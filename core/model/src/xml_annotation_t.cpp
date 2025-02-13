@@ -119,6 +119,6 @@ TEST_CASE("XML Annotations",
     REQUIRE(settings.simulationSettings.times.empty());
     REQUIRE(settings.optimizeOptions.optCosts.empty());
     REQUIRE(settings.optimizeOptions.optParams.empty());
-    REQUIRE(settings.speciesColours.empty());
+    REQUIRE(settings.speciesColors.empty());
   }
 }

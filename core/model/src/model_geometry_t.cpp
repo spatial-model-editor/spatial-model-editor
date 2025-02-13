@@ -124,89 +124,89 @@ TEST_CASE("Model geometry",
     QRgb c0{qRgb(0, 2, 0)};
     QRgb c1{qRgb(144, 97, 193)};
     QRgb c2{qRgb(197, 133, 96)};
-    auto cols1{m.getCompartments().getColours()};
+    auto cols1{m.getCompartments().getColors()};
     REQUIRE(cols1.size() == 3);
     REQUIRE(cols1[0] == c0);
     REQUIRE(cols1[1] == c1);
     REQUIRE(cols1[2] == c2);
-    SECTION("update geometry image colours no-ops") {
-      // invalid or no-op colour changes
+    SECTION("update geometry image colors no-ops") {
+      // invalid or no-op color changes
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
-      // oldColour not found
+      // oldColor not found
       REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(
           qRgb(255, 255, 255), qRgb(0, 0, 0)));
       // no-op
       REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(c0, c0));
       REQUIRE_NOTHROW(m.getGeometry().updateGeometryImageColor(c1, c1));
-      // newColour already in use
+      // newColor already in use
       REQUIRE_THROWS(m.getGeometry().updateGeometryImageColor(c0, c1));
       REQUIRE_THROWS(m.getGeometry().updateGeometryImageColor(c1, c0));
       // none of the above should have had any effect
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
     }
     SECTION("change image color and re-assign compartment (#1038)") {
-      auto cols{m.getCompartments().getColours()};
+      auto cols{m.getCompartments().getColors()};
       auto newCol1 = qRgb(211, 12, 77);
-      REQUIRE(m.getCompartments().getColours()[1] == cols[1]);
+      REQUIRE(m.getCompartments().getColors()[1] == cols[1]);
       m.getGeometry().updateGeometryImageColor(cols[1], newCol1);
-      REQUIRE(m.getCompartments().getColours()[1] == newCol1);
+      REQUIRE(m.getCompartments().getColors()[1] == newCol1);
       auto compIds = m.getCompartments().getIds();
-      m.getCompartments().setColour(compIds[0], newCol1);
-      m.getCompartments().setColour(compIds[1], cols[0]);
-      REQUIRE(m.getCompartments().getColours()[0] == newCol1);
-      REQUIRE(m.getCompartments().getColours()[1] == cols[0]);
+      m.getCompartments().setColor(compIds[0], newCol1);
+      m.getCompartments().setColor(compIds[1], cols[0]);
+      REQUIRE(m.getCompartments().getColors()[0] == newCol1);
+      REQUIRE(m.getCompartments().getColors()[1] == cols[0]);
     }
-    SECTION("update geometry image colours") {
+    SECTION("update geometry image colors") {
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == false);
       auto c3 = qRgb(255, 255, 255);
       auto c4 = qRgb(0, 255, 255);
-      auto id = m.getCompartments().getIdFromColour(c0);
+      auto id = m.getCompartments().getIdFromColor(c0);
       m.getGeometry().updateGeometryImageColor(c0, c3);
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == true);
-      REQUIRE(m.getCompartments().getIdFromColour(c0) == "");
-      REQUIRE(m.getCompartments().getIdFromColour(c3) == id);
-      REQUIRE(m.getCompartments().getIdFromColour(c4) == "");
+      REQUIRE(m.getCompartments().getIdFromColor(c0) == "");
+      REQUIRE(m.getCompartments().getIdFromColor(c3) == id);
+      REQUIRE(m.getCompartments().getIdFromColor(c4) == "");
       REQUIRE(m.getGeometry().getImages().colorTable().size() == 3);
-      REQUIRE(m.getCompartments().getColours().size() == 3);
-      REQUIRE(m.getCompartments().getColours()[0] == c3);
-      REQUIRE(m.getCompartments().getColour(id) == c3);
+      REQUIRE(m.getCompartments().getColors().size() == 3);
+      REQUIRE(m.getCompartments().getColors()[0] == c3);
+      REQUIRE(m.getCompartments().getColor(id) == c3);
       m.getGeometry().updateGeometryImageColor(c3, c4);
-      REQUIRE(m.getCompartments().getIdFromColour(c0) == "");
-      REQUIRE(m.getCompartments().getIdFromColour(c3) == "");
-      REQUIRE(m.getCompartments().getIdFromColour(c4) == id);
+      REQUIRE(m.getCompartments().getIdFromColor(c0) == "");
+      REQUIRE(m.getCompartments().getIdFromColor(c3) == "");
+      REQUIRE(m.getCompartments().getIdFromColor(c4) == id);
       REQUIRE(m.getGeometry().getHasUnsavedChanges() == true);
       REQUIRE(m.getGeometry().getImages().colorTable().size() == 3);
-      REQUIRE(m.getCompartments().getColours().size() == 3);
-      REQUIRE(m.getCompartments().getColour(id) == c4);
-      REQUIRE(m.getCompartments().getColours()[0] == c4);
+      REQUIRE(m.getCompartments().getColors().size() == 3);
+      REQUIRE(m.getCompartments().getColor(id) == c4);
+      REQUIRE(m.getCompartments().getColors()[0] == c4);
     }
-    SECTION("import geometry & keep colour assignments") {
+    SECTION("import geometry & keep color assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, true);
-      auto cols2{m.getCompartments().getColours()};
+      auto cols2{m.getCompartments().getColors()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == c0);
       REQUIRE(cols2[1] == c1);
       REQUIRE(cols2[2] == c2);
     }
-    SECTION("import geometry & don't keep colour assignments") {
+    SECTION("import geometry & don't keep color assignments") {
       QImage img(":/geometry/concave-cell-nucleus-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImages(common::ImageStack{{img}},
                                                false);
-      auto cols2{m.getCompartments().getColours()};
+      auto cols2{m.getCompartments().getColors()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == 0);
       REQUIRE(cols2[1] == 0);
       REQUIRE(cols2[2] == 0);
     }
-    SECTION("import geometry & try to keep invalid colour assignments") {
+    SECTION("import geometry & try to keep invalid color assignments") {
       QImage img(":/geometry/two-blobs-100x100.png");
       REQUIRE(img.size() == QSize(100, 100));
       m.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, true);
-      // new geometry image only contains c0 from previous colours
-      auto cols2{m.getCompartments().getColours()};
+      // new geometry image only contains c0 from previous colors
+      auto cols2{m.getCompartments().getColors()};
       REQUIRE(cols2.size() == 3);
       REQUIRE(cols2[0] == c0);
       REQUIRE(cols2[1] == 0);

@@ -19,7 +19,7 @@ static void initFitnessPlot(QCustomPlot *plot) {
   plot->clearGraphs();
   plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
   auto *graphFitness{plot->addGraph()};
-  graphFitness->setPen(sme::common::indexedColours()[0]);
+  graphFitness->setPen(sme::common::indexedColors()[0]);
   graphFitness->setScatterStyle(
       QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
   graphFitness->setName("Fitness of best parameters");
@@ -41,7 +41,7 @@ static void initParamsPlot(QCustomPlot *plot,
   plot->yAxis->setScaleType(QCPAxis::stLogarithmic);
   for (std::size_t i = 0; i < paramNames.size(); ++i) {
     auto *graphParams{plot->addGraph()};
-    graphParams->setPen(sme::common::indexedColours()[i]);
+    graphParams->setPen(sme::common::indexedColors()[i]);
     graphParams->setScatterStyle(
         QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
     graphParams->setName(paramNames[i]);

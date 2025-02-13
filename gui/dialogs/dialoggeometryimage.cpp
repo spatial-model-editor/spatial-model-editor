@@ -16,7 +16,7 @@ DialogGeometryImage::DialogGeometryImage(
   ui->setupUi(this);
   ui->lblImage->setZSlider(ui->slideZIndex);
   ui->lblImage->setImage(rescaledImage);
-  ui->btnApplyColours->setEnabled(false);
+  ui->btnApplyColors->setEnabled(false);
   for (const auto &u : units.getLengthUnits()) {
     ui->cmbUnitsWidth->addItem(u.name);
   }
@@ -31,7 +31,7 @@ DialogGeometryImage::DialogGeometryImage(
   ui->spinPixelsY->setValue(rescaledImage.volume().height());
   ui->lblZSlices->setText(
       QString("x %1 z-slices").arg(rescaledImage.volume().depth()));
-  updateColours();
+  updateColors();
   updateVoxelSize();
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
@@ -54,12 +54,12 @@ DialogGeometryImage::DialogGeometryImage(
           &DialogGeometryImage::spinPixelsY_valueChanged);
   connect(ui->btnResetPixels, &QPushButton::clicked, this,
           &DialogGeometryImage::btnResetPixels_clicked);
-  connect(ui->btnSelectColours, &QPushButton::clicked, this,
-          &DialogGeometryImage::btnSelectColours_clicked);
-  connect(ui->btnApplyColours, &QPushButton::clicked, this,
-          &DialogGeometryImage::btnApplyColours_clicked);
-  connect(ui->btnResetColours, &QPushButton::clicked, this,
-          &DialogGeometryImage::btnResetColours_clicked);
+  connect(ui->btnSelectColors, &QPushButton::clicked, this,
+          &DialogGeometryImage::btnSelectColors_clicked);
+  connect(ui->btnApplyColors, &QPushButton::clicked, this,
+          &DialogGeometryImage::btnApplyColors_clicked);
+  connect(ui->btnResetColors, &QPushButton::clicked, this,
+          &DialogGeometryImage::btnResetColors_clicked);
 
   ui->txtImageWidth->selectAll();
 }
@@ -72,7 +72,7 @@ sme::common::VolumeF DialogGeometryImage::getVoxelSize() const {
 
 bool DialogGeometryImage::imageSizeAltered() const { return alteredSize; }
 
-bool DialogGeometryImage::imageColoursAltered() const { return alteredColours; }
+bool DialogGeometryImage::imageColorsAltered() const { return alteredColors; }
 
 const sme::common::ImageStack &DialogGeometryImage::getAlteredImage() const {
   return ui->lblImage->getImage();
@@ -110,30 +110,30 @@ void DialogGeometryImage::updateVoxelSize() {
                                 .arg(modelUnitSymbol));
 }
 
-void DialogGeometryImage::updateColours() {
+void DialogGeometryImage::updateColors() {
   auto n{static_cast<int>(colorTable.size())};
-  QImage colourTableImage(1, 1, QImage::Format_Indexed8);
-  colourTableImage.fill(qRgb(0, 0, 0));
+  QImage colorTableImage(1, 1, QImage::Format_Indexed8);
+  colorTableImage.fill(qRgb(0, 0, 0));
   if (n > 0) {
-    int w{std::max(n, ui->lblColours->width())};
-    int h{std::max(1, ui->lblColours->height())};
-    int pixelsPerColour{w / n};
-    colourTableImage = QImage(w, h, QImage::Format_Indexed8);
-    colourTableImage.setColorTable(colorTable);
+    int w{std::max(n, ui->lblColors->width())};
+    int h{std::max(1, ui->lblColors->height())};
+    int pixelsPerColor{w / n};
+    colorTableImage = QImage(w, h, QImage::Format_Indexed8);
+    colorTableImage.setColorTable(colorTable);
     for (int x = 0; x < w; ++x) {
-      auto colourIndex{
-          static_cast<QRgb>(std::clamp(x / pixelsPerColour, 0, n - 1))};
+      auto colorIndex{
+          static_cast<QRgb>(std::clamp(x / pixelsPerColor, 0, n - 1))};
       for (int y = 0; y < h; ++y) {
-        colourTableImage.setPixel(x, y, colourIndex);
+        colorTableImage.setPixel(x, y, colorIndex);
       }
     }
   }
   if (n == 1) {
-    ui->lblLabelColours->setText("1 colour:");
+    ui->lblLabelColors->setText("1 color:");
   } else {
-    ui->lblLabelColours->setText(QString("%1 colours:").arg(n));
+    ui->lblLabelColors->setText(QString("%1 colors:").arg(n));
   }
-  ui->lblColours->setPixmap(QPixmap::fromImage(colourTableImage));
+  ui->lblColors->setPixmap(QPixmap::fromImage(colorTableImage));
 }
 
 void DialogGeometryImage::enableWidgets(bool enable) {
@@ -144,21 +144,21 @@ void DialogGeometryImage::enableWidgets(bool enable) {
   ui->spinPixelsX->setEnabled(enable);
   ui->spinPixelsY->setEnabled(enable);
   ui->btnResetPixels->setEnabled(enable);
-  ui->btnSelectColours->setEnabled(enable);
+  ui->btnSelectColors->setEnabled(enable);
   ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(enable);
 }
 
 void DialogGeometryImage::lblImage_mouseClicked(
     QRgb col, [[maybe_unused]] sme::common::Voxel voxel) {
-  if (!selectingColours) {
+  if (!selectingColors) {
     return;
   }
   if (colorTable.contains(col)) {
     return;
   }
   colorTable.push_back(col);
-  ui->btnApplyColours->setEnabled(true);
-  updateColours();
+  ui->btnApplyColors->setEnabled(true);
+  updateColors();
 }
 
 void DialogGeometryImage::txtImageWidth_editingFinished() { updateVoxelSize(); }
@@ -223,8 +223,8 @@ static int distance(QRgb a, QRgb b) {
   return dr * dr + dg * dg + db * db;
 }
 
-static void reduceImageToTheseColours(sme::common::ImageStack &images,
-                                      const QVector<QRgb> &colorTable) {
+static void reduceImageToTheseColors(sme::common::ImageStack &images,
+                                     const QVector<QRgb> &colorTable) {
   for (auto &image : images) {
     // map each index in image colorTable to the index of
     // the nearest color in colorTable
@@ -252,29 +252,29 @@ static void reduceImageToTheseColours(sme::common::ImageStack &images,
   }
 }
 
-void DialogGeometryImage::btnSelectColours_clicked() {
-  selectingColours = true;
+void DialogGeometryImage::btnSelectColors_clicked() {
+  selectingColors = true;
   colorTable.clear();
-  updateColours();
+  updateColors();
   enableWidgets(false);
 }
 
-void DialogGeometryImage::btnApplyColours_clicked() {
-  alteredColours = true;
-  selectingColours = false;
-  reduceImageToTheseColours(coloredImage, colorTable);
+void DialogGeometryImage::btnApplyColors_clicked() {
+  alteredColors = true;
+  selectingColors = false;
+  reduceImageToTheseColors(coloredImage, colorTable);
   enableWidgets(true);
-  ui->btnApplyColours->setEnabled(false);
+  ui->btnApplyColors->setEnabled(false);
   spinPixelsX_valueChanged(ui->spinPixelsX->value());
 }
 
-void DialogGeometryImage::btnResetColours_clicked() {
-  alteredColours = false;
-  selectingColours = false;
+void DialogGeometryImage::btnResetColors_clicked() {
+  alteredColors = false;
+  selectingColors = false;
   enableWidgets(true);
   coloredImage = originalImage;
   coloredImage.convertToIndexed();
   colorTable = coloredImage.colorTable();
-  updateColours();
+  updateColors();
   spinPixelsX_valueChanged(ui->spinPixelsX->value());
 }

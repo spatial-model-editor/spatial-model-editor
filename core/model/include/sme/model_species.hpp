@@ -86,8 +86,8 @@ public:
                                bool maskAndInvertY = false) const;
   [[nodiscard]] common::ImageStack
   getConcentrationImages(const QString &id) const;
-  void setColour(const QString &id, QRgb colour);
-  [[nodiscard]] QRgb getColour(const QString &id) const;
+  void setColor(const QString &id, QRgb color);
+  [[nodiscard]] QRgb getColor(const QString &id) const;
   void setIsConstant(const QString &id, bool constant);
   [[nodiscard]] bool getIsConstant(const QString &id) const;
   [[nodiscard]] bool isReactive(const QString &id) const;

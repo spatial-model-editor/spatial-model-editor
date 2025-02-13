@@ -26,7 +26,7 @@ private:
   QStringList compIds{};
   std::vector<geometry::Membrane> membranes{};
   std::unique_ptr<ImageMembranePixels> membranePixels;
-  std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColourPairs{};
+  std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> idColorPairs{};
   libsbml::Model *sbmlModel{nullptr};
   bool hasUnsavedChanges{false};
 
@@ -39,13 +39,13 @@ public:
   [[nodiscard]] const geometry::Membrane *getMembrane(const QString &id) const;
   [[nodiscard]] const std::vector<
       std::pair<std::string, std::pair<QRgb, QRgb>>> &
-  getIdColourPairs() const;
+  getIdColorPairs() const;
   [[nodiscard]] double getSize(const QString &id) const;
   void updateCompartmentNames(const QStringList &compartmentNames);
   void updateCompartments(
       const std::vector<std::unique_ptr<geometry::Compartment>> &compartments);
   void updateCompartmentImages(const common::ImageStack &imgs);
-  void updateGeometryImageColour(QRgb oldColour, QRgb newColour);
+  void updateGeometryImageColor(QRgb oldColor, QRgb newColor);
   void importMembraneIdsAndNames();
   void exportToSBML(const common::VolumeF &voxelSize);
   explicit ModelMembranes(libsbml::Model *model = nullptr);

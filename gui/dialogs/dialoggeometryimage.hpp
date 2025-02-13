@@ -19,7 +19,7 @@ public:
   ~DialogGeometryImage() override;
   [[nodiscard]] sme::common::VolumeF getVoxelSize() const;
   [[nodiscard]] bool imageSizeAltered() const;
-  [[nodiscard]] bool imageColoursAltered() const;
+  [[nodiscard]] bool imageColorsAltered() const;
   [[nodiscard]] const sme::common::ImageStack &getAlteredImage() const;
 
 private:
@@ -28,8 +28,8 @@ private:
   sme::common::ImageStack coloredImage;
   sme::common::ImageStack rescaledImage;
   bool alteredSize{false};
-  bool alteredColours{false};
-  bool selectingColours{false};
+  bool alteredColors{false};
+  bool selectingColors{false};
   QVector<QRgb> colorTable;
   sme::common::VolumeF voxelLocalUnits;
   sme::common::VolumeF voxelModelUnits;
@@ -37,7 +37,7 @@ private:
   QString modelUnitSymbol;
 
   void updateVoxelSize();
-  void updateColours();
+  void updateColors();
   void enableWidgets(bool enable);
   void lblImage_mouseClicked(QRgb col, sme::common::Voxel voxel);
   void txtImageWidth_editingFinished();
@@ -46,7 +46,7 @@ private:
   void spinPixelsX_valueChanged(int value);
   void spinPixelsY_valueChanged(int value);
   void btnResetPixels_clicked();
-  void btnSelectColours_clicked();
-  void btnApplyColours_clicked();
-  void btnResetColours_clicked();
+  void btnSelectColors_clicked();
+  void btnApplyColors_clicked();
+  void btnResetColors_clicked();
 };

@@ -15,7 +15,7 @@ namespace sme::geometry {
 
 Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
                          QRgb col)
-    : compartmentId{std::move(compId)}, colour{col} {
+    : compartmentId{std::move(compId)}, color{col} {
   if (imgs.empty()) {
     return;
   }
@@ -36,7 +36,7 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
     for (int x = 0; x < nx; ++x) {
       for (int y = 0; y < ny; ++y) {
         if (imgs[z].pixel(x, y) == col) {
-          // if colour matches, add voxel to field
+          // if color matches, add voxel to field
           ix.emplace_back(x, y, z);
           image.setPixel(x, y, 1);
           // NOTE: y=0 in ix is at bottom of image,
@@ -86,16 +86,16 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
   }
   SPDLOG_INFO("compartmentId: {}", compartmentId);
   SPDLOG_INFO("n_voxels: {}", ix.size());
-  SPDLOG_INFO("colour: {:x}", col);
+  SPDLOG_INFO("color: {:x}", col);
 }
 
 const std::string &Compartment::getId() const { return compartmentId; }
 
-QRgb Compartment::getColour() const { return colour; }
+QRgb Compartment::getColor() const { return color; }
 
-void Compartment::setColour(QRgb newColour) {
-  colour = newColour;
-  images.setColor(1, colour);
+void Compartment::setColor(QRgb newColor) {
+  color = newColor;
+  images.setColor(1, color);
 }
 
 const common::Volume &Compartment::getImageSize() const {
@@ -119,11 +119,11 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   images.setVoxelSize(A->getCompartmentImages().voxelSize());
   SPDLOG_INFO("membraneID: {}", id);
   SPDLOG_INFO("compartment A: {}", compA->getId());
-  QRgb colA = A->getColour();
-  SPDLOG_INFO("  - colour: {:x}", colA);
+  QRgb colA = A->getColor();
+  SPDLOG_INFO("  - color: {:x}", colA);
   SPDLOG_INFO("compartment B: {}", compB->getId());
-  QRgb colB = B->getColour();
-  SPDLOG_INFO("  - colour: {:x}", colB);
+  QRgb colB = B->getColor();
+  SPDLOG_INFO("  - color: {:x}", colB);
   SPDLOG_INFO("number of voxel pairs: {}", voxelPairs->size());
 
   // convert each pair of voxels into a pair of indices of the corresponding
@@ -170,16 +170,16 @@ const common::ImageStack &Membrane::getImages() const { return images; }
 Field::Field(const Compartment *compartment, std::string specID,
              double diffConst, QRgb col)
     : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst),
-      colour(col), conc(compartment->nVoxels(), 0.0) {
+      color(col), conc(compartment->nVoxels(), 0.0) {
   SPDLOG_INFO("speciesID: {}", id);
   SPDLOG_INFO("compartmentID: {}", comp->getId());
 }
 
 const std::string &Field::getId() const { return id; }
 
-QRgb Field::getColour() const { return colour; }
+QRgb Field::getColor() const { return color; }
 
-void Field::setColour(QRgb col) { colour = col; }
+void Field::setColor(QRgb col) { color = col; }
 
 bool Field::getIsSpatial() const { return isSpatial; }
 
@@ -250,7 +250,7 @@ common::ImageStack Field::getConcentrationImages() const {
                             QImage::Format_ARGB32_Premultiplied};
   images.setVoxelSize(comp->getCompartmentImages().voxelSize());
   images.fill(0);
-  // for now rescale conc to [0,1] to multiply species colour
+  // for now rescale conc to [0,1] to multiply species color
   double cmax{common::max(conc)};
   constexpr double concMinNonZeroThreshold{1e-15};
   if (cmax < concMinNonZeroThreshold) {
@@ -259,9 +259,9 @@ common::ImageStack Field::getConcentrationImages() const {
   for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
     double scale = conc[i] / cmax;
     const auto &v{comp->getVoxel(i)};
-    int r{static_cast<int>(scale * qRed(colour))};
-    int g{static_cast<int>(scale * qGreen(colour))};
-    int b{static_cast<int>(scale * qBlue(colour))};
+    int r{static_cast<int>(scale * qRed(color))};
+    int g{static_cast<int>(scale * qGreen(color))};
+    int b{static_cast<int>(scale * qBlue(color))};
     images[v.z].setPixel(v.p, qRgb(r, g, b));
   }
   return images;

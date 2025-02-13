@@ -116,7 +116,7 @@
           </widget>
          </item>
          <item row="10" column="0">
-          <widget class="QLabel" name="lblSpeciesColourLabel">
+          <widget class="QLabel" name="lblSpeciesColorLabel">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -124,16 +124,16 @@
             </sizepolicy>
            </property>
            <property name="toolTip">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="statusTip">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="whatsThis">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="text">
-            <string>Colour:</string>
+            <string>Color:</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -335,7 +335,7 @@
           <widget class="QLineEdit" name="txtSpeciesName"/>
          </item>
          <item row="10" column="6">
-          <widget class="QPushButton" name="btnChangeSpeciesColour">
+          <widget class="QPushButton" name="btnChangeSpeciesColor">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -343,16 +343,16 @@
             </sizepolicy>
            </property>
            <property name="toolTip">
-            <string>Change the colour that is used to display the concentration of this species</string>
+            <string>Change the color that is used to display the concentration of this species</string>
            </property>
            <property name="statusTip">
-            <string>Change the colour that is used to display the concentration of this species</string>
+            <string>Change the color that is used to display the concentration of this species</string>
            </property>
            <property name="whatsThis">
-            <string>Change the colour that is used to display the concentration of this species</string>
+            <string>Change the color that is used to display the concentration of this species</string>
            </property>
            <property name="text">
-            <string>change colour...</string>
+            <string>change color...</string>
            </property>
           </widget>
          </item>
@@ -383,7 +383,7 @@
           </widget>
          </item>
          <item row="10" column="1" colspan="5">
-          <widget class="QLabel" name="lblSpeciesColour">
+          <widget class="QLabel" name="lblSpeciesColor">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
              <horstretch>0</horstretch>
@@ -391,13 +391,13 @@
             </sizepolicy>
            </property>
            <property name="toolTip">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="statusTip">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="whatsThis">
-            <string>The colour that is used to display the concentration of this species</string>
+            <string>The color that is used to display the concentration of this species</string>
            </property>
            <property name="autoFillBackground">
             <bool>false</bool>

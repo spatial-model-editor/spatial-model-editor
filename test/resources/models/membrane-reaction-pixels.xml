@@ -48,12 +48,12 @@
     <listOfSpecies>
       <species id="in" name="in" compartment="circle" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
         <annotation>
-          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4293269835"/>
+          <spatialModelEditor:color xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:color="4293269835"/>
         </annotation>
       </species>
       <species id="out" name="out" compartment="outside" initialConcentration="0" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
         <annotation>
-          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4282168395"/>
+          <spatialModelEditor:color xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:color="4282168395"/>
         </annotation>
       </species>
     </listOfSpecies>

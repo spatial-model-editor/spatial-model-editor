@@ -62,17 +62,16 @@ TEST_CASE("Mesh3d simple geometries",
     REQUIRE_THAT(mesh3d.getErrorMessage(),
                  ContainsSubstring("geometry image missing"));
   }
-  SECTION("compartments assigned invalid colours") {
+  SECTION("compartments assigned invalid colors") {
     common::Volume volume(16, 21, 5);
     common::VolumeF voxelSize(1.0, 1.0, 1.0);
     common::VoxelF originPoint(0.0, 0.0, 0.0);
     common::ImageStack imageStack(volume, QImage::Format_RGB32);
     QRgb col = QColor(12, 66, 33).rgb();
     imageStack.fill(col);
-    for (const auto &colourVector :
+    for (const auto &colorVector :
          {std::vector<QRgb>{98765432}, std::vector<QRgb>{58642314, 0}}) {
-      mesh::Mesh3d mesh3d(imageStack, {5}, voxelSize, originPoint,
-                          colourVector);
+      mesh::Mesh3d mesh3d(imageStack, {5}, voxelSize, originPoint, colorVector);
       REQUIRE(mesh3d.isValid() == false);
       REQUIRE_THAT(mesh3d.getErrorMessage(),
                    ContainsSubstring("color is not present"));
@@ -85,8 +84,8 @@ TEST_CASE("Mesh3d simple geometries",
     common::ImageStack imageStack(volume, QImage::Format_RGB32);
     QRgb col = 0xff318399;
     imageStack.fill(col);
-    std::vector<QRgb> colours{col};
-    mesh::Mesh3d mesh3d(imageStack, {3}, voxelSize, originPoint, colours);
+    std::vector<QRgb> colors{col};
+    mesh::Mesh3d mesh3d(imageStack, {3}, voxelSize, originPoint, colors);
     REQUIRE(mesh3d.isValid() == true);
     REQUIRE(mesh3d.getErrorMessage().empty());
     SECTION("check outputs") {
@@ -253,18 +252,18 @@ TEST_CASE("Mesh3d more complex geometries",
     imageStack.convertToIndexed();
     common::VolumeF voxelSize(1.0, 1.0, 1.0);
     common::VoxelF originPoint(0.0, 0.0, 0.0);
-    auto colours = imageStack.colorTable();
-    REQUIRE(colours.size() == 3);
+    auto colors = imageStack.colorTable();
+    REQUIRE(colors.size() == 3);
     QRgb colOutside{0xff000000};
     QRgb colCell{0xffffffff};
     QRgb colNucleus{0xff7f7f7f};
     std::vector<std::size_t> maxCellVolume{5};
-    SECTION("No compartment colours") {
+    SECTION("No compartment colors") {
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
                           {});
       REQUIRE(mesh3d.isValid() == false);
     }
-    SECTION("Invalid compartment colours") {
+    SECTION("Invalid compartment colors") {
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
                           {0x123456, 0x987654});
       REQUIRE(mesh3d.isValid() == false);
@@ -374,9 +373,9 @@ TEST_CASE("Mesh3d more complex geometries",
                                colNucleus) <= 0.08);
     }
     SECTION("All three compartments") {
-      auto coloursAsStdVec = sme::common::toStdVec(colours);
+      auto colorsAsStdVec = sme::common::toStdVec(colors);
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          coloursAsStdVec);
+                          colorsAsStdVec);
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
@@ -384,7 +383,7 @@ TEST_CASE("Mesh3d more complex geometries",
         CAPTURE(compartmentIndex);
         REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint,
                                  compartmentIndex,
-                                 coloursAsStdVec[compartmentIndex]) >= 0.90);
+                                 colorsAsStdVec[compartmentIndex]) >= 0.90);
       }
     }
   }
@@ -402,13 +401,13 @@ TEST_CASE("Mesh3d more complex geometries",
     imageStack.convertToIndexed();
     common::VolumeF voxelSize(1.0, 1.0, 1.0);
     common::VoxelF originPoint(0.0, 0.0, 0.0);
-    auto colours = imageStack.colorTable();
-    REQUIRE(colours.size() == 3);
+    auto colors = imageStack.colorTable();
+    REQUIRE(colors.size() == 3);
     QRgb colOutside{0xff000000};
     QRgb colNucleus{0xff7f7f7f};
     QRgb colCell{0xffffffff};
     std::size_t maxCellVolume = 5;
-    SECTION("No compartment colours") {
+    SECTION("No compartment colors") {
       mesh::Mesh3d mesh3d(imageStack, {maxCellVolume}, voxelSize, originPoint,
                           {});
       REQUIRE(mesh3d.isValid() == false);
@@ -488,16 +487,16 @@ TEST_CASE("Mesh3d more complex geometries",
     SECTION("All three compartments") {
       mesh::Mesh3d mesh3d(
           imageStack, {maxCellVolume, maxCellVolume, maxCellVolume}, voxelSize,
-          originPoint, sme::common::toStdVec(colours));
+          originPoint, sme::common::toStdVec(colors));
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 0,
-                               colours[0]) >= 0.98);
+                               colors[0]) >= 0.98);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 1,
-                               colours[1]) >= 0.85);
+                               colors[1]) >= 0.85);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 2,
-                               colours[2]) >= 0.75);
+                               colors[2]) >= 0.75);
     }
   }
   SECTION("Hollow sphere") {
@@ -515,7 +514,7 @@ TEST_CASE("Mesh3d more complex geometries",
     auto colorTable = imageStack.colorTable();
     REQUIRE(colorTable.size() == 2);
     QRgb colOutside = 0xffffe119;
-    QRgb colInside = compartment->getColour();
+    QRgb colInside = compartment->getColor();
     REQUIRE(colorTable[0] == colOutside);
     REQUIRE(colorTable[1] == colInside);
     REQUIRE(geometry.getIsMeshValid() == true);
@@ -528,8 +527,8 @@ TEST_CASE("Mesh3d more complex geometries",
                              colInside) >= 0.90);
     REQUIRE(matchingFraction(imageStack, *mesh3d, voxelSize, originPoint, 0,
                              colOutside) <= 0.10);
-    // assign compartment to outside colour
-    m.getCompartments().setColour("Nucleus", colOutside);
+    // assign compartment to outside color
+    m.getCompartments().setColor("Nucleus", colOutside);
     mesh3d = geometry.getMesh3d();
     REQUIRE(mesh3d != nullptr);
     REQUIRE(mesh3d->getTetrahedronIndices().size() == 1);

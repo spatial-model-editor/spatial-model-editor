@@ -49,7 +49,7 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
       // check image output
       auto [boundaryImage, maskImage] =
           mesh.getBoundariesImages(QSize(100, 100), 0);
-      auto col0 = common::indexedColours()[0].rgba();
+      auto col0 = common::indexedColors()[0].rgba();
       REQUIRE(boundaryImage[0].width() == 77);
       REQUIRE(boundaryImage[0].height() == 100);
       REQUIRE(boundaryImage[0].pixel(1, 1) == col0);
@@ -158,8 +158,8 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
         mesh.getBoundariesImages(QSize(100, 100), 0);
     REQUIRE(boundaryImage[0].width() == 77);
     REQUIRE(boundaryImage[0].height() == 100);
-    auto col0 = common::indexedColours()[0].rgba();
-    auto col1 = common::indexedColours()[1].rgba();
+    auto col0 = common::indexedColors()[0].rgba();
+    auto col1 = common::indexedColors()[1].rgba();
     REQUIRE(boundaryImage[0].pixel(1, 1) == col0);
     REQUIRE(boundaryImage[0].pixel(4, 5) == col0);
     REQUIRE(boundaryImage[0].pixel(72, 96) == col0);

@@ -304,8 +304,8 @@ Model::getOptimizeOptions() const {
   return settings->optimizeOptions;
 }
 
-[[nodiscard]] const std::vector<QRgb> &Model::getSampledFieldColours() const {
-  return settings->sampledFieldColours;
+[[nodiscard]] const std::vector<QRgb> &Model::getSampledFieldColors() const {
+  return settings->sampledFieldColors;
 }
 
 void Model::clear() {

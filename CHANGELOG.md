@@ -9,7 +9,7 @@
 ## [1.7.0] - 2024-10-29
 ### Added
 - Python 3.13 wheels [#1002](https://github.com/spatial-model-editor/spatial-model-editor/issues/1002)
-- colours in the geometry image can now be changed [#960](https://github.com/spatial-model-editor/spatial-model-editor/issues/960)
+- colors in the geometry image can now be changed [#960](https://github.com/spatial-model-editor/spatial-model-editor/issues/960)
 - voxels can be selected in the 3d rendering of the geometry image [#979](https://github.com/spatial-model-editor/spatial-model-editor/issues/979)
 
 ### Fixed
@@ -34,7 +34,7 @@
 - support for anisotropic voxels [#879](https://github.com/spatial-model-editor/spatial-model-editor/issues/879)
 
 ### Changed
-- disable OK button while selecting geometry image colours [#878](https://github.com/spatial-model-editor/spatial-model-editor/issues/878).
+- disable OK button while selecting geometry image colors [#878](https://github.com/spatial-model-editor/spatial-model-editor/issues/878).
 - image arrays in sme (Python interface) now include a z dimension [#850](https://github.com/spatial-model-editor/spatial-model-editor/issues/850)
 
 ### Fixed
@@ -124,7 +124,7 @@
 - python interface: view and edit uniform/analytic/image species initial concentrations [#644](https://github.com/spatial-model-editor/spatial-model-editor/issues/644)
 
 ### Changed
-- compartment colour assignments are now preserved when the geometry image is resized [#587](https://github.com/spatial-model-editor/spatial-model-editor/issues/587)
+- compartment color assignments are now preserved when the geometry image is resized [#587](https://github.com/spatial-model-editor/spatial-model-editor/issues/587)
 
 ### Fixed
 - python interface: bug where compartment geometry mask was not updated after geometry image changed [#630](https://github.com/spatial-model-editor/spatial-model-editor/issues/630)
@@ -198,7 +198,7 @@
 - support multiple simulation lengths as comma delimited lists [#464](https://github.com/spatial-model-editor/spatial-model-editor/issues/464)
 - support for simulating models with empty compartments with the Dune-Copasi simulator [#435](https://github.com/spatial-model-editor/spatial-model-editor/issues/435)
 - option to resize the number of pixels in the geometry image [#462](https://github.com/spatial-model-editor/spatial-model-editor/issues/462)
-- option to reduce the number of colours in the geometry image [#280](https://github.com/spatial-model-editor/spatial-model-editor/issues/280)
+- option to reduce the number of colors in the geometry image [#280](https://github.com/spatial-model-editor/spatial-model-editor/issues/280)
 - support for non-integer stoichiometries in reactions [#495](https://github.com/spatial-model-editor/spatial-model-editor/issues/495)
 - optional grid and scale to geometry image [#497](https://github.com/spatial-model-editor/spatial-model-editor/issues/497)
 - python interface: DUNE simulator can now be used [#276](https://github.com/spatial-model-editor/spatial-model-editor/issues/276)

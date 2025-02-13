@@ -2,8 +2,8 @@
 //  - a modified QLabel
 //  - displays (and rescales without interpolation) an image,
 //  - tracks the mouse location in terms of the pixels of the original image
-//  - provides the colour of the last pixel that was clicked on
-//  - emits a signal when the user clicks the mouse, along with the colour of
+//  - provides the color of the last pixel that was clicked on
+//  - emits a signal when the user clicks the mouse, along with the color of
 //  the pixel that was clicked on
 
 #pragma once

@@ -2,7 +2,7 @@
 // - uses libSBML to read/write SBML document
 // - provides the contents in Qt containers for display
 // - augments the model with spatial information
-// - keeps track of geometry, membranes, mesh, colours, etc
+// - keeps track of geometry, membranes, mesh, colors, etc
 
 #pragma once
 
@@ -107,7 +107,7 @@ public:
   [[nodiscard]] const MeshParameters &getMeshParameters() const;
   simulate::OptimizeOptions &getOptimizeOptions();
   [[nodiscard]] const simulate::OptimizeOptions &getOptimizeOptions() const;
-  [[nodiscard]] const std::vector<QRgb> &getSampledFieldColours() const;
+  [[nodiscard]] const std::vector<QRgb> &getSampledFieldColors() const;
 
   explicit Model();
   Model(Model &&) noexcept = default;

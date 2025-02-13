@@ -111,7 +111,7 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
       auto col =
           qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
                imageDataArray->GetValue(idx + 2));
-      SPDLOG_DEBUG("voxel ({},{},{}) -> colour {:x}", x, y, z, col);
+      SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", x, y, z, col);
       emit mouseClicked(col, sme::common::Voxel{x, y, z});
     }
   }

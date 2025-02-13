@@ -1,7 +1,7 @@
 Mesh generation
 ===============
 The solution of the model equations will be created on a discretized version of the geometry.
-Once the geometry has been created from an image and all compartments have been assigned a colour,
+Once the geometry has been created from an image and all compartments have been assigned a color,
 a meshed approximation to the geometry is automatically constructed.
 
 The `Boundaries` tab shows the boundaries between compartments that have been automatically identified.

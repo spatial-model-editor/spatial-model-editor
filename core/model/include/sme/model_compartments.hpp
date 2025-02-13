@@ -33,7 +33,7 @@ private:
   friend class ModelGeometry;
   QStringList ids;
   QStringList names;
-  QVector<QRgb> colours;
+  QVector<QRgb> colors;
   std::vector<std::unique_ptr<geometry::Compartment>> compartments;
   libsbml::Model *sbmlModel = nullptr;
   ModelGeometry *modelGeometry = nullptr;
@@ -44,7 +44,7 @@ private:
   simulate::SimulationData *simulationData = nullptr;
   bool hasUnsavedChanges{false};
   std::map<std::string, double, std::less<>> initialCompartmentSizes{};
-  void updateGeometryImageColor(QRgb oldColour, QRgb newColour);
+  void updateGeometryImageColor(QRgb oldColor, QRgb newColor);
 
 public:
   ModelCompartments();
@@ -56,7 +56,7 @@ public:
   void setSimulationDataPtr(simulate::SimulationData *data);
   [[nodiscard]] const QStringList &getIds() const;
   [[nodiscard]] const QStringList &getNames() const;
-  [[nodiscard]] const QVector<QRgb> &getColours() const;
+  [[nodiscard]] const QVector<QRgb> &getColors() const;
   QString add(const QString &name);
   bool remove(const QString &id);
   [[nodiscard]] QString getName(const QString &id) const;
@@ -64,9 +64,9 @@ public:
   [[nodiscard]] std::optional<std::vector<QPointF>>
   getInteriorPoints(const QString &id) const;
   void setInteriorPoints(const QString &id, const std::vector<QPointF> &points);
-  void setColour(const QString &id, QRgb colour);
-  [[nodiscard]] QRgb getColour(const QString &id) const;
-  [[nodiscard]] QString getIdFromColour(QRgb colour) const;
+  void setColor(const QString &id, QRgb color);
+  [[nodiscard]] QRgb getColor(const QString &id) const;
+  [[nodiscard]] QString getIdFromColor(QRgb color) const;
   [[nodiscard]] const std::vector<std::unique_ptr<geometry::Compartment>> &
   getCompartments() const;
   geometry::Compartment *getCompartment(const QString &id);

@@ -46,9 +46,9 @@
       </widget>
      </item>
      <item row="7" column="5">
-      <widget class="QPushButton" name="btnResetColours">
+      <widget class="QPushButton" name="btnResetColors">
        <property name="text">
-        <string>Reset colours</string>
+        <string>Reset colors</string>
        </property>
       </widget>
      </item>
@@ -119,7 +119,7 @@
       </widget>
      </item>
      <item row="7" column="3">
-      <widget class="QPushButton" name="btnApplyColours">
+      <widget class="QPushButton" name="btnApplyColors">
        <property name="text">
         <string>Apply selection</string>
        </property>
@@ -149,14 +149,14 @@
       </widget>
      </item>
      <item row="7" column="1" colspan="2">
-      <widget class="QPushButton" name="btnSelectColours">
+      <widget class="QPushButton" name="btnSelectColors">
        <property name="text">
-        <string>Select colours...</string>
+        <string>Select colors...</string>
        </property>
       </widget>
      </item>
      <item row="6" column="1" colspan="5">
-      <widget class="QLabel" name="lblColours">
+      <widget class="QLabel" name="lblColors">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
          <horstretch>0</horstretch>
@@ -207,7 +207,7 @@
       <widget class="QComboBox" name="cmbUnitsWidth"/>
      </item>
      <item row="6" column="0">
-      <widget class="QLabel" name="lblLabelColours">
+      <widget class="QLabel" name="lblLabelColors">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -215,7 +215,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string>Colours:</string>
+        <string>Colors:</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -292,9 +292,9 @@
   <tabstop>spinPixelsX</tabstop>
   <tabstop>spinPixelsY</tabstop>
   <tabstop>btnResetPixels</tabstop>
-  <tabstop>btnSelectColours</tabstop>
-  <tabstop>btnApplyColours</tabstop>
-  <tabstop>btnResetColours</tabstop>
+  <tabstop>btnSelectColors</tabstop>
+  <tabstop>btnApplyColors</tabstop>
+  <tabstop>btnResetColors</tabstop>
  </tabstops>
  <resources/>
  <connections/>

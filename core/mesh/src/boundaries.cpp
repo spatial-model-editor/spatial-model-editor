@@ -48,14 +48,14 @@ extractContoursFromMask(const cv::Mat &mask,
 }
 
 static Contours getContours(const QImage &img,
-                            const std::vector<QRgb> &compartmentColours) {
+                            const std::vector<QRgb> &compartmentColors) {
   Contours contours;
-  for (auto col : compartmentColours) {
+  for (auto col : compartmentColors) {
     auto binaryMask = makeBinaryMask(img, col);
     SPDLOG_TRACE("comp {:x}", col);
     extractContoursFromMask(binaryMask, contours.compartmentEdges);
   }
-  auto binaryMask = makeBinaryMask(img, compartmentColours);
+  auto binaryMask = makeBinaryMask(img, compartmentColors);
   SPDLOG_TRACE("domain");
   extractContoursFromMask(binaryMask, contours.domainEdges);
   return contours;
@@ -127,10 +127,10 @@ static std::vector<Boundary> splitContours(const QImage &img,
 }
 
 Boundaries::Boundaries(const QImage &compartmentImage,
-                       const std::vector<QRgb> &compartmentColours,
+                       const std::vector<QRgb> &compartmentColors,
                        std::size_t simplifierType)
     : m_simplifierType{simplifierType} {
-  auto edgeContours{getContours(compartmentImage, compartmentColours)};
+  auto edgeContours{getContours(compartmentImage, compartmentColors)};
   m_boundaries = splitContours(compartmentImage, edgeContours);
   m_polylineSimplifier.setBoundaries(m_boundaries);
 }

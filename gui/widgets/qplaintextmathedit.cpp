@@ -407,13 +407,13 @@ void QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged() {
   int i = s.cursor.position();
   if (i < expr.size() && expr[i] == '(') {
     auto [len, valid] = getClosingBracket(expr, i, +1);
-    const auto &col = valid ? colourValid : colourInvalid;
+    const auto &col = valid ? colorValid : colorInvalid;
     s.cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor,
                           len);
     s.format.setBackground(QBrush(col));
   } else if (i > 0 && expr[i - 1] == ')') {
     auto [len, valid] = getClosingBracket(expr, i - 1, -1);
-    const auto &col = valid ? colourValid : colourInvalid;
+    const auto &col = valid ? colorValid : colorInvalid;
     s.cursor.movePosition(QTextCursor::PreviousCharacter,
                           QTextCursor::KeepAnchor, len);
     s.format.setBackground(QBrush(col));

@@ -65,8 +65,8 @@ TEST_CASE("SBML membranes utils",
       model::ImageMembranePixels imp;
       REQUIRE(imp.getImageSize() == sme::common::Volume{0, 0, 0});
     }
-    SECTION("Single colour") {
-      // 5x4 image with 1 colour
+    SECTION("Single color") {
+      // 5x4 image with 1 color
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 0, 0);
       img.fill(col0);
@@ -76,9 +76,9 @@ TEST_CASE("SBML membranes utils",
       REQUIRE(imp.getImageSize().width() == img.width());
       REQUIRE(imp.getImageSize().height() == img.height());
       REQUIRE(imp.getImageSize().depth() == 1);
-      REQUIRE(imp.getColourIndex(col0) == 0);
+      REQUIRE(imp.getColorIndex(col0) == 0);
     }
-    SECTION("4 colours") {
+    SECTION("4 colors") {
       QImage img(3, 3, QImage::Format_RGB32);
       QRgb col0 = qRgb(0, 0, 0);
       QRgb col1 = qRgb(123, 0, 0);
@@ -98,10 +98,10 @@ TEST_CASE("SBML membranes utils",
       REQUIRE(imp.getImageSize().width() == img.width());
       REQUIRE(imp.getImageSize().height() == img.height());
       REQUIRE(imp.getImageSize().depth() == 1);
-      auto i0 = imp.getColourIndex(col0);
-      auto i1 = imp.getColourIndex(col1);
-      auto i2 = imp.getColourIndex(col2);
-      auto i3 = imp.getColourIndex(col3);
+      auto i0 = imp.getColorIndex(col0);
+      auto i1 = imp.getColorIndex(col1);
+      auto i2 = imp.getColorIndex(col2);
+      auto i3 = imp.getColorIndex(col3);
       const auto *p01 = imp.getVoxels(i1, i0);
       REQUIRE_THROWS(imp.getVoxels(i0, i1));
       REQUIRE(p01->size() == 1);

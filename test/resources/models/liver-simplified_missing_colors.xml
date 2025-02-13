@@ -18,21 +18,16 @@
       </COPASI>
       <spatialModelEditor xmlns="https://github.com/spatial-model-editor">
         <settings>
-          <cereal_class_version>2</cereal_class_version>
+          <cereal_class_version>3</cereal_class_version>
           <simulationSettings>
             <cereal_class_version>1</cereal_class_version>
-            <times size="dynamic">
-              <value0>
-                <first>100</first>
-                <second>0.10000000000000001</second>
-              </value0>
-            </times>
+            <times size="dynamic"/>
             <options>
               <cereal_class_version>0</cereal_class_version>
               <dune>
-                <cereal_class_version>0</cereal_class_version>
+                <cereal_class_version>1</cereal_class_version>
                 <discretization>0</discretization>
-                <integrator>alexander_2</integrator>
+                <integrator>Alexander2</integrator>
                 <dt>0.10000000000000001</dt>
                 <minDt>1e-10</minDt>
                 <maxDt>10000</maxDt>
@@ -40,7 +35,8 @@
                 <decrease>0.5</decrease>
                 <writeVTKfiles>false</writeVTKfiles>
                 <newtonRelErr>1e-08</newtonRelErr>
-                <newtonAbsErr>9.9999999999999998e-13</newtonAbsErr>
+                <newtonAbsErr>0</newtonAbsErr>
+                <linearSolver>RestartedGMRes</linearSolver>
               </dune>
               <pixel>
                 <cereal_class_version>0</cereal_class_version>
@@ -57,7 +53,7 @@
                 <optLevel>3</optLevel>
               </pixel>
             </options>
-            <simulatorType>1</simulatorType>
+            <simulatorType>0</simulatorType>
           </simulationSettings>
           <displayOptions>
             <cereal_class_version>1</cereal_class_version>
@@ -72,16 +68,16 @@
           <meshParameters>
             <cereal_class_version>1</cereal_class_version>
             <maxPoints size="dynamic">
-              <value0>66</value0>
+              <value0>47</value0>
               <value1>8</value1>
             </maxPoints>
             <maxAreas size="dynamic">
-              <value0>40</value0>
-              <value1>40</value1>
+              <value0>100</value0>
+              <value1>100</value1>
             </maxAreas>
             <boundarySimplifierType>0</boundarySimplifierType>
           </meshParameters>
-          <speciesColours size="dynamic">
+          <speciesColors size="dynamic">
             <value0>
               <key>IKKb</key>
               <value>4294959385</value>
@@ -138,7 +134,7 @@
               <key>p65_nucleus</key>
               <value>4294622910</value>
             </value13>
-          </speciesColours>
+          </speciesColors>
           <optimizeOptions>
             <cereal_class_version>0</cereal_class_version>
             <optAlgorithm>

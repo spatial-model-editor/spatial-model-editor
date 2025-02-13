@@ -31,10 +31,10 @@ void save(Archive &ar, const sme::common::SmeFileContents &contents,
 template <class Archive>
 void load(Archive &ar, sme::common::SmeFileContents &contents,
           std::uint32_t const version) {
+  SPDLOG_INFO("Importing SmeFileContents v{}", version);
   if (version == 3) {
     ar(contents.xmlModel, contents.simulationData);
   } else if (version == 0 || version == 2) {
-    SPDLOG_ERROR("v2");
     // simulationData wasn't wrapped in a unique_ptr until version 3
     simulate::SimulationData simulationData{};
     {
@@ -43,7 +43,6 @@ void load(Archive &ar, sme::common::SmeFileContents &contents,
     contents.simulationData =
         std::make_unique<simulate::SimulationData>(std::move(simulationData));
   } else if (version == 1) {
-    SPDLOG_ERROR("v1");
     // in this version, we stored the SimulationSettings in the SmeFileContents,
     // so here we need to transfer it to the annotation in the sbml xmlModel
     model::SimulationSettings simulationSettings{};
@@ -65,6 +64,8 @@ void load(Archive &ar, sme::common::SmeFileContents &contents,
     sme::model::setSbmlAnnotation(doc->getModel(), annotation);
     contents.xmlModel = libsbml::writeSBMLToStdString(doc.get());
     SPDLOG_INFO("{}", contents.xmlModel);
+  } else {
+    SPDLOG_ERROR("Unsupported SmeFileContents version: {}", version);
   }
 }
 

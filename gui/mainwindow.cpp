@@ -475,7 +475,7 @@ void MainWindow::actionGeometry_from_model_triggered() {
   }
   tabSimulate->reset();
   for (const auto &id : model.getCompartments().getIds()) {
-    model.getCompartments().setColour(id, 0);
+    model.getCompartments().setColor(id, 0);
   }
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.getGeometry().importSampledFieldGeometry(filename);
@@ -513,12 +513,11 @@ void MainWindow::importGeometryImage(const sme::common::ImageStack &image,
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     tabSimulate->reset();
     if (!is_model_image || dialog.imageSizeAltered() ||
-        dialog.imageColoursAltered()) {
+        dialog.imageColorsAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
-      bool keepColourAssignments{is_model_image &&
-                                 !dialog.imageColoursAltered()};
+      bool keepColorAssignments{is_model_image && !dialog.imageColorsAltered()};
       model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
-                                                   keepColourAssignments);
+                                                   keepColorAssignments);
     }
     auto voxelSize{dialog.getVoxelSize()};
     SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),

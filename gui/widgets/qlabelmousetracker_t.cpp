@@ -7,7 +7,7 @@ using namespace sme::test;
 static const char *tags{
     "[qlabelmousetracker][gui/widgets/qlabelmousetracker][gui/widgets][gui]"};
 
-TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
+TEST_CASE("QLabelMouseTracker: single pixel, single color image", tags) {
   QLabelMouseTracker mouseTracker;
   sme::common::ImageStack imgs{{QImage(1, 1, QImage::Format_RGB32)}};
   QRgb col{qRgb(12, 243, 154)};
@@ -36,7 +36,7 @@ TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
   sendMouseClick(&mouseTracker, {2, 3});
   REQUIRE(clicks.size() == 1);
   REQUIRE(clicks.back() == col);
-  REQUIRE(mouseTracker.getColour() == col);
+  REQUIRE(mouseTracker.getColor() == col);
 
   // two more clicks on image
   sendMouseMove(&mouseTracker, {66, 81});
@@ -47,11 +47,11 @@ TEST_CASE("QLabelMouseTracker: single pixel, single colour image", tags) {
   sendMouseClick(&mouseTracker, {55, 11});
   REQUIRE(clicks.size() == 3);
   REQUIRE(clicks.back() == col);
-  REQUIRE(mouseTracker.getColour() == col);
+  REQUIRE(mouseTracker.getColor() == col);
 }
 
-TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
-  // pixel colours:
+TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 color image", tags) {
+  // pixel colors:
   // 2 1 1
   // 3 4 1
   // 3 1 1
@@ -94,14 +94,14 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, {0, 1});
     REQUIRE(clicks.size() == 1);
     REQUIRE(clicks.back() == col2);
-    REQUIRE(mouseTracker.getColour() == col2);
+    REQUIRE(mouseTracker.getColor() == col2);
 
     // mouse click (3,7)
     // pix (0,0) <-> col2
     sendMouseClick(&mouseTracker, {3, 7});
     REQUIRE(clicks.size() == 2);
     REQUIRE(clicks.back() == col2);
-    REQUIRE(mouseTracker.getColour() == col2);
+    REQUIRE(mouseTracker.getColor() == col2);
 
     // mouse click (5,44)
     // pix (0,1) <-> col3
@@ -110,7 +110,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
                           static_cast<int>(0.44 * imgDisplaySize)));
     REQUIRE(clicks.size() == 3);
     REQUIRE(clicks.back() == col3);
-    REQUIRE(mouseTracker.getColour() == col3);
+    REQUIRE(mouseTracker.getColor() == col3);
 
     // mouse click (5,84)
     // pix (0,2) <-> col3
@@ -119,7 +119,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
                           static_cast<int>(0.84 * imgDisplaySize)));
     REQUIRE(clicks.size() == 4);
     REQUIRE(clicks.back() == col3);
-    REQUIRE(mouseTracker.getColour() == col3);
+    REQUIRE(mouseTracker.getColor() == col3);
 
     // mouse clicks (99,99), (5,84), (50,50)
     // pix (2,2),(0,2),(1,1) <-> col1,col3,col4
@@ -134,7 +134,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     REQUIRE(clicks[0] == col1);
     REQUIRE(clicks[1] == col3);
     REQUIRE(clicks[2] == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
 
     // resized to 600x600, mouseclick (300,300)
     // pix (1,1) <-> col4
@@ -143,7 +143,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, {300, 300});
     REQUIRE(clicks.size() == 4);
     REQUIRE(clicks.back() == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
 
     // resized to 6x6, mouseclick (1,3)
     // pix (0,1) <-> col3
@@ -152,7 +152,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, {1, 3});
     REQUIRE(clicks.size() == 5);
     REQUIRE(clicks.back() == col3);
-    REQUIRE(mouseTracker.getColour() == col3);
+    REQUIRE(mouseTracker.getColor() == col3);
 
     // resized to 900x3, mouseclick (2,2)
     // pix (2,0) <-> col1
@@ -161,7 +161,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, {2, 2});
     REQUIRE(clicks.size() == 6);
     REQUIRE(clicks.back() == col1);
-    REQUIRE(mouseTracker.getColour() == col1);
+    REQUIRE(mouseTracker.getColor() == col1);
   }
   SECTION("Resize physical volume") {
     // 100px x 100px mousetracker widget size:
@@ -172,7 +172,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, QPoint(50, 50));
     REQUIRE(clicks.size() == 1);
     REQUIRE(clicks.back() == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
     // 2:1 aspect ratio physical size
     imageStack.setVoxelSize({2.0, 1.0, 1.0});
     mouseTracker.setImage(imageStack);
@@ -183,7 +183,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, QPoint(50, 25));
     REQUIRE(clicks.size() == 2);
     REQUIRE(clicks.back() == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
     // 5:1 aspect ratio physical size
     imageStack.setVoxelSize({50.0, 10.0, 1.0});
     mouseTracker.setImage(imageStack);
@@ -194,7 +194,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, QPoint(50, 10));
     REQUIRE(clicks.size() == 3);
     REQUIRE(clicks.back() == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
     // 1:3 aspect ratio physical size
     imageStack.setVoxelSize({3.0, 9.0, 1.0});
     mouseTracker.setImage(imageStack);
@@ -205,7 +205,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 colour image", tags) {
     sendMouseClick(&mouseTracker, QPoint(17, 50));
     REQUIRE(clicks.size() == 4);
     REQUIRE(clicks.back() == col4);
-    REQUIRE(mouseTracker.getColour() == col4);
+    REQUIRE(mouseTracker.getColor() == col4);
     // 1:100000 aspect ratio physical size: display width clipped to single
     // pixel
     imageStack.setVoxelSize({1.0, 100000.0, 1.0});
@@ -256,7 +256,7 @@ TEST_CASE("QLabelMouseTracker: image and mask", tags) {
   sendMouseClick(&mouseTracker, {0, 1});
   REQUIRE(clicks.size() == 1);
   REQUIRE(clicks.back() == 0xff000200);
-  REQUIRE(mouseTracker.getColour() == 0xff000200);
+  REQUIRE(mouseTracker.getColor() == 0xff000200);
   REQUIRE(mouseTracker.getMaskIndex() == 512);
 
   // mouse click (50,50)
@@ -264,6 +264,6 @@ TEST_CASE("QLabelMouseTracker: image and mask", tags) {
   sendMouseClick(&mouseTracker, {50, 50});
   REQUIRE(clicks.size() == 2);
   REQUIRE(clicks.back() == QColor(144, 97, 193).rgb());
-  REQUIRE(mouseTracker.getColour() == QColor(144, 97, 193).rgb());
+  REQUIRE(mouseTracker.getColor() == QColor(144, 97, 193).rgb());
   REQUIRE(mouseTracker.getMaskIndex() == 12944736);
 }

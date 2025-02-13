@@ -74,7 +74,7 @@ void QLabelMouseTracker::setImages(
   setMaskImage(imgPair.second);
 }
 
-QRgb QLabelMouseTracker::getColour() const { return colour; }
+QRgb QLabelMouseTracker::getColor() const { return color; }
 
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
@@ -95,19 +95,19 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
     return;
   }
   if (setCurrentPixel(ev->pos())) {
-    // update current colour and emit mouseClicked signal
+    // update current color and emit mouseClicked signal
     auto imagePixel{currentVoxel};
     if (flipYAxis) {
       imagePixel.p.setY(image[currentVoxel.z].height() - 1 - imagePixel.p.y());
     }
-    colour = image[currentVoxel.z].pixelColor(imagePixel.p).rgb();
-    SPDLOG_DEBUG("imagePixel ({},{},{}) -> colour {:x}", imagePixel.p.x(),
-                 imagePixel.p.y(), imagePixel.z, colour);
+    color = image[currentVoxel.z].pixelColor(imagePixel.p).rgb();
+    SPDLOG_DEBUG("imagePixel ({},{},{}) -> color {:x}", imagePixel.p.x(),
+                 imagePixel.p.y(), imagePixel.z, color);
     if (!maskImage.empty() && maskImage[currentVoxel.z].valid(currentVoxel.p)) {
       maskIndex = static_cast<int>(
           maskImage[currentVoxel.z].pixel(currentVoxel.p) & RGB_MASK);
     }
-    emit mouseClicked(colour, currentVoxel);
+    emit mouseClicked(color, currentVoxel);
   }
 }
 

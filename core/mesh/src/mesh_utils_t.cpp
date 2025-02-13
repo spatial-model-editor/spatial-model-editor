@@ -7,7 +7,7 @@
 using namespace sme;
 
 TEST_CASE("MeshUtils", "[core/mesh/mesh_utils][core/mesh][core][mesh_utils]") {
-  SECTION("makeBinaryMask: single colour") {
+  SECTION("makeBinaryMask: single color") {
     QImage img(10, 20, QImage::Format_RGB32);
     QRgb bg{qRgb(1, 2, 3)};
     QRgb fg{qRgb(21, 22, 32)};

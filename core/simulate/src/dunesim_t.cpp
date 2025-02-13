@@ -23,13 +23,13 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/435
     auto m{getExampleModel(Mod::VerySimpleModel)};
     m.getSpecies().setInitialConcentration("B_c2", 0.1);
-    auto col1{m.getCompartments().getColour("c1")};
-    auto col2{m.getCompartments().getColour("c2")};
+    auto col1{m.getCompartments().getColor("c1")};
+    auto col2{m.getCompartments().getColor("c2")};
     // remove all species from nucleus, but keep compartment in model
     m.getSpecies().remove("A_c3");
     m.getSpecies().remove("B_c3");
-    // re-assign compartment colour to generate default boundaries & mesh
-    m.getCompartments().setColour("c1", col1);
+    // re-assign compartment color to generate default boundaries & mesh
+    m.getCompartments().setColor("c1", col1);
     std::vector<std::string> comps{"c1", "c2", "c3"};
     auto maxPoints{m.getGeometry().getMesh2d()->getBoundaryMaxPoints()};
     auto maxAreas{m.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea()};
@@ -49,8 +49,8 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     // completely remove nucleus compartment from model and repeat:
     // shouldn't change simulation results
     m.getCompartments().remove("c3");
-    m.getCompartments().setColour("c1", col1);
-    m.getCompartments().setColour("c2", col2);
+    m.getCompartments().setColor("c1", col1);
+    m.getCompartments().setColor("c2", col2);
     REQUIRE(m.getGeometry().getMesh2d()->getBoundaryMaxPoints().size() == 3);
     REQUIRE(
         m.getGeometry().getMesh2d()->getCompartmentMaxTriangleArea().size() ==

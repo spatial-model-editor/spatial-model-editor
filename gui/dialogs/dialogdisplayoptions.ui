@@ -86,7 +86,7 @@
    <item row="5" column="0" colspan="3">
     <widget class="QLabel" name="lblNormalise">
      <property name="text">
-      <string>Normalise concentration image colour intensity to:</string>
+      <string>Normalise concentration image color intensity to:</string>
      </property>
     </widget>
    </item>

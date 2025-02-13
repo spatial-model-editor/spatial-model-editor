@@ -60,7 +60,7 @@ public:
   void importSampledFieldGeometry(const libsbml::Model *model);
   void importSampledFieldGeometry(const QString &filename);
   void importGeometryFromImages(const common::ImageStack &imgs,
-                                bool keepColourAssignments);
+                                bool keepColorAssignments);
   void updateMesh();
   void clear();
   [[nodiscard]] int getNumDimensions() const;
@@ -79,7 +79,7 @@ public:
   [[nodiscard]] bool getIsValid() const;
   [[nodiscard]] bool getIsMeshValid() const;
   [[nodiscard]] bool getHasImage() const;
-  void updateGeometryImageColor(QRgb oldColour, QRgb newColour);
+  void updateGeometryImageColor(QRgb oldColor, QRgb newColor);
   void writeGeometryToSBML() const;
   [[nodiscard]] bool getHasUnsavedChanges() const;
   void setHasUnsavedChanges(bool unsavedChanges);
