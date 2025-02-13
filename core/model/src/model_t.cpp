@@ -4,6 +4,7 @@
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
+#include "sme/version.hpp"
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
@@ -880,9 +881,12 @@ TEST_CASE("SBML: load multi-compartment model, change volume of geometry",
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
   // export sbml, import sbml, check all sizes preserved
-  auto xml{s.getXml().toStdString()};
+  auto xml = s.getXml();
+  REQUIRE(
+      xml.contains(QString("<!-- Created by Spatial Model Editor version %1")
+                       .arg(common::SPATIAL_MODEL_EDITOR_VERSION)));
   model::Model s2;
-  s2.importSBMLString(xml);
+  s2.importSBMLString(xml.toStdString());
   REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(a));
   REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(a));
   REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(d));
