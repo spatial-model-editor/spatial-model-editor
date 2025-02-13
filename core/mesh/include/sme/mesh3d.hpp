@@ -22,6 +22,7 @@ class Image_3;
 namespace sme::mesh {
 
 using QTetrahedronF = std::array<sme::common::VoxelF, 4>;
+using TriangleVertexIndices = std::array<std::size_t, 3>;
 using TetrahedronVertexIndices = std::array<std::size_t, 4>;
 
 class Mesh3d {
@@ -33,7 +34,10 @@ private:
   std::vector<sme::common::VoxelF> vertices_;
   std::vector<std::vector<QTetrahedronF>> tetrahedra_;
   std::vector<std::vector<TetrahedronVertexIndices>> tetrahedronVertexIndices_;
+  std::vector<std::vector<TriangleVertexIndices>>
+      membraneTriangleVertexIndices_;
   std::vector<std::uint8_t> labelToCompartmentIndex_;
+  std::vector<std::uint8_t> compartmentsToMembraneIndex_;
   bool validMesh_{false};
   std::vector<QRgb> colors_;
   std::string errorMessage_{};
@@ -50,12 +54,17 @@ public:
    * @param[in] voxelSize the physical size of a voxel
    * @param[in] originPoint the physical location of the ``(0,0,0)`` voxel
    * @param[in] compartmentColors the colors of compartments in the image
+   * @param[in] membraneIdColorPairs the ids and color-pairs of membranes in the
+   * image
    */
-  explicit Mesh3d(const sme::common::ImageStack &imageStack,
-                  std::vector<std::size_t> maxCellVolume = {},
-                  const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
-                  const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
-                  std::vector<QRgb> compartmentColors = {});
+  explicit Mesh3d(
+      const sme::common::ImageStack &imageStack,
+      std::vector<std::size_t> maxCellVolume = {},
+      const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
+      const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
+      const std::vector<QRgb> &compartmentColors = {},
+      const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+          &membraneIdColorPairs = {});
   ~Mesh3d();
   /**
    * @brief Returns true if the mesh is valid
@@ -110,9 +119,14 @@ public:
   [[nodiscard]] std::vector<double> getVerticesAsFlatArray() const;
   /**
    *
-   * @return number of compartments available.
+   * @return number of compartments in mesh.
    */
   [[nodiscard]] std::size_t getNumberOfCompartments() const;
+  /**
+   *
+   * @return number of membranes in mesh.
+   */
+  [[nodiscard]] std::size_t getNumberOfMembranes() const;
   /**
    * @brief The mesh tetrahedron indices as a flat array of ints
    *
@@ -129,6 +143,14 @@ public:
   [[nodiscard]] const std::vector<std::vector<TetrahedronVertexIndices>> &
   getTetrahedronIndices() const;
   /**
+   * @brief The mesh tetrahedron indices
+   *
+   * The indices of the vertices of each triangle on the boundary between
+   * compartments c1 and c2
+   */
+  [[nodiscard]] const std::vector<std::vector<TriangleVertexIndices>> &
+  getMembraneTriangleIndices() const;
+  /**
    * @brief The mesh in GMSH format
    *
    * @returns the mesh in GMSH format
@@ -136,16 +158,19 @@ public:
   [[nodiscard]] QString getGMSH() const;
 
   /**
-   * @brief Get the colors of the compartments
+   * @brief Get the colors of the compartments and membranes
    *
    */
   [[nodiscard]] const std::vector<QRgb> &getColors() const;
 
   /**
-   * @brief Set the colors of the compartments
+   * @brief Set the colors of the compartments and membranes
    *
    */
-  void setColors(std::vector<QRgb> colors);
+  void
+  setColors(const std::vector<QRgb> &compartmentColors,
+            const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+                &membraneIdColorPairs);
 
   static constexpr std::size_t dim = 3;
 };

@@ -223,12 +223,12 @@ static std::vector<QRgb> setImagePixels(
     auto matches = getMatchingSampledValues(values, sampledVolume);
     if (std::ranges::find(matches, true) != matches.cend()) {
       auto col{common::indexedColors()[iCol].rgb()};
-      SPDLOG_WARN("Color {} is {}", iCol, col);
+      SPDLOG_DEBUG("Color {} is {}", iCol, col);
       auto sampledValue{
           static_cast<std::size_t>(sampledVolume->getSampledValue())};
       if (sampledValue < importedSampledFieldColors.size()) {
         col = importedSampledFieldColors[sampledValue];
-        SPDLOG_WARN("  -> Using importedSampledFieldColor {}", col);
+        SPDLOG_DEBUG("  -> Using importedSampledFieldColor {}", col);
       }
       SPDLOG_DEBUG("  {}/{} -> color {:x}", sampledVolume->getId(),
                    sampledVolume->getDomainType(), col);
