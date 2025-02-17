@@ -97,30 +97,51 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
   // below are NLopt algorithms.
   // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html
-  case COBYLA:
-    SPDLOG_INFO("cobyla optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("cobyla"));
-
-  case BOBYQA:
-    SPDLOG_INFO("bobyqa optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("bobyqa"));
-
-  case NMS:
-    SPDLOG_INFO("neldermead optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("neldermead"));
-
-  case sbplx:
-    SPDLOG_INFO("sbplx optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("sbplx"));
-
-  case AL:
-    SPDLOG_INFO("auglag optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag"));
-
-  case ALEQ:
-    SPDLOG_INFO("auglag_eq optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("auglag_eq"));
-
+  case COBYLA: {
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("cobyla"));
+    algo->set_xtol_rel(
+        0); // this serves to effectively disable the stopping criterion based
+            // on the relative change in the parameters
+    algo->set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
+  case BOBYQA: {
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("bobyqa"));
+    algo->set_xtol_rel(0);
+    algo->set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
+  case NMS: {
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("neldermead"));
+    algo->set_xtol_rel(0);
+    algo->set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
+  case sbplx: {
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("sbplx"));
+    algo->set_xtol_rel(0);
+    algo->set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
+  case AL: {
+    // README: check
+    // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html?highlight=nlopt
+    // under 'set_local_optimizer' for more info
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("auglag"));
+    auto aux_algo = pagmo::nlopt("neldermead");
+    algo->set_xtol_rel(0);
+    algo->set_maxeval(1);
+    aux_algo.set_xtol_rel(0);
+    aux_algo.set_maxeval(1);
+    algo->set_local_optimizer(aux_algo);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
+  case PRAXIS: {
+    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("praxis"));
+    algo->set_xtol_rel(0);
+    algo->set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(*algo);
+  }
   default:
     SPDLOG_INFO("Unknown optimization algorithm: using PSO");
     return std::make_unique<pagmo::algorithm>(pagmo::pso());
@@ -142,8 +163,16 @@ std::size_t Optimization::finalizeEvolve(const std::string &newErrorMessage) {
 Optimization::Optimization(sme::model::Model &model) {
   const auto &options{model.getOptimizeOptions()};
 
+  // nlopt algorithms can have population < 2, while the others do not.
+  auto nloptAlgorithms = {OptAlgorithmType::COBYLA, OptAlgorithmType::BOBYQA,
+                          OptAlgorithmType::NMS,    OptAlgorithmType::sbplx,
+                          OptAlgorithmType::AL,     OptAlgorithmType::PRAXIS};
+
   // this probably needs to go if we want to support NLopt algorithms
-  if (options.optAlgorithm.population < 2) {
+  if (options.optAlgorithm.population < 2 and
+      std::ranges::find(nloptAlgorithms,
+                        options.optAlgorithm.optAlgorithmType) ==
+          nloptAlgorithms.end()) {
     errorMessage = "Invalid optimization population size, can't be less than 2";
     return;
   }

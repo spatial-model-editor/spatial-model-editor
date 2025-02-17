@@ -93,6 +93,8 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       {}});
 
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
+    SPDLOG_CRITICAL("Optimizing with algorithm {}",
+                    static_cast<int>(optAlgorithmType));
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
     if (optAlgorithmType == sme::simulate::OptAlgorithmType::DE) {
@@ -105,6 +107,8 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
       optimizeOptions.optAlgorithm.population = 7;
     } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::gaco) {
       optimizeOptions.optAlgorithm.population = 7;
+    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::PRAXIS) {
+      optimizeOptions.optAlgorithm.population = 2;
     } else {
       optimizeOptions.optAlgorithm.population = 2;
     }

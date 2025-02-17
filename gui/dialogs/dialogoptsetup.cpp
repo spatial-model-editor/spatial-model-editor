@@ -58,6 +58,8 @@ static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return "Rowan's SUPLEX algorithm";
   case sme::simulate::OptAlgorithmType::AL:
     return "Augmented Lagrangian method";
+  case sme::simulate::OptAlgorithmType::PRAXIS:
+    return "Brent's principle axis method";
   default:
     return "";
   }
@@ -181,7 +183,7 @@ setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
       {sme::simulate::OptAlgorithmType::NMS, 1},
       {sme::simulate::OptAlgorithmType::sbplx, 1},
       {sme::simulate::OptAlgorithmType::AL, 1},
-      {sme::simulate::OptAlgorithmType::ALEQ, 1}};
+      {sme::simulate::OptAlgorithmType::PRAXIS, 1}};
   if (auto iter{minPopulation.find(optAlgorithmType)};
       iter != minPopulation.end()) {
     spinPopulation->setMinimum(iter->second);
