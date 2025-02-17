@@ -52,8 +52,6 @@ static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return "Constrained Optimization BY Linear Approximations";
   case sme::simulate::OptAlgorithmType::BOBYQA:
     return "Bound Optimization BY Quadratic Approximations";
-  case sme::simulate::OptAlgorithmType::PRAXIS:
-    return "Gradient-free local optimization via the principal-axis method";
   case sme::simulate::OptAlgorithmType::NMS:
     return "Nelder-Mead Simplex algorithm";
   case sme::simulate::OptAlgorithmType::sbplx:
@@ -91,7 +89,6 @@ static sme::simulate::OptAlgorithmType toOptAlgorithmType(int index) {
 
 static std::vector<sme::simulate::OptParam>
 getDefaultOptParams(const sme::model::Model &model) {
-  // TODO: add the shitty NLopt algorithms
 
   std::vector<sme::simulate::OptParam> optParams;
 
@@ -127,7 +124,6 @@ getDefaultOptParams(const sme::model::Model &model) {
 
 static std::vector<sme::simulate::OptCost>
 getDefaultOptCosts(const sme::model::Model &model) {
-  // TODO: add the shitty NLopt algorithms
   std::vector<sme::simulate::OptCost> optCosts;
   std::size_t compartmentIndex{0};
   double defaultSimTime{100.0};
@@ -172,7 +168,6 @@ static void
 setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
                       QSpinBox *spinPopulation) {
   static std::unordered_map<sme::simulate::OptAlgorithmType, int> minPopulation{
-      // TODO: add the shitty NLopt algorithms
       {sme::simulate::OptAlgorithmType::PSO, 2},
       {sme::simulate::OptAlgorithmType::GPSO, 2},
       {sme::simulate::OptAlgorithmType::DE, 5},
@@ -180,7 +175,13 @@ setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
       {sme::simulate::OptAlgorithmType::jDE, 7},
       {sme::simulate::OptAlgorithmType::pDE, 7},
       {sme::simulate::OptAlgorithmType::ABC, 2},
-      {sme::simulate::OptAlgorithmType::gaco, 7}};
+      {sme::simulate::OptAlgorithmType::gaco, 7},
+      {sme::simulate::OptAlgorithmType::COBYLA, 1},
+      {sme::simulate::OptAlgorithmType::BOBYQA, 1},
+      {sme::simulate::OptAlgorithmType::NMS, 1},
+      {sme::simulate::OptAlgorithmType::sbplx, 1},
+      {sme::simulate::OptAlgorithmType::AL, 1},
+      {sme::simulate::OptAlgorithmType::ALEQ, 1}};
   if (auto iter{minPopulation.find(optAlgorithmType)};
       iter != minPopulation.end()) {
     spinPopulation->setMinimum(iter->second);

@@ -105,10 +105,6 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     SPDLOG_INFO("bobyqa optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("bobyqa"));
 
-  case PRAXIS:
-    SPDLOG_INFO("praxis optimization algorithm");
-    return std::make_unique<pagmo::algorithm>(pagmo::nlopt("praxis"));
-
   case NMS:
     SPDLOG_INFO("neldermead optimization algorithm");
     return std::make_unique<pagmo::algorithm>(pagmo::nlopt("neldermead"));

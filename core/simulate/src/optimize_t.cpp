@@ -92,15 +92,6 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       0,
                                       {}});
 
-  auto nlp = std::vector<int>{
-      static_cast<int>(sme::simulate::OptAlgorithmType::COBYLA),
-      static_cast<int>(sme::simulate::OptAlgorithmType::BOBYQA),
-      static_cast<int>(sme::simulate::OptAlgorithmType::PRAXIS),
-      static_cast<int>(sme::simulate::OptAlgorithmType::NMS),
-      static_cast<int>(sme::simulate::OptAlgorithmType::sbplx),
-      static_cast<int>(sme::simulate::OptAlgorithmType::AL),
-      static_cast<int>(sme::simulate::OptAlgorithmType::ALEQ)};
-
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
@@ -114,16 +105,14 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
       optimizeOptions.optAlgorithm.population = 7;
     } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::gaco) {
       optimizeOptions.optAlgorithm.population = 7;
-    } else if (std::ranges::find(nlp, static_cast<int>(optAlgorithmType)) !=
-               nlp.end()) {
-      optimizeOptions.optAlgorithm.population = 1;
     } else {
       optimizeOptions.optAlgorithm.population = 2;
     }
     optimizeOptions.optAlgorithm.optAlgorithmType = optAlgorithmType;
     model.getOptimizeOptions() = optimizeOptions;
-    model.getReactions().setParameterValue("r1", "k1", 0.1);
+    model.getReactions().setParameterValue("r1", "k1", 0.2);
     sme::simulate::Optimization optimization(model);
+
     optimization.evolve();
     REQUIRE(optimization.getIterations() == 1);
     REQUIRE(optimization.getErrorMessage().empty());

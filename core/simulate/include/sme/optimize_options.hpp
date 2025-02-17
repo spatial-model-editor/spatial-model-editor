@@ -141,7 +141,6 @@ enum class OptAlgorithmType {
   gaco,
   COBYLA,
   BOBYQA,
-  PRAXIS,
   NMS,
   sbplx,
   AL,
@@ -151,15 +150,12 @@ enum class OptAlgorithmType {
 /**
  * @brief An array of all algorithm types for iterating over
  */
-inline constexpr std::array<OptAlgorithmType, 15> optAlgorithmTypes{
-    OptAlgorithmType::PSO,    OptAlgorithmType::GPSO,
-    OptAlgorithmType::DE,     OptAlgorithmType::iDE,
-    OptAlgorithmType::jDE,    OptAlgorithmType::pDE,
-    OptAlgorithmType::ABC,    OptAlgorithmType::gaco,
-    OptAlgorithmType::COBYLA, OptAlgorithmType::BOBYQA,
-    OptAlgorithmType::PRAXIS, OptAlgorithmType::NMS,
-    OptAlgorithmType::sbplx,  OptAlgorithmType::AL,
-    OptAlgorithmType::ALEQ};
+inline constexpr std::array<OptAlgorithmType, 14> optAlgorithmTypes{
+    OptAlgorithmType::PSO,    OptAlgorithmType::GPSO, OptAlgorithmType::DE,
+    OptAlgorithmType::iDE,    OptAlgorithmType::jDE,  OptAlgorithmType::pDE,
+    OptAlgorithmType::ABC,    OptAlgorithmType::gaco, OptAlgorithmType::COBYLA,
+    OptAlgorithmType::BOBYQA, OptAlgorithmType::NMS,  OptAlgorithmType::sbplx,
+    OptAlgorithmType::AL,     OptAlgorithmType::ALEQ};
 
 /**
  * @brief Optimization algorithm options
