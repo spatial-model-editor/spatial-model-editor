@@ -97,6 +97,8 @@ Spatial Model Editor makes use of the following open source libraries:
 
 - [scotch](https://gitlab.inria.fr/scotch/scotch) - license: [CeCILL-C](https://gitlab.inria.fr/scotch/scotch/-/blob/master/doc/CeCILL-C_V1-en.txt?ref_type=heads)
 
+- [nlopt](https://github.com/stevengj/nlopt) - license: [LGPL](https://github.com/stevengj/nlopt?tab=License-1-ov-file)
+
 ## Licensing Note
 
 The source code in this repository is released under the MIT license, which is a permissive

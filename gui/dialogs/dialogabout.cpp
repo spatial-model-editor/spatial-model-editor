@@ -12,6 +12,7 @@
 #include <gmp.h>
 #include <llvm/Config/llvm-config.h>
 #include <mpfr.h>
+#include <nlopt.hpp>
 #include <omex/common/libcombine-version.h>
 #include <oneapi/tbb/version.h>
 #include <opencv2/opencv.hpp>
@@ -106,6 +107,9 @@ DialogAbout::DialogAbout(QWidget *parent)
   libraries.append(dep("VTK", "https://vtk.org/", vtkVersion::GetVTKVersion()));
   libraries.append(dep("scotch", "https://gitlab.inria.fr/scotch/scotch",
                        SCOTCH_VERSION, SCOTCH_RELEASE, SCOTCH_PATCHLEVEL));
+  libraries.append(dep("nlopt", "https://github.com/stevengj/nlopt",
+                       nlopt::version_major(), nlopt::version_minor(),
+                       nlopt::version_bugfix()));
   libraries.append("</ul>");
   ui->lblLibraries->setText(libraries);
 }
