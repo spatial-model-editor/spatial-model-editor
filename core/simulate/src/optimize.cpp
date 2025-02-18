@@ -98,49 +98,49 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
   // below are NLopt algorithms.
   // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html
   case COBYLA: {
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("cobyla"));
-    algo->set_xtol_rel(
+    auto algo = pagmo::nlopt("cobyla");
+    algo.set_xtol_rel(
         0); // this serves to effectively disable the stopping criterion based
             // on the relative change in the parameters
-    algo->set_maxeval(1);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case BOBYQA: {
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("bobyqa"));
-    algo->set_xtol_rel(0);
-    algo->set_maxeval(1);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    auto algo = pagmo::nlopt("bobyqa");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case NMS: {
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("neldermead"));
-    algo->set_xtol_rel(0);
-    algo->set_maxeval(1);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    auto algo = pagmo::nlopt("neldermead");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case sbplx: {
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("sbplx"));
-    algo->set_xtol_rel(0);
-    algo->set_maxeval(1);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    auto algo = pagmo::nlopt("sbplx");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case AL: {
     // README: check
     // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html?highlight=nlopt
     // under 'set_local_optimizer' for more info
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("auglag"));
+    auto algo = pagmo::nlopt("auglag");
     auto aux_algo = pagmo::nlopt("neldermead");
-    algo->set_xtol_rel(0);
-    algo->set_maxeval(1);
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
     aux_algo.set_xtol_rel(0);
     aux_algo.set_maxeval(1);
-    algo->set_local_optimizer(aux_algo);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    algo.set_local_optimizer(aux_algo);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case PRAXIS: {
-    auto algo = std::make_unique<pagmo::nlopt>(pagmo::nlopt("praxis"));
-    algo->set_xtol_rel(0);
-    algo->set_maxeval(1);
-    return std::make_unique<pagmo::algorithm>(*algo);
+    auto algo = pagmo::nlopt("praxis");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   default:
     SPDLOG_INFO("Unknown optimization algorithm: using PSO");
@@ -168,8 +168,7 @@ Optimization::Optimization(sme::model::Model &model) {
                           OptAlgorithmType::NMS,    OptAlgorithmType::sbplx,
                           OptAlgorithmType::AL,     OptAlgorithmType::PRAXIS};
 
-  // this probably needs to go if we want to support NLopt algorithms
-  if (options.optAlgorithm.population < 2 and
+  if (options.optAlgorithm.population < 2 &&
       std::ranges::find(nloptAlgorithms,
                         options.optAlgorithm.optAlgorithmType) ==
           nloptAlgorithms.end()) {
