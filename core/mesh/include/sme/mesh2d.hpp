@@ -21,7 +21,7 @@ class Boundaries;
 /**
  * @brief Constructs a triangular mesh from a geometry image
  *
- * Given a segmented geometry image, and the colours that correspond to
+ * Given a segmented geometry image, and the colors that correspond to
  * compartments in the image, the compartment boundaries are identified and
  * simplified to a set of connected straight lines, and the resulting PLSG is
  * triangulated to give a triangular mesh.
@@ -65,13 +65,13 @@ public:
    *    compartment
    * @param[in] voxelSize the physical size of a pixel
    * @param[in] originPoint the physical location of the ``(0,0)`` pixel
-   * @param[in] compartmentColours the colours of compartments in the image
+   * @param[in] compartmentColors the colors of compartments in the image
    */
   explicit Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints = {},
                   std::vector<std::size_t> maxTriangleArea = {},
                   const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
                   const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
-                  const std::vector<QRgb> &compartmentColours = {},
+                  const std::vector<QRgb> &compartmentColors = {},
                   std::size_t boundarySimplificationType = 0);
   ~Mesh2d();
   /**

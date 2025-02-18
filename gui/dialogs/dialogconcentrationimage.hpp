@@ -35,8 +35,8 @@ private:
   QString quantityUnit;
   QString quantityName;
 
-  QImage colourMaxConc;
-  QImage colourMinConc;
+  QImage colorMaxConc;
+  QImage colorMinConc;
   sme::common::ImageStack imgs;
   sme::geometry::VoxelIndexer qpi;
   std::vector<double> concentration;

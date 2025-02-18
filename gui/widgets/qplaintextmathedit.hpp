@@ -48,8 +48,8 @@ private:
   QStringListModel stringListModel;
   sme::common::Symbolic sym;
   std::vector<double> result{0.0};
-  const QColor colourValid{QColor(200, 255, 200)};
-  const QColor colourInvalid{QColor(255, 150, 150)};
+  const QColor colorValid{QColor(200, 255, 200)};
+  const QColor colorInvalid{QColor(255, 150, 150)};
   std::vector<std::string> vars;
   std::vector<sme::common::SymbolicFunction> functions;
   std::vector<std::pair<std::string, double>> consts{};

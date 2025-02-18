@@ -184,10 +184,10 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
 }
 
 void ModelGeometry::updateCompartmentAndMembraneSizes() {
-  // reassign all compartment colours to update sizes, interior points, etc
+  // reassign all compartment colors to update sizes, interior points, etc
   for (const auto &compartmentId : modelCompartments->getIds()) {
-    modelCompartments->setColour(compartmentId,
-                                 modelCompartments->getColour(compartmentId));
+    modelCompartments->setColor(compartmentId,
+                                modelCompartments->getColor(compartmentId));
   }
   if (isValid) {
     modelMembranes->exportToSBML(voxelSize);
@@ -227,8 +227,8 @@ static common::VolumeF calculateVoxelSize(const common::Volume &imageSize,
 
 void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   importDimensions(model);
-  auto gsf = importGeometryFromSampledField(
-      getGeometry(model), sbmlAnnotation->sampledFieldColours);
+  auto gsf = importGeometryFromSampledField(getGeometry(model),
+                                            sbmlAnnotation->sampledFieldColors);
   if (gsf.images.empty()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
@@ -245,12 +245,13 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   images = common::ImageStack(std::move(gsf.images));
   images.convertToIndexed();
   hasImage = true;
-  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
+  sbmlAnnotation->sampledFieldColors = common::toStdVec(images.colorTable());
   voxelSize = calculateVoxelSize(images.volume(), physicalSize);
+  images.setVoxelSize(voxelSize);
   modelMembranes->updateCompartmentImages(images);
-  for (const auto &[id, colour] : gsf.compartmentIdColourPairs) {
-    SPDLOG_INFO("setting compartment {} colour to {:x}", id, colour);
-    modelCompartments->setColour(id.c_str(), colour);
+  for (const auto &[id, color] : gsf.compartmentIdColorPairs) {
+    SPDLOG_INFO("setting compartment {} color to {:x}", id, color);
+    modelCompartments->setColor(id.c_str(), color);
   }
   auto *geom = getOrCreateGeometry(sbmlModel);
   exportSampledFieldGeometry(geom, images);
@@ -263,31 +264,32 @@ void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
 }
 
 void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
-                                             bool keepColourAssignments) {
+                                             bool keepColorAssignments) {
   hasUnsavedChanges = true;
   const auto &ids{modelCompartments->getIds()};
-  auto oldColours{modelCompartments->getColours()};
+  auto oldColors{modelCompartments->getColors()};
   for (const auto &id : ids) {
-    modelCompartments->setColour(id, 0);
+    modelCompartments->setColor(id, 0);
   }
   images = common::ImageStack{imgs};
   images.convertToIndexed();
-  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
+  images.setVoxelSize(voxelSize);
+  sbmlAnnotation->sampledFieldColors = common::toStdVec(images.colorTable());
   modelMembranes->updateCompartmentImages(images);
   auto *geom{getOrCreateGeometry(sbmlModel)};
   exportSampledFieldGeometry(geom, images);
-  if (keepColourAssignments) {
+  if (keepColorAssignments) {
     for (int i = 0; i < ids.size(); ++i) {
-      modelCompartments->setColour(ids[i], oldColours[i]);
+      modelCompartments->setColor(ids[i], oldColors[i]);
     }
   }
   hasImage = true;
 }
 
 void ModelGeometry::updateMesh() {
-  // geometry only valid if all compartments have a colour
-  isValid = hasImage && !modelCompartments->getColours().empty() &&
-            !modelCompartments->getColours().contains(0);
+  // geometry only valid if all compartments have a color
+  isValid = hasImage && !modelCompartments->getColors().empty() &&
+            !modelCompartments->getColors().contains(0);
   if (!isValid) {
     isMeshValid = false;
     mesh.reset();
@@ -295,7 +297,7 @@ void ModelGeometry::updateMesh() {
     return;
   }
   hasUnsavedChanges = true;
-  const auto &colours{modelCompartments->getColours()};
+  const auto &colors{modelCompartments->getColors()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
   if (images.volume().depth() > 1) {
@@ -303,14 +305,14 @@ void ModelGeometry::updateMesh() {
     mesh.reset();
     mesh3d = std::make_unique<mesh::Mesh3d>(images, std::vector<std::size_t>{},
                                             voxelSize, physicalOrigin,
-                                            common::toStdVec(colours));
+                                            common::toStdVec(colors));
     isMeshValid = mesh3d->isValid();
   } else {
     SPDLOG_INFO("Updating 2d mesh");
     mesh3d.reset();
     mesh = std::make_unique<mesh::Mesh2d>(
         images[0], meshParams.maxPoints, meshParams.maxAreas, voxelSize,
-        physicalOrigin, common::toStdVec(colours),
+        physicalOrigin, common::toStdVec(colors),
         meshParams.boundarySimplifierType);
     for (int i = 0; i < ids.size(); ++i) {
       modelCompartments->setInteriorPoints(
@@ -371,11 +373,12 @@ int ModelGeometry::getNumDimensions() const { return numDimensions; }
 
 void ModelGeometry::setVoxelSize(const common::VolumeF &newVoxelSize,
                                  bool updateSBML) {
-  SPDLOG_INFO("Setting pixel volume to {}x{}x{}", newVoxelSize.width(),
+  SPDLOG_INFO("Setting voxel size to {}x{}x{}", newVoxelSize.width(),
               newVoxelSize.height(), newVoxelSize.depth());
   hasUnsavedChanges = true;
   auto oldVoxelSize{voxelSize};
   voxelSize = newVoxelSize;
+  images.setVoxelSize(voxelSize);
 
   // update origin
   physicalOrigin.p.rx() *= voxelSize.width() / oldVoxelSize.width();
@@ -467,35 +470,35 @@ bool ModelGeometry::getIsMeshValid() const { return isMeshValid; }
 
 bool ModelGeometry::getHasImage() const { return hasImage; }
 
-void ModelGeometry::updateGeometryImageColor(QRgb oldColour, QRgb newColour) {
+void ModelGeometry::updateGeometryImageColor(QRgb oldColor, QRgb newColor) {
   if (!hasImage) {
     SPDLOG_WARN("No image");
     return;
   }
-  if (oldColour == newColour) {
+  if (oldColor == newColor) {
     return;
   }
   auto colorTable = images.colorTable();
-  auto colorIndex = static_cast<int>(colorTable.indexOf(oldColour));
+  auto colorIndex = static_cast<int>(colorTable.indexOf(oldColor));
   if (colorIndex < 0) {
-    SPDLOG_WARN("oldColour {:x} not found in image", oldColour);
+    SPDLOG_WARN("oldColor {:x} not found in image", oldColor);
     return;
   }
-  if (colorTable.indexOf(newColour) >= 0) {
-    SPDLOG_ERROR("newColour {:x} already used in image", newColour);
+  if (colorTable.indexOf(newColor) >= 0) {
+    SPDLOG_ERROR("newColor {:x} already used in image", newColor);
     throw std::invalid_argument(
-        "This colour is already taken by another "
-        "compartment. Please choose a different colour.");
+        "This color is already taken by another "
+        "compartment. Please choose a different color.");
   }
-  SPDLOG_INFO("Changing colour {:x} to {:x} in geometry image", oldColour,
-              newColour);
-  images.setColor(colorIndex, newColour);
-  sbmlAnnotation->sampledFieldColours = common::toStdVec(images.colorTable());
-  modelCompartments->updateGeometryImageColor(oldColour, newColour);
-  modelMembranes->updateGeometryImageColour(oldColour, newColour);
+  SPDLOG_INFO("Changing color {:x} to {:x} in geometry image", oldColor,
+              newColor);
+  images.setColor(colorIndex, newColor);
+  sbmlAnnotation->sampledFieldColors = common::toStdVec(images.colorTable());
+  modelCompartments->updateGeometryImageColor(oldColor, newColor);
+  modelMembranes->updateGeometryImageColor(oldColor, newColor);
   modelMembranes->updateCompartments(modelCompartments->getCompartments());
   if (mesh3d != nullptr) {
-    mesh3d->setColors(common::toStdVec(modelCompartments->getColours()));
+    mesh3d->setColors(common::toStdVec(modelCompartments->getColors()));
   }
   hasUnsavedChanges = true;
 }

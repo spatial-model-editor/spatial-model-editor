@@ -166,9 +166,9 @@ void bindModel(nanobind::module_ &m) {
            sets the geometry of each compartment to the corresponding pixels in the supplied geometry image
 
            Note:
-               Currently this function assumes that the compartments maintain the same colour
+               Currently this function assumes that the compartments maintain the same color
                as they had with the previous geometry image. If the new image does not contain
-               pixels of each of these colours, the new model geometry will not be valid.
+               pixels of each of these colors, the new model geometry will not be valid.
                The volume of a pixel (in physical units) is also unchanged by this function.
 
            Args:

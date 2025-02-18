@@ -106,7 +106,7 @@ The animations below show how the algorithm works, which uses the
 and `erode() <https://docs.opencv.org/4.5.1/d4/d86/group__imgproc__filter.html#gaeb1e0c1033e3f6b891a25d0511362aeb>`_
 functions from the `OpenCV <https://opencv.org/>`_ library
 
-Meaning of the colours used in the animations:
+Meaning of the colors used in the animations:
 
 * grey area: original connected region pixels
 * black area: remaining pixels after previous erosion operations

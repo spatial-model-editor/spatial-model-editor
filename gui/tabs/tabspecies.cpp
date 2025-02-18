@@ -44,8 +44,8 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabSpecies::btnEditImageConcentration_clicked);
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &TabSpecies::txtDiffusionConstant_editingFinished);
-  connect(ui->btnChangeSpeciesColour, &QPushButton::clicked, this,
-          &TabSpecies::btnChangeSpeciesColour_clicked);
+  connect(ui->btnChangeSpeciesColor, &QPushButton::clicked, this,
+          &TabSpecies::btnChangeSpeciesColor_clicked);
 }
 
 TabSpecies::~TabSpecies() = default;
@@ -85,7 +85,7 @@ void TabSpecies::enableWidgets(bool enable) {
   ui->radInitialConcentrationImage->setEnabled(enable);
   ui->btnEditImageConcentration->setEnabled(enable);
   ui->txtDiffusionConstant->setEnabled(enable);
-  ui->btnChangeSpeciesColour->setEnabled(enable);
+  ui->btnChangeSpeciesColor->setEnabled(enable);
 }
 
 void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
@@ -157,10 +157,10 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
         model.getSpecies().getDiffusionConstant(currentSpeciesId)));
     ui->lblDiffusionConstantUnits->setText(model.getUnits().getDiffusion());
   }
-  // colour
-  lblSpeciesColourPixmap.fill(model.getSpecies().getColour(currentSpeciesId));
-  ui->lblSpeciesColour->setPixmap(lblSpeciesColourPixmap);
-  ui->lblSpeciesColour->setText("");
+  // color
+  lblSpeciesColorPixmap.fill(model.getSpecies().getColor(currentSpeciesId));
+  ui->lblSpeciesColor->setPixmap(lblSpeciesColorPixmap);
+  ui->lblSpeciesColor->setText("");
 }
 
 void TabSpecies::btnAddSpecies_clicked() {
@@ -312,15 +312,15 @@ void TabSpecies::txtDiffusionConstant_editingFinished() {
   model.getSpecies().setDiffusionConstant(currentSpeciesId, diffConst);
 }
 
-void TabSpecies::btnChangeSpeciesColour_clicked() {
-  SPDLOG_DEBUG("waiting for new colour for species {} from user...",
+void TabSpecies::btnChangeSpeciesColor_clicked() {
+  SPDLOG_DEBUG("waiting for new color for species {} from user...",
                currentSpeciesId.toStdString());
   QColor newCol = QColorDialog::getColor(
-      model.getSpecies().getColour(currentSpeciesId), this,
-      "Choose new species colour", QColorDialog::DontUseNativeDialog);
+      model.getSpecies().getColor(currentSpeciesId), this,
+      "Choose new species color", QColorDialog::DontUseNativeDialog);
   if (newCol.isValid()) {
-    SPDLOG_DEBUG("  - set new colour to {:x}", newCol.rgb());
-    model.getSpecies().setColour(currentSpeciesId, newCol.rgb());
+    SPDLOG_DEBUG("  - set new color to {:x}", newCol.rgb());
+    model.getSpecies().setColor(currentSpeciesId, newCol.rgb());
     listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }
 }

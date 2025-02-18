@@ -16,7 +16,6 @@ class QVoxelRenderer : public SmeVtkWidget {
 public:
   explicit QVoxelRenderer(QWidget *parent = nullptr);
   void setImage(const sme::common::ImageStack &img);
-  void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
 
 signals:
   void mouseClicked(QRgb col, sme::common::Voxel voxel);
@@ -26,7 +25,6 @@ protected:
 
 private:
   vtkNew<vtkVolume> volume;
-  vtkNew<vtkVolumeProperty> volumeProperty;
   vtkNew<vtkGPUVolumeRayCastMapper> volumeMapper;
   vtkNew<vtkPiecewiseFunction> opacityTransferFunction;
   vtkNew<vtkImageData> imageData;

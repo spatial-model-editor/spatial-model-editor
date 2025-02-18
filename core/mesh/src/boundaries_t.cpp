@@ -7,7 +7,7 @@
 #include <cmath>
 
 struct BoundaryTestData {
-  std::vector<QRgb> colours;
+  std::vector<QRgb> colors;
   std::size_t nBoundaries;
   std::size_t nLoops;
   std::vector<std::size_t> nInteriorPoints;
@@ -26,7 +26,7 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
     QImage img(24, 32, QImage::Format_RGB32);
     QRgb col = qRgb(0, 0, 0);
     img.fill(col);
-    SECTION("no compartment colours") {
+    SECTION("no compartment colors") {
       auto interiorPoints{mesh::getInteriorPoints(img, {})};
       mesh::Boundaries boundaries0(img, {}, 0);
       REQUIRE(boundaries0.getSimplifierType() == 0);
@@ -199,10 +199,10 @@ TEST_CASE("Boundaries using images from Medha Bhattacharya",
         CAPTURE(boundaryTestImage.description);
         CAPTURE(filename.toStdString());
         QImage img(filename);
-        auto interiorPoints{mesh::getInteriorPoints(img, boundaryData.colours)};
-        mesh::Boundaries boundaries(img, boundaryData.colours, 0);
+        auto interiorPoints{mesh::getInteriorPoints(img, boundaryData.colors)};
+        mesh::Boundaries boundaries(img, boundaryData.colors, 0);
         REQUIRE(boundaries.size() == boundaryData.nBoundaries);
-        REQUIRE(interiorPoints.size() == boundaryData.colours.size());
+        REQUIRE(interiorPoints.size() == boundaryData.colors.size());
         for (std::size_t i = 0; i < interiorPoints.size(); ++i) {
           CAPTURE(i);
           REQUIRE(interiorPoints[i].size() == boundaryData.nInteriorPoints[i]);

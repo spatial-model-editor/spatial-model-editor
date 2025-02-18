@@ -68,9 +68,9 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(comp.nVoxels() == 1);
     REQUIRE(comp.getVoxel(0).p == QPoint{0, 0});
     REQUIRE(comp.getVoxel(0).z == 0);
-    REQUIRE(comp.getColour() == col);
-    comp.setColour(col2);
-    REQUIRE(comp.getColour() == col2);
+    REQUIRE(comp.getColor() == col);
+    comp.setColor(col2);
+    REQUIRE(comp.getColor() == col2);
 
     auto specCol = qRgb(123, 12, 1);
     geometry::Field field(&comp, "spec1", 1.0, specCol);

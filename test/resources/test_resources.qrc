@@ -16,8 +16,8 @@
         <file>models/ABtoC-invalid-annotation.xml</file>
         <file>models/brusselator-model_v3.xml</file>
         <file>models/liver-simplified_v1.3.1.xml</file>
-        <file>models/liver-simplified_invalid_colours.xml</file>
-        <file>models/liver-simplified_missing_colours.xml</file>
+        <file>models/liver-simplified_invalid_colors.xml</file>
+        <file>models/liver-simplified_missing_colors.xml</file>
         <file>models/invalid-dune-names.xml</file>
         <file>models/yeast-glycolysis.xml</file>
         <file>models/example2D.xml</file>
@@ -56,6 +56,7 @@
         <file>smefiles/very-simple-model-v0.sme</file>
         <file>smefiles/very-simple-model-v1.sme</file>
         <file>smefiles/very-simple-model-v2.sme</file>
+        <file>smefiles/very-simple-model-v3.sme</file>
         <file>smefiles/brusselator-model-corrupted.sme</file>
         <file>smefiles/brusselator-model-truncated.sme</file>
         <file>rendering/Objects/pyramid.ply</file>

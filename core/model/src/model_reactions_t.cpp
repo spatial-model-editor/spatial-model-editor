@@ -209,23 +209,23 @@ TEST_CASE("SBML reactions",
     m.getGeometry().importGeometryFromImages(imgs, false);
     m.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
     REQUIRE(m.getGeometry().getIsValid() == false);
-    // assign valid compartment colours
-    m.getCompartments().setColour("c1", imgs[0].pixel(0, 0));
-    m.getCompartments().setColour("c2", imgs[0].pixel(1, 0));
-    m.getCompartments().setColour("c3", imgs[0].pixel(2, 0));
+    // assign valid compartment colors
+    m.getCompartments().setColor("c1", imgs[0].pixel(0, 0));
+    m.getCompartments().setColor("c2", imgs[0].pixel(1, 0));
+    m.getCompartments().setColor("c3", imgs[0].pixel(2, 0));
     REQUIRE(m.getGeometry().getIsValid() == true);
     // recover membrane ids and membrane reactions
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[1]).size() == 2);
-    // repeat with different but valid colour assignments
+    // repeat with different but valid color assignments
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/679
     m.getGeometry().importGeometryFromImages(imgs, false);
     m.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
     REQUIRE(m.getGeometry().getIsValid() == false);
-    m.getCompartments().setColour("c1", imgs[0].pixel(2, 0));
-    m.getCompartments().setColour("c2", imgs[0].pixel(1, 0));
-    m.getCompartments().setColour("c3", imgs[0].pixel(0, 0));
+    m.getCompartments().setColor("c1", imgs[0].pixel(2, 0));
+    m.getCompartments().setColor("c2", imgs[0].pixel(1, 0));
+    m.getCompartments().setColor("c3", imgs[0].pixel(0, 0));
     REQUIRE(m.getGeometry().getIsValid() == true);
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getReactions().getIds(m.getMembranes().getIds()[0]).size() == 2);
@@ -315,9 +315,9 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getGeometry().getIsValid() == false);
     // assign compartments such that c1-c3 and c3-c2 share borders,
     // i.e. remove c1-c2 membrane from model geometry
-    m.getCompartments().setColour("c1", imgs[0].pixel(0, 0));
-    m.getCompartments().setColour("c3", imgs[0].pixel(1, 0));
-    m.getCompartments().setColour("c2", imgs[0].pixel(2, 0));
+    m.getCompartments().setColor("c1", imgs[0].pixel(0, 0));
+    m.getCompartments().setColor("c3", imgs[0].pixel(1, 0));
+    m.getCompartments().setColor("c2", imgs[0].pixel(2, 0));
     REQUIRE(m.getGeometry().getIsValid() == true);
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getMembranes().getIds()[0] == "c1_c3_membrane");
@@ -344,9 +344,9 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(locations[5]).size() == 2);
     // reassign compartment geometry so that c1-c2 membrane exists again:
     REQUIRE(m.getGeometry().getIsValid() == true);
-    m.getCompartments().setColour("c3", imgs[0].pixel(2, 0));
+    m.getCompartments().setColor("c3", imgs[0].pixel(2, 0));
     REQUIRE(m.getGeometry().getIsValid() == false);
-    m.getCompartments().setColour("c2", imgs[0].pixel(1, 0));
+    m.getCompartments().setColor("c2", imgs[0].pixel(1, 0));
     REQUIRE(m.getGeometry().getIsValid() == true);
     REQUIRE(m.getMembranes().getIds().size() == 2);
     REQUIRE(m.getMembranes().getIds()[0] == "c1_c2_membrane");

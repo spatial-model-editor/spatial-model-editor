@@ -34,8 +34,8 @@ void removeMeshParamsAnnotation(libsbml::ParametricGeometry *pg);
 std::optional<MeshParameters>
 getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg);
 
-void removeSpeciesColourAnnotation(libsbml::Species *species);
-std::optional<QRgb> getSpeciesColourAnnotation(const libsbml::Species *species);
+void removeSpeciesColorAnnotation(libsbml::Species *species);
+std::optional<QRgb> getSpeciesColorAnnotation(const libsbml::Species *species);
 
 void removeDisplayOptionsAnnotation(libsbml::Model *model);
 std::optional<model::DisplayOptions>

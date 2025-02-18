@@ -55,8 +55,8 @@ const geometry::Membrane *ModelMembranes::getMembrane(const QString &id) const {
 }
 
 const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>> &
-ModelMembranes::getIdColourPairs() const {
-  return idColourPairs;
+ModelMembranes::getIdColorPairs() const {
+  return idColorPairs;
 }
 
 double ModelMembranes::getSize(const QString &id) const {
@@ -94,10 +94,10 @@ void ModelMembranes::updateCompartments(
   for (const auto &compartment : compartments) {
     compIds.push_back(compartment->getId().c_str());
     SPDLOG_TRACE("  - {}", compartment->getId());
-    SPDLOG_TRACE("    - {:x}", compartment->getColour());
+    SPDLOG_TRACE("    - {:x}", compartment->getColor());
   }
   membranes.clear();
-  idColourPairs.clear();
+  idColorPairs.clear();
   ids.clear();
   if (membranePixels == nullptr) {
     return;
@@ -106,31 +106,31 @@ void ModelMembranes::updateCompartments(
     for (std::size_t i = 0; i < j; ++i) {
       const auto *compA = compartments[i].get();
       const auto *compB = compartments[j].get();
-      auto colourA = compA->getColour();
-      auto colourB = compB->getColour();
-      if (colourA == 0 || colourB == 0) {
+      auto colorA = compA->getColor();
+      auto colorB = compB->getColor();
+      if (colorA == 0 || colorB == 0) {
         break;
       }
-      auto colourIndexA = membranePixels->getColourIndex(colourA);
-      auto colourIndexB = membranePixels->getColourIndex(colourB);
-      if (colourIndexB < colourIndexA) {
+      auto colorIndexA = membranePixels->getColorIndex(colorA);
+      auto colorIndexB = membranePixels->getColorIndex(colorB);
+      if (colorIndexB < colorIndexA) {
         std::swap(compA, compB);
-        std::swap(colourA, colourB);
-        std::swap(colourIndexA, colourIndexB);
+        std::swap(colorA, colorB);
+        std::swap(colorIndexA, colorIndexB);
       }
-      SPDLOG_TRACE("-compA '{}': colour [{}] = {:x}", compA->getId(),
-                   colourIndexA, colourA);
-      SPDLOG_TRACE("-compB '{}': colour [{}] = {:x}", compB->getId(),
-                   colourIndexB, colourB);
+      SPDLOG_TRACE("-compA '{}': color [{}] = {:x}", compA->getId(),
+                   colorIndexA, colorA);
+      SPDLOG_TRACE("-compB '{}': color [{}] = {:x}", compB->getId(),
+                   colorIndexB, colorB);
       if (const auto *voxelPairs{
-              membranePixels->getVoxels(colourIndexA, colourIndexB)};
+              membranePixels->getVoxels(colorIndexA, colorIndexB)};
           voxelPairs != nullptr) {
         SPDLOG_TRACE("  -> {} point membrane", voxelPairs->size());
         std::string mId{compA->getId()};
         mId.append("_").append(compB->getId()).append("_membrane");
         membranes.emplace_back(mId, compA, compB, voxelPairs);
         ids.push_back(QString(mId.c_str()));
-        idColourPairs.push_back({mId, {colourA, colourB}});
+        idColorPairs.push_back({mId, {colorA, colorB}});
       }
     }
   }
@@ -140,16 +140,16 @@ void ModelMembranes::updateCompartmentImages(const common::ImageStack &imgs) {
   membranePixels = std::make_unique<ImageMembranePixels>(imgs);
 }
 
-void ModelMembranes::updateGeometryImageColour(QRgb oldColour, QRgb newColour) {
-  for (auto &idColourPair : idColourPairs) {
-    if (idColourPair.second.first == oldColour) {
-      idColourPair.second.first = newColour;
+void ModelMembranes::updateGeometryImageColor(QRgb oldColor, QRgb newColor) {
+  for (auto &idColorPair : idColorPairs) {
+    if (idColorPair.second.first == oldColor) {
+      idColorPair.second.first = newColor;
     }
-    if (idColourPair.second.second == oldColour) {
-      idColourPair.second.second = newColour;
+    if (idColorPair.second.second == oldColor) {
+      idColorPair.second.second = newColor;
     }
   }
-  membranePixels->updateColour(oldColour, newColour);
+  membranePixels->updateColor(oldColor, newColor);
 }
 
 void ModelMembranes::importMembraneIdsAndNames() {

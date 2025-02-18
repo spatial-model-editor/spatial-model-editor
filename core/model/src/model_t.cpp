@@ -4,6 +4,7 @@
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
+#include "sme/version.hpp"
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
@@ -99,12 +100,12 @@ TEST_CASE("SBML: import SBML doc without geometry",
     REQUIRE(geom->getNumGeometryDefinitions() == 0);
   }
   SECTION("import geometry & assign compartments") {
-    // import geometry image & assign compartments to colours
+    // import geometry image & assign compartments to colors
     s.getGeometry().importGeometryFromImages(
         common::ImageStack{{QImage(":/geometry/single-pixels-3x1.png")}},
         false);
-    s.getCompartments().setColour("compartment0", 0xffaaaaaa);
-    s.getCompartments().setColour("compartment1", 0xff525252);
+    s.getCompartments().setColor("compartment0", 0xffaaaaaa);
+    s.getCompartments().setColor("compartment1", 0xff525252);
     // export it again
     s.exportSBMLFile("tmplvl2model.xml");
     std::unique_ptr<libsbml::SBMLDocument> doc(
@@ -187,8 +188,8 @@ TEST_CASE("SBML: import SBML doc without geometry",
       // import model again, recover concentration & compartment assignments
       model::Model s2;
       s2.importSBMLFile("tmplvl2model2.xml");
-      REQUIRE(s2.getCompartments().getColour("compartment0") == 0xffaaaaaa);
-      REQUIRE(s2.getCompartments().getColour("compartment1") == 0xff525252);
+      REQUIRE(s2.getCompartments().getColor("compartment0") == 0xffaaaaaa);
+      REQUIRE(s2.getCompartments().getColor("compartment1") == 0xff525252);
       REQUIRE(s2.getSpecies().getConcentrationImages("spec0c0")[0].pixel(
                   1, 0) == qRgb(0, 0, 0));
       REQUIRE(s2.getSpecies().getConcentrationImages("spec0c0")[0].pixel(
@@ -322,9 +323,9 @@ TEST_CASE("SBML: import SBML level 2 document",
   REQUIRE(s.getGeometry().getHasImage() == true);
   REQUIRE(s.getGeometry().getIsValid() == false);
 
-  // assign compartments to colours
-  s.getCompartments().setColour("compartment0", 0xffaaaaaa);
-  s.getCompartments().setColour("compartment1", 0xff525252);
+  // assign compartments to colors
+  s.getCompartments().setColor("compartment0", 0xffaaaaaa);
+  s.getCompartments().setColor("compartment1", 0xff525252);
   REQUIRE(s.getReactions().getIsIncompleteODEImport());
   REQUIRE(s.getGeometry().getHasImage() == true);
   REQUIRE(s.getGeometry().getIsValid() == true);
@@ -349,36 +350,36 @@ TEST_CASE("SBML: import SBML level 2 document",
   REQUIRE(dynamic_cast<libsbml::SpatialModelPlugin *>(
               doc->getModel()->getPlugin("spatial")) != nullptr);
 
-  SECTION("Compartment Colours") {
+  SECTION("Compartment Colors") {
     QRgb col1 = 0xffaaaaaa;
     QRgb col2 = 0xff525252;
     QRgb col3 = 0xffffffff;
-    // can get CompartmentID from colour
-    REQUIRE(s.getCompartments().getIdFromColour(col1) == "compartment0");
-    REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-    REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-    // can get colour from CompartmentID"
-    REQUIRE(s.getCompartments().getColour("compartment0") == col1);
-    REQUIRE(s.getCompartments().getColour("compartment1") == col2);
-    SECTION("new colour assigned") {
-      s.getCompartments().setColour("compartment0", col1);
-      s.getCompartments().setColour("compartment1", col2);
-      s.getCompartments().setColour("compartment0", col3);
-      REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-      REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment1");
-      REQUIRE(s.getCompartments().getIdFromColour(col3) == "compartment0");
-      REQUIRE(s.getCompartments().getColour("compartment0") == col3);
-      REQUIRE(s.getCompartments().getColour("compartment1") == col2);
+    // can get CompartmentID from color
+    REQUIRE(s.getCompartments().getIdFromColor(col1) == "compartment0");
+    REQUIRE(s.getCompartments().getIdFromColor(col2) == "compartment1");
+    REQUIRE(s.getCompartments().getIdFromColor(col3) == "");
+    // can get color from CompartmentID"
+    REQUIRE(s.getCompartments().getColor("compartment0") == col1);
+    REQUIRE(s.getCompartments().getColor("compartment1") == col2);
+    SECTION("new color assigned") {
+      s.getCompartments().setColor("compartment0", col1);
+      s.getCompartments().setColor("compartment1", col2);
+      s.getCompartments().setColor("compartment0", col3);
+      REQUIRE(s.getCompartments().getIdFromColor(col1) == "");
+      REQUIRE(s.getCompartments().getIdFromColor(col2) == "compartment1");
+      REQUIRE(s.getCompartments().getIdFromColor(col3) == "compartment0");
+      REQUIRE(s.getCompartments().getColor("compartment0") == col3);
+      REQUIRE(s.getCompartments().getColor("compartment1") == col2);
     }
-    SECTION("existing colour re-assigned") {
-      s.getCompartments().setColour("compartment0", col1);
-      s.getCompartments().setColour("compartment1", col2);
-      s.getCompartments().setColour("compartment0", col2);
-      REQUIRE(s.getCompartments().getIdFromColour(col1) == "");
-      REQUIRE(s.getCompartments().getIdFromColour(col2) == "compartment0");
-      REQUIRE(s.getCompartments().getIdFromColour(col3) == "");
-      REQUIRE(s.getCompartments().getColour("compartment0") == col2);
-      REQUIRE(s.getCompartments().getColour("compartment1") == 0);
+    SECTION("existing color re-assigned") {
+      s.getCompartments().setColor("compartment0", col1);
+      s.getCompartments().setColor("compartment1", col2);
+      s.getCompartments().setColor("compartment0", col2);
+      REQUIRE(s.getCompartments().getIdFromColor(col1) == "");
+      REQUIRE(s.getCompartments().getIdFromColor(col2) == "compartment0");
+      REQUIRE(s.getCompartments().getIdFromColor(col3) == "");
+      REQUIRE(s.getCompartments().getColor("compartment0") == col2);
+      REQUIRE(s.getCompartments().getColor("compartment1") == 0);
     }
   }
 }
@@ -405,7 +406,7 @@ TEST_CASE("SBML: create new model, import geometry from image",
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
     REQUIRE(s.getGeometry().getIsValid() == false);
-    s.getCompartments().setColour("comp", col);
+    s.getCompartments().setColor("comp", col);
     REQUIRE(s.getIsValid() == true);
     REQUIRE(s.getErrorMessage().isEmpty());
     REQUIRE(s.getGeometry().getHasImage() == true);
@@ -455,12 +456,12 @@ TEST_CASE("SBML: import uint8 sampled field",
 
   const auto &img{s.getGeometry().getImages()};
   REQUIRE(img[0].colorCount() == 3);
-  REQUIRE(s.getCompartments().getColour("c1") ==
-          common::indexedColours()[0].rgb());
-  REQUIRE(s.getCompartments().getColour("c2") ==
-          common::indexedColours()[1].rgb());
-  REQUIRE(s.getCompartments().getColour("c3") ==
-          common::indexedColours()[2].rgb());
+  REQUIRE(s.getCompartments().getColor("c1") ==
+          common::indexedColors()[0].rgb());
+  REQUIRE(s.getCompartments().getColor("c2") ==
+          common::indexedColors()[1].rgb());
+  REQUIRE(s.getCompartments().getColor("c3") ==
+          common::indexedColors()[2].rgb());
   // species A_c1 has initialAmount 11 -> converted to concentration
   REQUIRE(s.getSpecies().getInitialConcentration("A_c1") ==
           dbl_approx(11.0 / 5441000.0));
@@ -596,7 +597,7 @@ TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
       QRgb col = QColor(144, 97, 193).rgba();
       REQUIRE(imgs[0].pixel(50, 50) == col);
       s.getGeometry().importGeometryFromImages(imgs, false);
-      s.getCompartments().setColour("comp", col);
+      s.getCompartments().setColor("comp", col);
       REQUIRE(s.getGeometry().getImages().volume().depth() == 1);
       REQUIRE(s.getGeometry().getImages()[0].size() == QSize(100, 100));
       REQUIRE(s.getGeometry().getImages()[0].pixel(50, 50) == col);
@@ -616,21 +617,21 @@ TEST_CASE("SBML: ABtoC.xml", "[core/model/model][core/model][core][model]") {
               dbl_approx(0.1));
       REQUIRE(s.getReactions().getRateExpression("r1") == "A * B * k1");
       REQUIRE(s.getReactions().getScheme("r1") == "A + B -> C");
-      REQUIRE(s.getSpecies().getColour("A") == 0xffe60003);
-      REQUIRE(s.getSpecies().getColour("B") == 0xff00b41b);
-      REQUIRE(s.getSpecies().getColour("C") == 0xfffbff00);
-      // change species colours
+      REQUIRE(s.getSpecies().getColor("A") == 0xffe60003);
+      REQUIRE(s.getSpecies().getColor("B") == 0xff00b41b);
+      REQUIRE(s.getSpecies().getColor("C") == 0xfffbff00);
+      // change species colors
       auto newA = QColor(12, 12, 12).rgb();
       auto newB = QColor(123, 321, 1).rgb();
       auto newC = QColor(0, 22, 99).rgb();
-      s.getSpecies().setColour("A", newA);
-      s.getSpecies().setColour("B", newB);
-      s.getSpecies().setColour("C", newC);
-      REQUIRE(s.getSpecies().getColour("A") == newA);
-      REQUIRE(s.getSpecies().getColour("B") == newB);
-      REQUIRE(s.getSpecies().getColour("C") == newC);
-      s.getSpecies().setColour("A", newC);
-      REQUIRE(s.getSpecies().getColour("A") == newC);
+      s.getSpecies().setColor("A", newA);
+      s.getSpecies().setColor("B", newB);
+      s.getSpecies().setColor("C", newC);
+      REQUIRE(s.getSpecies().getColor("A") == newA);
+      REQUIRE(s.getSpecies().getColor("B") == newB);
+      REQUIRE(s.getSpecies().getColor("C") == newC);
+      s.getSpecies().setColor("A", newC);
+      REQUIRE(s.getSpecies().getColor("A") == newC);
     }
   }
 }
@@ -880,9 +881,12 @@ TEST_CASE("SBML: load multi-compartment model, change volume of geometry",
   REQUIRE(interiorPoint.x() == dbl_approx(a * 68.5));
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
   // export sbml, import sbml, check all sizes preserved
-  auto xml{s.getXml().toStdString()};
+  auto xml = s.getXml();
+  REQUIRE(
+      xml.contains(QString("<!-- Created by Spatial Model Editor version %1")
+                       .arg(common::SPATIAL_MODEL_EDITOR_VERSION)));
   model::Model s2;
-  s2.importSBMLString(xml);
+  s2.importSBMLString(xml.toStdString());
   REQUIRE(s.getGeometry().getVoxelSize().width() == dbl_approx(a));
   REQUIRE(s.getGeometry().getVoxelSize().height() == dbl_approx(a));
   REQUIRE(s.getGeometry().getVoxelSize().depth() == dbl_approx(d));
@@ -952,16 +956,16 @@ TEST_CASE("SBML: import multi-compartment SBML doc without spatial geometry",
   // import a geometry image
   geometry.importGeometryFromImages(
       common::ImageStack{{QImage(":test/geometry/cell.png")}}, false);
-  auto colours{geometry.getImages().colorTable()};
-  REQUIRE(colours.size() == 4);
+  auto colors{geometry.getImages().colorTable()};
+  REQUIRE(colors.size() == 4);
   REQUIRE(geometry.getIsValid() == false);
   REQUIRE(geometry.getHasImage() == true);
   REQUIRE(reactions.getIsIncompleteODEImport() == true);
-  // assign each compartment to a colour region in the image
-  compartments.setColour("cyt", colours[1]);
-  compartments.setColour("nuc", colours[2]);
-  compartments.setColour("org", colours[3]);
-  compartments.setColour("ext", colours[0]);
+  // assign each compartment to a color region in the image
+  compartments.setColor("cyt", colors[1]);
+  compartments.setColor("nuc", colors[2]);
+  compartments.setColor("org", colors[3]);
+  compartments.setColor("ext", colors[0]);
   REQUIRE(geometry.getIsValid() == true);
   REQUIRE(geometry.getHasImage() == true);
   REQUIRE(reactions.getIsIncompleteODEImport() == true);

@@ -1,4 +1,5 @@
 #include "smevtkwidget.hpp"
+#include "sme/logger.hpp"
 #include <vtkCamera.h>
 
 SmeVtkWidget::SmeVtkWidget(QWidget *parent) : QVTKOpenGLNativeWidget(parent) {
@@ -20,4 +21,22 @@ SmeVtkWidget::SmeVtkWidget(QWidget *parent) : QVTKOpenGLNativeWidget(parent) {
   }();
   renderer->GetActiveCamera()->Azimuth(45);
   renderer->GetActiveCamera()->Elevation(30);
+}
+
+void SmeVtkWidget::syncCamera(SmeVtkWidget *smeVtkWidget) {
+  if (renderer->GetActiveCamera() ==
+      smeVtkWidget->renderer->GetActiveCamera()) {
+    SPDLOG_TRACE("Camera is already synced with this widget");
+    return;
+  }
+  SPDLOG_TRACE("Syncing camera with supplied SmeVtkWidget");
+  renderer->SetActiveCamera(smeVtkWidget->renderer->GetActiveCamera());
+  renderOnInteractorModified(smeVtkWidget->renderWindow.Get()->GetInteractor());
+  smeVtkWidget->renderOnInteractorModified(renderWindow->GetInteractor());
+}
+
+void SmeVtkWidget::renderOnInteractorModified(
+    vtkRenderWindowInteractor *interactor) {
+  interactor->AddObserver(vtkCommand::ModifiedEvent, renderWindow.Get(),
+                          &vtkGenericOpenGLRenderWindow::Render);
 }

@@ -2,8 +2,8 @@
 //  - a modified QLabel
 //  - displays (and rescales without interpolation) a slice of an image stack,
 //  - tracks the mouse location in terms of the pixels of the original image
-//  - provides the colour of the last pixel that was clicked on
-//  - emits a signal when the user clicks the mouse, along with the colour of
+//  - provides the color of the last pixel that was clicked on
+//  - emits a signal when the user clicks the mouse, along with the color of
 //  the pixel that was clicked on
 
 #pragma once
@@ -17,7 +17,7 @@ class QLabelMouseTracker : public QLabel {
   Q_OBJECT
 public:
   explicit QLabelMouseTracker(QWidget *parent = nullptr);
-  // QImage used for pixel location and colour
+  // QImage used for pixel location and color
   void setImage(const sme::common::ImageStack &img);
   [[nodiscard]] const sme::common::ImageStack &getImage() const;
   // set which z-slice to display
@@ -30,15 +30,15 @@ public:
   [[nodiscard]] const sme::common::ImageStack &getMaskImage() const;
   void setImages(const std::pair<sme::common::ImageStack,
                                  sme::common::ImageStack> &imgPair);
-  // colour of pixel at last mouse click position
-  [[nodiscard]] QRgb getColour() const;
+  // color of pixel at last mouse click position
+  [[nodiscard]] QRgb getColor() const;
   // value of mask index at last mouse click position
   [[nodiscard]] int getMaskIndex() const;
   // position of mouse as fraction of displayed pixmap volume
   [[nodiscard]] QPointF getRelativePosition() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
-  void setPhysicalSize(const sme::common::VolumeF &size, const QString &units);
+  void setPhysicalUnits(const QString &units);
   void displayGrid(bool enable);
   void displayScale(bool enable);
   void invertYAxis(bool enable);
@@ -77,6 +77,6 @@ private:
   bool flipYAxis{false};
   sme::common::VolumeF physicalSize{1.0, 1.0, 1.0};
   QString lengthUnits{};
-  QRgb colour{};
+  QRgb color{};
   int maskIndex{};
 };

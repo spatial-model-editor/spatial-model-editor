@@ -313,7 +313,7 @@ TEST_CASE("SBML compartments",
     REQUIRE(compartments.getIds().size() == 0);
     REQUIRE(compartments.getHasUnsavedChanges() == true);
   }
-  SECTION("Setting invalid compartment colour is a no-op") {
+  SECTION("Setting invalid compartment color is a no-op") {
     auto model{getExampleModel(Mod::VerySimpleModel)};
     auto &compartments{model.getCompartments()};
     REQUIRE(compartments.getIds().size() == 3);
@@ -330,39 +330,39 @@ TEST_CASE("SBML compartments",
     QRgb c2{qRgb(144, 97, 193)};
     QRgb c3{qRgb(197, 133, 96)};
     QRgb cInvalid{qRgb(1, 2, 3)};
-    auto cols{model.getCompartments().getColours()};
+    auto cols{model.getCompartments().getColors()};
     REQUIRE(cols.size() == 3);
     REQUIRE(cols[0] == c1);
     REQUIRE(cols[1] == c2);
     REQUIRE(cols[2] == c3);
-    // invalid id, valid colour
-    compartments.setColour("notme", c3);
+    // invalid id, valid color
+    compartments.setColor("notme", c3);
     REQUIRE(compartments.getHasUnsavedChanges() == false);
-    REQUIRE(compartments.getColours() == cols);
-    // invalid id, invalid colour
-    compartments.setColour("notme", c3);
+    REQUIRE(compartments.getColors() == cols);
+    // invalid id, invalid color
+    compartments.setColor("notme", c3);
     REQUIRE(compartments.getHasUnsavedChanges() == false);
-    REQUIRE(compartments.getColours() == cols);
-    // valid id, invalid colour
-    compartments.setColour("c1", cInvalid);
+    REQUIRE(compartments.getColors() == cols);
+    // valid id, invalid color
+    compartments.setColor("c1", cInvalid);
     REQUIRE(compartments.getHasUnsavedChanges() == false);
-    REQUIRE(compartments.getColours() == cols);
-    // valid id, valid colour
-    compartments.setColour("c1", c3);
+    REQUIRE(compartments.getColors() == cols);
+    // valid id, valid color
+    compartments.setColor("c1", c3);
     REQUIRE(compartments.getHasUnsavedChanges() == true);
-    REQUIRE(compartments.getColour("c1") == c3);
+    REQUIRE(compartments.getColor("c1") == c3);
     REQUIRE(compartments.getSize("c1") == dbl_approx(initialSizes.at("c3")));
-    REQUIRE(compartments.getColour("c2") == c2);
+    REQUIRE(compartments.getColor("c2") == c2);
     REQUIRE(compartments.getSize("c2") == dbl_approx(initialSizes.at("c2")));
-    REQUIRE(compartments.getColour("c3") == 0);
+    REQUIRE(compartments.getColor("c3") == 0);
     REQUIRE(compartments.getSize("c3") == dbl_approx(0));
-    // valid id, invalid colour
+    // valid id, invalid color
     compartments.setHasUnsavedChanges(false);
-    compartments.setColour("c3", cInvalid);
+    compartments.setColor("c3", cInvalid);
     REQUIRE(compartments.getHasUnsavedChanges() == false);
-    REQUIRE(compartments.getColour("c1") == c3);
-    REQUIRE(compartments.getColour("c2") == c2);
-    REQUIRE(compartments.getColour("c3") == 0);
+    REQUIRE(compartments.getColor("c1") == c3);
+    REQUIRE(compartments.getColor("c2") == c2);
+    REQUIRE(compartments.getColor("c3") == 0);
   }
   SECTION("Very simple model: remove compartment using const ref to id") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/685

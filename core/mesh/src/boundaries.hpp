@@ -14,7 +14,7 @@ namespace sme::mesh {
  * @brief Approximate boundary lines for a segmented image
  *
  * Constructs a set of boundary lines or loops that approximately
- * separate the original segmented image into regions of the same colour.
+ * separate the original segmented image into regions of the same color.
  * The boundary lines can then be simplified, either independently or
  * all together in a topology preserving way.
  */
@@ -29,10 +29,10 @@ public:
    * @brief Construct all the compartment boundaries from an image
    *
    * @param[in] compartmentImage the segmented compartment geometry image
-   * @param[in] compartmentColours the colours that correspond to compartments
+   * @param[in] compartmentColors the colors that correspond to compartments
    */
   explicit Boundaries(const QImage &compartmentImage,
-                      const std::vector<QRgb> &compartmentColours,
+                      const std::vector<QRgb> &compartmentColors,
                       std::size_t simplifierType);
   Boundaries() = default;
   ~Boundaries();

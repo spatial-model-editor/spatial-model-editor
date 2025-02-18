@@ -26,10 +26,10 @@ struct DialogGeometryImageWidgets {
     GET_DIALOG_WIDGET(QSpinBox, spinPixelsX);
     GET_DIALOG_WIDGET(QSpinBox, spinPixelsY);
     GET_DIALOG_WIDGET(QPushButton, btnResetPixels);
-    GET_DIALOG_WIDGET(QLabel, lblColours);
-    GET_DIALOG_WIDGET(QPushButton, btnSelectColours);
-    GET_DIALOG_WIDGET(QPushButton, btnApplyColours);
-    GET_DIALOG_WIDGET(QPushButton, btnResetColours);
+    GET_DIALOG_WIDGET(QLabel, lblColors);
+    GET_DIALOG_WIDGET(QPushButton, btnSelectColors);
+    GET_DIALOG_WIDGET(QPushButton, btnApplyColors);
+    GET_DIALOG_WIDGET(QPushButton, btnResetColors);
     GET_DIALOG_WIDGET(QLabel, lblPixelSize);
     GET_DIALOG_WIDGET(QDialogButtonBox, buttonBox);
   }
@@ -43,10 +43,10 @@ struct DialogGeometryImageWidgets {
   QSpinBox *spinPixelsX;
   QSpinBox *spinPixelsY;
   QPushButton *btnResetPixels;
-  QLabel *lblColours;
-  QPushButton *btnSelectColours;
-  QPushButton *btnApplyColours;
-  QPushButton *btnResetColours;
+  QLabel *lblColors;
+  QPushButton *btnSelectColors;
+  QPushButton *btnApplyColors;
+  QPushButton *btnResetColors;
   QLabel *lblPixelSize;
   QDialogButtonBox *buttonBox;
 };
@@ -82,7 +82,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets image width to 1e-8, voxel width -> 1e-10") {
       sendKeyEvents(
@@ -92,7 +92,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets image height to 10, voxel height -> 0.2") {
       sendKeyEvents(widgets.txtImageHeight,
@@ -101,7 +101,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(0.2));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets image height to 10, units to dm, voxel height -> 0.02, "
             "others /=10") {
@@ -117,7 +117,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(0.02));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(0.1));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets image height to 10, units to cm, voxel height -> 0.002, "
             "others /=100") {
@@ -133,7 +133,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(0.002));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(0.01));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets image width to 9 & units to dm, then image height 10, "
             "units um") {
@@ -148,7 +148,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(0.2 * 1e-6));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1e-6));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("user sets depth to 4, no change of units") {
       sendKeyEvents(widgets.txtImageDepth,
@@ -157,14 +157,14 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(4.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
     SECTION("x pixels reduced from 100 to 98") {
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -172,7 +172,7 @@ TEST_CASE("DialogGeometryImage",
       sendKeyEvents(widgets.spinPixelsX, {"Down", "Down"});
       REQUIRE(widgets.spinPixelsX->value() == 98);
       REQUIRE(dia.imageSizeAltered() == true);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(1.0 / 0.98));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0 / 0.98));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
@@ -185,7 +185,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -193,7 +193,7 @@ TEST_CASE("DialogGeometryImage",
       widgets.spinPixelsY->setValue(5);
       REQUIRE(widgets.spinPixelsY->value() == 5);
       REQUIRE(dia.imageSizeAltered() == true);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(10.0));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(10.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
@@ -206,7 +206,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -242,7 +242,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       sendMouseClick(widgets.btnResetPixels);
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -256,7 +256,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -294,7 +294,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       sendMouseClick(widgets.btnResetPixels);
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -302,23 +302,23 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
     }
-    SECTION("select colours pressed, then reset colours") {
+    SECTION("select colors pressed, then reset colors") {
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
       REQUIRE(widgets.txtImageWidth->isEnabled() == true);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               true);
-      sendMouseClick(widgets.btnSelectColours);
+      sendMouseClick(widgets.btnSelectColors);
       REQUIRE(widgets.txtImageWidth->isEnabled() == false);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               false);
-      sendMouseClick(widgets.btnResetColours);
+      sendMouseClick(widgets.btnResetColors);
       REQUIRE(widgets.txtImageWidth->isEnabled() == true);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               true);
@@ -326,17 +326,17 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
     }
-    SECTION("select colours pressed, then one chosen") {
+    SECTION("select colors pressed, then one chosen") {
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -344,24 +344,24 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(widgets.txtImageWidth->isEnabled() == true);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               true);
-      REQUIRE(widgets.btnApplyColours->isEnabled() == false);
-      sendMouseClick(widgets.btnSelectColours);
+      REQUIRE(widgets.btnApplyColors->isEnabled() == false);
+      sendMouseClick(widgets.btnSelectColors);
       REQUIRE(widgets.txtImageWidth->isEnabled() == false);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               false);
-      REQUIRE(widgets.btnApplyColours->isEnabled() == false);
+      REQUIRE(widgets.btnApplyColors->isEnabled() == false);
       sendMouseClick(widgets.lblImage, QPoint(3, 3));
-      REQUIRE(widgets.btnApplyColours->isEnabled() == true);
-      sendMouseClick(widgets.btnApplyColours);
+      REQUIRE(widgets.btnApplyColors->isEnabled() == true);
+      sendMouseClick(widgets.btnApplyColors);
       REQUIRE(widgets.txtImageWidth->isEnabled() == true);
       REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
               true);
-      REQUIRE(widgets.btnApplyColours->isEnabled() == false);
+      REQUIRE(widgets.btnApplyColors->isEnabled() == false);
       REQUIRE(dia.getVoxelSize().width() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(1.0));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1.0));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == true);
+      REQUIRE(dia.imageColorsAltered() == true);
       REQUIRE(dia.getAlteredImage().volume().width() == 100);
       REQUIRE(dia.getAlteredImage().volume().height() == 50);
       REQUIRE(dia.getAlteredImage().volume().depth() == 1);
@@ -394,7 +394,7 @@ TEST_CASE("DialogGeometryImage",
       REQUIRE(dia.getVoxelSize().height() == dbl_approx(22e3));
       REQUIRE(dia.getVoxelSize().depth() == dbl_approx(1e3));
       REQUIRE(dia.imageSizeAltered() == false);
-      REQUIRE(dia.imageColoursAltered() == false);
+      REQUIRE(dia.imageColorsAltered() == false);
     }
   }
 }

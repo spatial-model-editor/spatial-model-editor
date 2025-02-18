@@ -29,15 +29,15 @@ Mesh2d::Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints,
                std::vector<std::size_t> maxTriangleArea,
                const common::VolumeF &voxelSize,
                const common::VoxelF &originPoint,
-               const std::vector<QRgb> &compartmentColours,
+               const std::vector<QRgb> &compartmentColors,
                std::size_t boundarySimplificationType)
     : img(image), origin(originPoint.p),
       pixel(voxelSize.width(), voxelSize.height()),
       boundaryMaxPoints(std::move(maxPoints)),
       compartmentMaxTriangleArea(std::move(maxTriangleArea)),
-      boundaries{std::make_unique<Boundaries>(image, compartmentColours,
+      boundaries{std::make_unique<Boundaries>(image, compartmentColors,
                                               boundarySimplificationType)},
-      compartmentInteriorPoints{getInteriorPoints(image, compartmentColours)} {
+      compartmentInteriorPoints{getInteriorPoints(image, compartmentColors)} {
   SPDLOG_INFO("found {} boundaries", boundaries->size());
   for (const auto &boundary : boundaries->getBoundaries()) {
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
@@ -69,7 +69,7 @@ Mesh2d::Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints,
     SPDLOG_INFO("  - {} points, loop={}", boundary.getPoints().size(),
                 boundary.isLoop());
   }
-  if (compartmentMaxTriangleArea.size() != compartmentColours.size()) {
+  if (compartmentMaxTriangleArea.size() != compartmentColors.size()) {
     // if triangle areas not correctly specified pick a value proportional to
     // the image size
     constexpr std::size_t minArea{1};
@@ -78,7 +78,7 @@ Mesh2d::Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints,
         static_cast<std::size_t>(image.width() * image.height() / 250);
     auto area = std::clamp(propArea, minArea, maxArea);
     compartmentMaxTriangleArea =
-        std::vector<std::size_t>(compartmentColours.size(), area);
+        std::vector<std::size_t>(compartmentColors.size(), area);
     SPDLOG_INFO("no max triangle areas specified, using: {}", area);
   }
   constructMesh();
@@ -251,10 +251,12 @@ Mesh2d::getBoundariesImages(const QSize &size,
       {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
        static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
+  boundaryImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   boundaryImage.fill(qRgba(0, 0, 0, 0));
 
   common::ImageStack maskImage(boundaryImage.volume(),
                                QImage::Format_ARGB32_Premultiplied);
+  maskImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   maskImage.fill(qRgb(255, 255, 255));
 
   constexpr std::size_t zindex{0};
@@ -270,7 +272,7 @@ Mesh2d::getBoundariesImages(const QSize &size,
     if (k == boldBoundaryIndex) {
       penSize = boldPenSize;
     }
-    painter.setPen(QPen(common::indexedColours()[k], penSize));
+    painter.setPen(QPen(common::indexedColors()[k], penSize));
     pMask.setPen(QPen(QColor(0, 0, static_cast<int>(k)), maskPenSize));
     for (std::size_t i = 0; i < points.size(); ++i) {
       QPointF p1(points[i].x() * scaleFactor.x() + offset.x(),
@@ -304,12 +306,14 @@ Mesh2d::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
       {static_cast<int>(scaleFactor.x() * img.width() + 2 * offset.x()),
        static_cast<int>(scaleFactor.y() * img.height() + 2 * offset.y()), 1},
       QImage::Format_ARGB32_Premultiplied);
+  meshImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   meshImage.fill(0);
   // construct mask image
   constexpr std::size_t zindex{0};
   QPainter p(&meshImage[zindex]);
   p.setRenderHint(QPainter::Antialiasing);
   maskImage = common::ImageStack(meshImage.volume(), QImage::Format_RGB32);
+  maskImage.setVoxelSize({pixel.width(), pixel.height(), 1.0});
   maskImage.fill(qRgb(255, 255, 255));
   QPainter pMask(&maskImage[zindex]);
   // draw triangles

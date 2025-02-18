@@ -165,7 +165,7 @@
         <property name="whatsThis">
          <string>&lt;h4&gt;Geometry tab&lt;/h4&gt;
 &lt;p&gt;In the Geometry tab you can define the geometry of the model&lt;/p&gt;
-&lt;p&gt;First import an image of the geometry, then double-click on a compartment from the list, and select the corresponding colour on the image.&lt;/p&gt;</string>
+&lt;p&gt;First import an image of the geometry, then double-click on a compartment from the list, and select the corresponding color on the image.&lt;/p&gt;</string>
         </property>
         <attribute name="title">
          <string>Geometry</string>

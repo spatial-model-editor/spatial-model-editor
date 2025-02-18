@@ -99,7 +99,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
   common::Volume imageSize{nx, ny, nz};
   SPDLOG_INFO("Using {}x{}x{} ImageStack", nx, ny, nz);
   GeometrySampledField gsf;
-  QRgb nullColour{qRgb(0, 0, 0)};
+  QRgb nullColor{qRgb(0, 0, 0)};
   const auto *geom = getGeometry(model);
   if (geom == nullptr) {
     return {};
@@ -138,7 +138,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
   gsf.images = {static_cast<std::size_t>(nz),
                 {imageSize.width(), imageSize.height(), QImage::Format_RGB32}};
   for (auto &image : gsf.images) {
-    image.fill(nullColour);
+    image.fill(nullColor);
   }
   for (const auto &[comp, analyticVol] : compVols) {
     SPDLOG_INFO("Compartment: {}", comp->getId());
@@ -146,9 +146,9 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     SPDLOG_INFO("  - Ordinal: {}", analyticVol->getOrdinal());
     const auto *math = analyticVol->getMath();
     SPDLOG_INFO("  - Math: {}", mathASTtoString(math));
-    auto col = common::indexedColours()[iComp].rgb();
+    auto col = common::indexedColors()[iComp].rgb();
     ++iComp;
-    SPDLOG_INFO("  - Colour: {:x}", col);
+    SPDLOG_INFO("  - Color: {:x}", col);
     std::size_t nVoxels{0};
     for (std::size_t iz = 0; iz < nz; ++iz) {
       auto &image{gsf.images[iz]};
@@ -157,7 +157,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
           common::Voxel v{ix, iy, iz};
           // we want y=0 in bottom of image, Qt puts it in top:
           int invertedYIndex = image.height() - 1 - iy;
-          if (image.pixel(ix, invertedYIndex) == nullColour) {
+          if (image.pixel(ix, invertedYIndex) == nullColor) {
             // todo: need ot invert y inside v here???
             auto physical{toPhysicalVoxelCenter(v, imageSize, physicalOrigin,
                                                 physicalSize)};
@@ -175,7 +175,7 @@ importGeometryFromAnalyticGeometry(const libsbml::Model *model,
     }
     SPDLOG_INFO("  - Voxels: {}", nVoxels);
     if (nVoxels > 0) {
-      gsf.compartmentIdColourPairs.push_back({comp->getId(), col});
+      gsf.compartmentIdColorPairs.push_back({comp->getId(), col});
     }
   }
   return gsf;

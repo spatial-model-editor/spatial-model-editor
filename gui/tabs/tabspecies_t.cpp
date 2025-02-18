@@ -61,9 +61,9 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   auto *txtDiffusionConstant{
       tab.findChild<QLineEdit *>("txtDiffusionConstant")};
   REQUIRE(txtDiffusionConstant != nullptr);
-  auto *btnChangeSpeciesColour{
-      tab.findChild<QPushButton *>("btnChangeSpeciesColour")};
-  REQUIRE(btnChangeSpeciesColour != nullptr);
+  auto *btnChangeSpeciesColor{
+      tab.findChild<QPushButton *>("btnChangeSpeciesColor")};
+  REQUIRE(btnChangeSpeciesColor != nullptr);
 
   SECTION("very-simple-model loaded") {
     model = getExampleModel(Mod::VerySimpleModel);
@@ -145,10 +145,10 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     sendKeyEvents(listSpecies, {"Up"});
     sendKeyEvents(listSpecies, {"Down"});
     REQUIRE(txtDiffusionConstant->text() == "9");
-    // click change species colour, then cancel
+    // click change species color, then cancel
     mwt.addUserAction({"Esc"});
     mwt.start();
-    sendMouseClick(btnChangeSpeciesColour);
+    sendMouseClick(btnChangeSpeciesColor);
     // edit name
     txtSpeciesName->setFocus();
     sendKeyEvents(txtSpeciesName, {"B", "Q", "Tab"});

@@ -18,7 +18,7 @@
 namespace sme::simulate {
 
 void Simulation::initModel() {
-  // get compartments with interacting species, name & colour of each species
+  // get compartments with interacting species, name & color of each species
   for (const auto &compartmentId : model.getCompartments().getIds()) {
     std::vector<std::string> sIds;
     std::vector<QRgb> cols;
@@ -27,7 +27,7 @@ void Simulation::initModel() {
       if (!model.getSpecies().getIsConstant(s)) {
         sIds.push_back(s.toStdString());
         const auto &field = model.getSpecies().getField(s);
-        cols.push_back(field->getColour());
+        cols.push_back(field->getColor());
         comp = field->getCompartment();
       }
     }
@@ -498,6 +498,7 @@ common::ImageStack Simulation::getConcImage(
     }
   }
   common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
+  imgs.setVoxelSize(model.getGeometry().getVoxelSize());
   imgs.fill(0);
   // iterate over compartments
   for (std::size_t ic = 0; ic < compartments.size(); ++ic) {

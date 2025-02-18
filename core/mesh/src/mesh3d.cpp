@@ -148,9 +148,9 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
                std::vector<std::size_t> maxCellVolume,
                const common::VolumeF &voxelSize,
                const common::VoxelF &originPoint,
-               std::vector<QRgb> compartmentColours)
+               std::vector<QRgb> compartmentColors)
     : compartmentMaxCellVolume_(std::move(maxCellVolume)),
-      colors_(std::move(compartmentColours)) {
+      colors_(std::move(compartmentColors)) {
   if (imageStack.empty()) {
     errorMessage_ = "Compartment geometry image missing";
     return;
@@ -160,7 +160,7 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   imageStack_.convertToIndexed();
   auto vol = imageStack_.volume();
   const auto &colorTable = imageStack_.colorTable();
-  SPDLOG_INFO("ImageStack {}x{}x{} with {} colours", vol.width(), vol.height(),
+  SPDLOG_INFO("ImageStack {}x{}x{} with {} colors", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
   for (auto color : colors_) {
     if (!colorTable.contains(color)) {
@@ -190,8 +190,8 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   if (std::ranges::all_of(labelToCompartmentIndex_, [](std::uint8_t a) {
         return a == NullCompartmentIndex;
       })) {
-    SPDLOG_WARN("No compartments have been assigned a colour: meshing aborted");
-    errorMessage_ = "No compartments have been assigned a colour";
+    SPDLOG_WARN("No compartments have been assigned a color: meshing aborted");
+    errorMessage_ = "No compartments have been assigned a color";
     return;
   }
 
@@ -331,9 +331,6 @@ Mesh3d::getTetrahedronIndices() const {
 
 QString Mesh3d::getGMSH() const {
   // note: gmsh indexing starts with 1, so we need to add 1 to all indices
-  // meshing is done in terms of voxel geometry, to convert to physical points:
-  //   - rescale each vertex by a factor pixel
-  //   - add origin to each vertex
   QString msh;
   msh.append("$MeshFormat\n");
   msh.append("2.2 0 8\n");

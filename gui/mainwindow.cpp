@@ -347,10 +347,7 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
 
 void MainWindow::enableTabs() {
   bool enable{model.getIsValid() && model.getGeometry().getIsValid()};
-  if (model.getIsValid() && model.getGeometry().getHasImage()) {
-    ui->lblGeometry->setPhysicalSize(model.getGeometry().getPhysicalSize(),
-                                     model.getUnits().getLength().name);
-  }
+  ui->lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }
@@ -478,7 +475,7 @@ void MainWindow::actionGeometry_from_model_triggered() {
   }
   tabSimulate->reset();
   for (const auto &id : model.getCompartments().getIds()) {
-    model.getCompartments().setColour(id, 0);
+    model.getCompartments().setColor(id, 0);
   }
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.getGeometry().importSampledFieldGeometry(filename);
@@ -516,12 +513,11 @@ void MainWindow::importGeometryImage(const sme::common::ImageStack &image,
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     tabSimulate->reset();
     if (!is_model_image || dialog.imageSizeAltered() ||
-        dialog.imageColoursAltered()) {
+        dialog.imageColorsAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
-      bool keepColourAssignments{is_model_image &&
-                                 !dialog.imageColoursAltered()};
+      bool keepColorAssignments{is_model_image && !dialog.imageColorsAltered()};
       model.getGeometry().importGeometryFromImages(dialog.getAlteredImage(),
-                                                   keepColourAssignments);
+                                                   keepColorAssignments);
     }
     auto voxelSize{dialog.getVoxelSize()};
     SPDLOG_INFO("Set new voxel volume {}x{}x{}", voxelSize.width(),
@@ -632,7 +628,7 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
 void MainWindow::action3d_render_triggered(bool checked) {
   if (checked) {
     ui->stackGeometry->setCurrentIndex(1);
-    ui->voxGeometry->setImage(ui->lblGeometry->getImage());
+    ui->voxGeometry->setImage(model.getGeometry().getImages());
     return;
   }
   ui->stackGeometry->setCurrentIndex(0);

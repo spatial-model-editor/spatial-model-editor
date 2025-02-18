@@ -52,17 +52,17 @@
     <listOfSpecies>
       <species id="A" name="A" compartment="comp" initialConcentration="1" substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
         <annotation>
-          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4290373201"/>
+          <spatialModelEditor:color xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:color="4290373201"/>
         </annotation>
       </species>
       <species id="B" name="B" compartment="comp" initialConcentration="1" substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
         <annotation>
-          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4287244468"/>
+          <spatialModelEditor:color xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:color="4287244468"/>
         </annotation>
       </species>
       <species id="C" name="C" compartment="comp" initialConcentration="0" substanceUnits="mole" hasOnlySubstanceUnits="false" boundaryCondition="false" constant="false" spatial:isSpatial="true">
         <annotation>
-          <spatialModelEditor:colour xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:colour="4294903078"/>
+          <spatialModelEditor:color xmlns:spatialModelEditor="https://github.com/lkeegan/spatial-model-editor" spatialModelEditor:color="4294903078"/>
         </annotation>
       </species>
     </listOfSpecies>
