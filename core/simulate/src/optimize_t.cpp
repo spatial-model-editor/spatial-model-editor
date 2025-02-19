@@ -107,14 +107,12 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
       optimizeOptions.optAlgorithm.population = 7;
     } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::gaco) {
       optimizeOptions.optAlgorithm.population = 7;
-    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::PRAXIS) {
-      optimizeOptions.optAlgorithm.population = 2;
     } else {
       optimizeOptions.optAlgorithm.population = 2;
     }
     optimizeOptions.optAlgorithm.optAlgorithmType = optAlgorithmType;
     model.getOptimizeOptions() = optimizeOptions;
-    model.getReactions().setParameterValue("r1", "k1", 0.2);
+    model.getReactions().setParameterValue("r1", "k1", 0.1);
     sme::simulate::Optimization optimization(model);
 
     optimization.evolve();
