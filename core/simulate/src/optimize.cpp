@@ -8,6 +8,7 @@
 #include <pagmo/algorithms/de.hpp>
 #include <pagmo/algorithms/de1220.hpp>
 #include <pagmo/algorithms/gaco.hpp>
+#include <pagmo/algorithms/nlopt.hpp>
 #include <pagmo/algorithms/pso.hpp>
 #include <pagmo/algorithms/pso_gen.hpp>
 #include <pagmo/algorithms/sade.hpp>
@@ -94,7 +95,55 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return std::make_unique<pagmo::algorithm>(pagmo::bee_colony());
   case gaco:
     return std::make_unique<pagmo::algorithm>(pagmo::gaco(1, 7));
+  // below are NLopt algorithms.
+  // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html
+  case COBYLA: {
+    auto algo = pagmo::nlopt("cobyla");
+    algo.set_xtol_rel(
+        0); // this serves to effectively disable the stopping criterion based
+            // on the relative change in the parameters
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
+  case BOBYQA: {
+    auto algo = pagmo::nlopt("bobyqa");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
+  case NMS: {
+    auto algo = pagmo::nlopt("neldermead");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
+  case sbplx: {
+    auto algo = pagmo::nlopt("sbplx");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
+  case AL: {
+    // README: check
+    // https://esa.github.io/pagmo2/docs/cpp/algorithms/nlopt.html?highlight=nlopt
+    // under 'set_local_optimizer' for more info
+    auto algo = pagmo::nlopt("auglag");
+    auto aux_algo = pagmo::nlopt("neldermead");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    aux_algo.set_xtol_rel(0);
+    aux_algo.set_maxeval(1);
+    algo.set_local_optimizer(aux_algo);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
+  case PRAXIS: {
+    auto algo = pagmo::nlopt("praxis");
+    algo.set_xtol_rel(0);
+    algo.set_maxeval(1);
+    return std::make_unique<pagmo::algorithm>(std::move(algo));
+  }
   default:
+    SPDLOG_INFO("Unknown optimization algorithm: using PSO");
     return std::make_unique<pagmo::algorithm>(pagmo::pso());
   }
 }
@@ -113,7 +162,16 @@ std::size_t Optimization::finalizeEvolve(const std::string &newErrorMessage) {
 
 Optimization::Optimization(sme::model::Model &model) {
   const auto &options{model.getOptimizeOptions()};
-  if (options.optAlgorithm.population < 2) {
+
+  // nlopt algorithms can have population < 2, while the others do not.
+  auto nloptAlgorithms = {OptAlgorithmType::COBYLA, OptAlgorithmType::BOBYQA,
+                          OptAlgorithmType::NMS,    OptAlgorithmType::sbplx,
+                          OptAlgorithmType::AL,     OptAlgorithmType::PRAXIS};
+
+  if (options.optAlgorithm.population < 2 &&
+      std::ranges::find(nloptAlgorithms,
+                        options.optAlgorithm.optAlgorithmType) ==
+          nloptAlgorithms.end()) {
     errorMessage = "Invalid optimization population size, can't be less than 2";
     return;
   }
@@ -133,13 +191,12 @@ Optimization::Optimization(sme::model::Model &model) {
           sme::common::max(cost.targetValues));
     }
   }
-  modelQueue = std::make_unique<
-      oneapi::tbb::concurrent_queue<std::shared_ptr<sme::model::Model>>>();
+  modelQueue = std::make_unique<sme::simulate::ThreadsafeModelQueue>();
   algo = getPagmoAlgorithm(
       optConstData->optimizeOptions.optAlgorithm.optAlgorithmType);
 
-  // construct models in queue in serial for now to avoid libsbml thread safety
-  // issues (see
+  // README: construct models in queue in serial for now to avoid libsbml thread
+  // safety issues (see
   // https://github.com/spatial-model-editor/spatial-model-editor/issues/786)
   // todo: once that is fixed, can remove this & let the UDP construct them as
   // needed

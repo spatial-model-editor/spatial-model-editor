@@ -130,15 +130,32 @@ struct OptCost {
 /**
  * @brief Types of algorithms that can be used in optimization
  */
-enum class OptAlgorithmType { PSO, GPSO, DE, iDE, jDE, pDE, ABC, gaco };
+enum class OptAlgorithmType {
+  PSO,
+  GPSO,
+  DE,
+  iDE,
+  jDE,
+  pDE,
+  ABC,
+  gaco,
+  COBYLA,
+  BOBYQA,
+  NMS,
+  sbplx,
+  AL,
+  PRAXIS
+};
 
 /**
  * @brief An array of all algorithm types for iterating over
  */
-inline constexpr std::array<OptAlgorithmType, 8> optAlgorithmTypes{
-    OptAlgorithmType::PSO, OptAlgorithmType::GPSO, OptAlgorithmType::DE,
-    OptAlgorithmType::iDE, OptAlgorithmType::jDE,  OptAlgorithmType::pDE,
-    OptAlgorithmType::ABC, OptAlgorithmType::gaco};
+inline constexpr std::array<OptAlgorithmType, 14> optAlgorithmTypes{
+    OptAlgorithmType::PSO,    OptAlgorithmType::GPSO,  OptAlgorithmType::DE,
+    OptAlgorithmType::iDE,    OptAlgorithmType::jDE,   OptAlgorithmType::pDE,
+    OptAlgorithmType::ABC,    OptAlgorithmType::gaco,  OptAlgorithmType::COBYLA,
+    OptAlgorithmType::BOBYQA, OptAlgorithmType::NMS,   OptAlgorithmType::sbplx,
+    OptAlgorithmType::AL,     OptAlgorithmType::PRAXIS};
 
 /**
  * @brief Optimization algorithm options

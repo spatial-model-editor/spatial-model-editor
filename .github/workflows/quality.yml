@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: spatial-model-editor/setup-ci@2025.02.05
         with:
-          sme_deps: '2025.02.03'
+          sme_deps: '2025.02.18'
           cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v4
         with:

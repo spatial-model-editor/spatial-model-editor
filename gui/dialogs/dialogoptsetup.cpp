@@ -48,6 +48,18 @@ static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
     return "Artificial Bee Colony";
   case sme::simulate::OptAlgorithmType::gaco:
     return "Extended Ant Colony Optimization";
+  case sme::simulate::OptAlgorithmType::COBYLA:
+    return "Constrained Optimization BY Linear Approximations";
+  case sme::simulate::OptAlgorithmType::BOBYQA:
+    return "Bound Optimization BY Quadratic Approximations";
+  case sme::simulate::OptAlgorithmType::NMS:
+    return "Nelder-Mead Simplex algorithm";
+  case sme::simulate::OptAlgorithmType::sbplx:
+    return "Rowan's SUPLEX algorithm";
+  case sme::simulate::OptAlgorithmType::AL:
+    return "Augmented Lagrangian method";
+  case sme::simulate::OptAlgorithmType::PRAXIS:
+    return "Brent's principle axis method";
   default:
     return "";
   }
@@ -79,9 +91,13 @@ static sme::simulate::OptAlgorithmType toOptAlgorithmType(int index) {
 
 static std::vector<sme::simulate::OptParam>
 getDefaultOptParams(const sme::model::Model &model) {
+
   std::vector<sme::simulate::OptParam> optParams;
+
   for (const auto &id : model.getParameters().getIds()) {
+
     double value{model.getParameters().getExpression(id).toDouble()};
+
     optParams.push_back({sme::simulate::OptParamType::ModelParameter,
                          model.getParameters().getName(id).toStdString(),
                          id.toStdString(), "", value, value});
@@ -161,7 +177,13 @@ setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
       {sme::simulate::OptAlgorithmType::jDE, 7},
       {sme::simulate::OptAlgorithmType::pDE, 7},
       {sme::simulate::OptAlgorithmType::ABC, 2},
-      {sme::simulate::OptAlgorithmType::gaco, 7}};
+      {sme::simulate::OptAlgorithmType::gaco, 7},
+      {sme::simulate::OptAlgorithmType::COBYLA, 1},
+      {sme::simulate::OptAlgorithmType::BOBYQA, 1},
+      {sme::simulate::OptAlgorithmType::NMS, 1},
+      {sme::simulate::OptAlgorithmType::sbplx, 1},
+      {sme::simulate::OptAlgorithmType::AL, 1},
+      {sme::simulate::OptAlgorithmType::PRAXIS, 1}};
   if (auto iter{minPopulation.find(optAlgorithmType)};
       iter != minPopulation.end()) {
     spinPopulation->setMinimum(iter->second);

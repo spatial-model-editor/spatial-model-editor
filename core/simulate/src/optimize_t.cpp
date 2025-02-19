@@ -91,7 +91,10 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       0,
                                       0,
                                       {}});
+
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
+    SPDLOG_CRITICAL("Optimizing with algorithm {}",
+                    static_cast<int>(optAlgorithmType));
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
     if (optAlgorithmType == sme::simulate::OptAlgorithmType::DE) {
@@ -111,6 +114,7 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
     model.getOptimizeOptions() = optimizeOptions;
     model.getReactions().setParameterValue("r1", "k1", 0.1);
     sme::simulate::Optimization optimization(model);
+
     optimization.evolve();
     REQUIRE(optimization.getIterations() == 1);
     REQUIRE(optimization.getErrorMessage().empty());
