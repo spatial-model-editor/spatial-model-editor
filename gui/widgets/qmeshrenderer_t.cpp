@@ -27,8 +27,15 @@ TEST_CASE("QMeshRenderer",
     meshRenderer.setCompartmentIndex(i);
     wait(delay_ms);
   }
+  // highlight each membrane in turn
+  for (std::size_t i = 0; i < mesh.getNumberOfMembranes(); ++i) {
+    meshRenderer.setMembraneIndex(i);
+    wait(delay_ms);
+  }
   // change the compartment colors
-  meshRenderer.setColors({0xff00ff, 0x00ff00, 0x0000ff});
+  meshRenderer.setColors({0xff00ff, 0x00ff00, 0x0000ff, 0xffff00, 0x00ffff});
+  wait(delay_ms);
+  meshRenderer.setCompartmentIndex(2);
   wait(delay_ms);
   // change the render mode
   meshRenderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
