@@ -574,7 +574,7 @@
                  <item row="1" column="2">
                   <widget class="QSpinBox" name="spinMaxCellVolume">
                    <property name="minimum">
-                    <number>4</number>
+                    <number>3</number>
                    </property>
                    <property name="maximum">
                     <number>999999</number>

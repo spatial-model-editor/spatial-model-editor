@@ -550,35 +550,14 @@ TEST_CASE("Mesh3d max cell volume",
     REQUIRE(mesh3d != nullptr);
     REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 5);
     REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 5);
-    // make max cell volume for compartment zero much larger:
-    mesh3d->setCompartmentMaxCellVolume(0, 50);
-    // note: CGAL segfaults when the max cell volumes are too different (see
-    // #1037) so we also automatically adjust the other values to keep them all
-    // within a factor of 2 of the value that was changed
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 25);
-    mesh3d->setCompartmentMaxCellVolume(0, 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 8);
-    mesh3d->setCompartmentMaxCellVolume(1, 100);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 100);
-    mesh3d->setCompartmentMaxCellVolume(1, 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 8);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 4);
-    mesh3d->setCompartmentMaxCellVolume(1, 200);
-    for (std::size_t i = 100; i >= 4; --i) {
+    REQUIRE(mesh3d->isValid());
+    for (std::size_t i = 100; i >= 3; --i) {
       CAPTURE(i);
       mesh3d->setCompartmentMaxCellVolume(0, i);
       REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == i);
-      REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) <= 2 * i);
-    }
-    mesh3d->setCompartmentMaxCellVolume(0, 200);
-    for (std::size_t i = 100; i >= 4; --i) {
-      CAPTURE(i);
-      mesh3d->setCompartmentMaxCellVolume(1, i);
+      // setting max cell volume for one compartment should set it for all
       REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == i);
-      REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) <= 2 * i);
+      REQUIRE(mesh3d->isValid());
     }
   }
 }
