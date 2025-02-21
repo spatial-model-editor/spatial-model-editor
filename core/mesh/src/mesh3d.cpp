@@ -125,10 +125,11 @@ void Mesh3d::constructMesh() {
             labelToCompartmentIndex_[static_cast<std::size_t>(
                 c3t3.subdomain_index(c))];
         compartmentIndex != NullCompartmentIndex) {
-      SPDLOG_TRACE(
-          "cell with vertex ids {},{},{},{} in subdomain {} -> compartment {}",
-          c->vertex(0)->id(), c->vertex(1)->id(), c->vertex(2)->id(),
-          c->vertex(3)->id(), c3t3.subdomain_index(c), compartmentIndex);
+      SPDLOG_TRACE("cell with vertex ids {},{},{},{} in subdomain {} -> "
+                   "compartment {}",
+                   c->vertex(0)->id(), c->vertex(1)->id(), c->vertex(2)->id(),
+                   c->vertex(3)->id(), c3t3.subdomain_index(c),
+                   compartmentIndex);
       auto &vi = tetrahedronVertexIndices_[compartmentIndex].emplace_back();
       for (int i = 0; i < 4; ++i) {
         vi[static_cast<std::size_t>(i)] =
@@ -251,17 +252,13 @@ void Mesh3d::setCompartmentMaxCellVolume(std::size_t compartmentIndex,
     SPDLOG_INFO("  -> max cell volume unchanged");
     return;
   }
-  // ensure maxCellVolume values for each compartment do not differ by more than
-  // a factor 2 from each other, as this can lead to CGAL segfaults
-  constexpr std::size_t maxRelDiff{2};
+  // for now enforce that all compartments have the same max cell volume to
+  // avoid CGAL segfaulting for some combinations of max cell volumes (see
+  // #1037)
+  SPDLOG_INFO("  -> setting all max cell volumes to {}", maxCellVolume);
   for (auto &cellVolume : compartmentMaxCellVolume_) {
-    if (cellVolume * maxRelDiff < maxCellVolume) {
-      cellVolume = static_cast<std::size_t>(maxCellVolume / maxRelDiff);
-    } else if (cellVolume > maxRelDiff * maxCellVolume) {
-      cellVolume = maxRelDiff * maxCellVolume;
-    }
+    cellVolume = maxCellVolume;
   }
-  currentMaxCellVolume = maxCellVolume;
   constructMesh();
 }
 
