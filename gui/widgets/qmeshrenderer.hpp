@@ -5,10 +5,12 @@
 #include "smevtkwidget.hpp"
 #include <QMouseEvent>
 #include <vtkActor.h>
+#include <vtkCellArray.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractEdges.h>
 #include <vtkNew.h>
 #include <vtkPoints.h>
+#include <vtkPolyData.h>
 #include <vtkUnstructuredGrid.h>
 
 class QMeshRenderer : public SmeVtkWidget {
@@ -23,6 +25,7 @@ public:
   void setMesh(const sme::mesh::Mesh3d &mesh, std::size_t compartmentIndex,
                bool resetCamera = true);
   void setCompartmentIndex(std::size_t compartmentIndex);
+  void setMembraneIndex(std::size_t membraneIndex);
   void setColors(std::vector<QRgb> newColors);
   void setRenderMode(RenderMode mode);
   void clear();
@@ -38,10 +41,11 @@ private:
   void updateAndRender();
   QPoint lastMouseClickPos{};
   std::size_t currentCompartmentIndex{0};
-  std::vector<QRgb> colors{};
   RenderMode renderMode{RenderMode::Solid};
   vtkNew<vtkPoints> points{};
   std::vector<vtkNew<vtkUnstructuredGrid>> grids{};
+  std::vector<vtkNew<vtkCellArray>> triangles{};
+  std::vector<vtkNew<vtkPolyData>> membranes{};
   std::vector<vtkNew<vtkExtractEdges>> edges{};
   std::vector<vtkNew<vtkDataSetMapper>> solidMappers{};
   std::vector<vtkNew<vtkDataSetMapper>> wireframeMappers{};

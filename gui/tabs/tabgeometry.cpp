@@ -321,7 +321,13 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
       ui->stackCompMesh->setCurrentIndex(1);
       ui->spinMaxCellVolume->setValue(
           static_cast<int>(mesh3d->getCompartmentMaxCellVolume(compIndex)));
-      ui->mshCompMesh->setMesh(*mesh3d, compIndex);
+      if (membraneSelected) {
+        ui->mshCompMesh->setMesh(
+            *mesh3d, static_cast<std::size_t>(ui->listCompartments->count() +
+                                              ui->listMembranes->currentRow()));
+      } else {
+        ui->mshCompMesh->setMesh(*mesh3d, compIndex);
+      }
     }
   }
 }
@@ -459,11 +465,19 @@ void TabGeometry::updateMesh2d() {
 
 void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
+  auto nCompartments = static_cast<std::size_t>(ui->listCompartments->count());
+  auto membraneIndex =
+      static_cast<std::size_t>(ui->listMembranes->currentRow());
   if (auto *mesh3d = model.getGeometry().getMesh3d(); mesh3d != nullptr) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    if (membraneSelected) {
+      compIndex = 0;
+    }
     mesh3d->setCompartmentMaxCellVolume(compIndex,
                                         static_cast<std::size_t>(value));
-    ui->mshCompMesh->setMesh(*mesh3d, compIndex, false);
+    ui->mshCompMesh->setMesh(
+        *mesh3d, membraneSelected ? nCompartments + membraneIndex : compIndex,
+        false);
     QGuiApplication::restoreOverrideCursor();
   }
 }
@@ -601,5 +615,8 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
         ui->lblCompMesh->size(),
         static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
     ui->lblCompMesh->setPhysicalUnits(model.getUnits().getLength().name);
+  } else if (const auto *mesh3d{model.getGeometry().getMesh3d()};
+             mesh3d != nullptr) {
+    ui->mshCompMesh->setMembraneIndex(currentRow);
   }
 }

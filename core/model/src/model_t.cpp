@@ -916,7 +916,10 @@ TEST_CASE("SBML: load .xml model, simulate, save as .sme, load .sme",
   model::Model s2;
   s2.importFile("tmpmodelsmetest.sme");
   REQUIRE(s2.getCompartments().getIds() == s.getCompartments().getIds());
-  REQUIRE(s.getXml() == s2.getXml());
+  auto xml = s.getXml();
+  auto xml2 = s2.getXml();
+  // only compare xml after comment as it contains a datetime stamp
+  REQUIRE(xml.slice(xml.indexOf("<sbml")) == xml2.slice(xml2.indexOf("<sbml")));
   REQUIRE(s2.getSimulationData().timePoints.size() == 3);
   REQUIRE(s2.getSimulationData().timePoints[2] == dbl_approx(0.2));
   REQUIRE(s2.getSimulationData().concPadding.size() == 3);
