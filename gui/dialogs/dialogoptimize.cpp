@@ -63,6 +63,8 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
   }
   connect(ui->cmbTarget, &QComboBox::currentIndexChanged, this,
           &DialogOptimize::cmbTarget_currentIndexChanged);
+  connect(ui->cmbMode, &QComboBox::currentIndexChanged, this,
+          &DialogOptimize::cmbMode_currentIndexChanged);
   connect(ui->btnStartStop, &QPushButton::clicked, this,
           &DialogOptimize::btnStartStop_clicked);
   connect(ui->btnSetup, &QPushButton::clicked, this,
@@ -71,6 +73,8 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
           &DialogOptimize::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptimize::reject);
+  connect(ui->differenceMode, &QPushButton::clicked, this,
+          &DialogOptimize::differenceMode_clicked);
   init();
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   constexpr int plotMsRefreshInterval{1000};
@@ -123,6 +127,12 @@ void DialogOptimize::init() {
   for (const auto &optCost : m_model.getOptimizeOptions().optCosts) {
     ui->cmbTarget->addItem(optCost.name.c_str());
   }
+  ui->cmbMode->clear();
+  ui->cmbMode->setEnabled(true);
+  for (auto &&label : {"2D", "3D"}) {
+    ui->cmbMode->addItem(label);
+  }
+
   this->setCursor(Qt::WaitCursor);
   m_opt = std::make_unique<sme::simulate::Optimization>(m_model);
   this->setCursor(Qt::ArrowCursor);
@@ -132,6 +142,24 @@ void DialogOptimize::init() {
       static_cast<std::size_t>(ui->cmbTarget->currentIndex())));
   initFitnessPlot(ui->pltFitness);
   initParamsPlot(ui->pltParams, m_opt->getParamNames());
+
+  ui->lblResult->setZSlider(ui->zaxis);
+  ui->lblTarget->setZSlider(ui->zaxis);
+  ui->lblResult->setZIndex(0);
+  ui->lblTarget->setZIndex(0);
+  ui->lblTarget->displayGrid(true);
+  ui->lblTarget->displayScale(true);
+  ui->lblResult->displayGrid(true);
+  ui->lblResult->displayScale(true);
+
+  // target and result images have the same dimensions, so we can use only one
+  // to set the range of the z-slider
+  ui->zaxis->setMinimum(0);
+  ui->zaxis->setMaximum(m_opt
+                            ->getTargetImage(static_cast<std::size_t>(
+                                ui->cmbTarget->currentIndex()))
+                            .volume()
+                            .depth());
 }
 
 void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
@@ -146,6 +174,23 @@ void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
       img.has_value()) {
     ui->lblResult->setImage(img.value());
   }
+}
+
+void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
+  // TODO
+  SPDLOG_INFO("Mode index: {}", modeindex);
+  if (modeindex == 0) {
+    vizMode = VizMode::_2D;
+    ui->lblTarget->setVisible(true);
+    ui->lblResult->setVisible(true);
+  } else {
+    vizMode = VizMode::_3D;
+    // README: this is temporary and only there to show an effect of setting the
+    // dim toggle.
+    ui->lblTarget->setVisible(false);
+    ui->lblResult->setVisible(false);
+  }
+  SPDLOG_INFO("Viz mode: {}", static_cast<int>(vizMode));
 }
 
 void DialogOptimize::btnStartStop_clicked() {
@@ -176,6 +221,53 @@ void DialogOptimize::btnSetup_clicked() {
   }
 }
 
+void DialogOptimize::differenceMode_clicked() {
+  // this function is the slot connected to the clicked signal of the
+  // differenceMode checkbox. disables the second plot pane for the result and
+  // displays the absolute difference of best result and target in the first
+  // pane. The z-axis slider is used to select the z-index of the displayed
+  // image.
+  if (m_opt == nullptr) {
+    return;
+  }
+
+  differenceMode = !differenceMode;
+  SPDLOG_INFO("Difference mode: {}", differenceMode);
+  ui->lblResult->setVisible(!differenceMode);
+  ui->lblResultLabel->setVisible(!differenceMode);
+
+  auto variable = ui->cmbTarget->currentIndex();
+  auto z = ui->zaxis->value();
+
+  if (differenceMode) {
+    auto diff = m_opt->getDifferenceImage(variable);
+    ui->lblTarget->setImage(diff);
+  } else {
+
+    // reset the images when the difference mode is turned off
+    auto tgt = m_opt->getTargetImage(variable);
+    ui->lblTarget->setImage(tgt);
+    ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
+  }
+  ui->lblTargetLabel->setText(
+      differenceMode ? "Difference between estimated and target image:"
+                     : "Target values:");
+
+  ui->lblTarget->setZSlider(ui->zaxis);
+  ui->lblTarget->setZIndex(z);
+  ui->lblResult->setZSlider(ui->zaxis);
+  ui->lblResult->setZIndex(z);
+  ui->zaxis->setMaximum(ui->lblTarget->getImage().volume().depth());
+  ui->zaxis->setValue(z);
+  // Force the layout to update. This is intended to fix the problem where the
+  // hidden image is resized to its minimum after its visibility is toggled.
+  // TODO: is there a more straight forward way to do this?
+  ui->lblResult->updateGeometry();
+  ui->lblResult->parentWidget()->layout()->invalidate();
+  ui->lblResult->parentWidget()->layout()->activate();
+  ui->lblResult->parentWidget()->adjustSize();
+}
+
 void DialogOptimize::updatePlots() {
   if (m_opt == nullptr) {
     return;
@@ -185,7 +277,7 @@ void DialogOptimize::updatePlots() {
   const auto &params{m_opt->getParams()};
   for (std::size_t iIter = m_nPlottedIterations; iIter < nAvailableIterations;
        ++iIter) {
-    SPDLOG_DEBUG("adding iteration {}", iIter);
+    SPDLOG_INFO("adding iteration {}", iIter);
     // process new fitness
     ui->pltFitness->graph(0)->addData({static_cast<double>(iIter)},
                                       {fitnesses[iIter]}, true);
@@ -205,7 +297,12 @@ void DialogOptimize::updatePlots() {
           static_cast<std::size_t>(ui->cmbTarget->currentIndex()))};
       img.has_value()) {
     ui->lblResult->setImage(img.value());
+    ui->lblResult->setZSlider(ui->zaxis);
+    ui->lblResult->setZIndex(ui->zaxis->value());
   }
+
+  // TODO: update target image in the lblTarget widget if differenceMode is true
+  // and respect z-index
 }
 
 void DialogOptimize::finalizePlots() {
