@@ -303,9 +303,9 @@ void ModelGeometry::updateMesh() {
   if (images.volume().depth() > 1) {
     SPDLOG_INFO("Updating 3d mesh");
     mesh.reset();
-    mesh3d = std::make_unique<mesh::Mesh3d>(images, std::vector<std::size_t>{},
-                                            voxelSize, physicalOrigin,
-                                            common::toStdVec(colors));
+    mesh3d = std::make_unique<mesh::Mesh3d>(
+        images, std::vector<std::size_t>{}, voxelSize, physicalOrigin,
+        common::toStdVec(colors), modelMembranes->getIdColorPairs());
     isMeshValid = mesh3d->isValid();
   } else {
     SPDLOG_INFO("Updating 2d mesh");
@@ -498,7 +498,8 @@ void ModelGeometry::updateGeometryImageColor(QRgb oldColor, QRgb newColor) {
   modelMembranes->updateGeometryImageColor(oldColor, newColor);
   modelMembranes->updateCompartments(modelCompartments->getCompartments());
   if (mesh3d != nullptr) {
-    mesh3d->setColors(common::toStdVec(modelCompartments->getColors()));
+    mesh3d->setColors(common::toStdVec(modelCompartments->getColors()),
+                      modelMembranes->getIdColorPairs());
   }
   hasUnsavedChanges = true;
 }
