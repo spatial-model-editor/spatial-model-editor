@@ -125,7 +125,7 @@
           </widget>
          </item>
          <item row="7" column="0">
-          <widget class="QCheckBox" name="differenceMode">
+          <widget class="QCheckBox" name="diffMode">
            <property name="text">
             <string>show difference</string>
            </property>

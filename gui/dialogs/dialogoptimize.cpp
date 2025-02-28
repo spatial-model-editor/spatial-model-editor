@@ -73,7 +73,7 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
           &DialogOptimize::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptimize::reject);
-  connect(ui->differenceMode, &QCheckBox::clicked, this,
+  connect(ui->diffMode, &QCheckBox::clicked, this,
           &DialogOptimize::differenceMode_clicked);
   init();
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
@@ -112,6 +112,8 @@ void DialogOptimize::applyToModel() const {
 void DialogOptimize::init() {
   ui->lblResult->setImage({});
   ui->cmbTarget->clear();
+  ui->diffMode->setCheckable(true);
+
   if (m_model.getOptimizeOptions().optParams.empty() ||
       m_model.getOptimizeOptions().optCosts.empty()) {
     m_opt.reset();
@@ -186,6 +188,7 @@ void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
     vizMode = VizMode::_2D;
     ui->lblTarget->setVisible(true);
     ui->lblResult->setVisible(!differenceMode);
+    ui->zaxis->setVisible(true);
     ui->lblTarget3D->setVisible(false);
     ui->lblResult3D->setVisible(false);
     updateTargetImage();
@@ -195,9 +198,9 @@ void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
 
     // show the 3D visualization of the target and result images
     vizMode = VizMode::_3D;
-
     ui->lblTarget->setVisible(false);
     ui->lblResult->setVisible(false);
+    ui->zaxis->setVisible(false);
     ui->lblTarget3D->setVisible(true);
     ui->lblResult3D->setVisible(!differenceMode);
     updateTargetImage();
