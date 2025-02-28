@@ -294,24 +294,24 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
   SPDLOG_INFO("getDifferenceImage({})", index);
 
   auto size = getImageSize();
-  SPDLOG_INFO("volume: ({}, {}, {}), index: {}", size.width(), size.height(),
-              size.depth(), index);
+  // SPDLOG_INFO("volume: ({}, {}, {}), index: {}", size.width(), size.height(),
+  // size.depth(), index);
   auto tgt_values = getTargetValues(index);
   auto diff_values = tgt_values;
-  SPDLOG_INFO("tgt_value: {}", tgt_values.size());
+  // SPDLOG_INFO("tgt_value: {}", tgt_values.size());
   auto res_values = getBestResultValues(index);
-  SPDLOG_INFO("res_values: {}", res_values.size());
-  SPDLOG_INFO("target values: {}", tgt_values.size());
-  SPDLOG_INFO("result values: {}", res_values.size());
+  // SPDLOG_INFO("res_values: {}", res_values.size());
+  // SPDLOG_INFO("target values: {}", tgt_values.size());
+  // SPDLOG_INFO("result values: {}", res_values.size());
   if (res_values.size() > 0) {
-    SPDLOG_INFO("diff values max before: {}", common::max(diff_values));
-    SPDLOG_INFO("tgt_values values max: {}", common::max(tgt_values));
-    SPDLOG_INFO("res_values values max: {}", common::max(res_values));
+    // SPDLOG_INFO("diff values max before: {}", common::max(diff_values));
+    // SPDLOG_INFO("tgt_values values max: {}", common::max(tgt_values));
+    // SPDLOG_INFO("res_values values max: {}", common::max(res_values));
     std::ranges::transform(tgt_values, res_values, diff_values.begin(),
                            std::minus<double>());
   }
-  SPDLOG_INFO("diff values: {}", diff_values.size());
-  SPDLOG_INFO("max diff value: {}", common::max(diff_values));
+  // SPDLOG_INFO("diff values: {}", diff_values.size());
+  // SPDLOG_INFO("max diff value: {}", common::max(diff_values));
   return sme::common::ImageStack(size, diff_values, common::max(diff_values));
 }
 

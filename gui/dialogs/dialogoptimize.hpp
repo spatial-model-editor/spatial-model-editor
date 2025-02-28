@@ -26,6 +26,9 @@ public:
     _3D,
   };
 
+  VizMode getVizMode() const;
+  bool getDifferenceMode() const;
+
 private:
   sme::model::Model &m_model;
   std::unique_ptr<Ui::DialogOptimize> ui;
@@ -44,4 +47,6 @@ private:
   void finalizePlots();
   void differenceMode_clicked();
   void selectZ();
+  void updateTargetImage();
+  void updateResultImage();
 };

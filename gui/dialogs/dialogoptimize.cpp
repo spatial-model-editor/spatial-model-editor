@@ -73,7 +73,7 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
           &DialogOptimize::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptimize::reject);
-  connect(ui->differenceMode, &QPushButton::clicked, this,
+  connect(ui->differenceMode, &QCheckBox::clicked, this,
           &DialogOptimize::differenceMode_clicked);
   init();
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
@@ -185,18 +185,23 @@ void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
     // that are still there
     vizMode = VizMode::_2D;
     ui->lblTarget->setVisible(true);
-    ui->lblResult->setVisible(true);
+    ui->lblResult->setVisible(!differenceMode);
     ui->lblTarget3D->setVisible(false);
     ui->lblResult3D->setVisible(false);
+    updateTargetImage();
+    updateResultImage();
+
   } else {
+
     // show the 3D visualization of the target and result images
     vizMode = VizMode::_3D;
-    // README: this is temporary and only there to show an effect of setting the
-    // dim toggle.
+
     ui->lblTarget->setVisible(false);
     ui->lblResult->setVisible(false);
     ui->lblTarget3D->setVisible(true);
-    ui->lblResult3D->setVisible(true);
+    ui->lblResult3D->setVisible(!differenceMode);
+    updateTargetImage();
+    updateResultImage();
   }
   SPDLOG_INFO("Viz mode: {}", static_cast<int>(vizMode));
 }
@@ -233,47 +238,35 @@ void DialogOptimize::differenceMode_clicked() {
   // this function is the slot connected to the clicked signal of the
   // differenceMode checkbox. disables the second plot pane for the result and
   // displays the absolute difference of best result and target in the first
-  // pane. The z-axis slider is used to select the z-index of the displayed
-  // image.
+  // pane.
+
+  SPDLOG_INFO("Difference mode clicked {}", differenceMode);
+
   if (m_opt == nullptr) {
     return;
   }
 
   differenceMode = !differenceMode;
-  SPDLOG_INFO("Difference mode: {}", differenceMode);
-  ui->lblResult->setVisible(!differenceMode);
-  ui->lblResultLabel->setVisible(!differenceMode);
+  SPDLOG_INFO("Difference mode after: {}", differenceMode);
 
-  auto variable = ui->cmbTarget->currentIndex();
-  auto z = ui->zaxis->value();
+  updateTargetImage();
 
   if (differenceMode) {
-    auto diff = m_opt->getDifferenceImage(variable);
-    ui->lblTarget->setImage(diff);
+    ui->lblResult->setVisible(false);
+    ui->lblResult3D->setVisible(false);
+    ui->lblTargetLabel->setText(
+        "Difference between estimated and target image:");
   } else {
-
+    updateResultImage();
     // reset the images when the difference mode is turned off
-    auto tgt = m_opt->getTargetImage(variable);
-    ui->lblTarget->setImage(tgt);
-    ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
+    ui->lblTargetLabel->setText("Target values:");
   }
-  ui->lblTargetLabel->setText(
-      differenceMode ? "Difference between estimated and target image:"
-                     : "Target values:");
-
-  ui->lblTarget->setZSlider(ui->zaxis);
-  ui->lblTarget->setZIndex(z);
-  ui->lblResult->setZSlider(ui->zaxis);
-  ui->lblResult->setZIndex(z);
-  ui->zaxis->setMaximum(ui->lblTarget->getImage().volume().depth());
-  ui->zaxis->setValue(z);
-  // Force the layout to update. This is intended to fix the problem where the
-  // hidden image is resized to its minimum after its visibility is toggled.
-  // TODO: is there a more straight forward way to do this?
-  ui->lblResult->updateGeometry();
-  ui->lblResult->parentWidget()->layout()->invalidate();
-  ui->lblResult->parentWidget()->layout()->activate();
-  ui->lblResult->parentWidget()->adjustSize();
+  SPDLOG_INFO("label visible: {}", ui->lblResultLabel->isVisible());
+  SPDLOG_INFO("2d res visible: {}", ui->lblResult->isVisible());
+  SPDLOG_INFO("3d res visible: {}", ui->lblResult3D->isVisible());
+  SPDLOG_INFO("2d tgt visible: {}", ui->lblTarget->isVisible());
+  SPDLOG_INFO("3d tgt visible: {}", ui->lblTarget3D->isVisible());
+  SPDLOG_INFO("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
 }
 
 void DialogOptimize::updatePlots() {
@@ -301,16 +294,20 @@ void DialogOptimize::updatePlots() {
     ui->pltParams->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
   }
   m_nPlottedIterations = nAvailableIterations;
+
   if (auto img{m_opt->getUpdatedBestResultImage(
           static_cast<std::size_t>(ui->cmbTarget->currentIndex()))};
       img.has_value()) {
     ui->lblResult->setImage(img.value());
-    ui->lblResult->setZSlider(ui->zaxis);
-    ui->lblResult->setZIndex(ui->zaxis->value());
+    if (vizMode == VizMode::_2D) {
+      ui->lblResult->setZSlider(ui->zaxis);
+      ui->lblResult->setZIndex(ui->zaxis->value());
+    }
   }
 
-  // TODO: update target image in the lblTarget widget if differenceMode is true
-  // and respect z-index
+  if (differenceMode) {
+    updateTargetImage();
+  }
 }
 
 void DialogOptimize::finalizePlots() {
@@ -326,3 +323,74 @@ void DialogOptimize::finalizePlots() {
     ui->btnStartStop->setText("Start");
   }
 }
+
+void DialogOptimize::updateTargetImage() {
+  // this handles the distinction between 2D and 3D visualizations when setting
+  // image data for the image that displays the target values
+  // and handles the z-slider for the 2D visualization
+  if (m_opt == nullptr) {
+    return;
+  }
+
+  auto variable = ui->cmbTarget->currentIndex();
+  SPDLOG_INFO(" Updating target image for variable {}", variable);
+
+  auto img = differenceMode ? m_opt->getDifferenceImage(variable)
+                            : m_opt->getTargetImage(variable);
+  SPDLOG_INFO("difference mode: {}", differenceMode);
+  SPDLOG_INFO(" data: {}, empty: {}", img.volume().depth(), img.empty());
+
+  if (vizMode == VizMode::_2D) {
+    SPDLOG_INFO("Updating target image for 2D visualization ");
+    // all the z-axis stuff is only necessary for 2D visualization
+    auto z = ui->zaxis->value();
+    ui->lblTarget->setImage(img);
+    ui->lblTarget->setZSlider(ui->zaxis);
+    ui->lblTarget->setZIndex(z);
+    ui->zaxis->setMaximum(ui->lblTarget->getImage().volume().depth());
+    ui->zaxis->setValue(z);
+
+  } else {
+    SPDLOG_INFO("Updating target image for 3D visualization: 2D visible? {}, "
+                "3d visible? {}",
+                ui->lblTarget->isVisible(), ui->lblTarget3D->isVisible());
+    ui->lblTarget3D->setImage(img);
+  }
+}
+
+void DialogOptimize::updateResultImage() {
+  // this handles the distinction between 2D and 3D visualizations
+
+  if (m_opt == nullptr) {
+    return;
+  }
+
+  if (vizMode == VizMode::_2D) {
+    auto z = ui->zaxis->value();
+    ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
+    ui->lblResult->setZSlider(ui->zaxis);
+    ui->lblResult->setZIndex(z);
+
+    // which of this shit do I need really?
+    ui->lblResult->updateGeometry();
+    ui->lblResult->parentWidget()->layout()->invalidate();
+    ui->lblResult->parentWidget()->layout()->activate();
+    ui->lblResult->parentWidget()->adjustSize();
+  } else {
+    SPDLOG_INFO("Updating result image for 3D visualization  2D visible? {}, "
+                "3d visible? {}",
+                ui->lblResult->isVisible(), ui->lblResult3D->isVisible());
+    ui->lblResult3D->setImage(m_opt->getCurrentBestResultImage());
+
+    // which of this shit do I need really?
+    ui->lblResult3D->updateGeometry();
+    ui->lblResult3D->parentWidget()->layout()->invalidate();
+    ui->lblResult3D->parentWidget()->layout()->activate();
+    ui->lblResult3D->parentWidget()->adjustSize();
+  }
+}
+
+// getters
+DialogOptimize::VizMode DialogOptimize::getVizMode() const { return vizMode; }
+
+bool DialogOptimize::getDifferenceMode() const { return differenceMode; }

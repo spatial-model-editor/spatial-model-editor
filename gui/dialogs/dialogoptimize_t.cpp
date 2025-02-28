@@ -2,8 +2,11 @@
 #include "dialogoptimize.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include <QCheckBox>
 #include <QComboBox>
+#include <QLabel>
 #include <QPushButton>
+#include <QSlider>
 
 using namespace sme;
 using namespace sme::test;
@@ -13,10 +16,28 @@ struct DialogOptimizeWidgets {
     GET_DIALOG_WIDGET(QComboBox, cmbTarget);
     GET_DIALOG_WIDGET(QPushButton, btnSetup);
     GET_DIALOG_WIDGET(QPushButton, btnStartStop);
+    GET_DIALOG_WIDGET(QCheckBox, differenceMode);
+    GET_DIALOG_WIDGET(QComboBox, cmbMode);
+    GET_DIALOG_WIDGET(QLabel, lblResultLabel);
+    GET_DIALOG_WIDGET(QLabel, lblTargetLabel);
+    GET_DIALOG_WIDGET(QSlider, zaxis);
+    GET_DIALOG_WIDGET(QWidget, lblTarget);
+    GET_DIALOG_WIDGET(QWidget, lblResult);
+    GET_DIALOG_WIDGET(QWidget, lblTarget3D);
+    GET_DIALOG_WIDGET(QWidget, lblResult3D);
   }
   QComboBox *cmbTarget;
   QPushButton *btnSetup;
   QPushButton *btnStartStop;
+  QCheckBox *differenceMode;
+  QComboBox *cmbMode;
+  QLabel *lblResultLabel;
+  QLabel *lblTargetLabel;
+  QSlider *zaxis;
+  QWidget *lblTarget;
+  QWidget *lblResult;
+  QWidget *lblTarget3D;
+  QWidget *lblResult3D;
 };
 
 TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
@@ -40,6 +61,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
                                       0,
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
+
   SECTION("no optimizeOptions") {
     model.getOptimizeOptions() = {};
     DialogOptimize dia(model);
@@ -66,5 +88,66 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     sendMouseClick(widgets.btnStartStop);
     auto lines{dia.getParametersString().split("\n")};
     REQUIRE(lines.size() == 1);
+  }
+  SECTION("differenceMode") {
+    DialogOptimize dia(model);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
+    QTest::qWait(100); // Ensure the dialog is fully shown
+    // evolve params for 3secs
+    sendMouseClick(widgets.btnStartStop);
+    wait(3000);
+    sendMouseClick(widgets.btnStartStop);
+
+    REQUIRE(widgets.lblResult->isVisible() == true);
+    REQUIRE(widgets.lblTarget->isVisible() == true);
+    REQUIRE(widgets.lblTargetLabel->text() == "Target values:");
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(dia.getDifferenceMode() == false);
+    widgets.differenceMode->setFocus(); // Ensure the checkbox has focus
+    sendMouseClick(widgets.differenceMode);
+
+    SPDLOG_CRITICAL("difference mode: {}", dia.getDifferenceMode());
+    REQUIRE(dia.getDifferenceMode() == true);
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
+
+    REQUIRE(widgets.lblResultLabel->isVisible() == false);
+    REQUIRE(widgets.lblResult->isVisible() == false);
+    REQUIRE(widgets.lblTarget->isVisible() == true);
+    REQUIRE(widgets.lblTargetLabel->text() ==
+            "Difference between estimated and target image:");
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+  }
+
+  SECTION("visualization mode") {
+    DialogOptimize dia(model);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
+    // evolve params for 3secs
+    sendMouseClick(widgets.btnStartStop);
+    wait(3000);
+    sendMouseClick(widgets.btnStartStop);
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
+    REQUIRE(widgets.lblResult->isVisible() == true);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(widgets.lblTarget->isVisible() == true);
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+
+    widgets.cmbMode->setCurrentIndex(1); // switch to 3D visualization
+
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_3D);
+    REQUIRE(widgets.lblResult->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == true);
+    REQUIRE(widgets.lblTarget->isVisible() == false);
+    REQUIRE(widgets.lblTarget3D->isVisible() == true);
+
+    // widgets.cmbMode->setCurrentIndex(0); // switch to 3D visualization
+
+    // REQUIRE(widgets.lblResult->isVisible() == true);
+    // REQUIRE(widgets.lblResult3D->isVisible() == false);
+    // REQUIRE(widgets.lblTarget->isVisible() == true);
+    // REQUIRE(widgets.lblTarget3D->isVisible() == false);
   }
 }
