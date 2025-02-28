@@ -177,18 +177,26 @@ void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
 }
 
 void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
-  // TODO
+  // handles the switch between 2D and 3D visualization modes
+  // this option is always there, even if the data itself is not 3D
   SPDLOG_INFO("Mode index: {}", modeindex);
   if (modeindex == 0) {
+    // 2D mode -> show the vizualization of the target and result images
+    // that are still there
     vizMode = VizMode::_2D;
     ui->lblTarget->setVisible(true);
     ui->lblResult->setVisible(true);
+    ui->lblTarget3D->setVisible(false);
+    ui->lblResult3D->setVisible(false);
   } else {
+    // show the 3D visualization of the target and result images
     vizMode = VizMode::_3D;
     // README: this is temporary and only there to show an effect of setting the
     // dim toggle.
     ui->lblTarget->setVisible(false);
     ui->lblResult->setVisible(false);
+    ui->lblTarget3D->setVisible(true);
+    ui->lblResult3D->setVisible(true);
   }
   SPDLOG_INFO("Viz mode: {}", static_cast<int>(vizMode));
 }
