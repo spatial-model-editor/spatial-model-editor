@@ -62,33 +62,33 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
                                       {}});
   model.getOptimizeOptions() = optimizeOptions;
 
-  // SECTION("no optimizeOptions") {
-  //   model.getOptimizeOptions() = {};
-  //   DialogOptimize dia(model);
-  //   DialogOptimizeWidgets widgets(&dia);
-  //   dia.show();
-  //   // no valid initial optimize options
-  //   REQUIRE(widgets.btnStartStop->text() == "Start");
-  //   REQUIRE(widgets.btnStartStop->isEnabled() == false);
-  //   REQUIRE(widgets.btnSetup->isEnabled() == true);
-  //   REQUIRE(dia.getParametersString().isEmpty());
-  // }
-  // SECTION("existing optimizeOptions") {
-  //   DialogOptimize dia(model);
-  //   DialogOptimizeWidgets widgets(&dia);
-  //   dia.show();
-  //   // valid initial optimize options
-  //   REQUIRE(widgets.btnStartStop->isEnabled() == true);
-  //   REQUIRE(widgets.btnSetup->isEnabled() == true);
-  //   // no initial parameters
-  //   REQUIRE(dia.getParametersString().isEmpty());
-  //   // evolve params for 3secs
-  //   sendMouseClick(widgets.btnStartStop);
-  //   wait(3000);
-  //   sendMouseClick(widgets.btnStartStop);
-  //   auto lines{dia.getParametersString().split("\n")};
-  //   REQUIRE(lines.size() == 1);
-  // }
+  SECTION("no optimizeOptions") {
+    model.getOptimizeOptions() = {};
+    DialogOptimize dia(model);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
+    // no valid initial optimize options
+    REQUIRE(widgets.btnStartStop->text() == "Start");
+    REQUIRE(widgets.btnStartStop->isEnabled() == false);
+    REQUIRE(widgets.btnSetup->isEnabled() == true);
+    REQUIRE(dia.getParametersString().isEmpty());
+  }
+  SECTION("existing optimizeOptions") {
+    DialogOptimize dia(model);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
+    // valid initial optimize options
+    REQUIRE(widgets.btnStartStop->isEnabled() == true);
+    REQUIRE(widgets.btnSetup->isEnabled() == true);
+    // no initial parameters
+    REQUIRE(dia.getParametersString().isEmpty());
+    // evolve params for 3secs
+    sendMouseClick(widgets.btnStartStop);
+    wait(3000);
+    sendMouseClick(widgets.btnStartStop);
+    auto lines{dia.getParametersString().split("\n")};
+    REQUIRE(lines.size() == 1);
+  }
   SECTION("differenceMode") {
     DialogOptimize dia(model);
     DialogOptimizeWidgets widgets(&dia);
