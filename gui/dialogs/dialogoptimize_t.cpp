@@ -67,6 +67,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     DialogOptimize dia(model);
     DialogOptimizeWidgets widgets(&dia);
     dia.show();
+    QTest::qWait(100);
     // no valid initial optimize options
     REQUIRE(widgets.btnStartStop->text() == "Start");
     REQUIRE(widgets.btnStartStop->isEnabled() == false);
@@ -77,6 +78,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     DialogOptimize dia(model);
     DialogOptimizeWidgets widgets(&dia);
     dia.show();
+    QTest::qWait(100);
     // valid initial optimize options
     REQUIRE(widgets.btnStartStop->isEnabled() == true);
     REQUIRE(widgets.btnSetup->isEnabled() == true);
@@ -94,6 +96,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     DialogOptimizeWidgets widgets(&dia);
     dia.show();
     QTest::qWait(100); // Ensure the dialog is fully shown
+    REQUIRE(widgets.diffMode->isCheckable() == true);
     // evolve params for 3secs
     sendMouseClick(widgets.btnStartStop);
     wait(3000);
@@ -107,11 +110,11 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getDifferenceMode() == false);
     REQUIRE(widgets.diffMode->isChecked() == false);
     REQUIRE(widgets.diffMode->isEnabled() == true);
+    // TODO: check that the normal image is displayed
     widgets.diffMode->click();
     REQUIRE(widgets.diffMode->isChecked() == true);
     REQUIRE(dia.getDifferenceMode() == true);
     REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
-
     REQUIRE(widgets.lblResultLabel->isVisible() == false);
     REQUIRE(widgets.lblResult->isVisible() == false);
     REQUIRE(widgets.lblTarget->isVisible() == true);
@@ -119,6 +122,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
             "Difference between estimated and target image:");
     REQUIRE(widgets.lblTarget3D->isVisible() == false);
     REQUIRE(widgets.lblResult3D->isVisible() == false);
+    // TODO: check that the diff image is displayed
   }
 
   SECTION("visualization mode") {
