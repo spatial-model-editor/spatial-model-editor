@@ -110,7 +110,6 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     widgets.diffMode->click();
     REQUIRE(widgets.diffMode->isChecked() == true);
     REQUIRE(dia.getDifferenceMode() == true);
-    SPDLOG_CRITICAL("difference mode: {}", dia.getDifferenceMode());
     REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
 
     REQUIRE(widgets.lblResultLabel->isVisible() == false);

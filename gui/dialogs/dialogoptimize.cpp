@@ -240,23 +240,26 @@ void DialogOptimize::btnSetup_clicked() {
 void DialogOptimize::differenceMode_clicked() {
   // this function is the slot connected to the clicked signal of the
   // differenceMode checkbox. disables the second plot pane for the result and
-  // displays the absolute difference of best result and target in the first
-  // pane.
+  // displays the naive difference of target and best result in the first
+  // plot pane.
 
-  SPDLOG_INFO("Difference mode clicked {}", differenceMode);
+  SPDLOG_CRITICAL("Difference mode clicked {}", differenceMode);
 
   if (m_opt == nullptr) {
     return;
   }
 
   differenceMode = !differenceMode;
-  SPDLOG_INFO("Difference mode after: {}", differenceMode);
+  SPDLOG_CRITICAL("Difference mode after: {}", differenceMode);
+
+  ui->lblResult->setVisible(!differenceMode);
+  ui->lblResult3D->setVisible(!differenceMode && vizMode == VizMode::_3D);
+  ui->lblResultLabel->setVisible(!differenceMode);
 
   updateTargetImage();
 
   if (differenceMode) {
-    ui->lblResult->setVisible(false);
-    ui->lblResult3D->setVisible(false);
+
     ui->lblTargetLabel->setText(
         "Difference between estimated and target image:");
   } else {
@@ -264,12 +267,12 @@ void DialogOptimize::differenceMode_clicked() {
     // reset the images when the difference mode is turned off
     ui->lblTargetLabel->setText("Target values:");
   }
-  SPDLOG_INFO("label visible: {}", ui->lblResultLabel->isVisible());
-  SPDLOG_INFO("2d res visible: {}", ui->lblResult->isVisible());
-  SPDLOG_INFO("3d res visible: {}", ui->lblResult3D->isVisible());
-  SPDLOG_INFO("2d tgt visible: {}", ui->lblTarget->isVisible());
-  SPDLOG_INFO("3d tgt visible: {}", ui->lblTarget3D->isVisible());
-  SPDLOG_INFO("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
+  SPDLOG_CRITICAL("res label visible: {}", ui->lblResultLabel->isVisible());
+  SPDLOG_CRITICAL("2d res visible: {}", ui->lblResult->isVisible());
+  SPDLOG_CRITICAL("3d res visible: {}", ui->lblResult3D->isVisible());
+  SPDLOG_CRITICAL("2d tgt visible: {}", ui->lblTarget->isVisible());
+  SPDLOG_CRITICAL("3d tgt visible: {}", ui->lblTarget3D->isVisible());
+  SPDLOG_CRITICAL("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
 }
 
 void DialogOptimize::updatePlots() {

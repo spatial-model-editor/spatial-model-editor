@@ -291,16 +291,18 @@ const std::vector<double> &Optimization::getFitness() const {
 }
 
 common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
-  SPDLOG_INFO("getDifferenceImage({})", index);
+  // SPDLOG_INFO("getDifferenceImage({})", index);
 
   auto size = getImageSize();
   // SPDLOG_INFO("volume: ({}, {}, {}), index: {}", size.width(), size.height(),
   // size.depth(), index);
   auto tgt_values = getTargetValues(index);
-  auto diff_values = tgt_values;
-  // SPDLOG_INFO("tgt_value: {}", tgt_values.size());
+
+  // separate allocation to make sure that common::max does not segfault when
+  // called on an empty array.
+  auto diff_values =
+      std::vector<double>(size.width() * size.height() * size.depth(), 0);
   auto res_values = getBestResultValues(index);
-  // SPDLOG_INFO("res_values: {}", res_values.size());
   // SPDLOG_INFO("target values: {}", tgt_values.size());
   // SPDLOG_INFO("result values: {}", res_values.size());
   if (res_values.size() > 0) {
