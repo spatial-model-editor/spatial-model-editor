@@ -531,10 +531,13 @@ Simulation::getPyNames(std::size_t compartmentIndex) const {
   return compartmentSpeciesNames[compartmentIndex];
 }
 
-static std::size_t pointToPyIndex(const QPoint &p, std::size_t w) {
-  auto x{static_cast<std::size_t>(p.x())};
-  auto y{static_cast<std::size_t>(p.y())};
-  return x + w * y;
+static std::size_t voxelToPyIndex(const common::Voxel &v,
+                                  const common::Volume imageSize) {
+  auto x{static_cast<std::size_t>(v.p.x())};
+  auto y{static_cast<std::size_t>(v.p.y())};
+  auto w{static_cast<std::size_t>(imageSize.width())};
+  auto d{imageSize.depth()};
+  return x + w * y + w * d * v.z;
 }
 
 std::vector<std::vector<double>>
@@ -543,16 +546,13 @@ Simulation::getPyConcs(std::size_t timeIndex,
   // start with zero concentration everywhere for all species
   std::vector<std::vector<double>> pyConcs(
       compartmentSpeciesIds[compartmentIndex].size(),
-      std::vector<double>(
-          static_cast<std::size_t>(imageSize.width() * imageSize.height()),
-          0.0));
-  const auto w{static_cast<std::size_t>(imageSize.width())};
-  const auto &pixels{compartments[compartmentIndex]->getVoxels()};
+      std::vector<double>(imageSize.nVoxels(), 0.0));
+  const auto &voxels{compartments[compartmentIndex]->getVoxels()};
   const auto &conc{data->concentration[timeIndex][compartmentIndex]};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
   const std::size_t stride{nSpecies + data->concPadding[timeIndex]};
-  for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
-    const auto pyIndex{pointToPyIndex(pixels[ix].p, w)};
+  for (std::size_t ix = 0; ix < voxels.size(); ++ix) {
+    const auto pyIndex{voxelToPyIndex(voxels[ix], imageSize)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {
       pyConcs[is][pyIndex] = conc[ix * stride + is];
     }
@@ -569,16 +569,13 @@ Simulation::getPyDcdts(std::size_t compartmentIndex) const {
   }
   std::vector<std::vector<double>> pyDcdts(
       compartmentSpeciesIds[compartmentIndex].size(),
-      std::vector<double>(
-          static_cast<std::size_t>(imageSize.width() * imageSize.height()),
-          0.0));
-  const auto w{static_cast<std::size_t>(imageSize.width())};
+      std::vector<double>(imageSize.nVoxels(), 0.0));
   const auto &pixels{compartments[compartmentIndex]->getVoxels()};
   const auto &dcdt{pixelSim->getDcdt(compartmentIndex)};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
   const std::size_t stride{nSpecies + data->concPadding.back()};
   for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
-    const auto pyIndex{pointToPyIndex(pixels[ix].p, w)};
+    const auto pyIndex{voxelToPyIndex(pixels[ix], imageSize)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {
       pyDcdts[is][pyIndex] = dcdt[ix * stride + is];
     }
