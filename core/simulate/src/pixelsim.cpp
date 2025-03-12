@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <oneapi/tbb/global_control.h>
@@ -344,6 +345,17 @@ std::size_t PixelSim::run(double time, double timeout_ms,
                static_cast<double>(100 * discardedSteps) /
                    static_cast<double>(steps + discardedSteps));
   return steps;
+}
+
+std::size_t
+PixelSim::run_steadystate(double time, double timeout_ms, double stop_tolerance,
+                          const std::function<bool()> &stopRunningCallback) {
+  run(time, timeout_ms, [this]() -> bool {
+    // include a computation for the time derivative here
+    // if it's smaller than the stop_tolerance, return true ||
+    // stopRunningCallback()
+    return false;
+  });
 }
 
 const std::vector<double> &

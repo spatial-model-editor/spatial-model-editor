@@ -48,6 +48,9 @@ public:
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
+  std::size_t
+  run_steadystate(double time, double timeout_ms, double stop_tolerance,
+                  const std::function<bool()> &stopRunningCallback) override;
   [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
