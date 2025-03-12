@@ -297,6 +297,23 @@ PixelSim::PixelSim(
 
 PixelSim::~PixelSim() = default;
 
+std::size_t PixelSim::run_step(std::size_t steps, double time, double tNow) {
+  double maxDt = std::min(maxTimestep, time - tNow);
+  if (integrator == PixelIntegratorType::RK101) {
+    double timestep = std::min(maxDt, maxStableTimestep);
+    doRK101(timestep);
+    tNow += timestep;
+  } else {
+    tNow += doRKAdaptive(maxDt);
+    if (!currentErrorMessage.empty()) {
+      return steps;
+    }
+  }
+  ++steps;
+
+  return steps;
+}
+
 std::size_t PixelSim::run(double time, double timeout_ms,
                           const std::function<bool()> &stopRunningCallback) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
@@ -313,18 +330,8 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   // do timesteps until we reach t
   constexpr double relativeTolerance = 1e-12;
   while (tNow + time * relativeTolerance < time) {
-    double maxDt = std::min(maxTimestep, time - tNow);
-    if (integrator == PixelIntegratorType::RK101) {
-      double timestep = std::min(maxDt, maxStableTimestep);
-      doRK101(timestep);
-      tNow += timestep;
-    } else {
-      tNow += doRKAdaptive(maxDt);
-      if (!currentErrorMessage.empty()) {
-        return steps;
-      }
-    }
-    ++steps;
+    steps = run_step(steps, time, tNow);
+
     if (timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= timeout_ms) {
       SPDLOG_DEBUG("Simulation timeout: requesting stop");
@@ -350,12 +357,60 @@ std::size_t PixelSim::run(double time, double timeout_ms,
 std::size_t
 PixelSim::run_steadystate(double time, double timeout_ms, double stop_tolerance,
                           const std::function<bool()> &stopRunningCallback) {
-  run(time, timeout_ms, [this]() -> bool {
-    // include a computation for the time derivative here
-    // if it's smaller than the stop_tolerance, return true ||
-    // stopRunningCallback()
-    return false;
-  });
+  SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
+  SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
+  SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
+  currentErrorMessage.clear();
+  oneapi::tbb::global_control control(
+      oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
+  QElapsedTimer timer;
+  timer.start();
+  double tNow = 0;
+  std::size_t steps = 0;
+  discardedSteps = 0;
+  // do timesteps until we reach t
+  constexpr double relativeTolerance = 1e-12;
+
+  std::vector<double> old_Dcdt = getDcdt();
+  std::vector<double> new_Dcdt = getDcdt();
+
+  // make this big to avoid immediate stop
+  std::ranges::for_each(new_Dcdt, [](double x) { return x + 1e3; });
+
+  std::vector<double> delta_Dcdt = first_order_dcdt_change(new_Dcdt, old_Dcdt);
+  double current_max_dcdt = *std::ranges::max_element(delta_Dcdt);
+
+  while (current_max_dcdt > stop_tolerance) {
+
+    old_Dcdt = getDcdt();
+
+    steps = run_step(steps, time, tNow);
+
+    new_Dcdt = getDcdt();
+
+    delta_Dcdt = first_order_dcdt_change(new_Dcdt, old_Dcdt);
+    current_max_dcdt = *std::ranges::max_element(delta_Dcdt);
+
+    if (timeout_ms >= 0.0 &&
+        static_cast<double>(timer.elapsed()) >= timeout_ms) {
+      SPDLOG_DEBUG("Simulation timeout: requesting stop");
+      setStopRequested(true);
+    }
+    if (stopRunningCallback && stopRunningCallback()) {
+      setStopRequested(true);
+      SPDLOG_DEBUG("Simulation cancelled: requesting stop");
+    }
+    if (stopRequested.load()) {
+      currentErrorMessage = "Simulation stopped early";
+      SPDLOG_DEBUG("Simulation timeout or stopped early");
+      return steps;
+    }
+  }
+  SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
+               steps + discardedSteps,
+               static_cast<double>(100 * discardedSteps) /
+                   static_cast<double>(steps + discardedSteps));
+  return steps;
 }
 
 const std::vector<double> &
@@ -368,6 +423,25 @@ std::size_t PixelSim::getConcentrationPadding() const { return nExtraVars; }
 const std::vector<double> &
 PixelSim::getDcdt(std::size_t compartmentIndex) const {
   return simCompartments[compartmentIndex]->getDcdt();
+}
+
+std::vector<double> PixelSim::getDcdt() const {
+
+  // TODO: check if this is performance wise a problem because of the allocation
+  // involved here. Maybe use a side effect here.
+  std::vector<double> dcdt([this]() {
+    std::size_t n = 0;
+    for (const auto &compartment : simCompartments) {
+      n += compartment->getNSpecies();
+    }
+    return n;
+  }());
+  for (auto &&compartment : simCompartments) {
+    auto dcdtCompartment = compartment->getDcdt();
+    dcdt.insert(dcdt.end(), dcdtCompartment.begin(), dcdtCompartment.end());
+  }
+  dcdt.shrink_to_fit();
+  return dcdt;
 }
 
 double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,

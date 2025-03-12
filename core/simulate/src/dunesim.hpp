@@ -46,6 +46,7 @@ public:
       const std::vector<std::string> &compartmentIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   ~DuneSim() override;
+  std::size_t run_step(std::size_t steps, double time, double tNow) override;
   std::size_t run(double time, double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
   std::size_t

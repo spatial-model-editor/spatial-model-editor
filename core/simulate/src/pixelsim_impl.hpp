@@ -109,6 +109,7 @@ public:
   [[nodiscard]] const std::vector<common::Voxel> &getVoxels() const;
   std::vector<double> &getDcdt();
   [[nodiscard]] double getMaxStableTimestep() const;
+  [[nodiscard]] double getNSpecies() const;
 };
 
 class SimMembrane {
