@@ -12,12 +12,9 @@ namespace sme::simulate {
 class BaseSim {
 public:
   virtual ~BaseSim() = default;
-  virtual std::size_t run_step(std::size_t steps, double time, double tNow) = 0;
+  virtual void run_step(double time, double tNow) = 0;
   virtual std::size_t run(double time, double timeout_ms,
                           const std::function<bool()> &stopRunningCallback) = 0;
-  virtual std::size_t
-  run_steadystate(double time, double timeout_ms, double stop_tolerance,
-                  const std::function<bool()> &stopRunningCallback) = 0;
   [[nodiscard]] virtual const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const = 0;
   [[nodiscard]] virtual std::size_t getConcentrationPadding() const = 0;

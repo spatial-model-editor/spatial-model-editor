@@ -46,12 +46,10 @@ public:
       const std::vector<std::string> &compartmentIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   ~DuneSim() override;
-  std::size_t run_step(std::size_t steps, double time, double tNow) override;
-  std::size_t run(double time, double timeout_ms,
-                  const std::function<bool()> &stopRunningCallback) override;
-  std::size_t
-  run_steadystate(double time, double timeout_ms, double stop_tolerance,
-                  const std::function<bool()> &stopRunningCallback) override;
+  void run_step(double time, double tNow) override;
+  virtual std::size_t
+  run(double time, double timeout_ms,
+      const std::function<bool()> &stopRunningCallback) override;
   [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
