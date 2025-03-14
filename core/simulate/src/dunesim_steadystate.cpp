@@ -29,25 +29,6 @@ void DuneSimSteadyState::updateOldState() {
   }
 }
 
-void DuneSimSteadyState::calculateDcdt() {
-  dcdt.clear();
-  auto insert_here = dcdt.begin();
-
-  if (pDuneImpl2d != nullptr) {
-    for (const auto &compartment : pDuneImpl2d->getDuneCompartments()) {
-      std::ranges::transform(
-          compartment.concentration, old_state, insert_here,
-          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
-    }
-  } else {
-    for (const auto &compartment : pDuneImpl3d->getDuneCompartments()) {
-      std::ranges::transform(
-          compartment.concentration, old_state, insert_here,
-          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
-    }
-  }
-}
-
 // constructor
 DuneSimSteadyState::DuneSimSteadyState(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
@@ -74,6 +55,31 @@ DuneSimSteadyState::DuneSimSteadyState(
 // public member functions
 std::vector<double> DuneSimSteadyState::getDcdt() const { return dcdt; }
 
+void DuneSimSteadyState::compute_spatial_dcdt() {
+  dcdt.clear();
+  auto insert_here = dcdt.begin();
+  auto current_oldstate = old_state.begin();
+
+  if (pDuneImpl2d != nullptr) {
+    for (const auto &compartment : pDuneImpl2d->getDuneCompartments()) {
+      std::transform(
+          compartment.concentration.begin(), compartment.concentration.end(),
+          current_oldstate, insert_here,
+          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
+      current_oldstate += compartment.concentration.size();
+      insert_here += compartment.concentration.size();
+    }
+  } else {
+    for (const auto &compartment : pDuneImpl3d->getDuneCompartments()) {
+      std::transform(
+          compartment.concentration.begin(), compartment.concentration.end(),
+          current_oldstate, insert_here,
+          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
+      current_oldstate += compartment.concentration.size();
+      insert_here += compartment.concentration.size();
+    }
+  }
+}
 std::size_t
 DuneSimSteadyState::run(double timeout_ms,
                         const std::function<bool()> &stopRunningCallback) {

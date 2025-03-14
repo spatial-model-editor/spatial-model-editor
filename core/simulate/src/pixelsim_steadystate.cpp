@@ -12,9 +12,14 @@ PixelSimSteadyState::PixelSimSteadyState(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const std::map<std::string, double, std::less<>> &substitutions,
-    double stop_tolerance)
+    double meta_dt, double stop_tolerance)
     : PixelSim(sbmlDoc, compartmentIds, compartmentSpeciesIds, substitutions),
-      stop_tolerance(stop_tolerance) {}
+      meta_dt(meta_dt), stop_tolerance(stop_tolerance) {
+
+  // awkward but functional way to fix size of vectors
+  compute_spatial_dcdt();
+  old_state.reserve(dcdt.size());
+}
 
 std::size_t
 PixelSimSteadyState::run(double timeout_ms,
@@ -28,26 +33,25 @@ PixelSimSteadyState::run(double timeout_ms,
   QElapsedTimer timer;
   timer.start();
   double tNow = 0;
-  double time =
-      1.0; // set this to something small and increment during simulation
+  double time = 0;
   std::size_t steps = 0;
   discardedSteps = 0;
 
   // make this big to avoid immediate stop
   double current_max_dcdt = 1e3;
 
-  while (current_max_dcdt > stop_tolerance) {
+  while (std::abs(current_max_dcdt) > stop_tolerance) {
 
-    run_step(time, tNow);
+    run_step(meta_dt, tNow);
     if (!currentErrorMessage.empty()) {
       return steps;
     }
     ++steps;
-    time = tNow + 1.0; // increment time to run further.
-    calculateDcdt();   // TODO: make sure this does not just use the spatially
-                       // averaged dcdt, because we can miss local evolutions
-                       // otherwise
-    current_max_dcdt = std::ranges::max(getDcdt());
+    time = tNow + meta_dt; // increment time to run further.
+
+    compute_spatial_dcdt();
+    current_max_dcdt = *std::ranges::max_element(
+        dcdt, [](double a, double b) { return std::abs(a) < std::abs(b); });
 
     if (timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= timeout_ms) {
@@ -71,20 +75,30 @@ PixelSimSteadyState::run(double timeout_ms,
   return steps;
 }
 
-std::vector<double> PixelSimSteadyState::getDcdt() const {
+void PixelSimSteadyState::compute_spatial_dcdt() {
+  dcdt.clear();
 
-  // TODO: check if this is a problem performancewise because of the allocation
-  // involved here. Maybe use a side effect instead or find a good way to
-  // preallocate at least
-  std::vector<double> dcdt;
-
-  // is this correct or is there a better way to do it?
-  for (auto &&compartment : simCompartments) {
-    auto dcdtCompartment = compartment->getDcdt();
-    dcdt.insert(dcdt.end(), dcdtCompartment.begin(), dcdtCompartment.end());
+  // calculate dcd/dt in all compartments
+  // this is a repetition from calculateDcdt() but without spatial averaging
+  for (auto &sim : simCompartments) {
+    if (useTBB) {
+      sim->evaluateReactionsAndDiffusion_tbb();
+    } else {
+      sim->evaluateReactionsAndDiffusion();
+    }
+    dcdt.insert(dcdt.end(), sim->getDcdt().begin(), sim->getDcdt().end());
   }
-  dcdt.shrink_to_fit();
 
-  return dcdt;
+  // membrane contribution to dc/dt
+  for (auto &sim : simMembranes) {
+    sim->evaluateReactions();
+  }
+
+  for (auto &sim : simCompartments) {
+    dcdt.insert(dcdt.end(), sim->getDcdt().begin(), sim->getDcdt().end());
+  }
 }
+
+std::vector<double> PixelSimSteadyState::getDcdt() const { return dcdt; }
+
 } // namespace sme::simulate

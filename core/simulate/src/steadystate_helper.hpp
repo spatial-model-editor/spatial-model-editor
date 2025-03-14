@@ -4,6 +4,11 @@
 
 namespace sme {
 namespace simulate {
+
+/**
+ * @brief Base class for steady state simulations
+ *
+ */
 class SteadyStateHelper {
 public:
   [[nodiscard]] virtual std::vector<double> getDcdt() const = 0;

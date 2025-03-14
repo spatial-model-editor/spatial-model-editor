@@ -38,11 +38,11 @@ private:
   PixelIntegratorError errMax;
   double maxTimestep{std::numeric_limits<double>::max()};
   double nextTimestep{1e-7};
-  bool useTBB{false};
   common::ImageStack currentErrorImages{};
   std::size_t nExtraVars{0};
 
 protected:
+  bool useTBB{false};
   const model::Model &doc;
   std::vector<std::unique_ptr<SimCompartment>> simCompartments;
   std::vector<std::unique_ptr<SimMembrane>> simMembranes;
