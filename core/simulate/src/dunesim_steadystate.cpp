@@ -6,22 +6,73 @@
 #include <QFile>
 #include <QImage>
 #include <QPainter>
+#include <cmath>
 #include <vector>
 
 namespace sme::simulate {
-DuneSimSteadyState::DuneSimSteadyState(
-    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
-    double stop_tolerance,
-    const std::map<std::string, double, std::less<>> &substitutions)
-    : DuneSim(sbmlDoc, compartmentIds, substitutions),
-      stop_tolerance(stop_tolerance) {}
 
-double DuneSimSteadyState::get_dcdt_change_max(
-    const std::vector<double> &old, const std::vector<double> &current) const {
-  return 0;
+// private member functions
+void DuneSimSteadyState::updateOldState() {
+
+  old_state.clear();
+  auto insert_here = old_state.begin();
+  if (pDuneImpl2d != nullptr) {
+    for (const auto &compartment : pDuneImpl2d->getDuneCompartments()) {
+      insert_here = std::copy(compartment.concentration.begin(),
+                              compartment.concentration.end(), insert_here);
+    }
+  } else {
+    for (const auto &compartment : pDuneImpl3d->getDuneCompartments()) {
+      insert_here = std::copy(compartment.concentration.begin(),
+                              compartment.concentration.end(), insert_here);
+    }
+  }
 }
 
-std::vector<double> DuneSimSteadyState::getDcdt() const { return {}; }
+void DuneSimSteadyState::calculateDcdt() {
+  dcdt.clear();
+  auto insert_here = dcdt.begin();
+
+  if (pDuneImpl2d != nullptr) {
+    for (const auto &compartment : pDuneImpl2d->getDuneCompartments()) {
+      std::ranges::transform(
+          compartment.concentration, old_state, insert_here,
+          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
+    }
+  } else {
+    for (const auto &compartment : pDuneImpl3d->getDuneCompartments()) {
+      std::ranges::transform(
+          compartment.concentration, old_state, insert_here,
+          [this](double c, double c_old) { return (c - c_old) / meta_dt; });
+    }
+  }
+}
+
+// constructor
+DuneSimSteadyState::DuneSimSteadyState(
+    const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
+    double stop_tolerance, double meta_dt,
+    const std::map<std::string, double, std::less<>> &substitutions)
+    : DuneSim(sbmlDoc, compartmentIds, substitutions),
+      stop_tolerance(stop_tolerance), meta_dt(meta_dt) {
+  std::size_t statesize = 0;
+
+  if (pDuneImpl2d != nullptr) {
+    for (const auto &compartment : pDuneImpl2d->getDuneCompartments()) {
+      statesize += compartment.concentration.size();
+    }
+  } else {
+    for (const auto &compartment : pDuneImpl3d->getDuneCompartments()) {
+      statesize += compartment.concentration.size();
+    }
+  }
+  old_state.reserve(statesize);
+  updateOldState();
+  dcdt.reserve(statesize);
+}
+
+// public member functions
+std::vector<double> DuneSimSteadyState::getDcdt() const { return dcdt; }
 
 std::size_t
 DuneSimSteadyState::run(double timeout_ms,
@@ -31,25 +82,16 @@ DuneSimSteadyState::run(double timeout_ms,
   }
   QElapsedTimer timer;
   timer.start();
-  double time = 1.0;
   std::size_t steps = 0;
-  // primitive way to turn this into a steady state simulation
-  // that stops when the maximum change in dcdt is less than stop_tolerance:
+  double current_max_dcdt = 1e3;
 
-  auto old_dcdt = getDcdt();
-  auto new_dcdt = getDcdt();
-  // make this big to avoid immediate stop
-  std::ranges::for_each(new_dcdt, [](double x) { return x + 1e2; });
-  auto current_dcdt_change = get_dcdt_change_max(new_dcdt, old_dcdt);
-
-  while (current_dcdt_change > stop_tolerance) {
-    old_dcdt = getDcdt();
+  while (std::abs(current_max_dcdt) > stop_tolerance) {
 
     try {
       if (pDuneImpl2d != nullptr) {
-        pDuneImpl2d->run(time);
+        pDuneImpl2d->run(meta_dt);
       } else {
-        pDuneImpl3d->run(time);
+        pDuneImpl3d->run(meta_dt);
       }
       currentErrorMessage.clear();
     } catch (const Dune::Exception &e) {
@@ -57,9 +99,11 @@ DuneSimSteadyState::run(double timeout_ms,
       SPDLOG_ERROR("{}", currentErrorMessage);
       return 0;
     }
+    calculateDcdt();
+    current_max_dcdt = *std::ranges::max_element(
+        dcdt, [](double a, double b) { return std::abs(a) < std::abs(b); });
+    updateOldState();
     ++steps;
-    new_dcdt = getDcdt();
-    current_dcdt_change = get_dcdt_change_max(new_dcdt, old_dcdt);
 
     if (stopRunningCallback && stopRunningCallback()) {
       SPDLOG_DEBUG("Simulation cancelled: requesting stop");

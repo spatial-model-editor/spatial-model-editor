@@ -368,6 +368,7 @@ private:
     SPDLOG_INFO("end of interpolate");
   }
 
+public:
   const std::vector<DuneSimCompartment> &getDuneCompartments() const {
     return duneCompartments;
   }
