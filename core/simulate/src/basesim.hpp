@@ -12,7 +12,6 @@ namespace sme::simulate {
 class BaseSim {
 public:
   virtual ~BaseSim() = default;
-  virtual void run_step(double time, double tNow) = 0;
   virtual std::size_t run(double time, double timeout_ms,
                           const std::function<bool()> &stopRunningCallback) = 0;
   [[nodiscard]] virtual const std::vector<double> &
