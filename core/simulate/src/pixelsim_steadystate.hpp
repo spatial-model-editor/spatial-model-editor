@@ -9,9 +9,6 @@ class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
   double stop_tolerance;
 
 public:
-  [[nodiscard]] double get_first_order_dcdt_change_max(
-      const std::vector<double> &old,
-      const std::vector<double> &current) const override;
   [[nodiscard]] std::vector<double> getDcdt() const override;
 
   PixelSimSteadyState(
@@ -21,7 +18,7 @@ public:
       const std::map<std::string, double, std::less<>> &substitutions,
       double stop_tolerance);
 
-  std::size_t run(double time, double timeout_ms,
+  std::size_t run(double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
 };
 

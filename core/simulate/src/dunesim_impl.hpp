@@ -367,6 +367,10 @@ private:
     model->interpolate(*state, initialConditionFunctions);
     SPDLOG_INFO("end of interpolate");
   }
+
+  const std::vector<DuneSimCompartment> &getDuneCompartments() const {
+    return duneCompartments;
+  }
 };
 
 } // namespace sme::simulate

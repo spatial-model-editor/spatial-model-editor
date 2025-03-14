@@ -12,13 +12,9 @@ public:
       const std::vector<std::string> &compartmentIds, double stop_tolerance,
       const std::map<std::string, double, std::less<>> &substitutions = {});
 
-  double get_first_order_dcdt_change_max(
-      const std::vector<double> &old,
-      const std::vector<double> &current) const override;
-
   std::vector<double> getDcdt() const override;
 
-  std::size_t run(double time, double timeout_ms,
+  std::size_t run(double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
 };
 

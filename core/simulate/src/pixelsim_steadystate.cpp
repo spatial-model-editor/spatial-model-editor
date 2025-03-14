@@ -16,20 +16,8 @@ PixelSimSteadyState::PixelSimSteadyState(
     : PixelSim(sbmlDoc, compartmentIds, compartmentSpeciesIds, substitutions),
       stop_tolerance(stop_tolerance) {}
 
-double PixelSimSteadyState::get_first_order_dcdt_change_max(
-    const std::vector<double> &old, const std::vector<double> &current) const {
-  double max = 0;
-  for (std::size_t i = 0; i < old.size(); i++) {
-    double diff = std::abs(old[i] - current[i]);
-    if (diff > max) {
-      max = diff;
-    }
-  }
-  return max;
-}
-
 std::size_t
-PixelSimSteadyState::run(double time, double timeout_ms,
+PixelSimSteadyState::run(double timeout_ms,
                          const std::function<bool()> &stopRunningCallback) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
@@ -40,30 +28,26 @@ PixelSimSteadyState::run(double time, double timeout_ms,
   QElapsedTimer timer;
   timer.start();
   double tNow = 0;
+  double time =
+      1.0; // set this to something small and increment during simulation
   std::size_t steps = 0;
   discardedSteps = 0;
-  // do timesteps until we reach t
-  constexpr double relativeTolerance = 1e-12;
-
-  std::vector<double> old_Dcdt = getDcdt();
-  std::vector<double> new_Dcdt = getDcdt();
 
   // make this big to avoid immediate stop
-  std::ranges::for_each(new_Dcdt, [](double x) { return x + 1e3; });
-
-  double current_max_dcdt = get_first_order_dcdt_change_max(new_Dcdt, old_Dcdt);
+  double current_max_dcdt = 1e3;
 
   while (current_max_dcdt > stop_tolerance) {
-    calculateDcdt();
-    old_Dcdt = getDcdt();
+
     run_step(time, tNow);
     if (!currentErrorMessage.empty()) {
       return steps;
     }
     ++steps;
-    calculateDcdt();
-    new_Dcdt = getDcdt();
-    current_max_dcdt = get_first_order_dcdt_change_max(new_Dcdt, old_Dcdt);
+    time = tNow + 1.0; // increment time to run further.
+    calculateDcdt();   // TODO: make sure this does not just use the spatially
+                       // averaged dcdt, because we can miss local evolutions
+                       // otherwise
+    current_max_dcdt = std::ranges::max(getDcdt());
 
     if (timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= timeout_ms) {

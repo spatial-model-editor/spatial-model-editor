@@ -34,7 +34,7 @@ class DuneConverter;
 template <int DuneDimensions> class DuneImpl;
 
 class DuneSim : public BaseSim {
-private:
+protected:
   std::unique_ptr<DuneImpl<2>> pDuneImpl2d;
   std::unique_ptr<DuneImpl<3>> pDuneImpl3d;
   std::string currentErrorMessage{};
