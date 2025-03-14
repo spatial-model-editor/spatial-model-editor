@@ -7,12 +7,14 @@ target_sources(
           dunegrid.cpp
           duneini.cpp
           dunesim.cpp
+          dunesim_steadystate.cpp
           dunesim_impl.cpp
           optimize.cpp
           optimize_impl.cpp
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
+          pixelsim_steadystate.cpp
           simulate.cpp
           simulate_data.cpp
           simulate_options.cpp)
@@ -26,10 +28,12 @@ if(BUILD_TESTING)
            dunegrid_t.cpp
            duneini_t.cpp
            dunesim_t.cpp
+           dunesim_steadystate_t.cpp
            optimize_t.cpp
            optimize_impl_t.cpp
            pde_t.cpp
            pixelsim_t.cpp
+           pixelsim_steadystate_t.cpp
            simulate_data_t.cpp
            simulate_options_t.cpp
            simulate_t.cpp)

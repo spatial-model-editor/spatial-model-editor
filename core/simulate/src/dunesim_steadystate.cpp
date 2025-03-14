@@ -105,7 +105,7 @@ DuneSimSteadyState::run(double timeout_ms,
       SPDLOG_ERROR("{}", currentErrorMessage);
       return 0;
     }
-    calculateDcdt();
+    compute_spatial_dcdt();
     current_max_dcdt = *std::ranges::max_element(
         dcdt, [](double a, double b) { return std::abs(a) < std::abs(b); });
     updateOldState();
