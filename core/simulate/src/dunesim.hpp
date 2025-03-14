@@ -45,7 +45,7 @@ public:
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-  ~DuneSim() override;
+  virtual ~DuneSim() override;
   void run_step(double time, double tNow) override;
   virtual std::size_t
   run(double time, double timeout_ms,

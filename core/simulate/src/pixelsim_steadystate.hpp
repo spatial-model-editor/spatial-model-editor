@@ -1,18 +1,18 @@
 #pragma once
 #include "pixelsim.hpp"
-
+#include "steadystate_helper.hpp"
 namespace sme {
 
 namespace simulate {
 
-class PixelSimSteadyState : public PixelSim {
+class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
   double stop_tolerance;
 
 public:
-  [[nodiscard]] double
-  get_first_order_dcdt_change_max(const std::vector<double> &old,
-                                  const std::vector<double> &current) const;
-  [[nodiscard]] std::vector<double> getDcdt() const;
+  [[nodiscard]] double get_first_order_dcdt_change_max(
+      const std::vector<double> &old,
+      const std::vector<double> &current) const override;
+  [[nodiscard]] std::vector<double> getDcdt() const override;
 
   PixelSimSteadyState(
       const model::Model &sbmlDoc,
