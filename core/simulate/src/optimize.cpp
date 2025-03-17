@@ -347,18 +347,14 @@ Optimization::getUpdatedBestResultImage(std::size_t index) {
   return {};
 }
 
-common::ImageStack Optimization::getCurrentBestResultImage() {
+common::ImageStack Optimization::getCurrentBestResultImage() const {
   std::scoped_lock lock{bestResultsMutex};
-  SPDLOG_CRITICAL("getCurrentBestResultImage, {}, {}, {}",
-                  bestResults.values.size(), bestResults.imageIndex,
-                  optConstData->maxTargetValues.size());
+  SPDLOG_DEBUG("getCurrentBestResultImage, {}, {}, {}",
+               bestResults.values.size(), bestResults.imageIndex,
+               optConstData->maxTargetValues.size());
   if (bestResults.values.empty() or
       bestResults.imageIndex >= optConstData->maxTargetValues.size()) {
-    auto size = optConstData->imageSize;
-    auto v =
-        std::vector<double>(size.width() * size.height() * size.depth(), 0);
-    ;
-    return common::ImageStack(optConstData->imageSize, v, 0.0);
+    return common::ImageStack();
   }
   return common::ImageStack(
       optConstData->imageSize, bestResults.values[bestResults.imageIndex],
