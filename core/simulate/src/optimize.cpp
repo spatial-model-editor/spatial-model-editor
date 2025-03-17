@@ -12,6 +12,7 @@
 #include <pagmo/algorithms/pso.hpp>
 #include <pagmo/algorithms/pso_gen.hpp>
 #include <pagmo/algorithms/sade.hpp>
+#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace sme::simulate {
@@ -270,8 +271,8 @@ sme::common::Volume Optimization::getImageSize() {
 
 double Optimization::getMaxValue(std::size_t index) {
   if (index >= optConstData->maxTargetValues.size()) {
-    SPDLOG_CRITICAL("index outside of range for max value retrieval: {} , {}",
-                    index, optConstData->maxTargetValues.size());
+    SPDLOG_DEBUG("index outside of range for max value retrieval: {} , {}",
+                 index, optConstData->maxTargetValues.size());
     return 0;
   }
   return optConstData->maxTargetValues[index];
@@ -300,6 +301,10 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
   // called on an empty array.
   auto diff_values =
       std::vector<double>(size.width() * size.height() * size.depth(), 0);
+
+  if (bestResults.imageIndex == std::numeric_limits<std::size_t>::max()) {
+    return sme::common::ImageStack(size, diff_values, common::max(tgt_values));
+  }
   auto res_values = getBestResultValues(index);
   if (res_values.size() > 0) {
     std::ranges::transform(tgt_values, res_values, diff_values.begin(),
@@ -342,21 +347,29 @@ Optimization::getUpdatedBestResultImage(std::size_t index) {
   return {};
 }
 
-common::ImageStack Optimization::getCurrentBestResultImage() const {
+common::ImageStack Optimization::getCurrentBestResultImage() {
   std::scoped_lock lock{bestResultsMutex};
+  SPDLOG_CRITICAL("getCurrentBestResultImage, {}, {}, {}",
+                  bestResults.values.size(), bestResults.imageIndex,
+                  optConstData->maxTargetValues.size());
+  if (bestResults.values.empty() or
+      bestResults.imageIndex >= optConstData->maxTargetValues.size()) {
+    auto size = optConstData->imageSize;
+    auto v =
+        std::vector<double>(size.width() * size.height() * size.depth(), 0);
+    ;
+    return common::ImageStack(optConstData->imageSize, v, 0.0);
+  }
   return common::ImageStack(
       optConstData->imageSize, bestResults.values[bestResults.imageIndex],
       optConstData->maxTargetValues[bestResults.imageIndex]);
 }
 
 std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
-  std::scoped_lock lock{
-      bestResultsMutex}; // TODO: lock to avoid getting while it's still set?
-                         // not sure it's necessary, but will leave it here just
-                         // to be sure
+  std::scoped_lock lock{bestResultsMutex};
   if (index > bestResults.values.size() or bestResults.values.empty()) {
-    SPDLOG_CRITICAL("index outside of range for result retrieval: {} , {}",
-                    index, bestResults.values.size());
+    SPDLOG_DEBUG("index outside of range for result retrieval: {} , {}", index,
+                 bestResults.values.size());
     return {};
   }
   return bestResults.values[index];
@@ -365,8 +378,8 @@ std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
 std::vector<double> Optimization::getTargetValues(std::size_t index) const {
 
   if (index > optConstData->optimizeOptions.optCosts.size()) {
-    SPDLOG_CRITICAL("index outside of range for target retrieval: {} , {}",
-                    index, bestResults.values.size());
+    SPDLOG_DEBUG("index outside of range for target retrieval: {} , {}", index,
+                 bestResults.values.size());
     return {};
   }
 

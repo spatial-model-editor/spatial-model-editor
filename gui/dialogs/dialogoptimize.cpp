@@ -243,16 +243,16 @@ void DialogOptimize::differenceMode_clicked() {
   // displays the naive difference of target and best result in the first
   // plot pane.
 
-  SPDLOG_CRITICAL("Difference mode clicked {}", differenceMode);
+  SPDLOG_DEBUG("Difference mode clicked {}", differenceMode);
 
   if (m_opt == nullptr) {
     return;
   }
 
   differenceMode = !differenceMode;
-  SPDLOG_CRITICAL("Difference mode after: {}", differenceMode);
+  SPDLOG_DEBUG("Difference mode after: {}", differenceMode);
 
-  ui->lblResult->setVisible(!differenceMode);
+  ui->lblResult->setVisible(!differenceMode && vizMode == VizMode::_2D);
   ui->lblResult3D->setVisible(!differenceMode && vizMode == VizMode::_3D);
   ui->lblResultLabel->setVisible(!differenceMode);
 
@@ -267,12 +267,12 @@ void DialogOptimize::differenceMode_clicked() {
     // reset the images when the difference mode is turned off
     ui->lblTargetLabel->setText("Target values:");
   }
-  SPDLOG_CRITICAL("res label visible: {}", ui->lblResultLabel->isVisible());
-  SPDLOG_CRITICAL("2d res visible: {}", ui->lblResult->isVisible());
-  SPDLOG_CRITICAL("3d res visible: {}", ui->lblResult3D->isVisible());
-  SPDLOG_CRITICAL("2d tgt visible: {}", ui->lblTarget->isVisible());
-  SPDLOG_CRITICAL("3d tgt visible: {}", ui->lblTarget3D->isVisible());
-  SPDLOG_CRITICAL("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
+  SPDLOG_DEBUG("res label visible: {}", ui->lblResultLabel->isVisible());
+  SPDLOG_DEBUG("2d res visible: {}", ui->lblResult->isVisible());
+  SPDLOG_DEBUG("3d res visible: {}", ui->lblResult3D->isVisible());
+  SPDLOG_DEBUG("2d tgt visible: {}", ui->lblTarget->isVisible());
+  SPDLOG_DEBUG("3d tgt visible: {}", ui->lblTarget3D->isVisible());
+  SPDLOG_DEBUG("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
 }
 
 void DialogOptimize::updatePlots() {
@@ -339,12 +339,12 @@ void DialogOptimize::updateTargetImage() {
   }
 
   auto variable = ui->cmbTarget->currentIndex();
-  SPDLOG_INFO(" Updating target image for variable {}", variable);
+  SPDLOG_DEBUG(" Updating target image for variable {}", variable);
 
   auto img = differenceMode ? m_opt->getDifferenceImage(variable)
                             : m_opt->getTargetImage(variable);
-  SPDLOG_INFO("difference mode: {}", differenceMode);
-  SPDLOG_INFO(" data: {}, empty: {}", img.volume().depth(), img.empty());
+  SPDLOG_DEBUG("difference mode: {}", differenceMode);
+  SPDLOG_DEBUG(" data: {}, empty: {}", img.volume().depth(), img.empty());
 
   if (vizMode == VizMode::_2D) {
     SPDLOG_INFO("Updating target image for 2D visualization ");
@@ -355,12 +355,14 @@ void DialogOptimize::updateTargetImage() {
     ui->lblTarget->setZIndex(z);
     ui->zaxis->setMaximum(ui->lblTarget->getImage().volume().depth());
     ui->zaxis->setValue(z);
+    ui->lblTarget3D->updateGeometry();
 
   } else {
-    SPDLOG_INFO("Updating target image for 3D visualization: 2D visible? {}, "
-                "3d visible? {}",
-                ui->lblTarget->isVisible(), ui->lblTarget3D->isVisible());
+    SPDLOG_DEBUG("Updating target image for 3D visualization: 2D visible? {}, "
+                 "3d visible? {}",
+                 ui->lblTarget->isVisible(), ui->lblTarget3D->isVisible());
     ui->lblTarget3D->setImage(img);
+    ui->lblTarget3D->updateGeometry();
   }
 }
 
@@ -376,23 +378,19 @@ void DialogOptimize::updateResultImage() {
     ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
     ui->lblResult->setZSlider(ui->zaxis);
     ui->lblResult->setZIndex(z);
-
-    // which of this shit do I need really?
     ui->lblResult->updateGeometry();
-    ui->lblResult->parentWidget()->layout()->invalidate();
-    ui->lblResult->parentWidget()->layout()->activate();
-    ui->lblResult->parentWidget()->adjustSize();
+    // ui->lblResult->parentWidget()->layout()->invalidate();
+    // ui->lblResult->parentWidget()->layout()->activate();
+    // ui->lblResult->parentWidget()->adjustSize();
   } else {
-    SPDLOG_INFO("Updating result image for 3D visualization  2D visible? {}, "
-                "3d visible? {}",
-                ui->lblResult->isVisible(), ui->lblResult3D->isVisible());
+    SPDLOG_DEBUG("Updating result image for 3D visualization  2D visible? {}, "
+                 "3d visible? {}",
+                 ui->lblResult->isVisible(), ui->lblResult3D->isVisible());
     ui->lblResult3D->setImage(m_opt->getCurrentBestResultImage());
-
-    // which of this shit do I need really?
     ui->lblResult3D->updateGeometry();
-    ui->lblResult3D->parentWidget()->layout()->invalidate();
-    ui->lblResult3D->parentWidget()->layout()->activate();
-    ui->lblResult3D->parentWidget()->adjustSize();
+    // ui->lblResult3D->parentWidget()->layout()->invalidate();
+    // ui->lblResult3D->parentWidget()->layout()->activate();
+    // ui->lblResult3D->parentWidget()->adjustSize();
   }
 }
 

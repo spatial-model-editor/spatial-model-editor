@@ -145,8 +145,6 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       {}});
 
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
-    SPDLOG_CRITICAL("Optimizing with algorithm {}",
-                    static_cast<int>(optAlgorithmType));
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
     if (optAlgorithmType == sme::simulate::OptAlgorithmType::DE) {
