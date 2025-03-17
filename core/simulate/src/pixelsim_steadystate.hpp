@@ -23,6 +23,12 @@ public:
    */
   [[nodiscard]] std::vector<double> getDcdt() const override;
 
+  [[nodiscard]] const std::vector<double> &getOldState() const;
+
+  [[nodiscard]] double getMetaDt() const;
+
+  [[nodiscard]] double getStopTolerance() const;
+
   /**
    * @brief Compute dc/dt over all compartments, but without spatial averaging.
    * This is needed for steady state calculations because averaging might drown
@@ -46,8 +52,8 @@ public:
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-      const std::map<std::string, double, std::less<>> &substitutions,
-      double meta_dt, double stop_tolerance);
+      double meta_dt, double stop_tolerance,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
 
   /**
    * @brief TODO

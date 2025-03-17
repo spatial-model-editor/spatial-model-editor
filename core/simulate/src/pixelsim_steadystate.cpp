@@ -11,8 +11,8 @@ namespace sme::simulate {
 PixelSimSteadyState::PixelSimSteadyState(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-    const std::map<std::string, double, std::less<>> &substitutions,
-    double meta_dt, double stop_tolerance)
+    double meta_dt, double stop_tolerance,
+    const std::map<std::string, double, std::less<>> &substitutions)
     : PixelSim(sbmlDoc, compartmentIds, compartmentSpeciesIds, substitutions),
       meta_dt(meta_dt), stop_tolerance(stop_tolerance) {
 
@@ -101,4 +101,9 @@ void PixelSimSteadyState::compute_spatial_dcdt() {
 
 std::vector<double> PixelSimSteadyState::getDcdt() const { return dcdt; }
 
+const std::vector<double> &PixelSimSteadyState::getOldState() const {
+  return old_state;
+}
+double PixelSimSteadyState::getMetaDt() const { return meta_dt; }
+double PixelSimSteadyState::getStopTolerance() const { return stop_tolerance; }
 } // namespace sme::simulate
