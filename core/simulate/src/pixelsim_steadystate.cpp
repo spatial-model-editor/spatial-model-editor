@@ -10,10 +10,10 @@ namespace sme::simulate {
 PixelSimSteadyState::PixelSimSteadyState(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-    double meta_dt, double stop_tolerance,
+    double stop_tolerance,
     const std::map<std::string, double, std::less<>> &substitutions)
     : PixelSim(sbmlDoc, compartmentIds, compartmentSpeciesIds, substitutions),
-      meta_dt(meta_dt), stop_tolerance(stop_tolerance) {}
+      stop_tolerance(stop_tolerance) {}
 
 double
 PixelSimSteadyState::run(double timeout_ms,
@@ -125,8 +125,6 @@ double PixelSimSteadyState::compute_stopping_criterion(
   double relative_norm = dcdt_norm / std::max(c_norm, 1e-12);
   return relative_norm;
 }
-
-double PixelSimSteadyState::getMetaDt() const { return meta_dt; }
 
 double PixelSimSteadyState::getStopTolerance() const { return stop_tolerance; }
 } // namespace sme::simulate

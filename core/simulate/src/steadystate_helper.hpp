@@ -10,6 +10,11 @@ namespace simulate {
  */
 class SteadyStateHelper {
 public:
+  [[nodiscard]] virtual double getStopTolerance() const = 0;
+  [[nodiscard]] virtual std::vector<double> getConcentrations() const = 0;
+  [[nodiscard]] virtual double
+  compute_stopping_criterion(const std::vector<double> &c_old,
+                             const std::vector<double> &c_new, double dt) = 0;
   [[nodiscard]] virtual double
   run(double timeout_ms, const std::function<bool()> &stopRunningCallback) = 0;
   virtual ~SteadyStateHelper() = default;

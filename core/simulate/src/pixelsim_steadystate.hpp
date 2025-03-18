@@ -11,13 +11,17 @@ namespace simulate {
  *
  */
 class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
-  double meta_dt; // pseudo timestep for the steady state simulation
   double stop_tolerance;
 
 public:
-  [[nodiscard]] double getMetaDt() const;
+  [[nodiscard]] double getStopTolerance() const override;
 
-  [[nodiscard]] double getStopTolerance() const;
+  /**
+   * @brief Get the Concentrations object
+   *
+   * @return std::vector<double>
+   */
+  std::vector<double> getConcentrations() const override;
 
   /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
@@ -29,7 +33,7 @@ public:
    */
   double compute_stopping_criterion(const std::vector<double> &c_old,
                                     const std::vector<double> &c_new,
-                                    double dt);
+                                    double dt) override;
 
   /**
    * @brief Construct a new PixelSimSteadyState object
@@ -45,15 +49,8 @@ public:
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
-      double meta_dt, double stop_tolerance,
+      double stop_tolerance,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-
-  /**
-   * @brief Get the Concentrations object
-   *
-   * @return std::vector<double>
-   */
-  std::vector<double> getConcentrations() const;
 
   /**
    * @brief Run the simulation until a steady state is reached
