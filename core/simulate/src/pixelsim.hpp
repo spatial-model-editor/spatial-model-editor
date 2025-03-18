@@ -60,7 +60,7 @@ public:
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   virtual ~PixelSim() override;
-  void run_step(double time, double tNow);
+  double run_step(double time, double tNow);
   virtual std::size_t
   run(double time, double timeout_ms,
       const std::function<bool()> &stopRunningCallback) override;
@@ -75,6 +75,7 @@ public:
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
   void setStopRequested(bool stop) override;
+  double compute_stopping_criterion();
 };
 
 } // namespace simulate

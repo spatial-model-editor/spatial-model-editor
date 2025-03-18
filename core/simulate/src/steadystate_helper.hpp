@@ -1,6 +1,5 @@
 #pragma once
 #include <functional>
-#include <vector>
 
 namespace sme {
 namespace simulate {
@@ -11,8 +10,7 @@ namespace simulate {
  */
 class SteadyStateHelper {
 public:
-  [[nodiscard]] virtual std::vector<double> getDcdt() const = 0;
-  [[nodiscard]] virtual std::size_t
+  [[nodiscard]] virtual double
   run(double timeout_ms, const std::function<bool()> &stopRunningCallback) = 0;
   virtual ~SteadyStateHelper() = default;
 };

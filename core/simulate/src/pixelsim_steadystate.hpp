@@ -1,6 +1,7 @@
 #pragma once
 #include "pixelsim.hpp"
 #include "steadystate_helper.hpp"
+
 namespace sme {
 
 namespace simulate {
@@ -10,33 +11,25 @@ namespace simulate {
  *
  */
 class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
-  std::vector<double> dcdt;
-  std::vector<double> old_state;
   double meta_dt; // pseudo timestep for the steady state simulation
   double stop_tolerance;
 
 public:
-  /**
-   * @brief Get the Dcdt object
-   *
-   * @return std::vector<double>
-   */
-  [[nodiscard]] std::vector<double> getDcdt() const override;
-
-  [[nodiscard]] const std::vector<double> &getOldState() const;
-
   [[nodiscard]] double getMetaDt() const;
 
   [[nodiscard]] double getStopTolerance() const;
 
   /**
-   * @brief Compute dc/dt over all compartments, but without spatial averaging.
-   * This is needed for steady state calculations because averaging might drown
-   * out some still evolving parts of the domain if all the rest is already at
-   * steady state.
+   * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
    *
+   * @param c_old
+   * @param c_new
+   * @param dt
+   * @return double
    */
-  void compute_spatial_dcdt();
+  double compute_stopping_criterion(const std::vector<double> &c_old,
+                                    const std::vector<double> &c_new,
+                                    double dt);
 
   /**
    * @brief Construct a new PixelSimSteadyState object
@@ -56,14 +49,21 @@ public:
       const std::map<std::string, double, std::less<>> &substitutions = {});
 
   /**
-   * @brief TODO
+   * @brief Get the Concentrations object
+   *
+   * @return std::vector<double>
+   */
+  std::vector<double> getConcentrations() const;
+
+  /**
+   * @brief Run the simulation until a steady state is reached
    *
    * @param timeout_ms
    * @param stopRunningCallback
-   * @return std::size_t
+   * @return double the final value for the maximum dc_i/dt in any compartment
    */
-  std::size_t run(double timeout_ms,
-                  const std::function<bool()> &stopRunningCallback) override;
+  double run(double timeout_ms,
+             const std::function<bool()> &stopRunningCallback) override;
 };
 
 } // namespace simulate

@@ -297,7 +297,7 @@ PixelSim::PixelSim(
 
 PixelSim::~PixelSim() = default;
 
-void PixelSim::run_step(double time, double tNow) {
+double PixelSim::run_step(double time, double tNow) {
   double maxDt = std::min(maxTimestep, time - tNow);
   if (integrator == PixelIntegratorType::RK101) {
     double timestep = std::min(maxDt, maxStableTimestep);
@@ -306,6 +306,7 @@ void PixelSim::run_step(double time, double tNow) {
   } else {
     tNow += doRKAdaptive(maxDt);
   }
+  return tNow;
 }
 
 std::size_t PixelSim::run(double time, double timeout_ms,
@@ -313,6 +314,7 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
+
   currentErrorMessage.clear();
   oneapi::tbb::global_control control(
       oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
@@ -324,7 +326,8 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   // do timesteps until we reach t
   constexpr double relativeTolerance = 1e-12;
   while (tNow + time * relativeTolerance < time) {
-    run_step(time, tNow);
+    tNow = run_step(time, tNow);
+
     if (!currentErrorMessage.empty()) {
       return steps;
     }
@@ -379,5 +382,4 @@ const common::ImageStack &PixelSim::errorImages() const {
 }
 
 void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
-
 } // namespace sme::simulate
