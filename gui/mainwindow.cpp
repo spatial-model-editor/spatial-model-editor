@@ -14,6 +14,7 @@
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
+#include "sme/simulate_options.hpp"
 #include "tabevents.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
@@ -330,6 +331,12 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   if (model.getSimulationSettings().simulatorType ==
       sme::simulate::SimulatorType::DUNE) {
     ui->actionSimTypeDUNE->setChecked(true);
+  } else if (model.getSimulationSettings().simulatorType ==
+             sme::simulate::SimulatorType::DUNESteadyState) {
+    ui->actionDUNE_steady_state_FEM->setChecked(true);
+  } else if (model.getSimulationSettings().simulatorType ==
+             sme::simulate::SimulatorType::PixelSteadysState) {
+    ui->actionPixel_steady_state_FDM->setChecked(true);
   } else {
     ui->actionSimTypePixel->setChecked(true);
   }

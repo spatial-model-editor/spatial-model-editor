@@ -240,7 +240,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>29</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -315,6 +315,9 @@
      </property>
      <addaction name="actionSimTypeDUNE"/>
      <addaction name="actionSimTypePixel"/>
+     <addaction name="separator"/>
+     <addaction name="actionPixel_steady_state_FDM"/>
+     <addaction name="actionDUNE_steady_state_FEM"/>
     </widget>
     <addaction name="actionSet_model_units"/>
     <addaction name="actionEdit_geometry_image"/>
@@ -640,6 +643,22 @@
   <action name="action_SelKov3D">
    <property name="text">
     <string>&amp;SelKov3D</string>
+   </property>
+  </action>
+  <action name="actionDUNE_steady_state_FEM">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>DUNE steady state (FEM)</string>
+   </property>
+  </action>
+  <action name="actionPixel_steady_state_FDM">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Pixel steady state (FDM)</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">

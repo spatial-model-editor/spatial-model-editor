@@ -18,7 +18,7 @@ namespace sme::simulate {
 std::optional<std::vector<std::pair<std::size_t, double>>>
 parseSimulationTimes(const QString &lengths, const QString &intervals);
 
-enum class SimulatorType { DUNE, Pixel };
+enum class SimulatorType { DUNE, Pixel, DUNESteadyState, PixelSteadysState };
 
 enum class DuneDiscretizationType { FEM1 };
 
