@@ -7,8 +7,33 @@ using namespace sme::test;
 
 TEST_CASE("DuneSimSteadyState", "[core/simulate/dunesim][core/"
                                 "simulate][core][simulate][dunesim][dune]") {
-  SECTION("DUNE_steadystate_construction") { REQUIRE(3 == 6); }
-  SECTION("DUNE_steadystate_run") { REQUIRE(3 == 6); }
-  SECTION("DUNE_steadystate_getDcdt") { REQUIRE(3 == 6); }
-  SECTION("DUNE_steadystate_calculateDcdt") { REQUIRE(3 == 6); }
+  auto m{getExampleModel(Mod::GrayScott)};
+  std::vector<std::string> comps{"compartment"};
+  std::vector<std::vector<std::string>> specs{{"U", "V"}};
+  double stop_tolerance = 1e-8;
+  SECTION("construct") {
+    simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
+    REQUIRE(duneSim.errorMessage().empty());
+    REQUIRE(duneSim.getStopTolerance() == stop_tolerance);
+  }
+  SECTION("timeout_simulation") {
+    simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
+    double normdc_dt = duneSim.run(50, []() { return false; });
+    REQUIRE(duneSim.errorMessage() == "Simulation timeout");
+    REQUIRE(normdc_dt > stop_tolerance);
+  }
+  SECTION("Run_until_convergence") {
+    simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
+    double normdc_dt = duneSim.run(500000, []() { return false; });
+    if (not duneSim.errorMessage().empty()) {
+      SPDLOG_CRITICAL("error message: {}", duneSim.errorMessage());
+    }
+    REQUIRE(duneSim.errorMessage().empty());
+    REQUIRE(normdc_dt < stop_tolerance);
+  }
+  SECTION("Callback_is_provided_and_used_to_stop_simulation") {
+    simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
+    duneSim.run(-1, []() { return true; });
+    REQUIRE(duneSim.errorMessage() == "Simulation cancelled");
+  }
 }

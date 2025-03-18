@@ -11,11 +11,6 @@ namespace simulate {
  */
 class DuneSimSteadyState final : public DuneSim, public SteadyStateHelper {
   double stop_tolerance;
-  std::vector<double> old_state;
-  std::vector<double> dcdt;
-  double meta_dt;
-
-  void updateOldState();
 
 public:
   /**
@@ -31,32 +26,43 @@ public:
   explicit DuneSimSteadyState(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds, double stop_tolerance,
-      double meta_dt = 1.0,
       const std::map<std::string, double, std::less<>> &substitutions = {});
 
   /**
-   * @brief Calculate a first order estimate of the time derivative of the
-   * concentrations.
+   * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
    *
+   * @param c_old
+   * @param c_new
+   * @param dt
+   * @return double
    */
-  void compute_spatial_dcdt();
-
+  double compute_stopping_criterion(const std::vector<double> &c_old,
+                                    const std::vector<double> &c_new,
+                                    double dt) override;
   /**
-   * @brief Get the time derivative object
+   * @brief Get the Concentrations object
    *
    * @return std::vector<double>
    */
-  std::vector<double> getDcdt() const override;
+  std::vector<double> getConcentrations() const override;
 
   /**
    * @brief Run the simulation until steady state is reached.
    *
    * @param timeout_ms
    * @param stopRunningCallback
-   * @return std::size_t
+   * @return double The final value for the maximum of dc_i/dt over all
+   * compartments
    */
-  std::size_t run(double timeout_ms,
-                  const std::function<bool()> &stopRunningCallback) override;
+  double run(double timeout_ms,
+             const std::function<bool()> &stopRunningCallback) override;
+
+  /**
+   * @brief Get the number below which dc/dt is considered zero during a run
+   *
+   * @return double stop tolerance
+   */
+  double getStopTolerance() const override;
 };
 
 } // namespace simulate
