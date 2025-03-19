@@ -300,7 +300,7 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
   // separate allocation to make sure that common::max does not segfault when
   // called on an empty array.
   auto diff_values =
-      std::vector<double>(size.width() * size.height() * size.depth(), 0);
+      std::vector<double>(size.nVoxels(), 0);
 
   if (bestResults.imageIndex == std::numeric_limits<std::size_t>::max()) {
     return sme::common::ImageStack(size, diff_values, common::max(tgt_values));
