@@ -73,7 +73,7 @@ DuneSimSteadyState::run(double time, double timeout_ms,
   std::size_t steps_within_tolerance = 0;
   std::size_t steps = 0;
   SPDLOG_DEBUG("Starting DuneSimSteadyState::run");
-  while (current_error > stop_tolerance) {
+  while (steps_within_tolerance < 10) {
     std::vector<double> c_old = getConcentrations();
     SPDLOG_DEBUG("current time: {}, norm: {}, timeout - elapsed: "
                  "{},steps_within_tolerance: {}",
