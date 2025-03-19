@@ -72,14 +72,14 @@ DuneSimSteadyState::run(double time, double timeout_ms,
   timer.start();
   std::size_t steps_within_tolerance = 0;
   std::size_t steps = 0;
-  SPDLOG_CRITICAL("Starting DuneSimSteadyState::run");
+  SPDLOG_DEBUG("Starting DuneSimSteadyState::run");
   while (current_error > stop_tolerance) {
     std::vector<double> c_old = getConcentrations();
-    SPDLOG_CRITICAL("current time: {}, norm: {}, timeout - elapsed: "
-                    "{},steps_within_tolerance: {}",
-                    time, current_error,
-                    timeout_ms - static_cast<double>(timer.elapsed()),
-                    steps_within_tolerance);
+    SPDLOG_DEBUG("current time: {}, norm: {}, timeout - elapsed: "
+                 "{},steps_within_tolerance: {}",
+                 time, current_error,
+                 timeout_ms - static_cast<double>(timer.elapsed()),
+                 steps_within_tolerance);
     try {
       if (pDuneImpl2d != nullptr) {
         pDuneImpl2d->run(time);

@@ -10,7 +10,7 @@
 #include <QSlider>
 
 using namespace sme::test;
-
+// TODO: add tests for the steady state solver
 TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   QLabelMouseTracker mouseTracker;
   QVoxelRenderer voxelRenderer;
@@ -98,7 +98,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     REQUIRE(btnSimulate->isEnabled() == true);
 
     // new simulation using Pixel simulator
-    tab.useSimulator(false);
+    tab.useSimulator("Pixel");
     sendMouseClick(btnSimulate);
     REQUIRE(btnSimulate->isEnabled() == false);
     while (!btnSimulate->isEnabled()) {
@@ -168,7 +168,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     REQUIRE(model.getSpecies().getIsSpatial("A") == false);
     mwt.addUserAction({"Esc"});
     mwt.start();
-    tab.useSimulator(true);
+    tab.useSimulator("DUNE");
     QString invalidDune{"The model contains non-spatial species, which are not "
                         "currently supported by DuneCopasi. Would you like to "
                         "use the Pixel simulator instead?"};

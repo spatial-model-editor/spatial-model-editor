@@ -18,14 +18,14 @@ TEST_CASE("DuneSimSteadyState", "[core/simulate/dunesim][core/"
   }
   SECTION("timeout_simulation") {
     simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
-    std::size_t steps = duneSim.run(0.2, 50, []() { return false; });
+    std::size_t steps = duneSim.run(10.0, 50, []() { return false; });
     REQUIRE(duneSim.errorMessage() == "Simulation timeout");
     REQUIRE(duneSim.getCurrentError() > stop_tolerance);
     REQUIRE(steps > 0);
   }
   SECTION("Run_until_convergence") {
     simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
-    std::size_t steps = duneSim.run(0.2, 500000, []() { return false; });
+    std::size_t steps = duneSim.run(10.0, 500000, []() { return false; });
     if (not duneSim.errorMessage().empty()) {
       SPDLOG_CRITICAL("error message: {}", duneSim.errorMessage());
     }
@@ -35,7 +35,7 @@ TEST_CASE("DuneSimSteadyState", "[core/simulate/dunesim][core/"
   }
   SECTION("Callback_is_provided_and_used_to_stop_simulation") {
     simulate::DuneSimSteadyState duneSim(m, comps, stop_tolerance);
-    std::size_t steps = duneSim.run(0.2, -1, []() { return true; });
+    std::size_t steps = duneSim.run(10.0, -1, []() { return true; });
     REQUIRE(duneSim.errorMessage() == "Simulation cancelled");
     REQUIRE(duneSim.getCurrentError() > stop_tolerance);
     REQUIRE(steps > 0);
