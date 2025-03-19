@@ -295,7 +295,7 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
 
   auto size = getImageSize();
   // size.depth(), index);
-  auto tgt_values = getTargetValues(index);
+  const std::vector<double> &tgt_values = getTargetValues(index);
 
   // separate allocation to make sure that common::max does not segfault when
   // called on an empty array.
@@ -362,7 +362,7 @@ common::ImageStack Optimization::getCurrentBestResultImage() const {
 
 std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
   std::scoped_lock lock{bestResultsMutex};
-  if (index > bestResults.values.size() or bestResults.values.empty()) {
+  if (index >= bestResults.values.size() or bestResults.values.empty()) {
     SPDLOG_DEBUG("index outside of range for result retrieval: {} , {}", index,
                  bestResults.values.size());
     return {};
@@ -372,7 +372,7 @@ std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
 
 std::vector<double> Optimization::getTargetValues(std::size_t index) const {
 
-  if (index > optConstData->optimizeOptions.optCosts.size()) {
+  if (index >= optConstData->optimizeOptions.optCosts.size()) {
     SPDLOG_DEBUG("index outside of range for target retrieval: {} , {}", index,
                  bestResults.values.size());
     return {};
