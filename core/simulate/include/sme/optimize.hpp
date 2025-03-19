@@ -119,7 +119,7 @@ public:
   /**
    * @brief Get the raw values of the optimization target
    */
-  [[nodiscard]] std::vector<double> getTargetValues(std::size_t index) const;
+  [[nodiscard]] const std::vector<double>& getTargetValues(std::size_t index) const;
 
   /**
    * @brief Get an image of the current best result for a target
