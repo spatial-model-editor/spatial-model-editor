@@ -17,7 +17,7 @@ DuneSimSteadyState::DuneSimSteadyState(
     double stop_tolerance,
     const std::map<std::string, double, std::less<>> &substitutions)
     : DuneSim(sbmlDoc, compartmentIds, substitutions),
-      stop_tolerance(stop_tolerance) {}
+      stop_tolerance(stop_tolerance), current_error(1.0) {}
 
 std::vector<double> DuneSimSteadyState::getConcentrations() const {
   std::vector<double> c;
@@ -35,10 +35,14 @@ std::vector<double> DuneSimSteadyState::getConcentrations() const {
   return c;
 }
 
+void DuneSimSteadyState::setStopTolerance(double stop_tolerance) {
+  this->stop_tolerance = stop_tolerance;
+}
+
 double
-DuneSimSteadyState::compute_stopping_criterion(const std::vector<double> &c_old,
-                                               const std::vector<double> &c_new,
-                                               double dt) {
+DuneSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
+                                             const std::vector<double> &c_new,
+                                             double dt) {
   // TODO: this works because everything is implemented here, but we have
   // an estimate for dcdt already in the system, which however I could not
   // get to work correctly within the stopping criterion.
@@ -58,8 +62,8 @@ DuneSimSteadyState::compute_stopping_criterion(const std::vector<double> &c_old,
   return relative_norm;
 }
 
-double
-DuneSimSteadyState::run(double timeout_ms,
+std::size_t
+DuneSimSteadyState::run(double time, double timeout_ms,
                         const std::function<bool()> &stopRunningCallback) {
   if (pDuneImpl2d == nullptr && pDuneImpl3d == nullptr) {
     return 0;
@@ -67,15 +71,13 @@ DuneSimSteadyState::run(double timeout_ms,
   QElapsedTimer timer;
   timer.start();
   std::size_t steps_within_tolerance = 0;
-  double dt = 0.2;   // dummy time. run timestepper for this time, then check if
-  double time = 0.2; // it's reached a steady state
-  double norm = 1.0;
+  std::size_t steps = 0;
   SPDLOG_CRITICAL("Starting DuneSimSteadyState::run");
-  while (norm > stop_tolerance) {
+  while (current_error > stop_tolerance) {
     std::vector<double> c_old = getConcentrations();
     SPDLOG_CRITICAL("current time: {}, norm: {}, timeout - elapsed: "
                     "{},steps_within_tolerance: {}",
-                    time, norm,
+                    time, current_error,
                     timeout_ms - static_cast<double>(timer.elapsed()),
                     steps_within_tolerance);
     try {
@@ -90,18 +92,18 @@ DuneSimSteadyState::run(double timeout_ms,
       SPDLOG_ERROR("{}", currentErrorMessage);
       break;
     }
-    time += dt;
+    steps += 1;
     std::vector<double> c_new = getConcentrations();
-    norm = compute_stopping_criterion(c_old, c_new, dt);
-    if (std::isnan(norm)) {
+    current_error = computeStoppingCriterion(c_old, c_new, time);
+    if (std::isnan(current_error)) {
       currentErrorMessage = "Simulation failed: NaN detected in norm";
       SPDLOG_DEBUG("Simulation failed: NaN detected");
       break;
     }
-    if (norm < stop_tolerance) {
+    if (current_error < stop_tolerance) {
       ++steps_within_tolerance;
     }
-    if (stop_tolerance > 0 and norm > stop_tolerance) {
+    if (stop_tolerance > 0 and current_error > stop_tolerance) {
       steps_within_tolerance = 0;
     }
     if (stopRunningCallback && stopRunningCallback()) {
@@ -116,9 +118,9 @@ DuneSimSteadyState::run(double timeout_ms,
       break;
     }
   }
-  return norm;
+  return steps;
 }
-
+double DuneSimSteadyState::getCurrentError() const { return current_error; }
 double DuneSimSteadyState::getStopTolerance() const { return stop_tolerance; }
 
 } // namespace sme::simulate

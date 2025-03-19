@@ -13,10 +13,10 @@ PixelSimSteadyState::PixelSimSteadyState(
     double stop_tolerance,
     const std::map<std::string, double, std::less<>> &substitutions)
     : PixelSim(sbmlDoc, compartmentIds, compartmentSpeciesIds, substitutions),
-      stop_tolerance(stop_tolerance) {}
+      stop_tolerance(stop_tolerance), current_error(0) {}
 
-double
-PixelSimSteadyState::run(double timeout_ms,
+std::size_t
+PixelSimSteadyState::run(double time, double timeout_ms,
                          const std::function<bool()> &stopRunningCallback) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
@@ -27,13 +27,12 @@ PixelSimSteadyState::run(double timeout_ms,
   QElapsedTimer timer;
   timer.start();
   double tNow = 0;
-  double time = 1e6;
   std::size_t steps = 0;
   std::size_t steps_within_tolerance = 0;
   discardedSteps = 0;
   // do timesteps until we reach t
   constexpr double relativeTolerance = 1e-12;
-  double norm = 1.0;
+  current_error = 1.0;
   while (steps_within_tolerance < 10) {
     if (steps % 10000 == 0) {
       SPDLOG_DEBUG("current time: {}, norm: {}, timeout - elapsed: "
@@ -53,23 +52,23 @@ PixelSimSteadyState::run(double timeout_ms,
 
     std::vector<double> c = getConcentrations();
 
-    norm = compute_stopping_criterion(c_, c, t_new - t_old);
+    current_error = computeStoppingCriterion(c_, c, t_new - t_old);
 
     if (!currentErrorMessage.empty()) {
-      return norm;
+      break;
     }
     ++steps;
 
-    if (norm < stop_tolerance) {
+    if (current_error < stop_tolerance) {
       steps_within_tolerance += 1;
     }
-    if (steps_within_tolerance > 0 and norm > stop_tolerance) {
+    if (steps_within_tolerance > 0 and current_error > stop_tolerance) {
       steps_within_tolerance = 0;
     }
-    if (std::isnan(norm)) {
+    if (std::isnan(current_error)) {
       currentErrorMessage = "Simulation failed: NaN detected in norm";
       SPDLOG_DEBUG("Simulation failed: NaN detected");
-      return norm;
+      break;
     }
     if (timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= timeout_ms) {
@@ -83,7 +82,7 @@ PixelSimSteadyState::run(double timeout_ms,
     if (stopRequested.load()) {
       currentErrorMessage = "Simulation stopped early";
       SPDLOG_DEBUG("Simulation timeout or stopped early");
-      return norm;
+      break;
     }
   }
   SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
@@ -92,8 +91,10 @@ PixelSimSteadyState::run(double timeout_ms,
                    static_cast<double>(steps + discardedSteps));
   SPDLOG_DEBUG("final ||dcdt||: {}, tolerance: {}, steps within tolerance {}",
                norm, stop_tolerance, steps_within_tolerance);
-  return norm;
+  return steps;
 }
+
+double PixelSimSteadyState::getCurrentError() const { return current_error; }
 
 std::vector<double> PixelSimSteadyState::getConcentrations() const {
   std::vector<double> c;
@@ -104,12 +105,14 @@ std::vector<double> PixelSimSteadyState::getConcentrations() const {
   return c;
 }
 
-double PixelSimSteadyState::compute_stopping_criterion(
-    const std::vector<double> &c_old, const std::vector<double> &c_new,
-    double dt) {
+double
+PixelSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
+                                              const std::vector<double> &c_new,
+                                              double dt) {
   // TODO: this works because everything is implemented here, but we have
   // an estimate for dcdt already in the system, which however I could not
   // get to work correctly within the stopping criterion.
+  // is it the spatial average that messes it up?
   double sum_squared_dcdt = 0.0;
   double sum_squared_c = 0.0;
 
@@ -124,6 +127,10 @@ double PixelSimSteadyState::compute_stopping_criterion(
   double dcdt_norm = std::sqrt(sum_squared_dcdt);
   double relative_norm = dcdt_norm / std::max(c_norm, 1e-12);
   return relative_norm;
+}
+
+void PixelSimSteadyState::setStopTolerance(double stop_tolerance) {
+  this->stop_tolerance = stop_tolerance;
 }
 
 double PixelSimSteadyState::getStopTolerance() const { return stop_tolerance; }

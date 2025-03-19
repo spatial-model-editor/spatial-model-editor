@@ -75,7 +75,6 @@ public:
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
   void setStopRequested(bool stop) override;
-  double compute_stopping_criterion();
 };
 
 } // namespace simulate

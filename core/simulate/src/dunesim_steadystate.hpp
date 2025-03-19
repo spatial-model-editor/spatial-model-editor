@@ -11,6 +11,7 @@ namespace simulate {
  */
 class DuneSimSteadyState final : public DuneSim, public SteadyStateHelper {
   double stop_tolerance;
+  double current_error;
 
 public:
   /**
@@ -29,6 +30,20 @@ public:
       const std::map<std::string, double, std::less<>> &substitutions = {});
 
   /**
+   * @brief Geth the current error of the solver
+   *
+   */
+  double getCurrentError() const override;
+
+  /**
+   * @brief Set the stop_tolerance
+   *
+   * @param stop_tolerance New tolerance level below which the time derivative
+   * is considered zero and the simulation is assumed to have converged
+   */
+  void setStopTolerance(double stop_tolerance) override;
+
+  /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
    *
    * @param c_old
@@ -36,9 +51,9 @@ public:
    * @param dt
    * @return double
    */
-  double compute_stopping_criterion(const std::vector<double> &c_old,
-                                    const std::vector<double> &c_new,
-                                    double dt) override;
+  double computeStoppingCriterion(const std::vector<double> &c_old,
+                                  const std::vector<double> &c_new,
+                                  double dt) override;
   /**
    * @brief Get the Concentrations object
    *
@@ -49,13 +64,13 @@ public:
   /**
    * @brief Run the simulation until steady state is reached.
    *
+   * @param time
    * @param timeout_ms
    * @param stopRunningCallback
-   * @return double The final value for the maximum of dc_i/dt over all
-   * compartments
+   * @return std::size_t Number of iterations taken until stop
    */
-  double run(double timeout_ms,
-             const std::function<bool()> &stopRunningCallback) override;
+  std::size_t run(double time, double timeout_ms,
+                  const std::function<bool()> &stopRunningCallback) override;
 
   /**
    * @brief Get the number below which dc/dt is considered zero during a run

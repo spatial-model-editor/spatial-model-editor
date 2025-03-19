@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
 #include "pixelsim_steadystate.hpp"
+#include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
@@ -21,22 +22,24 @@ TEST_CASE("PixelSimSteadyState",
   }
   SECTION("timeout_simulation") {
     simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    double normdc_dt = pixelSim.run(50, []() { return false; });
-    REQUIRE(normdc_dt > stop_tolerance);
+    std::size_t steps = pixelSim.run(10000000, 50, []() { return false; });
+    REQUIRE(pixelSim.getCurrentError() > stop_tolerance);
+    REQUIRE(steps > 0);
     REQUIRE(pixelSim.errorMessage() == "Simulation stopped early");
   }
   SECTION("Run_until_convergence") {
     simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    double normdc_dt = pixelSim.run(500000, []() { return false; });
+    std::size_t steps = pixelSim.run(1000000, 500000, []() { return false; });
     if (not pixelSim.errorMessage().empty()) {
       SPDLOG_CRITICAL("error message: {}", pixelSim.errorMessage());
     }
     REQUIRE(pixelSim.errorMessage().empty());
-    REQUIRE(normdc_dt < stop_tolerance);
+    REQUIRE(steps > 0);
+    REQUIRE(pixelSim.getCurrentError() < stop_tolerance);
   }
   SECTION("Callback_is_provided_and_used_to_stop_simulation") {
     simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    pixelSim.run(-1, []() { return true; });
+    pixelSim.run(1000000, -1, []() { return true; });
     REQUIRE(pixelSim.errorMessage() == "Simulation stopped early");
   }
 }

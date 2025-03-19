@@ -12,9 +12,24 @@ namespace simulate {
  */
 class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
   double stop_tolerance;
+  double current_error;
 
 public:
+  /**
+   * @brief Get the stop_tolerance
+   *
+   * @return double stop_tolerance below which the simulations is assumed to
+   * have converged
+   */
   [[nodiscard]] double getStopTolerance() const override;
+
+  /**
+   * @brief Set the stop_tolerance
+   *
+   * @param stop_tolerance New tolerance level below which the time derivative
+   * is considered zero and the simulation is assumed to have converged
+   */
+  void setStopTolerance(double stop_tolerance) override;
 
   /**
    * @brief Get the Concentrations object
@@ -24,6 +39,12 @@ public:
   std::vector<double> getConcentrations() const override;
 
   /**
+   * @brief Get the current error of the solver
+   *
+   */
+  double getCurrentError() const override;
+
+  /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
    *
    * @param c_old
@@ -31,9 +52,9 @@ public:
    * @param dt
    * @return double
    */
-  double compute_stopping_criterion(const std::vector<double> &c_old,
-                                    const std::vector<double> &c_new,
-                                    double dt) override;
+  double computeStoppingCriterion(const std::vector<double> &c_old,
+                                  const std::vector<double> &c_new,
+                                  double dt) override;
 
   /**
    * @brief Construct a new PixelSimSteadyState object
@@ -57,10 +78,11 @@ public:
    *
    * @param timeout_ms
    * @param stopRunningCallback
-   * @return double the final value for the maximum dc_i/dt in any compartment
+   * @return std::size_t the final value for the maximum dc_i/dt in any
+   * compartment
    */
-  double run(double timeout_ms,
-             const std::function<bool()> &stopRunningCallback) override;
+  std::size_t run(double time, double timeout_ms,
+                  const std::function<bool()> &stopRunningCallback) override;
 };
 
 } // namespace simulate
