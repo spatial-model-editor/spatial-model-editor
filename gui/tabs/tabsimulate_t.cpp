@@ -98,7 +98,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     REQUIRE(btnSimulate->isEnabled() == true);
 
     // new simulation using Pixel simulator
-    tab.useDune(false);
+    tab.useSimulator(false);
     sendMouseClick(btnSimulate);
     REQUIRE(btnSimulate->isEnabled() == false);
     while (!btnSimulate->isEnabled()) {
@@ -168,7 +168,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
     REQUIRE(model.getSpecies().getIsSpatial("A") == false);
     mwt.addUserAction({"Esc"});
     mwt.start();
-    tab.useDune(true);
+    tab.useSimulator(true);
     QString invalidDune{"The model contains non-spatial species, which are not "
                         "currently supported by DuneCopasi. Would you like to "
                         "use the Pixel simulator instead?"};

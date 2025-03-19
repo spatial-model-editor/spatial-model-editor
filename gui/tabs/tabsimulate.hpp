@@ -33,7 +33,7 @@ public:
   ~TabSimulate() override;
   void loadModelData();
   void stopSimulation();
-  void useDune(bool enable);
+  void useSimulator(std::string simulator);
   void importTimesAndIntervalsOnNextLoad();
   void reset();
   void setOptions(const sme::simulate::Options &options);
@@ -70,4 +70,7 @@ private:
   void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
   void hslideTime_valueChanged(int value);
+  sme::simulate::SimulatorType
+  chooseAlternativeSimulator(std::string_view simtype);
+  const char *chooseAlternativeSimulator(sme::simulate::SimulatorType simtype);
 };

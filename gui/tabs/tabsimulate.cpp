@@ -11,6 +11,7 @@
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
+#include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include "ui_tabsimulate.h"
 #include <QMessageBox>
@@ -58,7 +59,7 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
       finalizePlotAndImages();
     }
   });
-  useDune(true);
+  useSimulator("DUNE");
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
 }
@@ -86,6 +87,36 @@ static void importModelTimesAndIntervals(
   }
 }
 
+const char *
+TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
+  if (simtype == sme::simulate::SimulatorType::DUNE) {
+    return "Pixel";
+  } else if (simtype == sme::simulate::SimulatorType::DUNESteadyState) {
+    return "PixelSteadyState";
+  } else if (simtype == sme::simulate::SimulatorType::Pixel) {
+    return "DUNE";
+  } else if (simtype == sme::simulate::SimulatorType::PixelSteadyState) {
+    return "DUNESteadyState";
+  } else {
+    return "";
+  }
+}
+
+sme::simulate::SimulatorType
+TabSimulate::chooseAlternativeSimulator(std::string_view simtype) {
+  if (simtype == "DUNE") {
+    return sme::simulate::SimulatorType::Pixel;
+  } else if (simtype == "DUNESteadyState") {
+    return sme::simulate::SimulatorType::PixelSteadyState;
+  } else if (simtype == "Pixel") {
+    return sme::simulate::SimulatorType::DUNE;
+  } else if (simtype == "PixelSteadyState") {
+    return sme::simulate::SimulatorType::DUNESteadyState;
+  } else {
+    return sme::simulate::SimulatorType::Pixel;
+  }
+}
+
 void TabSimulate::loadModelData() {
   if (sim != nullptr && sim->getIsRunning()) {
     return;
@@ -101,7 +132,9 @@ void TabSimulate::loadModelData() {
     simSteps.wait();
   }
   if (model.getSimulationSettings().simulatorType ==
-      sme::simulate::SimulatorType::DUNE) {
+          sme::simulate::SimulatorType::DUNE or
+      model.getSimulationSettings().simulatorType ==
+          sme::simulate::SimulatorType::DUNESteadyState) {
     QString duneInvalidTitle{};
     QString duneInvalidMessage{};
     if (!model.getGeometry().getIsMeshValid()) {
@@ -123,7 +156,8 @@ void TabSimulate::loadModelData() {
               " Would you like to use the Pixel simulator instead?",
           QMessageBox::Yes | QMessageBox::No)};
       if (result == QMessageBox::Yes) {
-        useDune(false);
+        useSimulator(chooseAlternativeSimulator(
+            model.getSimulationSettings().simulatorType));
       }
       return;
     }
@@ -140,10 +174,9 @@ void TabSimulate::loadModelData() {
   sim = std::make_unique<sme::simulate::Simulation>(model);
   if (!sim->errorMessage().empty()) {
     ui->btnSimulate->setEnabled(false);
-    QString alternativeSim{model.getSimulationSettings().simulatorType ==
-                                   sme::simulate::SimulatorType::DUNE
-                               ? "Pixel"
-                               : "DUNE"};
+
+    QString alternativeSim{chooseAlternativeSimulator(
+        model.getSimulationSettings().simulatorType)};
     if (QMessageBox::question(
             this, "Simulation Setup Failed",
             QString(
@@ -152,8 +185,8 @@ void TabSimulate::loadModelData() {
                 .arg(sim->errorMessage().c_str())
                 .arg(alternativeSim),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      useDune(model.getSimulationSettings().simulatorType !=
-              sme::simulate::SimulatorType::DUNE);
+      useSimulator(chooseAlternativeSimulator(
+          model.getSimulationSettings().simulatorType));
     }
     return;
   }
@@ -216,10 +249,16 @@ void TabSimulate::stopSimulation() {
   sim->requestStop();
 }
 
-void TabSimulate::useDune(bool enable) {
-  if (enable) {
+void TabSimulate::useSimulator(std::string simulator) {
+  if (simulator == "DUNE") {
     model.getSimulationSettings().simulatorType =
         sme::simulate::SimulatorType::DUNE;
+  } else if (simulator == "DUNESteadyState") {
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNESteadyState;
+  } else if (simulator == "PixelSteadyState") {
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::PixelSteadyState;
   } else {
     model.getSimulationSettings().simulatorType =
         sme::simulate::SimulatorType::Pixel;
