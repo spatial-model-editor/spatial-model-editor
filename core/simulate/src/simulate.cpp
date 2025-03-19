@@ -1,13 +1,17 @@
 #include "sme/simulate.hpp"
 #include "dunesim.hpp"
+#include "dunesim_steadystate.hpp"
 #include "pixelsim.hpp"
+#include "pixelsim_steadystate.hpp"
 #include "sme/geometry.hpp"
 #include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
+#include "sme/model_settings.hpp"
 #include "sme/pde.hpp"
+#include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include <QElapsedTimer>
 #include <algorithm>
@@ -131,14 +135,7 @@ void Simulation::applyNextEvent() {
   }
   // re-init simulator
   simulator.reset();
-  if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getIsMeshValid()) {
-    simulator =
-        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
-  } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
-  }
+  chooseSimulator();
   // remove applied simEvent
   simEvents.pop();
 }
@@ -194,6 +191,24 @@ void Simulation::updateConcentrations(double t) {
   }
 }
 
+void Simulation::chooseSimulator() {
+  if (settings->simulatorType == SimulatorType::DUNE &&
+      model.getGeometry().getIsMeshValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
+  } else if (settings->simulatorType == SimulatorType::DUNESteadyState &&
+             model.getGeometry().getIsMeshValid()) {
+    simulator = std::make_unique<DuneSimSteadyState>(model, compartmentIds,
+                                                     1e-7, eventSubstitutions);
+  } else if (settings->simulatorType == SimulatorType::PixelSteadyState) {
+    simulator = std::make_unique<PixelSimSteadyState>(
+        model, compartmentIds, compartmentSpeciesIds, 1e-7, eventSubstitutions);
+  } else {
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+  }
+}
+
 Simulation::Simulation(model::Model &smeModel)
     : model(smeModel), settings(&model.getSimulationSettings()),
       data{&model.getSimulationData()},
@@ -208,14 +223,7 @@ Simulation::Simulation(model::Model &smeModel)
   initModel();
   initEvents();
   // init simulator
-  if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getIsMeshValid()) {
-    simulator =
-        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
-  } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
-  }
+  chooseSimulator();
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
     if (data->timePoints.empty()) {
@@ -257,7 +265,7 @@ std::size_t Simulation::doMultipleTimesteps(
   timer.start();
 
   // ensure there is enough space that push_back won't cause a reallocation
-  // todo: there should be a mutex/lock here in case reserve() reallocates
+  // TODO: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
   data->reserve(data->size() + nStepsTotal);
   std::size_t steps{0};
