@@ -87,8 +87,7 @@ static void importModelTimesAndIntervals(
   }
 }
 
-const char *
-TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
+std::string TabSimulate::chooseSimulator(sme::simulate::SimulatorType simtype) {
   if (simtype == sme::simulate::SimulatorType::DUNE) {
     return "Pixel";
   } else if (simtype == sme::simulate::SimulatorType::DUNESteadyState) {
@@ -103,7 +102,7 @@ TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
 }
 
 sme::simulate::SimulatorType
-TabSimulate::chooseAlternativeSimulator(std::string_view simtype) {
+TabSimulate::chooseSimulator(std::string_view simtype) {
   if (simtype == "DUNE") {
     return sme::simulate::SimulatorType::Pixel;
   } else if (simtype == "DUNESteadyState") {
@@ -156,8 +155,8 @@ void TabSimulate::loadModelData() {
               " Would you like to use the Pixel simulator instead?",
           QMessageBox::Yes | QMessageBox::No)};
       if (result == QMessageBox::Yes) {
-        useSimulator(chooseAlternativeSimulator(
-            model.getSimulationSettings().simulatorType));
+        useSimulator(
+            chooseSimulator(model.getSimulationSettings().simulatorType));
       }
       return;
     }
@@ -175,8 +174,8 @@ void TabSimulate::loadModelData() {
   if (!sim->errorMessage().empty()) {
     ui->btnSimulate->setEnabled(false);
 
-    QString alternativeSim{chooseAlternativeSimulator(
-        model.getSimulationSettings().simulatorType)};
+    QString alternativeSim{
+        chooseSimulator(model.getSimulationSettings().simulatorType)};
     if (QMessageBox::question(
             this, "Simulation Setup Failed",
             QString(
@@ -185,8 +184,8 @@ void TabSimulate::loadModelData() {
                 .arg(sim->errorMessage().c_str())
                 .arg(alternativeSim),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      useSimulator(chooseAlternativeSimulator(
-          model.getSimulationSettings().simulatorType));
+      useSimulator(
+          chooseSimulator(model.getSimulationSettings().simulatorType));
     }
     return;
   }
