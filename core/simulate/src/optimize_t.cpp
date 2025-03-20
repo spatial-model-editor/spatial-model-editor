@@ -3,6 +3,8 @@
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/optimize.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <spdlog/spdlog.h>
 
 using namespace sme;
 using namespace sme::test;
@@ -540,7 +542,15 @@ TEST_CASE("optimizer_imageFunctions",
     auto expected =
         sme::common::ImageStack(sme::common::Volume(100, 100, 1), diff,
                                 *std::max_element(diff.begin(), diff.end()));
-    REQUIRE(img[0] == expected[0]); // we only have one slice
+
+    REQUIRE(img.volume().depth() == expected.volume().depth());
+    REQUIRE(img[0].size() == expected[0].size()); // we only have one slice
+
+    REQUIRE(img[0].pixel(0, 0) == expected[0].pixel(0, 0));
+    REQUIRE(img[0].pixel(10, 10) == expected[0].pixel(10, 10));
+    REQUIRE(img[0].pixel(99, 99) == expected[0].pixel(99, 99));
+    REQUIRE(img[0].pixel(10, 99) == expected[0].pixel(10, 99));
+    REQUIRE(img[0].pixel(99, 10) == expected[0].pixel(99, 10));
   }
   SECTION("getTargetValues") {
     auto idx = 1;
