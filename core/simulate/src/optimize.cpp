@@ -302,7 +302,8 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
   auto diff_values = std::vector<double>(size.nVoxels(), 0);
 
   if (bestResults.imageIndex == std::numeric_limits<std::size_t>::max()) {
-    return sme::common::ImageStack(size, diff_values, common::max(tgt_values));
+    return sme::common::ImageStack(
+        size, diff_values, tgt_values.size() > 0 ? common::max(tgt_values) : 0);
   }
   auto res_values = getBestResultValues(index);
   if (res_values.size() > 0) {

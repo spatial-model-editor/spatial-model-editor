@@ -117,11 +117,12 @@ void DialogOptimize::applyToModel() const {
 
 void DialogOptimize::init() {
   ui->lblResult->setImage({});
-  ui->cmbTarget->clear();
+  ui->lblDifference->setImage({});
   ui->lblResult3D->setImage({});
   ui->lblTarget3D->setImage({});
   ui->lblDifference3D->setImage({});
-  ui->lblDifference->setImage({});
+  ui->cmbTarget->clear();
+  ui->cmbMode->clear();
   if (m_model.getOptimizeOptions().optParams.empty() ||
       m_model.getOptimizeOptions().optCosts.empty()) {
     m_opt.reset();
@@ -137,7 +138,6 @@ void DialogOptimize::init() {
   for (const auto &optCost : m_model.getOptimizeOptions().optCosts) {
     ui->cmbTarget->addItem(optCost.name.c_str());
   }
-  ui->cmbMode->clear();
   ui->cmbMode->setEnabled(true);
   for (auto &&label : {"2D", "3D"}) {
     ui->cmbMode->addItem(label);
@@ -155,18 +155,17 @@ void DialogOptimize::init() {
   initFitnessPlot(ui->pltFitness);
   initParamsPlot(ui->pltParams, m_opt->getParamNames());
 
-  for (auto &&panel : {ui->lblTarget, ui->lblResult, ui->lblDifference}) {
-    panel->setZIndex(0);
-    panel->displayGrid(true);
-    panel->displayScale(true);
-  }
-
   // target and result images have the same dimensions, so we can use only one
   // to set the range of the z-slider
   ui->cmbMode->setCurrentIndex(0);
   ui->lblResult->setZSlider(ui->zaxisValues);
   ui->lblTarget->setZSlider(ui->zaxisValues);
   ui->lblDifference->setZSlider(ui->zaxisDifference);
+  for (auto &&panel : {ui->lblTarget, ui->lblResult, ui->lblDifference}) {
+    panel->setZIndex(0);
+    panel->displayGrid(true);
+    panel->displayScale(true);
+  }
 }
 
 void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
