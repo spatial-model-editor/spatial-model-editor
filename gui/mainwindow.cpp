@@ -228,23 +228,9 @@ void MainWindow::setupConnections() {
   connect(tabGeometry, &TabGeometry::modelGeometryChanged, this,
           &MainWindow::enableTabs);
 
-  // lambda to select the simulator to use based on the selected menu item
-  auto select_simulator = [this]() {
-    if (ui->actionSimTypeDUNE->isChecked()) {
-      return "DUNE";
-    }
-    if (ui->actionDUNE_steady_state_FEM->isChecked()) {
-      return "DUNESteadyState";
-    }
-    if (ui->actionPixel_steady_state_FDM->isChecked()) {
-      return "PixelSteadyState";
-    }
-    return "Pixel";
-  };
-
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
-          [s = tabSimulate, ui_ptr = ui.get(), select_simulator]() {
-            s->useSimulator(select_simulator());
+          [s = tabSimulate, ui_ptr = ui.get()]() {
+            s->useDune(ui_ptr->actionSimTypeDUNE->isChecked());
           });
 
   connect(ui->actionGeometry_grid, &QAction::triggered, this,
@@ -347,10 +333,10 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
     ui->actionSimTypeDUNE->setChecked(true);
   } else if (model.getSimulationSettings().simulatorType ==
              sme::simulate::SimulatorType::DUNESteadyState) {
-    ui->actionDUNE_steady_state_FEM->setChecked(true);
+    ui->actionSimTypeDUNESteadyState->setChecked(true);
   } else if (model.getSimulationSettings().simulatorType ==
              sme::simulate::SimulatorType::PixelSteadyState) {
-    ui->actionPixel_steady_state_FDM->setChecked(true);
+    ui->actionSimTypePixelSteadyState->setChecked(true);
   } else {
     ui->actionSimTypePixel->setChecked(true);
   }
