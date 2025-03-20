@@ -6,6 +6,7 @@
 #include "sme/utils.hpp"
 #include "ui_dialogoptimize.h"
 #include <qcustomplot.h>
+#include <qtabwidget.h>
 
 static void initFitnessPlot(QCustomPlot *plot) {
   if (plot->plotLayout()->rowCount() == 1) {
@@ -53,6 +54,7 @@ static void initParamsPlot(QCustomPlot *plot,
 DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
     : QDialog(parent), m_model{model},
       ui{std::make_unique<Ui::DialogOptimize>()} {
+
   ui->setupUi(this);
   ui->splitter->setSizes({1000, 1000});
   for (auto *lbl : {ui->lblTarget, ui->lblResult}) {
@@ -73,9 +75,10 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
           &DialogOptimize::accept);
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogOptimize::reject);
-  connect(ui->diffMode, &QCheckBox::clicked, this,
-          &DialogOptimize::differenceMode_clicked);
+  connect(ui->tabWidget, &QTabWidget::currentChanged, this,
+          &DialogOptimize::updateTabs);
   init();
+
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   constexpr int plotMsRefreshInterval{1000};
   m_plotRefreshTimer.setInterval(plotMsRefreshInterval);
@@ -85,6 +88,9 @@ DialogOptimize::DialogOptimize(sme::model::Model &model, QWidget *parent)
       finalizePlots();
     }
   });
+  ui->lblResult3D->hide();
+  ui->lblTarget3D->hide();
+  ui->lblDifference3D->hide();
 }
 
 DialogOptimize::~DialogOptimize() = default;
@@ -112,8 +118,10 @@ void DialogOptimize::applyToModel() const {
 void DialogOptimize::init() {
   ui->lblResult->setImage({});
   ui->cmbTarget->clear();
-  ui->diffMode->setCheckable(true);
-
+  ui->lblResult3D->setImage({});
+  ui->lblTarget3D->setImage({});
+  ui->lblDifference3D->setImage({});
+  ui->lblDifference->setImage({});
   if (m_model.getOptimizeOptions().optParams.empty() ||
       m_model.getOptimizeOptions().optCosts.empty()) {
     m_opt.reset();
@@ -142,26 +150,23 @@ void DialogOptimize::init() {
   ui->btnSetup->setEnabled(true);
   ui->lblTarget->setImage(m_opt->getTargetImage(
       static_cast<std::size_t>(ui->cmbTarget->currentIndex())));
+  ui->lblDifference->setImage(m_opt->getDifferenceImage(
+      static_cast<std::size_t>(ui->cmbTarget->currentIndex())));
   initFitnessPlot(ui->pltFitness);
   initParamsPlot(ui->pltParams, m_opt->getParamNames());
 
-  ui->lblResult->setZSlider(ui->zaxis);
-  ui->lblTarget->setZSlider(ui->zaxis);
-  ui->lblResult->setZIndex(0);
-  ui->lblTarget->setZIndex(0);
-  ui->lblTarget->displayGrid(true);
-  ui->lblTarget->displayScale(true);
-  ui->lblResult->displayGrid(true);
-  ui->lblResult->displayScale(true);
+  for (auto &&panel : {ui->lblTarget, ui->lblResult, ui->lblDifference}) {
+    panel->setZIndex(0);
+    panel->displayGrid(true);
+    panel->displayScale(true);
+  }
 
   // target and result images have the same dimensions, so we can use only one
   // to set the range of the z-slider
-  ui->zaxis->setMinimum(0);
-  ui->zaxis->setMaximum(m_opt
-                            ->getTargetImage(static_cast<std::size_t>(
-                                ui->cmbTarget->currentIndex()))
-                            .volume()
-                            .depth());
+  ui->cmbMode->setCurrentIndex(0);
+  ui->lblResult->setZSlider(ui->zaxisValues);
+  ui->lblTarget->setZSlider(ui->zaxisValues);
+  ui->lblDifference->setZSlider(ui->zaxisDifference);
 }
 
 void DialogOptimize::cmbTarget_currentIndexChanged(int index) {
@@ -182,29 +187,23 @@ void DialogOptimize::cmbMode_currentIndexChanged(int modeindex) {
   // handles the switch between 2D and 3D visualization modes
   // this option is always there, even if the data itself is not 3D
   SPDLOG_INFO("Mode index: {}", modeindex);
-  if (modeindex == 0) {
-    // 2D mode -> show the vizualization of the target and result images
-    // that are still there
-    vizMode = VizMode::_2D;
-    ui->lblTarget->setVisible(true);
-    ui->lblResult->setVisible(!differenceMode);
-    ui->zaxis->setVisible(true);
-    ui->lblTarget3D->setVisible(false);
-    ui->lblResult3D->setVisible(false);
-    updateTargetImage();
-    updateResultImage();
 
-  } else {
-
-    // show the 3D visualization of the target and result images
-    vizMode = VizMode::_3D;
-    ui->lblTarget->setVisible(false);
-    ui->lblResult->setVisible(false);
-    ui->zaxis->setVisible(false);
-    ui->lblTarget3D->setVisible(true);
-    ui->lblResult3D->setVisible(!differenceMode);
-    updateTargetImage();
-    updateResultImage();
+  vizMode = modeindex == 0 ? VizMode::_2D : VizMode::_3D;
+  auto is3D = vizMode == VizMode::_3D;
+  ui->lblTarget->setVisible(not is3D);
+  ui->lblResult->setVisible(not is3D);
+  ui->lblDifference->setVisible(not is3D);
+  ui->zaxisDifference->setVisible(not is3D);
+  ui->zlabelDifference->setVisible(not is3D);
+  ui->zaxisValues->setVisible(not is3D);
+  ui->zlabelValues->setVisible(not is3D);
+  ui->lblTarget3D->setVisible(is3D);
+  ui->lblResult3D->setVisible(is3D);
+  ui->lblDifference3D->setVisible(is3D);
+  updateTargetImage();
+  updateResultImage();
+  updateDifferenceImage();
+  if (not is3D) {
   }
   SPDLOG_INFO("Viz mode: {}", static_cast<int>(vizMode));
 }
@@ -235,44 +234,6 @@ void DialogOptimize::btnSetup_clicked() {
     m_model.getOptimizeOptions() = dialogOptSetup.getOptimizeOptions();
     init();
   }
-}
-
-void DialogOptimize::differenceMode_clicked() {
-  // this function is the slot connected to the clicked signal of the
-  // differenceMode checkbox. disables the second plot pane for the result and
-  // displays the naive difference of target and best result in the first
-  // plot pane.
-
-  SPDLOG_DEBUG("Difference mode clicked {}", differenceMode);
-
-  if (m_opt == nullptr) {
-    return;
-  }
-
-  differenceMode = !differenceMode;
-  SPDLOG_DEBUG("Difference mode after: {}", differenceMode);
-
-  ui->lblResult->setVisible(!differenceMode && vizMode == VizMode::_2D);
-  ui->lblResult3D->setVisible(!differenceMode && vizMode == VizMode::_3D);
-  ui->lblResultLabel->setVisible(!differenceMode);
-
-  updateTargetImage();
-
-  if (differenceMode) {
-
-    ui->lblTargetLabel->setText(
-        "Difference between estimated and target image:");
-  } else {
-    updateResultImage();
-    // reset the images when the difference mode is turned off
-    ui->lblTargetLabel->setText("Target values:");
-  }
-  SPDLOG_DEBUG("res label visible: {}", ui->lblResultLabel->isVisible());
-  SPDLOG_DEBUG("2d res visible: {}", ui->lblResult->isVisible());
-  SPDLOG_DEBUG("3d res visible: {}", ui->lblResult3D->isVisible());
-  SPDLOG_DEBUG("2d tgt visible: {}", ui->lblTarget->isVisible());
-  SPDLOG_DEBUG("3d tgt visible: {}", ui->lblTarget3D->isVisible());
-  SPDLOG_DEBUG("tgt label: '{}'", ui->lblTargetLabel->text().toStdString());
 }
 
 void DialogOptimize::updatePlots() {
@@ -306,13 +267,23 @@ void DialogOptimize::updatePlots() {
       img.has_value()) {
     ui->lblResult->setImage(img.value());
     if (vizMode == VizMode::_2D) {
-      ui->lblResult->setZSlider(ui->zaxis);
-      ui->lblResult->setZIndex(ui->zaxis->value());
+      ui->lblResult->setZSlider(ui->zaxisValues);
+      ui->lblResult->setZIndex(ui->zaxisValues->value());
     }
   }
 
-  if (differenceMode) {
+  updateDifferenceImage();
+}
+
+void DialogOptimize::updateTabs() {
+  if (ui->tabWidget->currentIndex() == 0) {
     updateTargetImage();
+    updateResultImage();
+  } else if (ui->tabWidget->currentIndex() == 1) {
+    updateDifferenceImage();
+  } else {
+    // put further stuff here later
+    SPDLOG_CRITICAL("Invalid tab index: {}", ui->tabWidget->currentIndex());
   }
 }
 
@@ -341,21 +312,20 @@ void DialogOptimize::updateTargetImage() {
   auto variable = ui->cmbTarget->currentIndex();
   SPDLOG_DEBUG(" Updating target image for variable {}", variable);
 
-  auto img = differenceMode ? m_opt->getDifferenceImage(variable)
-                            : m_opt->getTargetImage(variable);
-  SPDLOG_DEBUG("difference mode: {}", differenceMode);
+  auto img = m_opt->getTargetImage(variable);
   SPDLOG_DEBUG(" data: {}, empty: {}", img.volume().depth(), img.empty());
 
   if (vizMode == VizMode::_2D) {
     SPDLOG_INFO("Updating target image for 2D visualization ");
     // all the z-axis stuff is only necessary for 2D visualization
-    auto z = ui->zaxis->value();
+    auto z = ui->zaxisValues->value();
     ui->lblTarget->setImage(img);
-    ui->lblTarget->setZSlider(ui->zaxis);
+    ui->zaxisValues->setMinimum(0);
+    ui->zaxisValues->setMaximum(ui->lblTarget->getImage().volume().depth());
+    ui->zaxisValues->setValue(z);
+    ui->lblTarget->setZSlider(ui->zaxisValues);
     ui->lblTarget->setZIndex(z);
-    ui->zaxis->setMaximum(ui->lblTarget->getImage().volume().depth());
-    ui->zaxis->setValue(z);
-    ui->lblTarget3D->updateGeometry();
+    ui->lblTarget->updateGeometry();
 
   } else {
     SPDLOG_DEBUG("Updating target image for 3D visualization: 2D visible? {}, "
@@ -374,27 +344,41 @@ void DialogOptimize::updateResultImage() {
   }
 
   if (vizMode == VizMode::_2D) {
-    auto z = ui->zaxis->value();
+    auto z = ui->zaxisValues->value();
     ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
-    ui->lblResult->setZSlider(ui->zaxis);
+    ui->lblResult->setZSlider(ui->zaxisValues);
     ui->lblResult->setZIndex(z);
     ui->lblResult->updateGeometry();
-    // ui->lblResult->parentWidget()->layout()->invalidate();
-    // ui->lblResult->parentWidget()->layout()->activate();
-    // ui->lblResult->parentWidget()->adjustSize();
   } else {
     SPDLOG_DEBUG("Updating result image for 3D visualization  2D visible? {}, "
                  "3d visible? {}",
                  ui->lblResult->isVisible(), ui->lblResult3D->isVisible());
     ui->lblResult3D->setImage(m_opt->getCurrentBestResultImage());
     ui->lblResult3D->updateGeometry();
-    // ui->lblResult3D->parentWidget()->layout()->invalidate();
-    // ui->lblResult3D->parentWidget()->layout()->activate();
-    // ui->lblResult3D->parentWidget()->adjustSize();
+  }
+}
+
+void DialogOptimize::updateDifferenceImage() {
+  if (m_opt == nullptr) {
+    return;
+  }
+  auto variable = ui->cmbTarget->currentIndex();
+  SPDLOG_DEBUG(" Updating difference image for variable {}", variable);
+  auto img = m_opt->getDifferenceImage(variable);
+  if (vizMode == VizMode::_2D) {
+    auto z = ui->zaxisDifference->value();
+    ui->lblDifference->setImage(img);
+    ui->zaxisDifference->setMinimum(0);
+    ui->zaxisDifference->setMaximum(ui->lblTarget->getImage().volume().depth());
+    ui->zaxisDifference->setValue(z);
+    ui->lblDifference->setZSlider(ui->zaxisDifference);
+    ui->lblDifference->setZIndex(z);
+    ui->lblDifference->updateGeometry();
+  } else {
+    ui->lblDifference3D->setImage(img);
+    ui->lblDifference3D->updateGeometry();
   }
 }
 
 // getters
 DialogOptimize::VizMode DialogOptimize::getVizMode() const { return vizMode; }
-
-bool DialogOptimize::getDifferenceMode() const { return differenceMode; }

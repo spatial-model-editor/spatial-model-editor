@@ -27,7 +27,6 @@ public:
   };
 
   VizMode getVizMode() const;
-  bool getDifferenceMode() const;
 
 private:
   sme::model::Model &m_model;
@@ -36,7 +35,6 @@ private:
   std::future<std::size_t> m_optIterations;
   std::size_t m_nPlottedIterations{0};
   QTimer m_plotRefreshTimer;
-  bool differenceMode{false};
   VizMode vizMode{VizMode::_2D};
   void init();
   void cmbTarget_currentIndexChanged(int index);
@@ -44,9 +42,10 @@ private:
   void btnStartStop_clicked();
   void btnSetup_clicked();
   void updatePlots();
+  void updateTabs();
   void finalizePlots();
-  void differenceMode_clicked();
   void selectZ();
   void updateTargetImage();
   void updateResultImage();
+  void updateDifferenceImage();
 };
