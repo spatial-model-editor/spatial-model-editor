@@ -230,13 +230,19 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
           [s = tabSimulate, ui_ptr = ui.get()]() {
+            // FIXME: this should be more centralized, it doesn´t scale well as
+            // it currently is
             if (ui_ptr->actionSimTypeDUNE->isChecked()) {
+              SPDLOG_CRITICAL("  Dune clicked");
               s->useSimulator("Dune");
             } else if (ui_ptr->actionDUNE_Steady_state_FEM->isChecked()) {
+              SPDLOG_CRITICAL("  Dune steadystate clicked");
               s->useSimulator("DuneSteadyState");
             } else if (ui_ptr->actionPixel_Steady_State_FDM->isChecked()) {
+              SPDLOG_CRITICAL("  Pixel steadystate clicked");
               s->useSimulator("PixelSteadyState");
             } else {
+              SPDLOG_CRITICAL("  Pixel clicked");
               s->useSimulator("Pixel");
             }
           });

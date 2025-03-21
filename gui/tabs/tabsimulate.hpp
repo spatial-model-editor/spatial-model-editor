@@ -70,6 +70,7 @@ private:
   void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
   void hslideTime_valueChanged(int value);
-  sme::simulate::SimulatorType chooseSimulator(std::string_view simtype);
-  std::string chooseSimulator(sme::simulate::SimulatorType simtype);
+  sme::simulate::SimulatorType
+  chooseAlternativeSimulator(std::string_view simtype);
+  std::string chooseAlternativeSimulator(sme::simulate::SimulatorType simtype);
 };

@@ -13,6 +13,8 @@ namespace simulate {
 class PixelSimSteadyState final : public PixelSim, public SteadyStateHelper {
   double stop_tolerance;
   double current_error;
+  std::size_t steps_within_tolerance;
+  std::size_t num_steps_steadystate;
 
 public:
   /**
@@ -32,11 +34,33 @@ public:
   void setStopTolerance(double stop_tolerance) override;
 
   /**
+   * @brief Get the number of timesteps for which the error was below the
+   * tolerance to consider the current state a steady state
+   *
+   * @return std::size_t
+   */
+  [[nodiscard]] std::size_t getNumStepsSteady() const override;
+
+  /**
+   * @brief Set the Num Steps Steady object
+   *
+   */
+  void setNumStepsSteady(std::size_t new_numstepssteady) override;
+
+  /**
    * @brief Get the Concentrations object
    *
    * @return std::vector<double>
    */
   std::vector<double> getConcentrations() const override;
+
+  /**
+   * @brief Get the number of timesteps for which the error was below the
+   * tolerance set
+   *
+   * @return std::size_t
+   */
+  [[nodiscard]] std::size_t getStepsBelowTolerance() const override;
 
   /**
    * @brief Get the current error of the solver

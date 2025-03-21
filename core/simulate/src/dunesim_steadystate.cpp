@@ -17,7 +17,10 @@ DuneSimSteadyState::DuneSimSteadyState(
     double stop_tolerance,
     const std::map<std::string, double, std::less<>> &substitutions)
     : DuneSim(sbmlDoc, compartmentIds, substitutions),
-      stop_tolerance(stop_tolerance), current_error(1.0) {}
+      stop_tolerance(stop_tolerance), current_error(1.0),
+      steps_within_tolerance(0), num_steps_steadystate(3) {
+  SPDLOG_CRITICAL("DuneSimSteadyState constructor");
+}
 
 std::vector<double> DuneSimSteadyState::getConcentrations() const {
   std::vector<double> c;
@@ -35,16 +38,12 @@ std::vector<double> DuneSimSteadyState::getConcentrations() const {
   return c;
 }
 
-void DuneSimSteadyState::setStopTolerance(double stop_tolerance) {
-  this->stop_tolerance = stop_tolerance;
-}
-
 double
 DuneSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
                                              const std::vector<double> &c_new,
                                              double dt) {
   // TODO: this works because everything is implemented here, but we have
-  // an estimate for dcdt already in the system, which however I could not
+  // an estimate for dcdt already in the system (?), which however I could not
   // get to work correctly within the stopping criterion.
   double sum_squared_dcdt = 0.0;
   double sum_squared_c = 0.0;
@@ -70,57 +69,70 @@ DuneSimSteadyState::run(double time, double timeout_ms,
   }
   QElapsedTimer timer;
   timer.start();
-  std::size_t steps_within_tolerance = 0;
-  std::size_t steps = 0;
-  SPDLOG_DEBUG("Starting DuneSimSteadyState::run");
-  while (steps_within_tolerance < 10) {
-    std::vector<double> c_old = getConcentrations();
-    SPDLOG_DEBUG("current time: {}, norm: {}, timeout - elapsed: "
-                 "{},steps_within_tolerance: {}",
-                 time, current_error,
-                 timeout_ms - static_cast<double>(timer.elapsed()),
-                 steps_within_tolerance);
-    try {
-      if (pDuneImpl2d != nullptr) {
-        pDuneImpl2d->run(time);
-      } else {
-        pDuneImpl3d->run(time);
-      }
-      currentErrorMessage.clear();
-    } catch (const Dune::Exception &e) {
-      currentErrorMessage = e.what();
-      SPDLOG_ERROR("{}", currentErrorMessage);
-      break;
+  SPDLOG_CRITICAL("Starting DuneSimSteadyState::run");
+  std::vector<double> c_old = getConcentrations();
+  SPDLOG_CRITICAL("current time: {}, norm: {}, timeout - elapsed: "
+                  "{},steps_within_tolerance: {}",
+                  time, current_error,
+                  timeout_ms - static_cast<double>(timer.elapsed()),
+                  steps_within_tolerance);
+
+  try {
+    if (pDuneImpl2d != nullptr) {
+      pDuneImpl2d->run(time);
+    } else {
+      pDuneImpl3d->run(time);
     }
-    steps += 1;
-    std::vector<double> c_new = getConcentrations();
-    current_error = computeStoppingCriterion(c_old, c_new, time);
-    if (std::isnan(current_error)) {
-      currentErrorMessage = "Simulation failed: NaN detected in norm";
-      SPDLOG_DEBUG("Simulation failed: NaN detected");
-      break;
-    }
-    if (current_error < stop_tolerance) {
-      ++steps_within_tolerance;
-    }
-    if (stop_tolerance > 0 and current_error > stop_tolerance) {
-      steps_within_tolerance = 0;
-    }
-    if (stopRunningCallback && stopRunningCallback()) {
-      SPDLOG_DEBUG("Simulation cancelled: requesting stop");
-      currentErrorMessage = "Simulation cancelled";
-      break;
-    }
-    if (timeout_ms >= 0.0 &&
-        static_cast<double>(timer.elapsed()) >= timeout_ms) {
-      SPDLOG_DEBUG("Simulation timeout: requesting stop");
-      currentErrorMessage = "Simulation timeout";
-      break;
-    }
+    currentErrorMessage.clear();
+  } catch (const Dune::Exception &e) {
+    currentErrorMessage = e.what();
+    SPDLOG_ERROR("{}", currentErrorMessage);
   }
-  return steps;
+  std::vector<double> c_new = getConcentrations();
+  current_error = computeStoppingCriterion(c_old, c_new, time);
+  if (std::isnan(current_error) or std::isinf(current_error)) {
+    currentErrorMessage = "Simulation failed: NaN  of Inf detected in norm";
+    SPDLOG_DEBUG(currentErrorMessage);
+  }
+  if (current_error < stop_tolerance) {
+    ++steps_within_tolerance;
+  }
+  // needs to have n successive steps below tolerance to be considered steady
+  if (steps_within_tolerance > 0 and current_error > stop_tolerance) {
+    steps_within_tolerance = 0;
+  }
+  if (steps_within_tolerance >= num_steps_steadystate) {
+    SPDLOG_CRITICAL("Reached steady state");
+  }
+
+  if (stopRunningCallback && stopRunningCallback()) {
+    SPDLOG_DEBUG("Simulation cancelled: requesting stop");
+    currentErrorMessage = "Simulation cancelled";
+  }
+  if (timeout_ms >= 0.0 && static_cast<double>(timer.elapsed()) >= timeout_ms) {
+    SPDLOG_DEBUG("Simulation timeout: requesting stop");
+    currentErrorMessage = "Simulation timeout";
+  }
+  return 1;
 }
 double DuneSimSteadyState::getCurrentError() const { return current_error; }
+
 double DuneSimSteadyState::getStopTolerance() const { return stop_tolerance; }
+
+std::size_t DuneSimSteadyState::getStepsBelowTolerance() const {
+  return steps_within_tolerance;
+}
+
+void DuneSimSteadyState::setStopTolerance(double stop_tolerance) {
+  this->stop_tolerance = stop_tolerance;
+}
+
+std::size_t DuneSimSteadyState::getNumStepsSteady() const {
+  return num_steps_steadystate;
+}
+
+void DuneSimSteadyState::setNumStepsSteady(std::size_t new_numstepssteady) {
+  num_steps_steadystate = new_numstepssteady;
+}
 
 } // namespace sme::simulate
