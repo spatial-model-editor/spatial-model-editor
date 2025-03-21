@@ -232,9 +232,9 @@ void MainWindow::setupConnections() {
           [s = tabSimulate, ui_ptr = ui.get()]() {
             if (ui_ptr->actionSimTypeDUNE->isChecked()) {
               s->useSimulator("Dune");
-            } else if (ui_ptr->actionDUNE_steady_state_FEM->isChecked()) {
+            } else if (ui_ptr->actionDUNE_Steady_state_FEM->isChecked()) {
               s->useSimulator("DuneSteadyState");
-            } else if (ui_ptr->actionPixel_steady_state_FDM->isChecked()) {
+            } else if (ui_ptr->actionPixel_Steady_State_FDM->isChecked()) {
               s->useSimulator("PixelSteadyState");
             } else {
               s->useSimulator("Pixel");
@@ -341,10 +341,10 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
     ui->actionSimTypeDUNE->setChecked(true);
   } else if (model.getSimulationSettings().simulatorType ==
              sme::simulate::SimulatorType::DUNESteadyState) {
-    ui->actionDUNE_steady_state_FEM->setChecked(true);
+    ui->actionDUNE_Steady_state_FEM->setChecked(true);
   } else if (model.getSimulationSettings().simulatorType ==
              sme::simulate::SimulatorType::PixelSteadyState) {
-    ui->actionPixel_steady_state_FDM->setChecked(true);
+    ui->actionPixel_Steady_State_FDM->setChecked(true);
   } else {
     ui->actionSimTypePixel->setChecked(true);
   }

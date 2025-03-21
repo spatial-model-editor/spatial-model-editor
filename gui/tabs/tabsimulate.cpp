@@ -175,7 +175,7 @@ void TabSimulate::loadModelData() {
     ui->btnSimulate->setEnabled(false);
 
     QString alternativeSim{
-        chooseSimulator(model.getSimulationSettings().simulatorType)};
+        chooseSimulator(model.getSimulationSettings().simulatorType).c_str()};
     if (QMessageBox::question(
             this, "Simulation Setup Failed",
             QString(
