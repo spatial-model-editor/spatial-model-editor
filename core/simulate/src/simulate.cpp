@@ -349,7 +349,7 @@ std::size_t Simulation::doMultipleTimesteps(
       }
 
       if (simulator->hasConverged()) {
-        SPDLOG_INFO("Simulation has converged");
+        SPDLOG_CRITICAL("Simulation has converged");
         isRunning.store(false);
         stopRequested.store(false);
         simulator->setStopRequested(false);

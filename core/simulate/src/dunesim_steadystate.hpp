@@ -67,7 +67,13 @@ public:
    */
   void setStopTolerance(double stop_tolerance) override;
 
-  bool hasConverged() const override;
+  /**
+   * @brief Check if the simulation has converged
+   *
+   * @return true has converged: steps_within_tolerance >= num_steps_steadystate
+   * @return false has not yet converged
+   */
+  [[nodiscard]] bool hasConverged() const override;
 
   /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.

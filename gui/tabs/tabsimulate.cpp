@@ -18,7 +18,6 @@
 #include <QProgressDialog>
 #include <algorithm>
 #include <future>
-
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QVoxelRenderer *voxelRenderer, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model{m},
@@ -104,6 +103,28 @@ TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
   } else {
     return "";
   }
+}
+
+void TabSimulate::useSimulator(std::string simulator) {
+  SPDLOG_CRITICAL("useSimulator: {}", simulator);
+  if (simulator == "Dune") {
+    SPDLOG_CRITICAL("  useSimulator selecting DUNE: {}", simulator);
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNE;
+  } else if (simulator == "DuneSteadyState") {
+    SPDLOG_CRITICAL("  useSimulator selecting DUNESteadyState: {}", simulator);
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNESteadyState;
+  } else if (simulator == "PixelSteadyState") {
+    SPDLOG_CRITICAL("  useSimulator selecting PixelSteadyState: {}", simulator);
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::PixelSteadyState;
+  } else {
+    SPDLOG_CRITICAL("  useSimulator selecting  Pixel: {}", simulator);
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+  }
+  loadModelData();
 }
 
 void TabSimulate::loadModelData() {
@@ -252,28 +273,6 @@ void TabSimulate::loadModelData() {
 void TabSimulate::stopSimulation() {
   SPDLOG_INFO("Simulation stop requested by user");
   sim->requestStop();
-}
-
-void TabSimulate::useSimulator(std::string simulator) {
-  SPDLOG_CRITICAL("useSimulator: {}", simulator);
-  if (simulator == "Dune") {
-    SPDLOG_CRITICAL("  useSimulator selecting DUNE: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::DUNE;
-  } else if (simulator == "DuneSteadyState") {
-    SPDLOG_CRITICAL("  useSimulator selecting DUNESteadyState: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::DUNESteadyState;
-  } else if (simulator == "PixelSteadyState") {
-    SPDLOG_CRITICAL("  useSimulator selecting PixelSteadyState: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::PixelSteadyState;
-  } else {
-    SPDLOG_CRITICAL("  useSimulator selecting  Pixel: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::Pixel;
-  }
-  loadModelData();
 }
 
 void TabSimulate::importTimesAndIntervalsOnNextLoad() {

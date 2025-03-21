@@ -5,6 +5,7 @@
 #include "plotwrapper.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/simulate.hpp"
+#include "tabsimulate_base.hpp"
 #include <QWidget>
 #include <future>
 #include <memory>
