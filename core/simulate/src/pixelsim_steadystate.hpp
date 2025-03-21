@@ -52,7 +52,7 @@ public:
    *
    * @return std::vector<double>
    */
-  std::vector<double> getConcentrations() const override;
+  [[nodiscard]] std::vector<double> getConcentrations() const override;
 
   /**
    * @brief Get the number of timesteps for which the error was below the
@@ -66,7 +66,15 @@ public:
    * @brief Get the current error of the solver
    *
    */
-  double getCurrentError() const override;
+  [[nodiscard]] double getCurrentError() const override;
+
+  /**
+   * @brief Check if the simulation has converged
+   *
+   * @return true has converged: steps_within_tolerance >= num_steps_steadystate
+   * @return false has not yet converged
+   */
+  [[nodiscard]] bool hasConverged() const override;
 
   /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.
@@ -76,9 +84,10 @@ public:
    * @param dt
    * @return double
    */
-  double computeStoppingCriterion(const std::vector<double> &c_old,
-                                  const std::vector<double> &c_new,
-                                  double dt) override;
+  [[nodiscard]] double
+  computeStoppingCriterion(const std::vector<double> &c_old,
+                           const std::vector<double> &c_new,
+                           double dt) override;
 
   /**
    * @brief Construct a new PixelSimSteadyState object
@@ -105,8 +114,9 @@ public:
    * @return std::size_t the final value for the maximum dc_i/dt in any
    * compartment
    */
-  std::size_t run(double time, double timeout_ms,
-                  const std::function<bool()> &stopRunningCallback) override;
+  [[nodiscard]] std::size_t
+  run(double time, double timeout_ms,
+      const std::function<bool()> &stopRunningCallback) override;
 };
 
 } // namespace simulate

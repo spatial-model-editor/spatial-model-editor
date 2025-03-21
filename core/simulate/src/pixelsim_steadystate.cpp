@@ -85,17 +85,16 @@ PixelSimSteadyState::run(double time, double timeout_ms,
     setStopRequested(true);
   }
 
-  if (steps_within_tolerance >= num_steps_steadystate) {
+  if (hasConverged()) {
     SPDLOG_CRITICAL("Reached steady state");
     setStopRequested(true);
-    // TODO: make this create a state which can be used to show to the user
-    // that the simulation converged
   }
 
-  SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
-               steps + discardedSteps,
-               static_cast<double>(100 * discardedSteps) /
-                   static_cast<double>(steps + discardedSteps));
+  SPDLOG_DEBUG(
+      "PixelSimSteadyState t={} integrated using {} steps ({:3.1f}% discarded)",
+      time, steps + discardedSteps,
+      static_cast<double>(100 * discardedSteps) /
+          static_cast<double>(steps + discardedSteps));
   SPDLOG_CRITICAL(
       "final ||dcdt||: {}, tolerance: {}, steps within tolerance {}",
       current_error, stop_tolerance, steps_within_tolerance);
@@ -123,15 +122,12 @@ PixelSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
   // is it the spatial average that messes it up?
   double sum_squared_dcdt = 0.0;
   double sum_squared_c = 0.0;
-  SPDLOG_CRITICAL("    - dt: {}", dt);
   for (size_t i = 0; i < c_new.size(); ++i) {
     double dcdt = (c_new[i] - c_old[i]) / std::max(dt, 1e-12);
     // Sum squares for L2 norm calculations
     sum_squared_dcdt += dcdt * dcdt;
     sum_squared_c += c_new[i] * c_new[i];
   }
-  SPDLOG_CRITICAL("    - sum_squared_dcdt {}", sum_squared_dcdt);
-  SPDLOG_CRITICAL("    - sum_squared_c {}", sum_squared_c);
   double c_norm = std::sqrt(sum_squared_c);
   double dcdt_norm = std::sqrt(sum_squared_dcdt);
   double relative_norm = dcdt_norm / std::max(c_norm, 1e-12);
@@ -154,6 +150,10 @@ std::size_t PixelSimSteadyState::getNumStepsSteady() const {
 
 void PixelSimSteadyState::setNumStepsSteady(std::size_t new_numstepssteady) {
   num_steps_steadystate = new_numstepssteady;
+}
+
+bool PixelSimSteadyState::hasConverged() const {
+  return steps_within_tolerance >= num_steps_steadystate;
 }
 
 } // namespace sme::simulate

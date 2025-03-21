@@ -71,11 +71,11 @@ DuneSimSteadyState::run(double time, double timeout_ms,
   timer.start();
   SPDLOG_CRITICAL("Starting DuneSimSteadyState::run");
   std::vector<double> c_old = getConcentrations();
-  SPDLOG_CRITICAL("current time: {}, norm: {}, timeout - elapsed: "
-                  "{},steps_within_tolerance: {}",
-                  time, current_error,
-                  timeout_ms - static_cast<double>(timer.elapsed()),
-                  steps_within_tolerance);
+  SPDLOG_DEBUG(
+      " DuneSimSteadyState current time: {}, norm: {}, timeout - elapsed: "
+      "{},steps_within_tolerance: {}, num_steps_steadystate: {}",
+      time, current_error, timeout_ms - static_cast<double>(timer.elapsed()),
+      steps_within_tolerance, num_steps_steadystate);
 
   try {
     if (pDuneImpl2d != nullptr) {
@@ -101,8 +101,9 @@ DuneSimSteadyState::run(double time, double timeout_ms,
   if (steps_within_tolerance > 0 and current_error > stop_tolerance) {
     steps_within_tolerance = 0;
   }
-  if (steps_within_tolerance >= num_steps_steadystate) {
-    SPDLOG_CRITICAL("Reached steady state");
+  if (hasConverged()) {
+    SPDLOG_CRITICAL("DuneSimSteadyState reached steady state");
+    setStopRequested(true);
   }
 
   if (stopRunningCallback && stopRunningCallback()) {
@@ -133,6 +134,10 @@ std::size_t DuneSimSteadyState::getNumStepsSteady() const {
 
 void DuneSimSteadyState::setNumStepsSteady(std::size_t new_numstepssteady) {
   num_steps_steadystate = new_numstepssteady;
+}
+
+bool DuneSimSteadyState::hasConverged() const {
+  return steps_within_tolerance >= num_steps_steadystate;
 }
 
 } // namespace sme::simulate

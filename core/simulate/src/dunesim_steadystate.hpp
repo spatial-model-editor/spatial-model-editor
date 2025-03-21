@@ -43,7 +43,7 @@ public:
    *
    * @return std::size_t
    */
-  [[nodiscard]] std::size_t getNumStepsSteady() const override;
+  std::size_t getNumStepsSteady() const override;
 
   /**
    * @brief Set the Num Steps Steady object
@@ -66,6 +66,8 @@ public:
    * is considered zero and the simulation is assumed to have converged
    */
   void setStopTolerance(double stop_tolerance) override;
+
+  bool hasConverged() const override;
 
   /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.

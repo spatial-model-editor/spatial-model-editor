@@ -382,4 +382,9 @@ const common::ImageStack &PixelSim::errorImages() const {
 }
 
 void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
+
+bool PixelSim::hasConverged() const {
+  SPDLOG_DEBUG("Not implemented because time stepping method, ignore");
+  return false;
+}
 } // namespace sme::simulate

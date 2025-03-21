@@ -55,6 +55,7 @@ public:
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
   void setStopRequested(bool stop) override;
+  [[nodiscard]] virtual bool hasConverged() const override;
 };
 
 } // namespace simulate

@@ -347,6 +347,15 @@ std::size_t Simulation::doMultipleTimesteps(
         simulator->setStopRequested(false);
         return steps;
       }
+
+      if (simulator->hasConverged()) {
+        SPDLOG_INFO("Simulation has converged");
+        isRunning.store(false);
+        stopRequested.store(false);
+        simulator->setStopRequested(false);
+        return steps;
+      }
+
       updateConcentrations(data->timePoints.back() + time);
       ++nCompletedTimesteps;
     }

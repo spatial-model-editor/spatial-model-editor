@@ -74,6 +74,7 @@ public:
                                                   std::size_t pixelIndex) const;
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
+  [[nodiscard]] bool hasConverged() const override;
   void setStopRequested(bool stop) override;
 };
 

@@ -20,6 +20,7 @@ public:
   [[nodiscard]] virtual const std::string &errorMessage() const = 0;
   [[nodiscard]] virtual const common::ImageStack &errorImages() const = 0;
   virtual void setStopRequested(bool stop) = 0;
+  [[nodiscard]] virtual bool hasConverged() const = 0;
 };
 
 } // namespace sme::simulate

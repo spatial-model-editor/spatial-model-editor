@@ -59,7 +59,7 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
       finalizePlotAndImages();
     }
   });
-  useSimulator("DUNE");
+  useSimulator("Dune");
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
 
@@ -103,21 +103,6 @@ TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
     return "DUNESteadyState";
   } else {
     return "";
-  }
-}
-
-sme::simulate::SimulatorType
-TabSimulate::chooseAlternativeSimulator(std::string_view simtype) {
-  if (simtype == "DUNE") {
-    return sme::simulate::SimulatorType::Pixel;
-  } else if (simtype == "DUNESteadyState") {
-    return sme::simulate::SimulatorType::PixelSteadyState;
-  } else if (simtype == "Pixel") {
-    return sme::simulate::SimulatorType::DUNE;
-  } else if (simtype == "PixelSteadyState") {
-    return sme::simulate::SimulatorType::DUNESteadyState;
-  } else {
-    return sme::simulate::SimulatorType::Pixel;
   }
 }
 

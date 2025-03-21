@@ -102,4 +102,9 @@ void DuneSim::setStopRequested([[maybe_unused]] bool stop) {
   SPDLOG_DEBUG("Not implemented - ignoring request");
 }
 
+bool DuneSim::hasConverged() const {
+  SPDLOG_DEBUG("Not implemented because time stepping method, ignore");
+  return false;
+}
+
 } // namespace sme::simulate
