@@ -1,5 +1,6 @@
 #include "pixelsim_steadystate.hpp"
 #include "pixelsim_impl.hpp"
+#include "steadystate_helper.hpp"
 #include <QElapsedTimer>
 #include <cmath>
 #include <oneapi/tbb/global_control.h>
@@ -130,8 +131,11 @@ PixelSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
   }
   double c_norm = std::sqrt(sum_squared_c);
   double dcdt_norm = std::sqrt(sum_squared_dcdt);
-  double relative_norm = dcdt_norm / std::max(c_norm, 1e-12);
-  return relative_norm;
+  if (mode == SteadystateMode::relative) {
+    dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
+  }
+
+  return dcdt_norm;
 }
 
 double PixelSimSteadyState::getStopTolerance() const { return stop_tolerance; }
@@ -144,16 +148,21 @@ std::size_t PixelSimSteadyState::getStepsBelowTolerance() const {
   return steps_within_tolerance;
 }
 
-std::size_t PixelSimSteadyState::getNumStepsSteady() const {
+std::size_t PixelSimSteadyState::getStepsBelowTolerance() const {
   return num_steps_steadystate;
 }
 
-void PixelSimSteadyState::setNumStepsSteady(std::size_t new_numstepssteady) {
+void PixelSimSteadyState::setStepsBelowTolerance(
+    std::size_t new_numstepssteady) {
   num_steps_steadystate = new_numstepssteady;
 }
 
 bool PixelSimSteadyState::hasConverged() const {
   return steps_within_tolerance >= num_steps_steadystate;
 }
+
+SteadystateMode PixelSimSteadyState::getMode() { return mode; }
+
+void PixelSimSteadyState::setMode(SteadystateMode mode) { this->mode = mode; }
 
 } // namespace sme::simulate

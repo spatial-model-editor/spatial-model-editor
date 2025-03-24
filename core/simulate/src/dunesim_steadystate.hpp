@@ -14,6 +14,7 @@ class DuneSimSteadyState final : public DuneSim, public SteadyStateHelper {
   double current_error;
   std::size_t steps_within_tolerance;
   std::size_t num_steps_steadystate;
+  SteadystateMode mode;
 
 public:
   /**
@@ -43,13 +44,13 @@ public:
    *
    * @return std::size_t
    */
-  std::size_t getNumStepsSteady() const override;
+  std::size_t getStepsBelowTolerance() const override;
 
   /**
    * @brief Set the Num Steps Steady object
    *
    */
-  void setNumStepsSteady(std::size_t new_numstepssteady) override;
+  void setStepsBelowTolerance(std::size_t new_numstepssteady) override;
 
   /**
    * @brief Get the number of timesteps for which the error was below the
@@ -74,6 +75,20 @@ public:
    * @return false has not yet converged
    */
   [[nodiscard]] bool hasConverged() const override;
+
+  /**
+   * @brief Get the tolerance mode
+   *
+   * @return SteadystateMode
+   */
+  [[nodiscard]] SteadystateMode getMode() override;
+
+  /**
+   * @brief Set the tolerance mode
+   *
+   * @param mode Tolerance mode: absolute or relative
+   */
+  void setMode(SteadystateMode mode) override;
 
   /**
    * @brief Compute the stopping criterion as ||dc/dt|| / ||c||.

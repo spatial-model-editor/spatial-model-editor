@@ -42,9 +42,8 @@ double
 DuneSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
                                              const std::vector<double> &c_new,
                                              double dt) {
-  // TODO: this works because everything is implemented here, but we have
-  // an estimate for dcdt already in the system (?), which however I could not
-  // get to work correctly within the stopping criterion.
+  // TODO: this works because everything is implemented here, but maybe we have
+  // an estimate for dcdt already?
   double sum_squared_dcdt = 0.0;
   double sum_squared_c = 0.0;
 
@@ -57,8 +56,11 @@ DuneSimSteadyState::computeStoppingCriterion(const std::vector<double> &c_old,
 
   double c_norm = std::sqrt(sum_squared_c);
   double dcdt_norm = std::sqrt(sum_squared_dcdt);
-  double relative_norm = dcdt_norm / std::max(c_norm, 1e-12);
-  return relative_norm;
+  if (mode == SteadystateMode::relative) {
+    dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
+  }
+
+  return dcdt_norm;
 }
 
 std::size_t
@@ -128,16 +130,21 @@ void DuneSimSteadyState::setStopTolerance(double stop_tolerance) {
   this->stop_tolerance = stop_tolerance;
 }
 
-std::size_t DuneSimSteadyState::getNumStepsSteady() const {
+std::size_t DuneSimSteadyState::getStepsBelowTolerance() const {
   return num_steps_steadystate;
 }
 
-void DuneSimSteadyState::setNumStepsSteady(std::size_t new_numstepssteady) {
+void DuneSimSteadyState::setStepsBelowTolerance(
+    std::size_t new_numstepssteady) {
   num_steps_steadystate = new_numstepssteady;
 }
 
 bool DuneSimSteadyState::hasConverged() const {
   return steps_within_tolerance >= num_steps_steadystate;
 }
+
+SteadystateMode DuneSimSteadyState::getMode() { return mode; }
+
+void DuneSimSteadyState::setMode(SteadystateMode mode) { this->mode = mode; }
 
 } // namespace sme::simulate

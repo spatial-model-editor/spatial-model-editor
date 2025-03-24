@@ -32,6 +32,7 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QWhatsThis>
+#include <spdlog/spdlog.h>
 
 static QString getStatusBarMessage(int step) {
   if (step == 1) {
@@ -203,6 +204,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->action_Optimization, &QAction::triggered, this,
           &MainWindow::action_Optimization_triggered);
+
+  connect(ui->actionSteady_state_analysis, &QAction::triggered, this,
+          &MainWindow::action_steadystate_analysis_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -617,8 +621,9 @@ void MainWindow::action_steadystate_analysis_triggered() {
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }
-  DialogSteadystate dialogSteadystate{};
+  DialogSteadystate dialogSteadystate(model);
   if (dialogSteadystate.exec() == QDialog::Accepted) {
+    SPDLOG_CRITICAL("Steadystate analysis shit accepted");
   }
 }
 
