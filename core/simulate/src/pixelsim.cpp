@@ -10,7 +10,6 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
-#include <cstddef>
 #include <cstdlib>
 #include <memory>
 #include <oneapi/tbb/global_control.h>
@@ -297,24 +296,11 @@ PixelSim::PixelSim(
 
 PixelSim::~PixelSim() = default;
 
-double PixelSim::run_step(double time, double tNow) {
-  double maxDt = std::min(maxTimestep, time - tNow);
-  if (integrator == PixelIntegratorType::RK101) {
-    double timestep = std::min(maxDt, maxStableTimestep);
-    doRK101(timestep);
-    tNow += timestep;
-  } else {
-    tNow += doRKAdaptive(maxDt);
-  }
-  return tNow;
-}
-
 std::size_t PixelSim::run(double time, double timeout_ms,
                           const std::function<bool()> &stopRunningCallback) {
   SPDLOG_TRACE("  - max rel local err {}", errMax.rel);
   SPDLOG_TRACE("  - max abs local err {}", errMax.abs);
   SPDLOG_TRACE("  - max stepsize {}", maxTimestep);
-
   currentErrorMessage.clear();
   oneapi::tbb::global_control control(
       oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
@@ -326,10 +312,16 @@ std::size_t PixelSim::run(double time, double timeout_ms,
   // do timesteps until we reach t
   constexpr double relativeTolerance = 1e-12;
   while (tNow + time * relativeTolerance < time) {
-    tNow = run_step(time, tNow);
-
-    if (!currentErrorMessage.empty()) {
-      return steps;
+    double maxDt = std::min(maxTimestep, time - tNow);
+    if (integrator == PixelIntegratorType::RK101) {
+      double timestep = std::min(maxDt, maxStableTimestep);
+      doRK101(timestep);
+      tNow += timestep;
+    } else {
+      tNow += doRKAdaptive(maxDt);
+      if (!currentErrorMessage.empty()) {
+        return steps;
+      }
     }
     ++steps;
     if (timeout_ms >= 0.0 &&
@@ -383,8 +375,4 @@ const common::ImageStack &PixelSim::errorImages() const {
 
 void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
 
-bool PixelSim::hasConverged() const {
-  SPDLOG_DEBUG("Not implemented because time stepping method, ignore");
-  return false;
-}
 } // namespace sme::simulate

@@ -102,53 +102,15 @@ public:
    */
   bool setBestResults(double fitness,
                       std::vector<std::vector<double>> &&results);
-
-  /**
-   * @brief Get the values for a target obtained with the best currently
-   * available parameters.
-   *
-   */
-  [[nodiscard]] std::vector<double>
-  getBestResultValues(std::size_t index) const;
-
   /**
    * @brief Get an image of the a target
    */
   [[nodiscard]] common::ImageStack getTargetImage(std::size_t index) const;
-
-  /**
-   * @brief Get the raw values of the optimization target
-   */
-  [[nodiscard]] std::vector<double> getTargetValues(std::size_t index) const;
-
   /**
    * @brief Get an image of the current best result for a target
    */
   [[nodiscard]] std::optional<common::ImageStack>
   getUpdatedBestResultImage(std::size_t index);
-
-  /**
-   * @brief Get the current best result for a target
-   */
-  [[nodiscard]] common::ImageStack getCurrentBestResultImage() const;
-
-  /**
-   * @brief Get the size of the domain of the image representing the
-   * optimization target in number of pixels in each dimension
-   */
-  [[nodiscard]] sme::common::Volume getImageSize();
-
-  /**
-   * @brief get the maximum value of the target values
-   */
-  [[nodiscard]] double getMaxValue(std::size_t index);
-
-  /**
-   * @brief Get the difference between the optimization target and the current
-   * best result
-   */
-  [[nodiscard]] common::ImageStack getDifferenceImage(std::size_t index);
-
   /**
    * @brief The number of completed evolve iterations
    */

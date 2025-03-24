@@ -15,7 +15,6 @@
 #include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include <memory>
-#include <spdlog/spdlog.h>
 
 namespace sme::simulate {
 
@@ -92,7 +91,6 @@ public:
         geometryImageSize{sbmlDoc.getGeometry().getImages().volume()},
         pixelSize(sbmlDoc.getGeometry().getVoxelSize()),
         pixelOrigin{sbmlDoc.getGeometry().getPhysicalOrigin()} {
-    SPDLOG_CRITICAL("DuneImpl constructor");
     const auto &lengthUnit{sbmlDoc.getUnits().getLength()};
     const auto &volumeUnit{sbmlDoc.getUnits().getVolume()};
     volOverL3 = model::getVolOverL3(lengthUnit, volumeUnit);
@@ -368,11 +366,6 @@ private:
     }
     model->interpolate(*state, initialConditionFunctions);
     SPDLOG_INFO("end of interpolate");
-  }
-
-public:
-  const std::vector<DuneSimCompartment> &getDuneCompartments() const {
-    return duneCompartments;
   }
 };
 
