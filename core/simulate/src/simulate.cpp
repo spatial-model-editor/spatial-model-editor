@@ -1,23 +1,18 @@
 #include "sme/simulate.hpp"
 #include "dunesim.hpp"
-#include "dunesim_steadystate.hpp"
 #include "pixelsim.hpp"
-#include "pixelsim_steadystate.hpp"
 #include "sme/geometry.hpp"
 #include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model.hpp"
-#include "sme/model_settings.hpp"
 #include "sme/pde.hpp"
-#include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include <QElapsedTimer>
 #include <algorithm>
 #include <limits>
 #include <numeric>
-#include <spdlog/spdlog.h>
 #include <utility>
 
 namespace sme::simulate {
@@ -136,7 +131,14 @@ void Simulation::applyNextEvent() {
   }
   // re-init simulator
   simulator.reset();
-  makeSimulator();
+  if (settings->simulatorType == SimulatorType::DUNE &&
+      model.getGeometry().getIsMeshValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
+  } else {
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+  }
   // remove applied simEvent
   simEvents.pop();
 }
@@ -192,42 +194,10 @@ void Simulation::updateConcentrations(double t) {
   }
 }
 
-void Simulation::makeSimulator() {
-  SPDLOG_CRITICAL("makeSimulator start");
-  if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getIsMeshValid()) {
-    SPDLOG_CRITICAL("  makeSimulator selecting DUNE: {}",
-                    static_cast<int>(settings->simulatorType));
-    simulator =
-        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
-  } else if (settings->simulatorType == SimulatorType::DUNESteadyState &&
-             model.getGeometry().getIsMeshValid()) {
-    SPDLOG_CRITICAL("  makeSimulator selecting DUNESteadyState: {}",
-                    static_cast<int>(settings->simulatorType));
-    simulator = std::make_unique<DuneSimSteadyState>(model, compartmentIds,
-                                                     1e-7, eventSubstitutions);
-  } else if (settings->simulatorType == SimulatorType::PixelSteadyState) {
-    SPDLOG_CRITICAL("  makeSimulator selecting PixelSteadyState: {}",
-                    static_cast<int>(settings->simulatorType));
-    simulator = std::make_unique<PixelSimSteadyState>(
-        model, compartmentIds, compartmentSpeciesIds, 1e-7, eventSubstitutions);
-  } else {
-    SPDLOG_CRITICAL("  makeSimulator selecting Pixel: {}",
-                    static_cast<int>(settings->simulatorType));
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
-  }
-  SPDLOG_CRITICAL("makeSimulator done");
-}
-
 Simulation::Simulation(model::Model &smeModel)
     : model(smeModel), settings(&model.getSimulationSettings()),
       data{&model.getSimulationData()},
       imageSize(model.getGeometry().getImages().volume()) {
-
-  SPDLOG_CRITICAL("Simulation constructor with solver: {}",
-                  static_cast<int>(settings->simulatorType));
-
   if (data->timePoints.size() <= 1) {
     SPDLOG_INFO("starting new simulation");
     data->clear();
@@ -238,35 +208,33 @@ Simulation::Simulation(model::Model &smeModel)
   initModel();
   initEvents();
   // init simulator
-  makeSimulator();
+  if (settings->simulatorType == SimulatorType::DUNE &&
+      model.getGeometry().getIsMeshValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
+  } else {
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+  }
   if (simulator->errorMessage().empty()) {
-    SPDLOG_CRITICAL("everything good, recording timesteps");
     nCompletedTimesteps.store(data->timePoints.size());
     if (data->timePoints.empty()) {
       updateConcentrations(0);
       ++nCompletedTimesteps;
     }
-  } else {
-    SPDLOG_CRITICAL("error in simulation constructor: {}",
-                    simulator->errorMessage());
   }
-  SPDLOG_CRITICAL("Simulation constructor done");
 }
 
 Simulation::~Simulation() = default;
 
 std::size_t Simulation::doTimesteps(double time, std::size_t nSteps,
                                     double timeout_ms) {
-  SPDLOG_CRITICAL("call doTimesteps with solver {}",
-                  static_cast<int>(settings->simulatorType));
   return doMultipleTimesteps({{nSteps, time}}, timeout_ms);
 }
 
 std::size_t Simulation::doMultipleTimesteps(
     const std::vector<std::pair<std::size_t, double>> &timesteps,
     double timeout_ms, const std::function<bool()> &stopRunningCallback) {
-  SPDLOG_CRITICAL("run simulation with solver {}",
-                  static_cast<int>(settings->simulatorType));
   isRunning.store(true);
   stopRequested.store(false);
   if (data->timePoints.empty()) {
@@ -289,16 +257,15 @@ std::size_t Simulation::doMultipleTimesteps(
   timer.start();
 
   // ensure there is enough space that push_back won't cause a reallocation
-  // TODO: there should be a mutex/lock here in case reserve() reallocates
+  // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
   data->reserve(data->size() + nStepsTotal);
   std::size_t steps{0};
   double remaining_timeout_ms{-1.0};
   for (const auto &timestep : timesteps) {
     const auto [nSteps, time] = timestep;
-    SPDLOG_CRITICAL("doing {} timesteps of length {}", nSteps, time);
+    SPDLOG_INFO("doing {} timesteps of length {}", nSteps, time);
     for (std::size_t iStep = 0; iStep < nSteps; ++iStep) {
-      SPDLOG_CRITICAL("  - step {}/{}", iStep + 1, nSteps);
       if (timeout_ms >= 0.0) {
         remaining_timeout_ms =
             timeout_ms - static_cast<double>(timer.elapsed());
@@ -313,8 +280,7 @@ std::size_t Simulation::doMultipleTimesteps(
       double currentTime{data->timePoints.back()};
       while (std::abs(currentTime - nextEventTime) / time <
              fractionTimestepEpsilon) {
-        SPDLOG_CRITICAL("  t={}, applying event at {}", currentTime,
-                        nextEventTime);
+        SPDLOG_INFO("t={}, applying event at {}", currentTime, nextEventTime);
         applyNextEvent();
         nextEventTime = simEvents.front().time;
       }
@@ -323,8 +289,8 @@ std::size_t Simulation::doMultipleTimesteps(
              0.1 * fractionTimestepEpsilon) {
         // event would occur during this step: do a smaller sub-step until event
         double subTimeStep{nextEventTime - currentTime};
-        SPDLOG_CRITICAL("  Sub-step of {} to apply event at {}", subTimeStep,
-                        nextEventTime);
+        SPDLOG_INFO("Sub-step of {} to apply event at {}", subTimeStep,
+                    nextEventTime);
         steps += simulator->run(subTimeStep, remaining_timeout_ms,
                                 stopRunningCallback);
         // update intermediate concentrations to be able to apply them to model
@@ -336,9 +302,8 @@ std::size_t Simulation::doMultipleTimesteps(
         data->pop_back();
         currentTime += subTimeStep;
         currentTimeStep -= subTimeStep;
-        SPDLOG_CRITICAL("Remaining time step: {}", currentTimeStep);
+        SPDLOG_INFO("Remaining time step: {}", currentTimeStep);
       }
-      SPDLOG_CRITICAL("  Running step of length {}", currentTimeStep);
       steps += simulator->run(currentTimeStep, remaining_timeout_ms,
                               stopRunningCallback);
       if (!simulator->errorMessage().empty() || stopRequested.load()) {
@@ -347,15 +312,6 @@ std::size_t Simulation::doMultipleTimesteps(
         simulator->setStopRequested(false);
         return steps;
       }
-
-      if (simulator->hasConverged()) {
-        SPDLOG_CRITICAL("Simulation has converged");
-        isRunning.store(false);
-        stopRequested.store(false);
-        simulator->setStopRequested(false);
-        return steps;
-      }
-
       updateConcentrations(data->timePoints.back() + time);
       ++nCompletedTimesteps;
     }

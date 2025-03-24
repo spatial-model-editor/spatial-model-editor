@@ -66,7 +66,6 @@ public:
   explicit Simulation(model::Model &smeModel);
   ~Simulation();
 
-  void makeSimulator();
   std::size_t doTimesteps(double time, std::size_t nSteps = 1,
                           double timeout_ms = -1.0);
   std::size_t doMultipleTimesteps(

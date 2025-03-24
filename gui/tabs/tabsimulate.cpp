@@ -11,13 +11,13 @@
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
-#include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
 #include "ui_tabsimulate.h"
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <algorithm>
 #include <future>
+
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QVoxelRenderer *voxelRenderer, QWidget *parent)
     : QWidget(parent), ui{std::make_unique<Ui::TabSimulate>()}, model{m},
@@ -58,13 +58,9 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
       finalizePlotAndImages();
     }
   });
-  useSimulator("Dune");
+  useDune(true);
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
-
-  SPDLOG_CRITICAL(
-      "Tabsimulate setup done: {}",
-      static_cast<int>(model.getSimulationSettings().simulatorType));
 }
 
 TabSimulate::~TabSimulate() = default;
@@ -90,48 +86,7 @@ static void importModelTimesAndIntervals(
   }
 }
 
-std::string
-TabSimulate::chooseAlternativeSimulator(sme::simulate::SimulatorType simtype) {
-  if (simtype == sme::simulate::SimulatorType::DUNE) {
-    return "Pixel";
-  } else if (simtype == sme::simulate::SimulatorType::DUNESteadyState) {
-    return "PixelSteadyState";
-  } else if (simtype == sme::simulate::SimulatorType::Pixel) {
-    return "DUNE";
-  } else if (simtype == sme::simulate::SimulatorType::PixelSteadyState) {
-    return "DUNESteadyState";
-  } else {
-    return "";
-  }
-}
-
-void TabSimulate::useSimulator(std::string simulator) {
-  SPDLOG_CRITICAL("useSimulator: {}", simulator);
-  if (simulator == "Dune") {
-    SPDLOG_CRITICAL("  useSimulator selecting DUNE: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::DUNE;
-  } else if (simulator == "DuneSteadyState") {
-    SPDLOG_CRITICAL("  useSimulator selecting DUNESteadyState: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::DUNESteadyState;
-  } else if (simulator == "PixelSteadyState") {
-    SPDLOG_CRITICAL("  useSimulator selecting PixelSteadyState: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::PixelSteadyState;
-  } else {
-    SPDLOG_CRITICAL("  useSimulator selecting  Pixel: {}", simulator);
-    model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::Pixel;
-  }
-  loadModelData();
-}
-
 void TabSimulate::loadModelData() {
-  SPDLOG_CRITICAL(
-      "load model data with solver: {}",
-      static_cast<int>((model.getSimulationSettings().simulatorType)));
-
   if (sim != nullptr && sim->getIsRunning()) {
     return;
   }
@@ -146,10 +101,7 @@ void TabSimulate::loadModelData() {
     simSteps.wait();
   }
   if (model.getSimulationSettings().simulatorType ==
-          sme::simulate::SimulatorType::DUNE or
-      model.getSimulationSettings().simulatorType ==
-          sme::simulate::SimulatorType::DUNESteadyState) {
-    SPDLOG_CRITICAL("    Some DUNE solver is selected");
+      sme::simulate::SimulatorType::DUNE) {
     QString duneInvalidTitle{};
     QString duneInvalidMessage{};
     if (!model.getGeometry().getIsMeshValid()) {
@@ -165,23 +117,13 @@ void TabSimulate::loadModelData() {
     }
     if (!duneInvalidTitle.isEmpty()) {
       ui->btnSimulate->setEnabled(false);
-      SPDLOG_CRITICAL(
-          "   DUNE simulation setup failed, trying to select alternative: {}",
-          duneInvalidMessage.toStdString());
       auto result{QMessageBox::question(
           this, duneInvalidTitle,
           duneInvalidMessage +
               " Would you like to use the Pixel simulator instead?",
           QMessageBox::Yes | QMessageBox::No)};
       if (result == QMessageBox::Yes) {
-        if (model.getSimulationSettings().simulatorType ==
-            sme::simulate::SimulatorType::DUNE) {
-          model.getSimulationSettings().simulatorType =
-              sme::simulate::SimulatorType::Pixel;
-        } else {
-          model.getSimulationSettings().simulatorType =
-              sme::simulate::SimulatorType::PixelSteadyState;
-        }
+        useDune(false);
       }
       return;
     }
@@ -198,11 +140,10 @@ void TabSimulate::loadModelData() {
   sim = std::make_unique<sme::simulate::Simulation>(model);
   if (!sim->errorMessage().empty()) {
     ui->btnSimulate->setEnabled(false);
-    SPDLOG_CRITICAL("something went wrong with the simulation setup, trying to "
-                    "select other solver");
-    QString alternativeSim{
-        chooseAlternativeSimulator(model.getSimulationSettings().simulatorType)
-            .c_str()};
+    QString alternativeSim{model.getSimulationSettings().simulatorType ==
+                                   sme::simulate::SimulatorType::DUNE
+                               ? "Pixel"
+                               : "DUNE"};
     if (QMessageBox::question(
             this, "Simulation Setup Failed",
             QString(
@@ -211,8 +152,8 @@ void TabSimulate::loadModelData() {
                 .arg(sim->errorMessage().c_str())
                 .arg(alternativeSim),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      useSimulator(chooseAlternativeSimulator(
-          model.getSimulationSettings().simulatorType));
+      useDune(model.getSimulationSettings().simulatorType !=
+              sme::simulate::SimulatorType::DUNE);
     }
     return;
   }
@@ -275,6 +216,17 @@ void TabSimulate::stopSimulation() {
   sim->requestStop();
 }
 
+void TabSimulate::useDune(bool enable) {
+  if (enable) {
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::DUNE;
+  } else {
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+  }
+  loadModelData();
+}
+
 void TabSimulate::importTimesAndIntervalsOnNextLoad() {
   importTimesAndIntervals = true;
 }
@@ -300,14 +252,8 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
 void TabSimulate::invertYAxis(bool enable) { flipYAxis = enable; }
 
 void TabSimulate::btnSimulate_clicked() {
-  SPDLOG_CRITICAL("btnSimulate_clicked");
   auto simulationTimes{sme::simulate::parseSimulationTimes(
       ui->txtSimLength->text(), ui->txtSimInterval->text())};
-
-  for (auto [n, dt] : simulationTimes.value()) {
-    SPDLOG_CRITICAL("   times: {} x {}", n, dt);
-  }
-
   if (!simulationTimes.has_value()) {
     QMessageBox::warning(this, "Invalid simulation length or image interval",
                          "Invalid simulation length or image interval");
@@ -341,7 +287,6 @@ void TabSimulate::btnSimulate_clicked() {
       sim.get(), simulationTimes.value(), -1.0, std::function<bool()>{});
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
-  SPDLOG_CRITICAL("btnSimulate_clicked finished");
 }
 
 void TabSimulate::btnSliceImage_clicked() {

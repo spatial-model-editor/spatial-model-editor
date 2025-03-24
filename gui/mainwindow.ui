@@ -315,15 +315,13 @@
      </property>
      <addaction name="actionSimTypeDUNE"/>
      <addaction name="actionSimTypePixel"/>
-     <addaction name="separator"/>
-     <addaction name="actionDUNE_Steady_state_FEM"/>
-     <addaction name="actionPixel_Steady_State_FDM"/>
     </widget>
     <addaction name="actionSet_model_units"/>
     <addaction name="actionEdit_geometry_image"/>
     <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
     <addaction name="action_Optimization"/>
+    <addaction name="actionSteady_state_analysis"/>
    </widget>
    <widget class="QMenu" name="menu_Advanced">
     <property name="title">
@@ -604,7 +602,7 @@
     <string>&amp;Optimization</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+P</string>
+    <string>Backspace</string>
    </property>
   </action>
   <action name="actionsingle_compartment_diffusion_3d">
@@ -645,6 +643,11 @@
     <string>&amp;SelKov3D</string>
    </property>
   </action>
+  <action name="actionSteady_state_analysis">
+   <property name="text">
+    <string>Steady state analysis</string>
+   </property>
+  </action>
   <actiongroup name="actionGroupSimType">
    <action name="actionSimTypeDUNE">
     <property name="checkable">
@@ -666,22 +669,6 @@
     </property>
     <property name="text">
      <string>&amp;Pixel (FDM)</string>
-    </property>
-   </action>
-   <action name="actionDUNE_Steady_state_FEM">
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-    <property name="text">
-     <string>DUNE Steady state (FEM)</string>
-    </property>
-   </action>
-   <action name="actionPixel_Steady_State_FDM">
-    <property name="checkable">
-     <bool>true</bool>
-    </property>
-    <property name="text">
-     <string>Pixel Steady State (FDM)</string>
     </property>
    </action>
   </actiongroup>

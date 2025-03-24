@@ -5,7 +5,6 @@
 #include "plotwrapper.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/simulate.hpp"
-#include "tabsimulate_base.hpp"
 #include <QWidget>
 #include <future>
 #include <memory>
@@ -34,7 +33,7 @@ public:
   ~TabSimulate() override;
   void loadModelData();
   void stopSimulation();
-  void useSimulator(std::string simulator);
+  void useDune(bool enable);
   void importTimesAndIntervalsOnNextLoad();
   void reset();
   void setOptions(const sme::simulate::Options &options);
@@ -71,5 +70,4 @@ private:
   void btnDisplayOptions_clicked();
   void graphClicked(const QMouseEvent *event);
   void hslideTime_valueChanged(int value);
-  std::string chooseAlternativeSimulator(sme::simulate::SimulatorType simtype);
 };

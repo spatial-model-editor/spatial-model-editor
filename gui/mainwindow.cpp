@@ -6,6 +6,7 @@
 #include "dialogoptimize.hpp"
 #include "dialogoptsetup.hpp"
 #include "dialogsimulationoptions.hpp"
+#include "dialogsteadystate.hpp"
 #include "dialogunits.hpp"
 #include "guiutils.hpp"
 #include "ode_import_wizard.hpp"
@@ -14,7 +15,6 @@
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
-#include "sme/simulate_options.hpp"
 #include "tabevents.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
@@ -230,21 +230,7 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGroupSimType, &QActionGroup::triggered, this,
           [s = tabSimulate, ui_ptr = ui.get()]() {
-            // FIXME: this should be more centralized, it doesn´t scale well as
-            // it currently is
-            if (ui_ptr->actionSimTypeDUNE->isChecked()) {
-              SPDLOG_CRITICAL("  Dune clicked");
-              s->useSimulator("Dune");
-            } else if (ui_ptr->actionDUNE_Steady_state_FEM->isChecked()) {
-              SPDLOG_CRITICAL("  Dune steadystate clicked");
-              s->useSimulator("DuneSteadyState");
-            } else if (ui_ptr->actionPixel_Steady_State_FDM->isChecked()) {
-              SPDLOG_CRITICAL("  Pixel steadystate clicked");
-              s->useSimulator("PixelSteadyState");
-            } else {
-              SPDLOG_CRITICAL("  Pixel clicked");
-              s->useSimulator("Pixel");
-            }
+            s->useDune(ui_ptr->actionSimTypeDUNE->isChecked());
           });
 
   connect(ui->actionGeometry_grid, &QAction::triggered, this,
@@ -345,12 +331,6 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
   if (model.getSimulationSettings().simulatorType ==
       sme::simulate::SimulatorType::DUNE) {
     ui->actionSimTypeDUNE->setChecked(true);
-  } else if (model.getSimulationSettings().simulatorType ==
-             sme::simulate::SimulatorType::DUNESteadyState) {
-    ui->actionDUNE_Steady_state_FEM->setChecked(true);
-  } else if (model.getSimulationSettings().simulatorType ==
-             sme::simulate::SimulatorType::PixelSteadyState) {
-    ui->actionPixel_Steady_State_FDM->setChecked(true);
   } else {
     ui->actionSimTypePixel->setChecked(true);
   }
@@ -629,6 +609,16 @@ void MainWindow::action_Optimization_triggered() {
     }
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(this, "Optimize error", e.what());
+  }
+}
+
+void MainWindow::action_steadystate_analysis_triggered() {
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
+  DialogSteadystate dialogSteadystate{};
+  if (dialogSteadystate.exec() == QDialog::Accepted) {
   }
 }
 
