@@ -23,7 +23,6 @@ private:
     _3D,
   };
   sme::model::Model &m_model;
-  std::unique_ptr<sme::simulate::BaseSim> m_simulator;
   std::unique_ptr<Ui::DialogSteadystate> ui;
   QTimer m_plotRefreshTimer;
   VizMode vizmode;

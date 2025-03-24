@@ -114,22 +114,22 @@ void DialogSteadystate::plottingCurrentIndexChanged(
 
 void DialogSteadystate::timeoutInputChanged() {
   SPDLOG_CRITICAL("timeout ");
-  m_simulator->setTimeout(ui->timeoutInput->text().toDouble());
+  // TODO: implement this bullshit
 }
 
 void DialogSteadystate::toleranceInputChanged() {
   SPDLOG_CRITICAL("tolerance ");
-  m_simulator->setStopTolerance(ui->toleranceInput->text().toDouble());
+  // TODO: implement this bullshit
 }
 
 void DialogSteadystate::stepsWithinToleranceInputChanged() {
   SPDLOG_CRITICAL("steps within tolerance ");
-  m_simulator->setStepsBelowTolerance(ui->tolStepInput->text().toInt());
+  // TODO: implement this bullshit
 }
 
 void DialogSteadystate::maxstepsInputChanged() {
   SPDLOG_CRITICAL("max step ");
-  m_simulator->setMaxSteps(ui->maxStepInput->text().toInt());
+  // TODO: implement this bullshit
 }
 
 void DialogSteadystate::btnStartStopClicked() {

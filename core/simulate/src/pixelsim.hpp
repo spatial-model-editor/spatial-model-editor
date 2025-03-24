@@ -60,7 +60,7 @@ public:
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
   virtual ~PixelSim() override;
-  double run_step(double time, double tNow);
+  double run_step(double time, double tNow) override;
   virtual std::size_t
   run(double time, double timeout_ms,
       const std::function<bool()> &stopRunningCallback) override;
@@ -74,7 +74,6 @@ public:
                                                   std::size_t pixelIndex) const;
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
-  [[nodiscard]] bool hasConverged() const override;
   void setStopRequested(bool stop) override;
 };
 
