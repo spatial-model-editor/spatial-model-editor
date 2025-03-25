@@ -314,6 +314,14 @@ std::size_t SteadyStateSimulation::getStepsToConvergence() const {
 
 double SteadyStateSimulation::getDt() const { return m_dt; }
 
+std::string SteadyStateSimulation::getSolverErrormessage() const {
+  return m_simulator->errorMessage();
+}
+
+bool SteadyStateSimulation::getSolverStopRequested() const {
+  return m_simulator->getStopRequested();
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 

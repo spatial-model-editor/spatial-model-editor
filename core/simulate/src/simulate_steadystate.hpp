@@ -30,7 +30,7 @@ class SteadyStateSimulation final {
   // helper functions for solvers
   void initModel();
   void reset_solver();
-
+  void selectSimulator();
   // .. and for running them
   void runDune(double time);
   void runPixel(double time);
@@ -157,16 +157,76 @@ public:
    */
   [[nodiscard]] double getDt() const;
 
+  /**
+   * @brief Get the error message from the solvers
+   *
+   * @return std::string
+   */
+  [[nodiscard]] std::string getSolverErrormessage() const;
+
+  /**
+   * @brief Get a boolean flag if the solver has been requested to stop
+   *
+   * @return true Solver has been requested to be stopped
+   * @return false otherwise
+   */
+  [[nodiscard]] bool getSolverStopRequested() const;
+
   // setters
+
+  /**
+   * @brief Set the convergence mode
+   *
+   * @param mode SteadystateConvergenceMode: absolute or relative
+   */
   void setStopMode(SteadystateConvergenceMode mode);
+
+  /**
+   * @brief Set the number of steps below tolerance required to consider the
+   * simulation converged
+   *
+   * @param new_numstepssteady std::size_t
+   */
   void setStepsBelowTolerance(std::size_t new_numstepssteady);
+
+  /**
+   * @brief Set the tolerance used to determine convergence
+   *
+   * @param stop_tolerance double
+   */
   void setStopTolerance(double stop_tolerance);
+
+  /**
+   * @brief Set the type of simulator used. This resets all data and solver
+   * states and creates a new simulation with the new solver type
+   *
+   * @param type SimulatorType: Dune or Pixel
+   */
   void setSimulatorType(SimulatorType type);
+
+  /**
+   * @brief Set the number of steps the simulation needs to have a stable
+   * solution for to consider it converged
+   *
+   * @param steps_to_convergence std::size_t
+   */
   void setStepsToConvergence(std::size_t steps_to_convergence);
+
+  /**
+   * @brief Set the timestep to check for convergence
+   *
+   * @param dt
+   */
   void setDt(double dt);
+
   // functionality
-  void run(double time);
-  void selectSimulator();
+
+  /**
+   * @brief Run the simulation for the given time in seconds
+   *
+   * @param time_s
+   */
+  void run(double time_s);
 };
 } // namespace simulate
 } // namespace sme

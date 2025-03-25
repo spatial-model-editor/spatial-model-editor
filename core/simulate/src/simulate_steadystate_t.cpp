@@ -43,36 +43,15 @@ TEST_CASE("SimulateSteadyState",
     simulate::SteadyStateSimulation steadyStateSim(
         m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
         simulate::SteadystateConvergenceMode::relative, 1000, 1e-2);
-    // simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    // std::size_t steps = pixelSim.run(1000000, 500000, []() { return false;
-    // }); if (not pixelSim.errorMessage().empty()) {
-    //   SPDLOG_CRITICAL("error message: {}", pixelSim.errorMessage());
-    // }
-    // REQUIRE(pixelSim.errorMessage().empty());
-    // REQUIRE(steps > 0);
-    // REQUIRE(pixelSim.getCurrentError() < stop_tolerance);
   }
   SECTION("Run_until_convergence_dune") {
     simulate::SteadyStateSimulation steadyStateSim(
         m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
         simulate::SteadystateConvergenceMode::relative, 1000, 1e-2);
-    // simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    // std::size_t steps = pixelSim.run(1000000, 500000, []() { return false;
-    // }); if (not pixelSim.errorMessage().empty()) {
-    //   SPDLOG_CRITICAL("error message: {}", pixelSim.errorMessage());
-    // }
-    // REQUIRE(pixelSim.errorMessage().empty());
-    // REQUIRE(steps > 0);
-    // REQUIRE(pixelSim.getCurrentError() < stop_tolerance);
   }
   SECTION("timeout_simulation") {
     simulate::SteadyStateSimulation steadyStateSim(
         m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
         simulate::SteadystateConvergenceMode::relative, 1000, 1e-2);
-    // simulate::PixelSimSteadyState pixelSim(m, comps, specs, stop_tolerance);
-    // std::size_t steps = pixelSim.run(10000000, 50, []() { return false; });
-    // REQUIRE(pixelSim.getCurrentError() > stop_tolerance);
-    // REQUIRE(steps > 0);
-    // REQUIRE(pixelSim.errorMessage() == "Simulation stopped early");
   }
 }
