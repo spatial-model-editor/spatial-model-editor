@@ -17,41 +17,93 @@
 
 namespace sme::simulate {
 
-void SteadyStateSimulation::selectSimulator() {
-  if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE)
-    m_simulator =
-        std::make_unique<DuneSim>(m_model, /*TODO: Add compartment ids here*/);
-  else {
-    m_simulator = std::make_unique<PixelSim>(
-        m_model, /*TODO: Add compartment ids here and other shit*/);
+// lifecycle
+SteadyStateSimulation::SteadyStateSimulation(
+    sme::model::Model &model, SimulatorType type, double tolerance,
+    std::size_t steps_to_convergence,
+    SteadystateConvergenceMode convergence_mode, std::size_t timeout_ms,
+    double dt)
+    : m_has_converged(false), m_model(model), m_convergenceTolerance(tolerance),
+      m_steps_below_tolerance(0), m_steps_to_convergence(steps_to_convergence),
+      m_timeout_ms(timeout_ms), m_stop_mode(convergence_mode), m_steps(),
+      m_errors(), m_compartmentIdxs(), m_compartmentIds(),
+      m_compartmentSpeciesIds(), m_compartmentSpeciesColors(), m_dt(dt) {
+  initModel();
+  selectSimulator();
+}
+
+// helpers
+void SteadyStateSimulation::initModel() {
+  int i = 0;
+  for (const auto &compartmentId : m_model.getCompartments().getIds()) {
+    m_compartmentIdxs.push_back(i);
+    m_compartmentIds.push_back(compartmentId.toStdString());
+    m_compartmentSpeciesIds.push_back({});
+    m_compartmentSpeciesColors.push_back({});
+    for (const auto &s : m_model.getSpecies().getIds(compartmentId)) {
+      if (!m_model.getSpecies().getIsConstant(s)) {
+        m_compartmentSpeciesIds[i].push_back(s.toStdString());
+        const auto &field = m_model.getSpecies().getField(s);
+        m_compartmentSpeciesColors[i].push_back(field->getColor());
+      }
+    }
+    i++;
   }
 }
+
+void SteadyStateSimulation::selectSimulator() {
+
+  if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE &&
+      m_model.getGeometry().getIsMeshValid())
+    m_simulator = std::make_unique<DuneSim>(m_model, m_compartmentIds);
+  else {
+    m_simulator = std::make_unique<PixelSim>(m_model, m_compartmentIds,
+                                             m_compartmentSpeciesIds);
+  }
+}
+
+// run stuff
 
 void SteadyStateSimulation::runPixel(double time) {
 
   m_simulator->setCurrentErrormessage("");
+
   oneapi::tbb::global_control control(
       oneapi::tbb::global_control::max_allowed_parallelism,
       m_model.getSimulationSettings().options.pixel.maxThreads);
-  QElapsedTimer timer;
-  timer.start();
-  double tNow = 0;
-  // do timesteps until we reach t
-  constexpr double relativeTolerance = 1e-12;
-  while (tNow + time * relativeTolerance < time) {
-    auto c_before = getConcentrations();
-    double tBefore = time;
-    tNow = m_simulator->run_step(time, tNow);
 
-    auto c_after = getConcentrations();
-    auto current_error =
-        computeStoppingCriterion(c_before, c_after, tNow - tBefore);
+  QElapsedTimer timer;
+  double tNow = 0;
+  constexpr double relativeTolerance = 1e-12;
+
+  std::vector<double> c_old = getConcentrations();
+  std::vector<double> c_new;
+  c_new.reserve(c_old.capacity());
+
+  // do timesteps until we reach t
+  timer.start();
+  while (tNow + time * relativeTolerance < time) {
+    double tBefore = time;
+
+    m_simulator->run(m_dt, m_timeout_ms,
+                     [&]() { return m_simulator->getStopRequested(); });
+
+    c_new = getConcentrations();
+
+    auto current_error = computeStoppingCriterion(c_old, c_new, tNow - tBefore);
+
+    c_old.swap(c_new);
+
     if (std::isnan(current_error) or std::isinf(current_error)) {
       m_simulator->setCurrentErrormessage(
           "Simulation failed: NaN  of Inf detected in norm");
       SPDLOG_DEBUG(currentErrorMessage);
     }
+
+    tNow += m_dt;
+
     m_steps.push_back(tNow);
+
     m_errors.push_back(current_error);
 
     if (current_error < m_convergenceTolerance) {
@@ -61,17 +113,10 @@ void SteadyStateSimulation::runPixel(double time) {
     }
 
     if (m_steps_below_tolerance >= m_steps_to_convergence) {
-      m_has_converged.store(true);
+      m_has_converged = true;
       m_simulator->setStopRequested(true);
       SPDLOG_DEBUG("Simulation has converged");
-    }
-
-    if (m_simulator->getCurrentErrorMessage().empty()) {
       break;
-    }
-
-    if (m_steps_below_tolerance >= m_steps_to_convergence) {
-      m_has_converged.store(true);
     }
 
     if (m_timeout_ms >= 0.0 &&
@@ -80,37 +125,37 @@ void SteadyStateSimulation::runPixel(double time) {
       m_simulator->setStopRequested(true);
       break;
     }
-    if (m_simulator->getStopRequested().load()) {
+
+    if (m_simulator->getStopRequested()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
       SPDLOG_DEBUG("Simulation timeout or stopped early");
       break;
     }
   }
-  SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
-               steps + discardedSteps,
-               static_cast<double>(100 * discardedSteps) /
-                   static_cast<double>(steps + discardedSteps));
 }
 
 void SteadyStateSimulation::runDune(double time) {
-
-  // FIXME: do some better shit here to make this work!
   QElapsedTimer timer;
+
   timer.start();
+
   double tNow = 0.;
+
   double relativeTolerance = 1e-12;
+
+  std::vector<double> c_old = getConcentrations();
+
+  std::vector<double> c_new;
+
+  c_new.reserve(c_old.capacity());
+
+  // use dt here to avoid too long intervals for checking the stopping criterion
+
   while (tNow + time * relativeTolerance < time) {
 
-    SPDLOG_CRITICAL("Starting DuneSimSteadyState::run");
-    std::vector<double> c_old = getConcentrations();
-    SPDLOG_DEBUG(
-        " DuneSimSteadyState current time: {}, norm: {}, timeout - elapsed: "
-        "{},steps_within_tolerance: {}, num_steps_steadystate: {}",
-        time, current_error, timeout_ms - static_cast<double>(timer.elapsed()),
-        steps_within_tolerance, num_steps_steadystate);
-
     try {
-      tNow = m_simulator->run_step(time, tNow);
+      m_simulator->run(m_dt, m_timeout_ms,
+                       [&]() { return m_simulator->getStopRequested(); });
 
     } catch (const Dune::Exception &e) {
       m_simulator->setCurrentErrormessage(e.what());
@@ -118,17 +163,16 @@ void SteadyStateSimulation::runDune(double time) {
       break;
     }
 
-    std::vector<double> c_new = getConcentrations();
+    tNow += m_dt;
+
+    c_new = getConcentrations();
 
     double current_error = computeStoppingCriterion(c_old, c_new, time);
 
-    if (std::isnan(current_error) or std::isinf(current_error)) {
-      m_simulator->setCurrentErrormessage(
-          "Simulation failed: NaN  of Inf detected in norm");
-      SPDLOG_DEBUG(currentErrorMessage);
-      break;
-    }
+    c_old.swap(c_new);
+
     m_errors.push_back(current_error);
+
     m_steps.push_back(tNow);
 
     if (current_error < m_convergenceTolerance) {
@@ -138,7 +182,7 @@ void SteadyStateSimulation::runDune(double time) {
     }
 
     if (m_steps_below_tolerance >= m_steps_to_convergence) {
-      m_has_converged.store(true);
+      m_has_converged = true;
       m_simulator->setStopRequested(true);
       SPDLOG_DEBUG("Simulation has converged");
       break;
@@ -150,10 +194,17 @@ void SteadyStateSimulation::runDune(double time) {
       m_simulator->setCurrentErrormessage("Simulation timeout");
       break;
     }
+
+    if (m_simulator->getStopRequested()) {
+      m_simulator->setCurrentErrormessage("Simulation stopped early");
+      SPDLOG_DEBUG("Simulation timeout or stopped early");
+      break;
+    }
   }
 }
 
 void SteadyStateSimulation::run(double time) {
+
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE) {
     runDune(time);
   } else {
@@ -162,11 +213,11 @@ void SteadyStateSimulation::run(double time) {
 }
 
 // state getters
-bool SteadyStateSimulation::hasConverged() const {
-  return m_has_converged.load();
-}
+bool SteadyStateSimulation::hasConverged() const { return m_has_converged; }
 
-SteadystateStopMode SteadyStateSimulation::getStopMode() { return m_stop_mode; }
+SteadystateConvergenceMode SteadyStateSimulation::getStopMode() {
+  return m_stop_mode;
+}
 
 std::size_t SteadyStateSimulation::getStepsBelowTolerance() const {
   return m_steps_below_tolerance;
@@ -200,9 +251,11 @@ std::size_t SteadyStateSimulation::getStepsToConvergence() const {
   return m_steps_to_convergence;
 }
 
+double SteadyStateSimulation::getDt() const { return m_dt; }
+
 // state setters
 
-void SteadyStateSimulation::setStopMode(SteadystateStopMode mode) {
+void SteadyStateSimulation::setStopMode(SteadystateConvergenceMode mode) {
   m_stop_mode = mode;
 }
 
@@ -224,6 +277,8 @@ void SteadyStateSimulation::setStepsToConvergence(
   m_steps_to_convergence = steps_to_convergence;
 }
 
+void SteadyStateSimulation::setDt(double dt) { m_dt = dt; }
+
 double SteadyStateSimulation::computeStoppingCriterion(
     const std::vector<double> &c_old, const std::vector<double> &c_new,
     double dt) {
@@ -239,7 +294,7 @@ double SteadyStateSimulation::computeStoppingCriterion(
 
   double c_norm = std::sqrt(sum_squared_c);
   double dcdt_norm = std::sqrt(sum_squared_dcdt);
-  if (m_stop_mode == SteadystateStopMode::relative) {
+  if (m_stop_mode == SteadystateConvergenceMode::relative) {
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
   }
 

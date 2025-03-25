@@ -102,25 +102,25 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     algo.set_xtol_rel(
         0); // this serves to effectively disable the stopping criterion based
             // on the relative change in the parameters
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case BOBYQA: {
     auto algo = pagmo::nlopt("bobyqa");
     algo.set_xtol_rel(0);
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case NMS: {
     auto algo = pagmo::nlopt("neldermead");
     algo.set_xtol_rel(0);
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case sbplx: {
     auto algo = pagmo::nlopt("sbplx");
     algo.set_xtol_rel(0);
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case AL: {
@@ -130,16 +130,16 @@ getPagmoAlgorithm(sme::simulate::OptAlgorithmType optAlgorithmType) {
     auto algo = pagmo::nlopt("auglag");
     auto aux_algo = pagmo::nlopt("neldermead");
     algo.set_xtol_rel(0);
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     aux_algo.set_xtol_rel(0);
-    aux_algo.set_maxeval(10);
+    aux_algo.set_maxeval(1);
     algo.set_local_optimizer(aux_algo);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   case PRAXIS: {
     auto algo = pagmo::nlopt("praxis");
     algo.set_xtol_rel(0);
-    algo.set_maxeval(10);
+    algo.set_maxeval(1);
     return std::make_unique<pagmo::algorithm>(std::move(algo));
   }
   default:
@@ -264,19 +264,6 @@ const std::vector<std::vector<double>> &Optimization::getParams() const {
   return bestParams;
 }
 
-sme::common::Volume Optimization::getImageSize() {
-  return optConstData->imageSize;
-}
-
-double Optimization::getMaxValue(std::size_t index) {
-  if (index >= optConstData->maxTargetValues.size()) {
-    SPDLOG_CRITICAL("index outside of range for max value retrieval: {} , {}",
-                    index, optConstData->maxTargetValues.size());
-    return 0;
-  }
-  return optConstData->maxTargetValues[index];
-}
-
 std::vector<QString> Optimization::getParamNames() const {
   std::vector<QString> names;
   names.reserve(optConstData->optimizeOptions.optParams.size());
@@ -288,24 +275,6 @@ std::vector<QString> Optimization::getParamNames() const {
 
 const std::vector<double> &Optimization::getFitness() const {
   return bestFitness;
-}
-
-common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
-
-  auto size = getImageSize();
-  // size.depth(), index);
-  auto tgt_values = getTargetValues(index);
-
-  // separate allocation to make sure that common::max does not segfault when
-  // called on an empty array.
-  auto diff_values =
-      std::vector<double>(size.width() * size.height() * size.depth(), 0);
-  auto res_values = getBestResultValues(index);
-  if (res_values.size() > 0) {
-    std::ranges::transform(tgt_values, res_values, diff_values.begin(),
-                           std::minus<double>());
-  }
-  return sme::common::ImageStack(size, diff_values, common::max(diff_values));
 }
 
 bool Optimization::setBestResults(double fitness,
@@ -340,37 +309,6 @@ Optimization::getUpdatedBestResultImage(std::size_t index) {
                               optConstData->maxTargetValues[index]);
   }
   return {};
-}
-
-common::ImageStack Optimization::getCurrentBestResultImage() const {
-  std::scoped_lock lock{bestResultsMutex};
-  return common::ImageStack(
-      optConstData->imageSize, bestResults.values[bestResults.imageIndex],
-      optConstData->maxTargetValues[bestResults.imageIndex]);
-}
-
-std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
-  std::scoped_lock lock{
-      bestResultsMutex}; // TODO: lock to avoid getting while it's still set?
-                         // not sure it's necessary, but will leave it here just
-                         // to be sure
-  if (index > bestResults.values.size() or bestResults.values.empty()) {
-    SPDLOG_CRITICAL("index outside of range for result retrieval: {} , {}",
-                    index, bestResults.values.size());
-    return {};
-  }
-  return bestResults.values[index];
-}
-
-std::vector<double> Optimization::getTargetValues(std::size_t index) const {
-
-  if (index > optConstData->optimizeOptions.optCosts.size()) {
-    SPDLOG_CRITICAL("index outside of range for target retrieval: {} , {}",
-                    index, bestResults.values.size());
-    return {};
-  }
-
-  return optConstData->optimizeOptions.optCosts[index].targetValues;
 }
 
 std::size_t Optimization::getIterations() const { return nIterations.load(); };

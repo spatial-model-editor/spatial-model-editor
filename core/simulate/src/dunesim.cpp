@@ -99,7 +99,16 @@ const common::ImageStack &DuneSim::errorImages() const {
 }
 
 void DuneSim::setStopRequested([[maybe_unused]] bool stop) {
+  // TODO: implement this properly: duneimpl in separate thread --> send
+  // kill/stop signal ?
   SPDLOG_DEBUG("Not implemented - ignoring request");
+}
+
+bool DuneSim::getStopRequested() const {
+  // TODO: implement this properly: duneimpl in separate thread --> send
+  // kill/stop signal ?
+  SPDLOG_DEBUG("Not implemented - ignoring request");
+  return false;
 }
 
 } // namespace sme::simulate

@@ -71,6 +71,9 @@ public:
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
   void setStopRequested(bool stop) override;
+  bool getStopRequested() const override;
+  void setCurrentErrormessage(const std::string &msg) override;
+  std::string getCurrentErrorMessage() const override;
 };
 
 } // namespace simulate
