@@ -14,7 +14,7 @@ class SteadyStateSimulation final {
   bool m_has_converged;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
-  double m_convergenceTolerance;
+  double m_convergence_tolerance;
   std::size_t m_steps_below_tolerance;
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
@@ -36,7 +36,7 @@ class SteadyStateSimulation final {
   void runPixel(double time);
   [[nodiscard]] double
   computeStoppingCriterion(const std::vector<double> &c_old,
-                           const std::vector<double> &c_new, double dt);
+                           const std::vector<double> &c_new);
 
   // helper functions for data
   void append_data(double timestep, double error);
@@ -172,6 +172,13 @@ public:
    */
   [[nodiscard]] bool getSolverStopRequested() const;
 
+  /**
+   * @brief Get the timeout threshold in milliseconds
+   *
+   * @return double
+   */
+  [[nodiscard]] double getTimeout() const;
+
   // setters
 
   /**
@@ -219,6 +226,13 @@ public:
    */
   void setDt(double dt);
 
+  /**
+   * @brief Set the timeout threshold in milliseconds
+   *
+   * @param timeout_ms
+   */
+  void setTimeout(double timeout_ms);
+
   // functionality
 
   /**
@@ -226,7 +240,7 @@ public:
    *
    * @param time_s
    */
-  void run(double time_s);
+  void run();
 };
 } // namespace simulate
 } // namespace sme
