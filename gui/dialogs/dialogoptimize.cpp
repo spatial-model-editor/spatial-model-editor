@@ -304,11 +304,11 @@ void DialogOptimize::updateTargetImage() {
   // this handles the distinction between 2D and 3D visualizations when setting
   // image data for the image that displays the target values
   // and handles the z-slider for the 2D visualization
-  if (m_opt == nullptr) {
+  auto variable = ui->cmbTarget->currentIndex();
+  if (m_opt == nullptr || variable < 0 || variable >= ui->cmbTarget->count()) {
     return;
   }
 
-  auto variable = ui->cmbTarget->currentIndex();
   SPDLOG_DEBUG(" Updating target image for variable {}", variable);
 
   auto img = m_opt->getTargetImage(variable);
@@ -358,10 +358,10 @@ void DialogOptimize::updateResultImage() {
 }
 
 void DialogOptimize::updateDifferenceImage() {
-  if (m_opt == nullptr) {
+  auto variable = ui->cmbTarget->currentIndex();
+  if (m_opt == nullptr || variable < 0 || variable >= ui->cmbTarget->count()) {
     return;
   }
-  auto variable = ui->cmbTarget->currentIndex();
   SPDLOG_DEBUG(" Updating difference image for variable {}", variable);
   auto img = m_opt->getDifferenceImage(variable);
   if (vizMode == VizMode::_2D) {
