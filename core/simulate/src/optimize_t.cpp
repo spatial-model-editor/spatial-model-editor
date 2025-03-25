@@ -4,7 +4,6 @@
 #include "sme/model.hpp"
 #include "sme/optimize.hpp"
 #include <catch2/catch_test_macros.hpp>
-#include <spdlog/spdlog.h>
 
 using namespace sme;
 using namespace sme::test;

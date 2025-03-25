@@ -294,7 +294,7 @@ const std::vector<double> &Optimization::getFitness() const {
 common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
 
   auto size = getImageSize();
-  // size.depth(), index);
+
   std::vector<double> tgt_values = getTargetValues(index);
 
   // separate allocation to make sure that common::max does not segfault when

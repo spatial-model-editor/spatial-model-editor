@@ -265,10 +265,6 @@ void DialogOptimize::updatePlots() {
           static_cast<std::size_t>(ui->cmbTarget->currentIndex()))};
       img.has_value()) {
     ui->lblResult->setImage(img.value());
-    if (vizMode == VizMode::_2D) {
-      ui->lblResult->setZSlider(ui->zaxisValues);
-      ui->lblResult->setZIndex(ui->zaxisValues->value());
-    }
   }
 
   updateDifferenceImage();
@@ -317,21 +313,13 @@ void DialogOptimize::updateTargetImage() {
   if (vizMode == VizMode::_2D) {
     SPDLOG_INFO("Updating target image for 2D visualization ");
     // all the z-axis stuff is only necessary for 2D visualization
-    auto z = ui->zaxisValues->value();
     ui->lblTarget->setImage(img);
-    ui->zaxisValues->setMinimum(0);
-    ui->zaxisValues->setMaximum(ui->lblTarget->getImage().volume().depth());
-    ui->zaxisValues->setValue(z);
-    ui->lblTarget->setZSlider(ui->zaxisValues);
-    ui->lblTarget->setZIndex(z);
-    ui->lblTarget->updateGeometry();
 
   } else {
     SPDLOG_DEBUG("Updating target image for 3D visualization: 2D visible? {}, "
                  "3d visible? {}",
                  ui->lblTarget->isVisible(), ui->lblTarget3D->isVisible());
     ui->lblTarget3D->setImage(img);
-    ui->lblTarget3D->updateGeometry();
   }
 }
 
@@ -345,15 +333,12 @@ void DialogOptimize::updateResultImage() {
   if (vizMode == VizMode::_2D) {
     auto z = ui->zaxisValues->value();
     ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
-    ui->lblResult->setZSlider(ui->zaxisValues);
-    ui->lblResult->setZIndex(z);
-    ui->lblResult->updateGeometry();
+    // ui->lblResult->setZIndex(z);
   } else {
     SPDLOG_DEBUG("Updating result image for 3D visualization  2D visible? {}, "
                  "3d visible? {}",
                  ui->lblResult->isVisible(), ui->lblResult3D->isVisible());
     ui->lblResult3D->setImage(m_opt->getCurrentBestResultImage());
-    ui->lblResult3D->updateGeometry();
   }
 }
 
@@ -365,17 +350,9 @@ void DialogOptimize::updateDifferenceImage() {
   SPDLOG_DEBUG(" Updating difference image for variable {}", variable);
   auto img = m_opt->getDifferenceImage(variable);
   if (vizMode == VizMode::_2D) {
-    auto z = ui->zaxisDifference->value();
     ui->lblDifference->setImage(img);
-    ui->zaxisDifference->setMinimum(0);
-    ui->zaxisDifference->setMaximum(ui->lblTarget->getImage().volume().depth());
-    ui->zaxisDifference->setValue(z);
-    ui->lblDifference->setZSlider(ui->zaxisDifference);
-    ui->lblDifference->setZIndex(z);
-    ui->lblDifference->updateGeometry();
   } else {
     ui->lblDifference3D->setImage(img);
-    ui->lblDifference3D->updateGeometry();
   }
 }
 
