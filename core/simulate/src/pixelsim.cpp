@@ -322,66 +322,63 @@ std::size_t PixelSim::run(double time, double timeout_ms,
       if (!currentErrorMessage.empty()) {
         return steps;
       }
-      ++steps;
-      if (timeout_ms >= 0.0 &&
-          static_cast<double>(timer.elapsed()) >= timeout_ms) {
-        SPDLOG_DEBUG("Simulation timeout: requesting stop");
-        setStopRequested(true);
-      }
-      if (stopRunningCallback && stopRunningCallback()) {
-        setStopRequested(true);
-        SPDLOG_DEBUG("Simulation cancelled: requesting stop");
-      }
-      if (stopRequested.load()) {
-        currentErrorMessage = "Simulation stopped early";
-        SPDLOG_DEBUG("Simulation timeout or stopped early");
-        return steps;
-      }
     }
-    SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
-                 steps + discardedSteps,
-                 static_cast<double>(100 * discardedSteps) /
-                     static_cast<double>(steps + discardedSteps));
-    return steps;
+    ++steps;
+    if (timeout_ms >= 0.0 &&
+        static_cast<double>(timer.elapsed()) >= timeout_ms) {
+      SPDLOG_DEBUG("Simulation timeout: requesting stop");
+      setStopRequested(true);
+    }
+    if (stopRunningCallback && stopRunningCallback()) {
+      setStopRequested(true);
+      SPDLOG_DEBUG("Simulation cancelled: requesting stop");
+    }
+    if (stopRequested.load()) {
+      currentErrorMessage = "Simulation stopped early";
+      SPDLOG_DEBUG("Simulation timeout or stopped early");
+      return steps;
+    }
   }
+  SPDLOG_DEBUG("t={} integrated using {} steps ({:3.1f}% discarded)", time,
+               steps + discardedSteps,
+               static_cast<double>(100 * discardedSteps) /
+                   static_cast<double>(steps + discardedSteps));
+  return steps;
+}
 
-  const std::vector<double> &PixelSim::getConcentrations(
-      std::size_t compartmentIndex) const {
-    return simCompartments[compartmentIndex]->getConcentrations();
-  }
+const std::vector<double> &
+PixelSim::getConcentrations(std::size_t compartmentIndex) const {
+  return simCompartments[compartmentIndex]->getConcentrations();
+}
 
-  std::size_t PixelSim::getConcentrationPadding() const { return nExtraVars; }
+std::size_t PixelSim::getConcentrationPadding() const { return nExtraVars; }
 
-  const std::vector<double> &PixelSim::getDcdt(std::size_t compartmentIndex)
-      const {
-    return simCompartments[compartmentIndex]->getDcdt();
-  }
+const std::vector<double> &
+PixelSim::getDcdt(std::size_t compartmentIndex) const {
+  return simCompartments[compartmentIndex]->getDcdt();
+}
 
-  double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
-                                              std::size_t speciesIndex,
-                                              std::size_t pixelIndex) const {
-    return simCompartments[compartmentIndex]->getLowerOrderConcentration(
-        speciesIndex, pixelIndex);
-  }
+double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
+                                            std::size_t speciesIndex,
+                                            std::size_t pixelIndex) const {
+  return simCompartments[compartmentIndex]->getLowerOrderConcentration(
+      speciesIndex, pixelIndex);
+}
 
-  const std::string &PixelSim::errorMessage() const {
-    return currentErrorMessage;
-  }
+const std::string &PixelSim::errorMessage() const {
+  return currentErrorMessage;
+}
 
-  const common::ImageStack &PixelSim::errorImages() const {
-    return currentErrorImages;
-  }
+const common::ImageStack &PixelSim::errorImages() const {
+  return currentErrorImages;
+}
 
-  bool PixelSim::getStopRequested() const { return stopRequested.load(); }
+bool PixelSim::getStopRequested() const { return stopRequested.load(); }
 
-  void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
+void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
 
-  void PixelSim::setCurrentErrormessage(const std::string &msg) {
-    currentErrorMessage = msg;
-  }
-
-  std::string PixelSim::getCurrentErrorMessage() const {
-    return currentErrorMessage;
-  }
+void PixelSim::setCurrentErrormessage(const std::string &msg) {
+  currentErrorMessage = msg;
+}
 
 } // namespace sme::simulate

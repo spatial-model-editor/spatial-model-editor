@@ -73,7 +73,6 @@ public:
   void setStopRequested(bool stop) override;
   bool getStopRequested() const override;
   void setCurrentErrormessage(const std::string &msg) override;
-  std::string getCurrentErrorMessage() const override;
 };
 
 } // namespace simulate

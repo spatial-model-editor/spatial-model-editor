@@ -21,14 +21,6 @@ public:
   QString getParametersString() const;
   void applyToModel() const;
 
-  enum struct VizMode {
-    _2D,
-    _3D,
-  };
-
-  VizMode getVizMode() const;
-  bool getDifferenceMode() const;
-
 private:
   sme::model::Model &m_model;
   std::unique_ptr<Ui::DialogOptimize> ui;
@@ -36,17 +28,10 @@ private:
   std::future<std::size_t> m_optIterations;
   std::size_t m_nPlottedIterations{0};
   QTimer m_plotRefreshTimer;
-  bool differenceMode{false};
-  VizMode vizMode{VizMode::_2D};
   void init();
   void cmbTarget_currentIndexChanged(int index);
-  void cmbMode_currentIndexChanged(int index);
   void btnStartStop_clicked();
   void btnSetup_clicked();
   void updatePlots();
   void finalizePlots();
-  void differenceMode_clicked();
-  void selectZ();
-  void updateTargetImage();
-  void updateResultImage();
 };

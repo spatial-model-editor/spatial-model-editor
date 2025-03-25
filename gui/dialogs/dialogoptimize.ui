@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1261</width>
-    <height>873</height>
+    <height>861</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,10 +33,10 @@
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <widget class="QWidget" name="layoutWidget">
+       <widget class="QWidget" name="">
         <layout class="QGridLayout" name="gridLayout">
-         <item row="8" column="0" colspan="3">
-          <widget class="QLabel" name="lblTargetLabel">
+         <item row="3" column="0" colspan="2">
+          <widget class="QLabel" name="lblResultLabel">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
              <horstretch>0</horstretch>
@@ -44,44 +44,7 @@
             </sizepolicy>
            </property>
            <property name="text">
-            <string>Target values:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="10" column="0" colspan="3">
-          <widget class="QLabelMouseTracker" name="lblTarget" native="true">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>300</height>
-            </size>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
-           </property>
-           <property name="text" stdset="0">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="15" column="0">
-          <widget class="QSlider" name="zaxis">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="lblCmbModeLabel">
-           <property name="text">
-            <string>Plotting mode:</string>
+            <string>Values using current best parameters:</string>
            </property>
           </widget>
          </item>
@@ -98,52 +61,13 @@
            </property>
           </widget>
          </item>
-         <item row="11" column="0" colspan="3">
-          <widget class="QLabel" name="lblResultLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Values using current best parameters:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="14" column="0">
-          <widget class="QLabel" name="zlabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>z-axis</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="0">
-          <widget class="QCheckBox" name="diffMode">
-           <property name="text">
-            <string>show difference</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="0" colspan="3">
+         <item row="4" column="0" colspan="2">
           <widget class="QLabelMouseTracker" name="lblResult" native="true">
            <property name="sizePolicy">
-            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>300</width>
-             <height>300</height>
-            </size>
            </property>
            <property name="whatsThis">
             <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
@@ -154,15 +78,22 @@
            </property>
           </widget>
          </item>
-         <item row="9" column="0">
-          <widget class="QVoxelRenderer" name="lblTarget3D">
-           <property name="enabled">
-            <bool>false</bool>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabelMouseTracker" name="lblTarget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
+      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+           </property>
+           <property name="text" stdset="0">
+            <string/>
            </property>
           </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QComboBox" name="cmbMode"/>
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="cmbTarget">
@@ -174,16 +105,22 @@
            </property>
           </widget>
          </item>
-         <item row="12" column="0">
-          <widget class="QVoxelRenderer" name="lblResult3D">
-           <property name="enabled">
-            <bool>false</bool>
+         <item row="1" column="0" colspan="2">
+          <widget class="QLabel" name="lblTargetLabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>Target values:</string>
            </property>
           </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QWidget" name="layoutWidget1">
+       <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="vlayout2">
          <item>
           <widget class="QCustomPlot" name="pltFitness" native="true"/>
@@ -249,11 +186,6 @@
    <class>QCustomPlot</class>
    <extends>QWidget</extends>
    <header>qcustomplot.h</header>
-  </customwidget>
-  <customwidget>
-   <class>QVoxelRenderer</class>
-   <extends>QOpenGLWidget</extends>
-   <header>qvoxelrenderer.hpp</header>
   </customwidget>
  </customwidgets>
  <tabstops>

@@ -94,6 +94,10 @@ std::size_t DuneSim::getConcentrationPadding() const { return 0; }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
+void DuneSim::setCurrentErrormessage(const std::string &msg) {
+  currentErrorMessage = msg;
+}
+
 const common::ImageStack &DuneSim::errorImages() const {
   return currentErrorImages;
 }

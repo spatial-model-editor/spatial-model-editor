@@ -19,7 +19,6 @@ public:
   [[nodiscard]] virtual std::size_t getConcentrationPadding() const = 0;
   [[nodiscard]] virtual const std::string &errorMessage() const = 0;
   [[nodiscard]] virtual const common::ImageStack &errorImages() const = 0;
-  [[nodiscard]] virtual std::string getCurrentErrorMessage() const = 0;
   virtual void setCurrentErrormessage(const std::string &msg) = 0;
   [[nodiscard]] virtual bool getStopRequested() const = 0;
   virtual void setStopRequested(bool stoprequested) = 0;

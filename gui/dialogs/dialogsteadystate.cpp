@@ -1,4 +1,5 @@
 #include "dialogsteadystate.hpp"
+#include "dialogoptimize.hpp"
 #include "ui_dialogsteadystate.h"
 #include <memory>
 #include <qcombobox.h>
@@ -89,6 +90,12 @@ void DialogSteadystate::solverCurrentIndexChanged(int index) {
   make_simulator();
   init_plots();
 }
+
+void DialogSteadystate::init_plots() { SPDLOG_CRITICAL("init plots"); }
+
+void DialogSteadystate::make_simulator() { SPDLOG_CRITICAL("make simulator"); }
+
+void DialogSteadystate::reset() { SPDLOG_CRITICAL("reset"); }
 
 void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
   SPDLOG_CRITICAL("convergence clicked {}", index);

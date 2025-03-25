@@ -13,6 +13,7 @@ target_sources(
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
+          simulate_steadystate.cpp
           simulate.cpp
           simulate_data.cpp
           simulate_options.cpp)

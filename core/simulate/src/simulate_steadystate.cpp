@@ -17,6 +17,7 @@
 
 namespace sme::simulate {
 
+//////////////////////////////////////////////////////////////////////////////////
 // lifecycle
 SteadyStateSimulation::SteadyStateSimulation(
     sme::model::Model &model, SimulatorType type, double tolerance,
@@ -32,9 +33,16 @@ SteadyStateSimulation::SteadyStateSimulation(
   selectSimulator();
 }
 
-// helpers
+//////////////////////////////////////////////////////////////////////////////////
+
+// helpers for solvers
 void SteadyStateSimulation::initModel() {
   int i = 0;
+  m_compartmentIds.clear();
+  m_compartmentSpeciesIds.clear();
+  m_compartmentSpeciesColors.clear();
+  m_compartmentIdxs.clear();
+
   for (const auto &compartmentId : m_model.getCompartments().getIds()) {
     m_compartmentIdxs.push_back(i);
     m_compartmentIds.push_back(compartmentId.toStdString());
@@ -62,7 +70,48 @@ void SteadyStateSimulation::selectSimulator() {
   }
 }
 
-// run stuff
+void SteadyStateSimulation::reset_solver() {
+  m_simulator = nullptr;
+  m_steps_below_tolerance = 0;
+  m_has_converged = false;
+  initModel();
+}
+
+double SteadyStateSimulation::computeStoppingCriterion(
+    const std::vector<double> &c_old, const std::vector<double> &c_new,
+    double dt) {
+  double sum_squared_dcdt = 0.0;
+  double sum_squared_c = 0.0;
+
+  for (size_t i = 0; i < c_new.size(); ++i) {
+    double dcdt = (c_new[i] - c_old[i]) / std::max(dt, 1e-12);
+    // Sum squares for L2 norm calculations
+    sum_squared_dcdt += dcdt * dcdt;
+    sum_squared_c += c_new[i] * c_new[i];
+  }
+
+  double c_norm = std::sqrt(sum_squared_c);
+  double dcdt_norm = std::sqrt(sum_squared_dcdt);
+  if (m_stop_mode == SteadystateConvergenceMode::relative) {
+    dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
+  }
+
+  return dcdt_norm;
+}
+
+// helpers for data
+void SteadyStateSimulation::append_data(double timestep, double error) {
+  m_steps.push_back(timestep);
+  m_errors.push_back(error);
+}
+
+void SteadyStateSimulation::reset_data() {
+  m_steps.clear();
+  m_errors.clear();
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+// functions to run stuff
 
 void SteadyStateSimulation::runPixel(double time) {
 
@@ -80,17 +129,20 @@ void SteadyStateSimulation::runPixel(double time) {
   std::vector<double> c_new;
   c_new.reserve(c_old.capacity());
 
+  int n_steps = static_cast<int>(std::ceil(time / m_dt));
+  m_steps.reserve(n_steps);
+  m_errors.reserve(n_steps);
+
   // do timesteps until we reach t
   timer.start();
   while (tNow + time * relativeTolerance < time) {
-    double tBefore = time;
 
     m_simulator->run(m_dt, m_timeout_ms,
                      [&]() { return m_simulator->getStopRequested(); });
 
     c_new = getConcentrations();
 
-    auto current_error = computeStoppingCriterion(c_old, c_new, tNow - tBefore);
+    auto current_error = computeStoppingCriterion(c_old, c_new, m_dt);
 
     c_old.swap(c_new);
 
@@ -167,7 +219,7 @@ void SteadyStateSimulation::runDune(double time) {
 
     c_new = getConcentrations();
 
-    double current_error = computeStoppingCriterion(c_old, c_new, time);
+    double current_error = computeStoppingCriterion(c_old, c_new, m_dt);
 
     c_old.swap(c_new);
 
@@ -212,10 +264,11 @@ void SteadyStateSimulation::run(double time) {
   }
 }
 
+//////////////////////////////////////////////////////////////////////////////////
 // state getters
 bool SteadyStateSimulation::hasConverged() const { return m_has_converged; }
 
-SteadystateConvergenceMode SteadyStateSimulation::getStopMode() {
+SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() {
   return m_stop_mode;
 }
 
@@ -231,7 +284,15 @@ double SteadyStateSimulation::getStopTolerance() const {
   return m_convergenceTolerance;
 }
 
-std::vector<double> SteadyStateSimulation::getConcentrations() const {}
+std::vector<double> SteadyStateSimulation::getConcentrations() const {
+  std::vector<double> concs;
+
+  for (auto &&idx : m_compartmentIdxs) {
+    auto c = m_simulator->getConcentrations(idx);
+  }
+
+  return concs;
+}
 
 double SteadyStateSimulation::getCurrentError() const {
   return m_errors.back();
@@ -253,6 +314,7 @@ std::size_t SteadyStateSimulation::getStepsToConvergence() const {
 
 double SteadyStateSimulation::getDt() const { return m_dt; }
 
+//////////////////////////////////////////////////////////////////////////////////
 // state setters
 
 void SteadyStateSimulation::setStopMode(SteadystateConvergenceMode mode) {
@@ -270,6 +332,10 @@ void SteadyStateSimulation::setStopTolerance(double stop_tolerance) {
 
 void SteadyStateSimulation::setSimulatorType(SimulatorType type) {
   m_model.getSimulationSettings().simulatorType = type;
+  reset_data();
+  reset_solver();
+  initModel();
+  selectSimulator();
 }
 
 void SteadyStateSimulation::setStepsToConvergence(
@@ -278,27 +344,5 @@ void SteadyStateSimulation::setStepsToConvergence(
 }
 
 void SteadyStateSimulation::setDt(double dt) { m_dt = dt; }
-
-double SteadyStateSimulation::computeStoppingCriterion(
-    const std::vector<double> &c_old, const std::vector<double> &c_new,
-    double dt) {
-  double sum_squared_dcdt = 0.0;
-  double sum_squared_c = 0.0;
-
-  for (size_t i = 0; i < c_new.size(); ++i) {
-    double dcdt = (c_new[i] - c_old[i]) / std::max(dt, 1e-12);
-    // Sum squares for L2 norm calculations
-    sum_squared_dcdt += dcdt * dcdt;
-    sum_squared_c += c_new[i] * c_new[i];
-  }
-
-  double c_norm = std::sqrt(sum_squared_c);
-  double dcdt_norm = std::sqrt(sum_squared_dcdt);
-  if (m_stop_mode == SteadystateConvergenceMode::relative) {
-    dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
-  }
-
-  return dcdt_norm;
-}
 
 } // namespace sme::simulate
