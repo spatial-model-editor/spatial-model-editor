@@ -18,6 +18,7 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   ui->valuesPlot->displayScale(model.getDisplayOptions().showGeometryScale);
   ui->valuesPlot->displayGrid(model.getDisplayOptions().showGeometryGrid);
   ui->valuesPlot->setPhysicalUnits(model.getUnits().getLength().name);
+
   ui->errorPlot->xAxis->setLabel("Steps");
   ui->errorPlot->yAxis->setLabel("Error");
 
@@ -66,9 +67,6 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   connect(ui->tolStepInput, &QLineEdit::editingFinished, this,
           &DialogSteadystate::stepsWithinToleranceInputChanged);
 
-  connect(ui->maxStepInput, &QLineEdit::editingFinished, this,
-          &DialogSteadystate::maxstepsInputChanged);
-
   make_simulator();
   init_plots();
 }
@@ -80,14 +78,11 @@ void DialogSteadystate::solverCurrentIndexChanged(int index) {
   SPDLOG_CRITICAL("solver  clicked {}", index);
 
   if (index == 1) {
-    m_model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::DUNE;
+    sim.setSimulatorType(sme::simulate::SimulatorType::Dune);
   } else {
-    m_model.getSimulationSettings().simulatorType =
-        sme::simulate::SimulatorType::Pixel;
+    sim.setSimulatorType(sme::simulate::SimulatorType::Pixel);
   }
   reset();
-  make_simulator();
   init_plots();
 }
 
@@ -98,13 +93,20 @@ void DialogSteadystate::make_simulator() { SPDLOG_CRITICAL("make simulator"); }
 void DialogSteadystate::reset() { SPDLOG_CRITICAL("reset"); }
 
 void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
+
+  if (index == 0) {
+    sim.setConvergenceMode(sme::simulate::SteadystateConvergenceMode::Absolute);
+  } else {
+    sim.setConvergenceMode(sme::simulate::SteadystateConvergenceMode::Relative);
+  }
   SPDLOG_CRITICAL("convergence clicked {}", index);
-  // TODO: implement this bs
 }
 
 void DialogSteadystate::plottingCurrentIndexChanged(
     [[maybe_unused]] int index) {
+
   SPDLOG_CRITICAL("plotting clicked {}", index);
+
   if (vizmode == VizMode::_2D) {
     SPDLOG_CRITICAL("2D -> 3D");
     ui->valuesPlot->hide();
@@ -120,23 +122,20 @@ void DialogSteadystate::plottingCurrentIndexChanged(
 }
 
 void DialogSteadystate::timeoutInputChanged() {
-  SPDLOG_CRITICAL("timeout ");
-  // TODO: implement this bullshit
+  sim.setTimeout(ui->timeoutInput->text().toDouble());
+  SPDLOG_CRITICAL("timeout change to {}", ui->timeoutInput->text().toDouble());
 }
 
 void DialogSteadystate::toleranceInputChanged() {
-  SPDLOG_CRITICAL("tolerance ");
-  // TODO: implement this bullshit
+  sim.setTolerance(ui->toleranceInput->text().toDouble());
+  SPDLOG_CRITICAL("tolerance changed to {}",
+                  ui->toleranceInput->text().toDouble());
 }
 
 void DialogSteadystate::stepsWithinToleranceInputChanged() {
-  SPDLOG_CRITICAL("steps within tolerance ");
-  // TODO: implement this bullshit
-}
-
-void DialogSteadystate::maxstepsInputChanged() {
-  SPDLOG_CRITICAL("max step ");
-  // TODO: implement this bullshit
+  SPDLOG_CRITICAL("steps within tolerance changed to {}",
+                  ui->tolStepInput->text().toInt());
+  sim.setStepsWithinTolerance(ui->tolStepInput->text().toInt());
 }
 
 void DialogSteadystate::btnStartStopClicked() {

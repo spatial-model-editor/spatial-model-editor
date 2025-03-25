@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sme/model.hpp"
-#include "sme/simulate.hpp"
+#include "sme/simulate_steadystate.hpp"
 #include <QDialog>
 #include <QStringList>
 #include <QTimer>
@@ -18,34 +18,38 @@ class BaseSim;
 class DialogSteadystate : public QDialog {
   Q_OBJECT
 private:
+  // struct that indicates visualization mode: 2d plane with zslider or full 3D
   enum struct VizMode {
     _2D,
     _3D,
   };
-  sme::model::Model &m_model;
-  std::unique_ptr<Ui::DialogSteadystate> ui;
-  QTimer m_plotRefreshTimer;
-  VizMode vizmode;
-  std::vector<double> steps;
-  std::vector<double> errors;
 
-  // helpers
+  // simulation parameters
+  std::unique_ptr<Ui::DialogSteadystate> ui;
+  sme::SteadyStateSimulation sim;
+  QTimer m_plotRefreshTimer;
+
+  // helper for plotting
+  VizMode vizmode;
+
+  // helpers for simulation
+
+  // helper functions
   void init_plots();
   void make_simulator();
+  void updatePlots();
+  void finalizePlots();
   void reset();
+  void selectZ();
 
   // slots
   void solverCurrentIndexChanged(int index);
   void convergenceCurrentIndexChanged(int index);
   void plottingCurrentIndexChanged(int index);
   void stepsWithinToleranceInputChanged();
-  void maxstepsInputChanged();
   void timeoutInputChanged();
   void toleranceInputChanged();
   void btnStartStopClicked();
-  void updatePlots();
-  void finalizePlots();
-  void selectZ();
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,

@@ -38,7 +38,7 @@ TEST_CASE("SimulateSteadyState",
     sim.setStepsBelowTolerance(5);
     REQUIRE(sim.getStepsBelowTolerance() == 5);
 
-    sim.setStopMode(simulate::SteadystateConvergenceMode::absolute);
+    sim.setConvergenceMode(simulate::SteadystateConvergenceMode::absolute);
     REQUIRE(sim.getConvergenceMode() ==
             simulate::SteadystateConvergenceMode::absolute);
 

@@ -360,7 +360,8 @@ double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 
-void SteadyStateSimulation::setStopMode(SteadystateConvergenceMode mode) {
+void SteadyStateSimulation::setConvergenceMode(
+    SteadystateConvergenceMode mode) {
   m_stop_mode = mode;
 }
 

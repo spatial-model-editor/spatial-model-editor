@@ -186,7 +186,7 @@ public:
    *
    * @param mode SteadystateConvergenceMode: absolute or relative
    */
-  void setStopMode(SteadystateConvergenceMode mode);
+  void setConvergenceMode(SteadystateConvergenceMode mode);
 
   /**
    * @brief Set the number of steps below tolerance required to consider the
