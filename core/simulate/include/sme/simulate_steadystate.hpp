@@ -2,12 +2,17 @@
 #include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate_options.hpp"
-
 #include <cstddef>
 
 namespace sme {
 namespace simulate {
 enum class SteadystateConvergenceMode { absolute, relative };
+
+struct SteadyStateData {
+  double step;
+  double error;
+  common::ImageStack concentrationImageStack;
+};
 class SteadyStateSimulation final {
 
   // data members
@@ -19,8 +24,8 @@ class SteadyStateSimulation final {
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
   SteadystateConvergenceMode m_stop_mode;
-  std::vector<double> m_steps;
-  std::vector<double> m_errors;
+  // use tbb concurrent_vector: thread-safe writing, lock-free reading
+  std::atomic<std::shared_ptr<SteadyStateData>> m_data;
   std::vector<int> m_compartmentIdxs;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
@@ -30,8 +35,9 @@ class SteadyStateSimulation final {
 
   // helper functions for solvers
   void initModel();
-  void reset_solver();
+  void resetSolver();
   void selectSimulator();
+
   // .. and for running them
   void runDune(double time);
   void runPixel(double time);
@@ -40,8 +46,8 @@ class SteadyStateSimulation final {
                            const std::vector<double> &c_new);
 
   // helper functions for data
-  void append_data(double timestep, double error);
-  void reset_data();
+  void recordData(double timestep, double error);
+  void resetData();
 
 public:
   // lifecycle
@@ -115,19 +121,14 @@ public:
   [[nodiscard]] std::vector<double> getConcentrations() const;
 
   /**
-   * @brief Get the current error
+   * @brief Get the latest data point
    *
-   * @return double The current value of the quantity computed in the stopping
-   * criterion
+   * @return const std::atomic<std::shared_ptr<SteadyStateData>> &
+   A pointer to a struct containing the step, error and
+   * concentration image stack of the latest step of the simulation.
    */
-  [[nodiscard]] double getCurrentError() const;
-
-  /**
-   * @brief Get the current time of the simulation
-   *
-   * @return double current times
-   */
-  [[nodiscard]] double getCurrentStep() const;
+  [[nodiscard]] const std::atomic<std::shared_ptr<SteadyStateData>> &
+  getLatestData() const;
 
   /**
    * @brief Get the number of steps the simulation needs to have a stable
@@ -136,20 +137,6 @@ public:
    * @return std::size_t
    */
   [[nodiscard]] std::size_t getStepsToConvergence() const;
-
-  /**
-   * @brief Get the steps taken in the simulation to check for convergence
-   *
-   * @return const std::vector<double>&
-   */
-  [[nodiscard]] const std::vector<double> &getSteps() const;
-
-  /**
-   * @brief Get the errors at each step in a dvector
-   *
-   * @return const std::vector<double>&
-   */
-  [[nodiscard]] const std::vector<double> &getErrors() const;
 
   /**
    * @brief Get the timestep used to check for convergence
@@ -179,13 +166,6 @@ public:
    * @return double
    */
   [[nodiscard]] double getTimeout() const;
-
-  /**
-   * @brief Get the concentration image stack
-   *
-   * @return common::ImageStack
-   */
-  [[nodiscard]] common::ImageStack getConcentrationImageStack() const;
 
   // setters
 

@@ -28,7 +28,7 @@ SteadyStateSimulation::SteadyStateSimulation(
     : m_has_converged(false), m_model(model),
       m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
-      m_stop_mode(convergence_mode), m_steps(), m_errors(), m_compartmentIdxs(),
+      m_stop_mode(convergence_mode), m_data(), m_compartmentIdxs(),
       m_compartmentIds(), m_compartmentSpeciesIds(),
       m_compartmentSpeciesColors(), m_dt(dt), m_stopRequested(false) {
   m_model.getSimulationSettings().simulatorType = type;
@@ -37,8 +37,7 @@ SteadyStateSimulation::SteadyStateSimulation(
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-
-// helpers for solvers
+// helper functions for solver setup
 void SteadyStateSimulation::initModel() {
   int i = 0;
   m_compartmentIds.clear();
@@ -73,7 +72,7 @@ void SteadyStateSimulation::selectSimulator() {
   }
 }
 
-void SteadyStateSimulation::reset_solver() {
+void SteadyStateSimulation::resetSolver() {
   m_simulator = nullptr;
   m_steps_below_tolerance = 0;
   m_has_converged.store(false);
@@ -104,19 +103,20 @@ double SteadyStateSimulation::computeStoppingCriterion(
   return dcdt_norm;
 }
 
+//////////////////////////////////////////////////////////////////////////////////
 // helpers for data
-void SteadyStateSimulation::append_data(double timestep, double error) {
-  m_steps.push_back(timestep);
-  m_errors.push_back(error);
+void SteadyStateSimulation::recordData(double timestep, double error) {
+  common::ImageStack concImgStack = m_model.getGeometry().getImages();
+  m_data.store(
+      std::make_shared<SteadyStateData>(timestep, error, concImgStack));
 }
 
-void SteadyStateSimulation::reset_data() {
-  m_steps.clear();
-  m_errors.clear();
+void SteadyStateSimulation::resetData() {
+  m_data.store(std::make_shared<SteadyStateData>());
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-// functions to run stuff
+// helper functions to run stuff
 
 void SteadyStateSimulation::runPixel(double time) {
   m_simulator->setCurrentErrormessage("");
@@ -151,11 +151,11 @@ void SteadyStateSimulation::runPixel(double time) {
       break;
     }
 
-    SPDLOG_CRITICAL("  - time: {}, current error: {}, tolerance: {}, "
-                    "steps_below_tolerance: "
-                    "{}",
-                    tNow, current_error, m_convergence_tolerance,
-                    m_steps_below_tolerance);
+    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
+                 "steps_below_tolerance: "
+                 "{}",
+                 tNow, current_error, m_convergence_tolerance,
+                 m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       m_steps_below_tolerance++;
@@ -191,9 +191,7 @@ void SteadyStateSimulation::runPixel(double time) {
 
     tNow += m_dt;
 
-    m_steps.push_back(tNow);
-
-    m_errors.push_back(current_error);
+    recordData(tNow, current_error);
   }
 }
 
@@ -277,9 +275,7 @@ void SteadyStateSimulation::runDune(double time) {
       break;
     }
 
-    m_errors.push_back(current_error);
-
-    m_steps.push_back(tNow);
+    recordData(tNow, current_error);
   }
 }
 
@@ -299,8 +295,8 @@ void SteadyStateSimulation::requestStop() {
 }
 
 void SteadyStateSimulation::reset() {
-  reset_data();
-  reset_solver();
+  resetData();
+  resetSolver();
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -336,28 +332,9 @@ std::vector<double> SteadyStateSimulation::getConcentrations() const {
   return concs;
 }
 
-double SteadyStateSimulation::getCurrentError() const {
-  if (m_errors.size() == 0) {
-    SPDLOG_DEBUG("Vector storing errors is empty");
-    return std::numeric_limits<double>::max();
-  }
-  return m_errors.back();
-}
-
-double SteadyStateSimulation::getCurrentStep() const {
-  if (m_steps.size() == 0) {
-    SPDLOG_DEBUG("Vector storing steps is empty");
-    return 0;
-  }
-  return m_steps.back();
-}
-
-const std::vector<double> &SteadyStateSimulation::getSteps() const {
-  return m_steps;
-}
-
-const std::vector<double> &SteadyStateSimulation::getErrors() const {
-  return m_errors;
+const std::atomic<std::shared_ptr<SteadyStateData>> &
+SteadyStateSimulation::getLatestData() const {
+  return m_data;
 }
 
 std::size_t SteadyStateSimulation::getStepsToConvergence() const {
@@ -376,9 +353,6 @@ bool SteadyStateSimulation::getSolverStopRequested() const {
 
 double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
 
-common::ImageStack SteadyStateSimulation::getConcentrationImageStack() const {
-  return m_model.getGeometry().getImages();
-}
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 
@@ -398,8 +372,8 @@ void SteadyStateSimulation::setStopTolerance(double stop_tolerance) {
 
 void SteadyStateSimulation::setSimulatorType(SimulatorType type) {
   m_model.getSimulationSettings().simulatorType = type;
-  reset_data();
-  reset_solver();
+  resetData();
+  resetSolver();
   initModel();
   selectSimulator();
 }

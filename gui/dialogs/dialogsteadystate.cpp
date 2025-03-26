@@ -1,11 +1,13 @@
 #include "dialogsteadystate.hpp"
 #include "ui_dialogsteadystate.h"
+#include <chrono>
 #include <memory>
 #include <qcombobox.h>
 #include <qline.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qvalidator.h>
+#include <spdlog/spdlog.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
@@ -17,6 +19,7 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
 
   SPDLOG_CRITICAL("construct dialog steadystate with solver: {}",
                   static_cast<int>(sim.getSimulatorType()));
+
   // set up ui elements
   ui->setupUi(this);
   ui->splitter->setSizes({1000, 1000});
@@ -38,10 +41,6 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
 
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
 
-  constexpr int plotMsRefreshInterval{1000};
-
-  m_plotRefreshTimer.setInterval(plotMsRefreshInterval);
-
   // set validators for input to only allow certain types in the QLineEdits
   ui->timeoutInput->setValidator(
       new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
@@ -54,6 +53,10 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   ui->tolStepInput->setValidator(
       new QIntValidator(0, std::numeric_limits<int>::max(), this));
   ui->tolStepInput->setText(QString::number(sim.getStepsToConvergence()));
+
+  ui->convIntervalInput->setValidator(
+      new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
+  ui->convIntervalInput->setText(QString::number(sim.getDt()));
 
   // connect slots and signals
   connect(ui->cmbConvergence, &QComboBox::currentIndexChanged, this,
@@ -90,8 +93,35 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   m_plotRefreshTimer.setInterval(1000);
   connect(&m_plotRefreshTimer, &QTimer::timeout, this, [this]() {
+    SPDLOG_CRITICAL("refresh timer function");
     update();
+
+    // check if simulation has converged or stopped early
+    if (m_simulationFuture.valid() &&
+        m_simulationFuture.wait_for(std::chrono::seconds(0)) ==
+            std::future_status::ready) {
+
+      if (sim.hasConverged()) {
+        isRunning = false;
+        SPDLOG_CRITICAL("Simulation has converged");
+        QMessageBox::information(this, "Simulation converged",
+                                 "The simulation has converged.");
+      } else if (sim.getSolverStopRequested()) {
+        isRunning = false;
+        SPDLOG_CRITICAL("Simulation has stopped early");
+        if (sim.getSolverErrormessage() == "Simulation timed out") {
+          QMessageBox::critical(this, "Simulation timed out",
+                                sim.getSolverErrormessage().c_str());
+        } else {
+          QMessageBox::critical(this, "Simulation stopped early",
+                                sim.getSolverErrormessage().c_str());
+        }
+      } else {
+        // do nothing
+      }
+    }
     if (!isRunning) {
+      m_plotRefreshTimer.stop();
       finalize();
     }
   });
@@ -116,7 +146,6 @@ void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
 
 void DialogSteadystate::plottingCurrentIndexChanged(
     [[maybe_unused]] int index) {
-
   SPDLOG_CRITICAL("plotting clicked {}", index);
 
   if (vizmode == VizMode::_2D) {
@@ -169,15 +198,19 @@ void DialogSteadystate::btnStartStopClicked() {
   if (!isRunning) {
     SPDLOG_CRITICAL("run the thing");
     isRunning = true;
-
     // start timer to periodically update simulation results
     ui->btnStartStop->setText("Stop");
     runAndPlot();
-    ui->btnStartStop->setText("Start");
   } else {
     SPDLOG_CRITICAL("stop the thing");
     isRunning = false;
     sim.requestStop();
+
+    if (m_simulationFuture.valid()) {
+      SPDLOG_CRITICAL(" waiting for simulation to finish");
+      m_simulationFuture.wait();
+    }
+
     m_plotRefreshTimer.stop();
     finalize();
     ui->btnStartStop->setText("Start");
@@ -219,39 +252,18 @@ void DialogSteadystate::reset() {
 }
 
 void DialogSteadystate::runAndPlot() {
+  SPDLOG_CRITICAL(" run and plot");
   m_plotRefreshTimer.start();
 
   /// start simulation in a different thread
-  std::future<void> ftr = std::async(
+  m_simulationFuture = std::async(
       std::launch::async, &sme::simulate::SteadyStateSimulation::run, &sim);
-
-  // wait until everything is done and the simulation retuns, then finalize
-  // plots and everything
-  ftr.get(); // FIXME: this is probably wrong because it blocks?
-  m_plotRefreshTimer.stop();
-  finalize();
-
-  // ... only then show messages about what has happened to the simulation
-  if (sim.hasConverged()) {
-    SPDLOG_CRITICAL("Simulation has converged");
-    QMessageBox::information(this, "Simulation converged",
-                             "The simulation has converged.");
-  } else {
-    m_plotRefreshTimer.stop();
-    SPDLOG_CRITICAL("Simulation has stopped early");
-    if (sim.getSolverErrormessage() == "Simulation timed out") {
-      QMessageBox::critical(this, "Simulation timed out",
-                            sim.getSolverErrormessage().c_str());
-    } else {
-      QMessageBox::critical(this, "Simulation stopped early",
-                            sim.getSolverErrormessage().c_str());
-    }
-  }
 }
 
 void DialogSteadystate::update() {
-  SPDLOG_CRITICAL("update UI");
-  // TODO: implement this bs
+  SPDLOG_CRITICAL("  update UI");
+  sme::simulate::SteadyStateData data = *sim.getLatestData().load();
+  SPDLOG_CRITICAL(" latest data: step: {}, error: {}", data.step, data.error);
 }
 
 void DialogSteadystate::finalize() {

@@ -8,6 +8,7 @@
 #include <QStringList>
 #include <QTimer>
 
+#include <future>
 #include <memory>
 
 namespace Ui {
@@ -30,6 +31,7 @@ private:
   // simulation parameters
   std::unique_ptr<Ui::DialogSteadystate> ui;
   sme::simulate::SteadyStateSimulation sim;
+  std::future<void> m_simulationFuture;
   QTimer m_plotRefreshTimer;
 
   // helper for plotting
