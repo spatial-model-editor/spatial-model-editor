@@ -29,6 +29,7 @@ private:
   };
 
   // simulation parameters
+  sme::model::Model &m_model;
   std::unique_ptr<Ui::DialogSteadystate> ui;
   sme::simulate::SteadyStateSimulation sim;
   std::future<void> m_simulationFuture;

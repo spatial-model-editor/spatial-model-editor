@@ -1,18 +1,23 @@
 #include "dialogsteadystate.hpp"
+#include "sme/utils.hpp"
 #include "ui_dialogsteadystate.h"
+
 #include <chrono>
 #include <memory>
+
 #include <qcombobox.h>
+#include <qcustomplot.h>
 #include <qline.h>
 #include <qlineedit.h>
 #include <qmessagebox.h>
 #include <qvalidator.h>
+
 #include <spdlog/spdlog.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
 DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
-    : ui(std::make_unique<Ui::DialogSteadystate>()),
+    : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       sim(sme::simulate::SteadyStateSimulation(
           model, sme::simulate::SimulatorType::Pixel, 1e-6, 10,
           sme::simulate::SteadystateConvergenceMode::relative, 10000, 1)) {
@@ -23,14 +28,6 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   // set up ui elements
   ui->setupUi(this);
   ui->splitter->setSizes({1000, 1000});
-
-  ui->valuesPlot->invertYAxis(model.getDisplayOptions().invertYAxis);
-  ui->valuesPlot->displayScale(model.getDisplayOptions().showGeometryScale);
-  ui->valuesPlot->displayGrid(model.getDisplayOptions().showGeometryGrid);
-  ui->valuesPlot->setPhysicalUnits(model.getUnits().getLength().name);
-
-  ui->errorPlot->xAxis->setLabel("Steps");
-  ui->errorPlot->yAxis->setLabel("Error");
 
   // add options and defaults to the comboboxes
   ui->cmbConvergence->addItems({"Absolute", "Relative"});
@@ -103,7 +100,8 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
 
       if (sim.hasConverged()) {
         isRunning = false;
-        SPDLOG_CRITICAL("Simulation has converged");
+        SPDLOG_CRITICAL("Simulation has converged: {}",
+                        sim.getStepsBelowTolerance());
         QMessageBox::information(this, "Simulation converged",
                                  "The simulation has converged.");
       } else if (sim.getSolverStopRequested()) {
@@ -120,21 +118,18 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
         // do nothing
       }
     }
+
     if (!isRunning) {
-      m_plotRefreshTimer.stop();
+      ui->btnStartStop->setText("Start");
       finalize();
     }
   });
-
-  initPlots();
 }
 
 DialogSteadystate::~DialogSteadystate() = default;
 
 ////////////////////////////////////////////////////////////////////////////////
 // slots
-void DialogSteadystate::initPlots() { SPDLOG_CRITICAL("init plots"); }
-
 void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
   if (index == 0) {
     sim.setConvergenceMode(sme::simulate::SteadystateConvergenceMode::absolute);
@@ -210,7 +205,6 @@ void DialogSteadystate::btnStartStopClicked() {
       SPDLOG_CRITICAL(" waiting for simulation to finish");
       m_simulationFuture.wait();
     }
-
     m_plotRefreshTimer.stop();
     finalize();
     ui->btnStartStop->setText("Start");
@@ -235,8 +229,45 @@ void DialogSteadystate::btnCancelClicked() {
 
 ////////////////////////////////////////////////////////////////////////////////
 // helper functions
+
+void DialogSteadystate::initPlots() {
+  SPDLOG_CRITICAL("init plots");
+
+  // init error plot
+  QCPGraph *errorPlotParams = ui->errorPlot->addGraph();
+  errorPlotParams->setPen(sme::common::indexedColors()[0]);
+  errorPlotParams->setScatterStyle(
+      QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc, 5));
+  ui->errorPlot->graph(0)->setName("Error");
+
+  QCPGraph *tolerancePlotParams = ui->errorPlot->addGraph();
+  tolerancePlotParams->setPen(sme::common::indexedColors()[1]);
+  tolerancePlotParams->setScatterStyle(
+      QCPScatterStyle(QCPScatterStyle::ScatterShape::ssCross, 5));
+  ui->errorPlot->graph(1)->setName("Tolerance");
+
+  ui->errorPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->errorPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->errorPlot->legend->setVisible(true);
+  ui->errorPlot->xAxis->setLabel("Steps");
+  ui->errorPlot->yAxis->setLabel("Error");
+  ui->errorPlot->yAxis->setScaleType(QCPAxis::stLogarithmic);
+  ui->errorPlot->rescaleAxes(true);
+  ui->errorPlot->replot();
+
+  // init image plots
+  ui->valuesPlot->invertYAxis(m_model.getDisplayOptions().invertYAxis);
+  ui->valuesPlot->displayScale(m_model.getDisplayOptions().showGeometryScale);
+  ui->valuesPlot->displayGrid(m_model.getDisplayOptions().showGeometryGrid);
+  ui->valuesPlot->setPhysicalUnits(m_model.getUnits().getLength().name);
+}
+
 void DialogSteadystate::resetPlots() {
-  // TODO: implement this shit
+  // TODO: this is provisional and untested
+  ui->errorPlot->clearGraphs();
+  ui->valuesPlot->clear();
+
+  initPlots();
 }
 
 void DialogSteadystate::reset() {
@@ -252,6 +283,7 @@ void DialogSteadystate::reset() {
 }
 
 void DialogSteadystate::runAndPlot() {
+  resetPlots();
   SPDLOG_CRITICAL(" run and plot");
   m_plotRefreshTimer.start();
 
@@ -264,6 +296,10 @@ void DialogSteadystate::update() {
   SPDLOG_CRITICAL("  update UI");
   sme::simulate::SteadyStateData data = *sim.getLatestData().load();
   SPDLOG_CRITICAL(" latest data: step: {}, error: {}", data.step, data.error);
+  ui->errorPlot->graph(0)->addData(data.step, data.error);
+  ui->errorPlot->graph(1)->addData(data.step, sim.getStopTolerance());
+  ui->errorPlot->rescaleAxes(true);
+  ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
 }
 
 void DialogSteadystate::finalize() {
