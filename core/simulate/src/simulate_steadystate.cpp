@@ -1,4 +1,4 @@
-#include "simulate_steadystate.hpp"
+#include "sme/simulate_steadystate.hpp"
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/duneconverter.hpp"
@@ -30,7 +30,7 @@ SteadyStateSimulation::SteadyStateSimulation(
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
       m_stop_mode(convergence_mode), m_steps(), m_errors(), m_compartmentIdxs(),
       m_compartmentIds(), m_compartmentSpeciesIds(),
-      m_compartmentSpeciesColors(), m_dt(dt) {
+      m_compartmentSpeciesColors(), m_dt(dt), m_stopRequested(false) {
   m_model.getSimulationSettings().simulatorType = type;
   initModel();
   selectSimulator();
@@ -76,8 +76,9 @@ void SteadyStateSimulation::selectSimulator() {
 void SteadyStateSimulation::reset_solver() {
   m_simulator = nullptr;
   m_steps_below_tolerance = 0;
-  m_has_converged = false;
+  m_has_converged.store(false);
   initModel();
+  selectSimulator();
 }
 
 double SteadyStateSimulation::computeStoppingCriterion(
@@ -118,7 +119,6 @@ void SteadyStateSimulation::reset_data() {
 // functions to run stuff
 
 void SteadyStateSimulation::runPixel(double time) {
-
   m_simulator->setCurrentErrormessage("");
 
   QElapsedTimer timer;
@@ -151,11 +151,11 @@ void SteadyStateSimulation::runPixel(double time) {
       break;
     }
 
-    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
-                 "steps_below_tolerance: "
-                 "{}",
-                 tNow, current_error, m_convergence_tolerance,
-                 m_steps_below_tolerance);
+    SPDLOG_CRITICAL("  - time: {}, current error: {}, tolerance: {}, "
+                    "steps_below_tolerance: "
+                    "{}",
+                    tNow, current_error, m_convergence_tolerance,
+                    m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       m_steps_below_tolerance++;
@@ -164,9 +164,9 @@ void SteadyStateSimulation::runPixel(double time) {
     }
 
     if (m_steps_below_tolerance >= m_steps_to_convergence) {
-      m_has_converged = true;
+      m_has_converged.store(true);
       m_simulator->setStopRequested(true);
-      SPDLOG_DEBUG("Simulation has converged");
+      SPDLOG_CRITICAL("Simulation has converged");
       break;
     }
     SPDLOG_DEBUG(" timeout situation: {}, {}", m_timeout_ms,
@@ -182,6 +182,10 @@ void SteadyStateSimulation::runPixel(double time) {
     if (m_simulator->getStopRequested()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
       SPDLOG_DEBUG("Simulation timeout or stopped early");
+      break;
+    }
+
+    if (m_stopRequested) {
       break;
     }
 
@@ -234,11 +238,11 @@ void SteadyStateSimulation::runDune(double time) {
 
     c_old.swap(c_new);
 
-    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
-                 "steps_below_tolerance: "
-                 "{}",
-                 tNow, current_error, m_convergence_tolerance,
-                 m_steps_below_tolerance);
+    SPDLOG_CRITICAL("  - time: {}, current error: {}, tolerance: {}, "
+                    "steps_below_tolerance: "
+                    "{}",
+                    tNow, current_error, m_convergence_tolerance,
+                    m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       ++m_steps_below_tolerance;
@@ -247,9 +251,9 @@ void SteadyStateSimulation::runDune(double time) {
     }
 
     if (m_steps_below_tolerance >= m_steps_to_convergence) {
-      m_has_converged = true;
+      m_has_converged.store(true);
       m_simulator->setStopRequested(true);
-      SPDLOG_DEBUG("Simulation has converged");
+      SPDLOG_CRITICAL("Simulation has converged");
       break;
     }
 
@@ -269,6 +273,10 @@ void SteadyStateSimulation::runDune(double time) {
 
     tNow += m_dt;
 
+    if (m_stopRequested) {
+      break;
+    }
+
     m_errors.push_back(current_error);
 
     m_steps.push_back(tNow);
@@ -285,9 +293,21 @@ void SteadyStateSimulation::run() {
   }
 }
 
+void SteadyStateSimulation::requestStop() {
+  m_simulator->setStopRequested(true);
+  m_stopRequested = true;
+}
+
+void SteadyStateSimulation::reset() {
+  reset_data();
+  reset_solver();
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 // state getters
-bool SteadyStateSimulation::hasConverged() const { return m_has_converged; }
+bool SteadyStateSimulation::hasConverged() const {
+  return m_has_converged.load();
+}
 
 SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() {
   return m_stop_mode;
@@ -329,7 +349,6 @@ double SteadyStateSimulation::getCurrentStep() const {
     SPDLOG_DEBUG("Vector storing steps is empty");
     return 0;
   }
-
   return m_steps.back();
 }
 
@@ -357,6 +376,9 @@ bool SteadyStateSimulation::getSolverStopRequested() const {
 
 double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
 
+common::ImageStack SteadyStateSimulation::getConcentrationImageStack() const {
+  return m_model.getGeometry().getImages();
+}
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 

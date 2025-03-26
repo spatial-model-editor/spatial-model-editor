@@ -1,9 +1,9 @@
-#include "basesim.hpp"
+#include "../../src/basesim.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate_options.hpp"
 
 #include <cstddef>
-#include <qrgb.h>
 
 namespace sme {
 namespace simulate {
@@ -11,7 +11,7 @@ enum class SteadystateConvergenceMode { absolute, relative };
 class SteadyStateSimulation final {
 
   // data members
-  bool m_has_converged;
+  std::atomic<bool> m_has_converged;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
   double m_convergence_tolerance;
@@ -26,6 +26,7 @@ class SteadyStateSimulation final {
   std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
   std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
   double m_dt; // timestep to check for convergence, not solver timestep
+  bool m_stopRequested;
 
   // helper functions for solvers
   void initModel();
@@ -179,6 +180,13 @@ public:
    */
   [[nodiscard]] double getTimeout() const;
 
+  /**
+   * @brief Get the concentration image stack
+   *
+   * @return common::ImageStack
+   */
+  [[nodiscard]] common::ImageStack getConcentrationImageStack() const;
+
   // setters
 
   /**
@@ -241,6 +249,19 @@ public:
    * @param time_s
    */
   void run();
+
+  /**
+   * @brief Request the simulation to stop
+   *
+   */
+  void requestStop();
+
+  /**
+   * @brief Reset the solver to its initial state. This gets rid of all data and
+   * solver states
+   *
+   */
+  void reset();
 };
 } // namespace simulate
 } // namespace sme

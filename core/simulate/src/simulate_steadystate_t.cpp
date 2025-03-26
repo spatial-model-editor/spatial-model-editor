@@ -1,7 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
-#include "simulate_steadystate.hpp"
 #include "sme/simulate_options.hpp"
+#include "sme/simulate_steadystate.hpp"
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 #include <fmt/ranges.h>

@@ -2,9 +2,12 @@
 
 #include "sme/model.hpp"
 #include "sme/simulate_steadystate.hpp"
+
 #include <QDialog>
+#include <QElapsedTimer>
 #include <QStringList>
 #include <QTimer>
+
 #include <memory>
 
 namespace Ui {
@@ -26,33 +29,38 @@ private:
 
   // simulation parameters
   std::unique_ptr<Ui::DialogSteadystate> ui;
-  sme::SteadyStateSimulation sim;
+  sme::simulate::SteadyStateSimulation sim;
   QTimer m_plotRefreshTimer;
 
   // helper for plotting
   VizMode vizmode;
+  bool isRunning;
 
   // helpers for simulation
 
   // helper functions
-  void init_plots();
-  void make_simulator();
-  void updatePlots();
-  void finalizePlots();
-  void reset();
+  void initPlots();
+  void update();
+  void finalize();
   void selectZ();
+  void resetPlots();
+  void reset();
+  void runAndPlot();
 
   // slots
-  void solverCurrentIndexChanged(int index);
   void convergenceCurrentIndexChanged(int index);
   void plottingCurrentIndexChanged(int index);
   void stepsWithinToleranceInputChanged();
   void timeoutInputChanged();
   void toleranceInputChanged();
+  void convIntervalInputChanged();
   void btnStartStopClicked();
+  void btnResetClicked();
+  void btnOkClicked();
+  void btnCancelClicked();
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,
                              QWidget *parent = nullptr);
-  ~DialogSteadystate() override;
+  ~DialogSteadystate();
 };

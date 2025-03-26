@@ -35,31 +35,8 @@
        </property>
        <widget class="QWidget" name="layoutWidget">
         <layout class="QGridLayout" name="gridLayout">
-         <item row="2" column="2">
-          <widget class="QLineEdit" name="timeoutInput"/>
-         </item>
-         <item row="7" column="0">
-          <widget class="QLabel" name="modeLabel">
-           <property name="text">
-            <string>Plotting mode:</string>
-           </property>
-          </widget>
-         </item>
          <item row="7" column="2">
           <widget class="QComboBox" name="cmbPlotting"/>
-         </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="solverLabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>Solver:</string>
-           </property>
-          </widget>
          </item>
          <item row="14" column="0" colspan="4">
           <widget class="QLabel" name="valuesLabel">
@@ -74,40 +51,10 @@
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="timeoutLabel">
-           <property name="text">
-            <string>Timeout [s]:</string>
-           </property>
-          </widget>
-         </item>
-         <item row="17" column="0" colspan="4">
-          <widget class="QLabel" name="zlabel">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="text">
-            <string>z-axis</string>
-           </property>
-          </widget>
-         </item>
-         <item row="15" column="0">
-          <widget class="QVoxelRenderer" name="valuesPlot3D">
-           <property name="enabled">
-            <bool>false</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="2">
-          <widget class="QComboBox" name="cmbConvergence"/>
-         </item>
-         <item row="3" column="2">
-          <widget class="QLineEdit" name="toleranceInput">
-           <property name="text">
-            <string/>
+         <item row="13" column="0" colspan="3">
+          <widget class="Line" name="line">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
           </widget>
          </item>
@@ -134,17 +81,31 @@
            </property>
           </widget>
          </item>
-         <item row="1" column="2">
-          <widget class="QComboBox" name="cmbSolver">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
+         <item row="15" column="0">
+          <widget class="QVoxelRenderer" name="valuesPlot3D">
+           <property name="enabled">
+            <bool>false</bool>
            </property>
           </widget>
          </item>
-         <item row="3" column="0">
+         <item row="5" column="2">
+          <widget class="QComboBox" name="cmbConvergence"/>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="tolStepLabel">
+           <property name="text">
+            <string>Steps to convergence:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="modeLabel">
+           <property name="text">
+            <string>Plotting mode:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
           <widget class="QLabel" name="toleranceLabel">
            <property name="text">
             <string>Stop tolerance: </string>
@@ -154,12 +115,29 @@
          <item row="4" column="2">
           <widget class="QLineEdit" name="tolStepInput"/>
          </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="timeoutLabel">
+           <property name="text">
+            <string>Timeout [s]:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLineEdit" name="toleranceInput">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
          <item row="5" column="0">
           <widget class="QLabel" name="convergenceLabel">
            <property name="text">
             <string>Convergence mode:</string>
            </property>
           </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLineEdit" name="timeoutInput"/>
          </item>
          <item row="18" column="0" colspan="3">
           <widget class="QSlider" name="zaxis">
@@ -168,17 +146,26 @@
            </property>
           </widget>
          </item>
-         <item row="13" column="0" colspan="3">
-          <widget class="Line" name="line">
-           <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+         <item row="17" column="0" colspan="4">
+          <widget class="QLabel" name="zlabel">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="text">
+            <string>z-axis</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="tolStepLabel">
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="convIntervalInput"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="convIntervalLabel">
            <property name="text">
-            <string>Steps below tolerance: </string>
+            <string>Interval between convergence checks: </string>
            </property>
           </widget>
          </item>
@@ -205,6 +192,13 @@
          </property>
          <property name="text">
           <string>Start</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnReset">
+         <property name="text">
+          <string>Reset</string>
          </property>
         </widget>
        </item>
@@ -241,9 +235,6 @@
    <header>qvoxelrenderer.hpp</header>
   </customwidget>
  </customwidgets>
- <tabstops>
-  <tabstop>btnStartStop</tabstop>
- </tabstops>
  <resources/>
  <connections/>
 </ui>
