@@ -26,6 +26,7 @@ class SteadyStateSimulation final {
   SteadystateConvergenceMode m_stop_mode;
   // use tbb concurrent_vector: thread-safe writing, lock-free reading
   std::atomic<std::shared_ptr<SteadyStateData>> m_data;
+  std::vector<const geometry::Compartment *> m_compartments;
   std::vector<int> m_compartmentIdxs;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::vector<std::string>> m_compartmentSpeciesIds;

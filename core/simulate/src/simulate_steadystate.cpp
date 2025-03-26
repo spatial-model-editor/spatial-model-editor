@@ -44,12 +44,17 @@ void SteadyStateSimulation::initModel() {
   m_compartmentSpeciesIds.clear();
   m_compartmentSpeciesColors.clear();
   m_compartmentIdxs.clear();
+  m_compartments.clear();
 
+  // TODO: compare this to simulate::initModel and check that I didn't mess up
+  // the ordering
   for (const auto &compartmentId : m_model.getCompartments().getIds()) {
     m_compartmentIdxs.push_back(i);
     m_compartmentIds.push_back(compartmentId.toStdString());
     m_compartmentSpeciesIds.push_back({});
     m_compartmentSpeciesColors.push_back({});
+    auto comp = m_model.getCompartments().getCompartment(compartmentId);
+    m_compartments.push_back(comp);
     for (const auto &s : m_model.getSpecies().getIds(compartmentId)) {
       if (!m_model.getSpecies().getIsConstant(s)) {
         m_compartmentSpeciesIds[i].push_back(s.toStdString());
@@ -367,11 +372,14 @@ common::ImageStack SteadyStateSimulation::getConcImage(
   const auto *speciesIndices = &speciesToDraw;
   // default to drawing all species if not specified
   if (speciesToDraw.empty()) {
-    speciesIndices = &m_compartmentSpeciesIds;
+    speciesIndices = &m_compartmentSpeciesIds; // TODO: fix the type here
   }
   // calculate normalisation for each species
-  auto maxConcs{data->concentrationMax
-                    [nCompletedTimesteps.load(std::memory_order_seq_cst) - 1]};
+  auto maxConcs{
+      data->concentrationMax[nCompletedTimesteps.load(
+                                 std::memory_order_seq_cst) -
+                             1]}; // TODO: this is not really necessary. just
+                                  // get the latest and maintain a running max
   if (!normaliseOverAllTimepoints) {
     // get max for each species at this timepoint
     for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
@@ -380,6 +388,8 @@ common::ImageStack SteadyStateSimulation::getConcImage(
       }
     }
   }
+
+  // TODO: extract this into a separate function to make it a bit cleaner
   if (normaliseOverAllSpecies) {
     // normalise over max of all visible species
     double maxC{minimumNonzeroConc};
@@ -400,6 +410,8 @@ common::ImageStack SteadyStateSimulation::getConcImage(
       }
     }
   }
+
+  // TODO: extract this into separate functions?
   common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
   imgs.setVoxelSize(m_model.getGeometry().getVoxelSize());
   imgs.fill(0);
