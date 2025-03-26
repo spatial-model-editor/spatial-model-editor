@@ -20,7 +20,9 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
     : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       sim(sme::simulate::SteadyStateSimulation(
           model, sme::simulate::SimulatorType::Pixel, 1e-6, 10,
-          sme::simulate::SteadystateConvergenceMode::relative, 10000, 1)) {
+          sme::simulate::SteadystateConvergenceMode::relative, 10000, 1)),
+      m_simulationFuture(), m_plotRefreshTimer(), vizmode(VizMode::_2D),
+      isRunning(false) {
 
   SPDLOG_CRITICAL("construct dialog steadystate with solver: {}",
                   static_cast<int>(sim.getSimulatorType()));
@@ -256,14 +258,16 @@ void DialogSteadystate::initPlots() {
   ui->errorPlot->replot();
 
   // init image plots
+  ui->valuesPlot->show();
   ui->valuesPlot->invertYAxis(m_model.getDisplayOptions().invertYAxis);
   ui->valuesPlot->displayScale(m_model.getDisplayOptions().showGeometryScale);
   ui->valuesPlot->displayGrid(m_model.getDisplayOptions().showGeometryGrid);
   ui->valuesPlot->setPhysicalUnits(m_model.getUnits().getLength().name);
+
+  ui->valuesPlot3D->hide();
 }
 
 void DialogSteadystate::resetPlots() {
-  // TODO: this is provisional and untested
   ui->errorPlot->clearGraphs();
   ui->valuesPlot->clear();
 
@@ -283,8 +287,8 @@ void DialogSteadystate::reset() {
 }
 
 void DialogSteadystate::runAndPlot() {
-  resetPlots();
   SPDLOG_CRITICAL(" run and plot");
+  resetPlots();
   m_plotRefreshTimer.start();
 
   /// start simulation in a different thread
@@ -294,12 +298,26 @@ void DialogSteadystate::runAndPlot() {
 
 void DialogSteadystate::update() {
   SPDLOG_CRITICAL("  update UI");
+
+  // update error plot
   sme::simulate::SteadyStateData data = *sim.getLatestData().load();
   SPDLOG_CRITICAL(" latest data: step: {}, error: {}", data.step, data.error);
   ui->errorPlot->graph(0)->addData(data.step, data.error);
   ui->errorPlot->graph(1)->addData(data.step, sim.getStopTolerance());
   ui->errorPlot->rescaleAxes(true);
   ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+
+  // update image plot
+  if (vizmode == VizMode::_2D) {
+    SPDLOG_CRITICAL("update 2D plot");
+    ui->valuesPlot->setImage(data.concentrationImageStack);
+    ui->valuesPlot->setZIndex(ui->zaxis->value());
+    ui->valuesPlot->repaint();
+  } else {
+    SPDLOG_CRITICAL("update 3D plot");
+    ui->valuesPlot3D->setImage(data.concentrationImageStack);
+    ui->valuesPlot->repaint();
+  }
 }
 
 void DialogSteadystate::finalize() {
