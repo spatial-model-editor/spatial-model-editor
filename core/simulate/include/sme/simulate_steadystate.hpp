@@ -167,6 +167,21 @@ public:
    */
   [[nodiscard]] double getTimeout() const;
 
+  /**
+   * @brief Get the concentration image stack for a given timepoint
+   *
+   * @param timeIndex
+   * @param speciesToDraw
+   * @param normaliseOverAllTimepoints
+   * @param normaliseOverAllSpecies
+   * @return common::ImageStack
+   */
+  [[nodiscard]] common::ImageStack
+  getConcImage(std::size_t timeIndex,
+               const std::vector<std::vector<std::size_t>> &speciesToDraw,
+               bool normaliseOverAllTimepoints,
+               bool normaliseOverAllSpecies) const;
+
   // setters
 
   /**

@@ -353,6 +353,81 @@ bool SteadyStateSimulation::getSolverStopRequested() const {
 
 double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
 
+common::ImageStack SteadyStateSimulation::getConcImage(
+    std::size_t timeIndex,
+    const std::vector<std::vector<std::size_t>> &speciesToDraw,
+    bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const {
+  // README: adjusted copy from simulate::getConcImage. What to do to reuse this
+  // stuff?
+  if (m_compartments.empty()) {
+    return common::ImageStack{};
+  }
+  constexpr double minimumNonzeroConc{100.0 *
+                                      std::numeric_limits<double>::min()};
+  const auto *speciesIndices = &speciesToDraw;
+  // default to drawing all species if not specified
+  if (speciesToDraw.empty()) {
+    speciesIndices = &m_compartmentSpeciesIds;
+  }
+  // calculate normalisation for each species
+  auto maxConcs{data->concentrationMax
+                    [nCompletedTimesteps.load(std::memory_order_seq_cst) - 1]};
+  if (!normaliseOverAllTimepoints) {
+    // get max for each species at this timepoint
+    for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        maxConcs[ic][is] = data->avgMinMax[timeIndex][ic][is].max;
+      }
+    }
+  }
+  if (normaliseOverAllSpecies) {
+    // normalise over max of all visible species
+    double maxC{minimumNonzeroConc};
+    for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        maxC = std::max(maxC, maxConcs[ic][is]);
+      }
+    }
+    for (auto &c : maxConcs) {
+      std::ranges::fill(c, maxC);
+    }
+  }
+  // apply minimum (avoid dividing by zero)
+  for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
+    for (std::size_t is : (*speciesIndices)[ic]) {
+      if (maxConcs[ic][is] < minimumNonzeroConc) {
+        maxConcs[ic][is] = minimumNonzeroConc;
+      }
+    }
+  }
+  common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
+  imgs.setVoxelSize(m_model.getGeometry().getVoxelSize());
+  imgs.fill(0);
+  // iterate over compartments
+  for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
+    const auto &voxels{m_compartments[ic]->getVoxels()};
+    const auto &conc{data->concentration[timeIndex][ic]};
+    std::size_t nSpecies = m_compartmentSpeciesIds[ic].size();
+    std::size_t stride{nSpecies + data->concPadding[timeIndex]};
+    for (std::size_t ix = 0; ix < voxels.size(); ++ix) {
+      int r = 0;
+      int g = 0;
+      int b = 0;
+      for (std::size_t is : (*speciesIndices)[ic]) {
+        double c = conc[ix * stride + is] / maxConcs[ic][is];
+        const auto &col = m_compartmentSpeciesColors[ic][is];
+        r += static_cast<int>(qRed(col) * c);
+        g += static_cast<int>(qGreen(col) * c);
+        b += static_cast<int>(qBlue(col) * c);
+      }
+      r = r < 256 ? r : 255;
+      g = g < 256 ? g : 255;
+      b = b < 256 ? b : 255;
+      imgs[voxels[ix].z].setPixel(voxels[ix].p, qRgb(r, g, b));
+    }
+  }
+  return imgs;
+}
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 
