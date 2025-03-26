@@ -3,6 +3,7 @@
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/optimize.hpp"
+#include <catch2/catch_test_macros.hpp>
 
 using namespace sme;
 using namespace sme::test;
@@ -15,6 +16,58 @@ template <typename T>
 static bool is_sorted_descending(const std::vector<T> &v) {
   return std::is_sorted(v.begin(), v.end(), [](T a, T b) { return a > b; });
 }
+
+struct TestOptimization {
+
+  sme::model::Model model;
+
+  TestOptimization() {
+    model = getExampleModel(Mod::ABtoC);
+
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+    sme::simulate::OptimizeOptions optimizeOptions;
+    optimizeOptions.optAlgorithm.islands = 1;
+    optimizeOptions.optAlgorithm.population = 3;
+    // optimization parameter: k1 parameter of reaction r1
+    optimizeOptions.optParams.push_back(
+        {sme::simulate::OptParamType::ReactionParameter, "name", "k1", "r1",
+         0.02, 0.88});
+    // optimization cost: absolute difference of concentration of species C from
+    // zero, after simulating for time 1
+    optimizeOptions.optCosts.push_back(
+        {sme::simulate::OptCostType::Concentration,
+         simulate::OptCostDiffType::Absolute,
+         "name1",
+         "C",
+         1.0,
+         0.23,
+         0,
+         2,
+         {}});
+    // optimization cost: absolute difference of concentration of species A from
+    // 2, after simulating for time 1
+    // make explicit target of 2 for all pixels in compartment
+    const auto *comp{model.getSpecies().getField("A")->getCompartment()};
+    const auto compImgWidth{comp->getCompartmentImages()[0].width()};
+    const auto compImgHeight{comp->getCompartmentImages()[0].height()};
+    std::vector<double> target(
+        static_cast<std::size_t>(compImgWidth * compImgHeight), 0.0);
+    constexpr double targetPixel{2.0};
+    for (const auto &voxel : comp->getVoxels()) {
+      target[static_cast<std::size_t>(voxel.p.x()) +
+             static_cast<std::size_t>(compImgWidth) *
+                 static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
+          targetPixel;
+    }
+    optimizeOptions.optCosts.push_back(
+        {sme::simulate::OptCostType::Concentration,
+         simulate::OptCostDiffType::Absolute, "name2", "A", 1.0, 0.23, 0, 2,
+         target});
+
+    model.getOptimizeOptions() = optimizeOptions;
+  }
+};
 
 TEST_CASE("Invalid population sizes",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
@@ -93,8 +146,6 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       {}});
 
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
-    SPDLOG_CRITICAL("Optimizing with algorithm {}",
-                    static_cast<int>(optAlgorithmType));
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
     if (optAlgorithmType == sme::simulate::OptAlgorithmType::DE) {
@@ -462,4 +513,56 @@ TEST_CASE("Start long optimization in another thread & stop early",
   REQUIRE(optimization.getFitness().size() >= 1);
   REQUIRE(optimization.getFitness().back() ==
           dbl_approx(std::numeric_limits<double>::max()));
+}
+
+TEST_CASE("optimizer_imageFunctions",
+          "[core/simulate/optimize][core/simulate][core][optimize]") {
+  TestOptimization optim;
+  sme::simulate::Optimization optimizer(optim.model);
+
+  optimizer.evolve(5);
+
+  SECTION("getImageSize") {
+    auto imgSize = optimizer.getImageSize();
+    REQUIRE(imgSize.depth() == 1);
+    REQUIRE(imgSize.width() == 100);
+    REQUIRE(imgSize.height() == 100);
+  }
+  SECTION("getDifferenceImage") {
+    auto idx = 1;
+    auto img = optimizer.getDifferenceImage(idx);
+
+    auto diff = std::vector<double>(10000, 0);
+
+    std::ranges::transform(optimizer.getTargetValues(idx),
+                           optimizer.getBestResultValues(idx), diff.begin(),
+                           std::minus<double>());
+
+    auto expected =
+        sme::common::ImageStack(sme::common::Volume(100, 100, 1), diff,
+                                *std::max_element(diff.begin(), diff.end()));
+
+    REQUIRE(img.volume().depth() == expected.volume().depth());
+    REQUIRE(img[0].size() == expected[0].size()); // we only have one slice
+
+    REQUIRE(img[0].pixel(0, 0) == expected[0].pixel(0, 0));
+    REQUIRE(img[0].pixel(10, 10) == expected[0].pixel(10, 10));
+    REQUIRE(img[0].pixel(99, 99) == expected[0].pixel(99, 99));
+    REQUIRE(img[0].pixel(10, 99) == expected[0].pixel(10, 99));
+    REQUIRE(img[0].pixel(99, 10) == expected[0].pixel(99, 10));
+  }
+  SECTION("getTargetValues") {
+    auto idx = 1;
+    auto values = optimizer.getTargetValues(idx);
+    REQUIRE(values.size() == 10000);
+    REQUIRE(*std::ranges::min_element(values) == dbl_approx(0.0));
+    REQUIRE(*std::ranges::max_element(values) == dbl_approx(2.0));
+  }
+  SECTION("getCurrentBestResultImage") {
+    auto idx = 1;
+    auto values = optimizer.getBestResultValues(idx);
+    REQUIRE(values.size() == 10000);
+    REQUIRE(*std::ranges::max_element(values) > 0.0);
+    REQUIRE(*std::ranges::min_element(values) == dbl_approx(0.0));
+  }
 }

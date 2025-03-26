@@ -47,6 +47,20 @@ using CGALSizingField =
 
 namespace sme::mesh {
 
+static QRgb interpolate(QRgb c1, QRgb c2) {
+  auto hsv1 = QColor(c1).toHsv();
+  auto hsv2 = QColor(c2).toHsv();
+  // if a color is achromatic (hue of -1) use the hue of the other color
+  float hue1 = hsv1.hueF() < 0.f ? hsv2.hueF() : hsv1.hueF();
+  float hue2 = hsv2.hueF() < 0.f ? hsv1.hueF() : hsv2.hueF();
+  // if both colors are achromatic then just set hue to 0
+  float hueF = std::max(0.f, 0.5f * hue1 + 0.5f * hue2);
+  return QColor::fromHsvF(
+             hueF, 0.5f * hsv1.saturationF() + 0.5f * hsv2.hsvSaturationF(),
+             0.5f * hsv1.valueF() + 0.5f * hsv2.valueF())
+      .rgb();
+}
+
 static sme::common::VoxelF toVoxelF(CGALC3t3::Vertex_handle vertexHandle) {
   return {vertexHandle->point().x(), vertexHandle->point().y(),
           vertexHandle->point().z()};
@@ -58,6 +72,9 @@ static constexpr auto NullCompartmentIndex =
 void Mesh3d::constructMesh() {
   vertices_.clear();
   for (auto &v : tetrahedronVertexIndices_) {
+    v.clear();
+  }
+  for (auto &v : membraneTriangleVertexIndices_) {
     v.clear();
   }
   for (auto &v : tetrahedra_) {
@@ -120,15 +137,40 @@ void Mesh3d::constructMesh() {
     ++id;
   }
 
+  // extract triangles for each membrane
+  for (auto facet1 : c3t3.triangulation().finite_facets()) {
+    auto c1 = labelToCompartmentIndex_[static_cast<std::size_t>(
+        c3t3.subdomain_index(facet1.first))];
+    if (c1 != NullCompartmentIndex) {
+      auto facet2 = c3t3.triangulation().mirror_facet(facet1);
+      auto c2 = labelToCompartmentIndex_[static_cast<std::size_t>(
+          c3t3.subdomain_index(facet2.first))];
+      if (c2 != NullCompartmentIndex && c1 != c2) {
+        auto idx =
+            compartmentsToMembraneIndex_[c1 * getNumberOfCompartments() + c2];
+        if (idx != NullCompartmentIndex) {
+          membraneTriangleVertexIndices_[idx].push_back(
+              {static_cast<std::size_t>(
+                   facet1.first->vertex((facet1.second + 1) % 4)->id()),
+               static_cast<std::size_t>(
+                   facet1.first->vertex((facet1.second + 2) % 4)->id()),
+               static_cast<std::size_t>(
+                   facet1.first->vertex((facet1.second + 3) % 4)->id())});
+        }
+      }
+    }
+  }
+
   for (auto c : c3t3.triangulation().finite_cell_handles()) {
     if (auto compartmentIndex =
             labelToCompartmentIndex_[static_cast<std::size_t>(
                 c3t3.subdomain_index(c))];
         compartmentIndex != NullCompartmentIndex) {
-      SPDLOG_TRACE(
-          "cell with vertex ids {},{},{},{} in subdomain {} -> compartment {}",
-          c->vertex(0)->id(), c->vertex(1)->id(), c->vertex(2)->id(),
-          c->vertex(3)->id(), c3t3.subdomain_index(c), compartmentIndex);
+      SPDLOG_TRACE("cell with vertex ids {},{},{},{} in subdomain {} -> "
+                   "compartment {}",
+                   c->vertex(0)->id(), c->vertex(1)->id(), c->vertex(2)->id(),
+                   c->vertex(3)->id(), c3t3.subdomain_index(c),
+                   compartmentIndex);
       auto &vi = tetrahedronVertexIndices_[compartmentIndex].emplace_back();
       for (int i = 0; i < 4; ++i) {
         vi[static_cast<std::size_t>(i)] =
@@ -148,9 +190,10 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
                std::vector<std::size_t> maxCellVolume,
                const common::VolumeF &voxelSize,
                const common::VoxelF &originPoint,
-               std::vector<QRgb> compartmentColors)
-    : compartmentMaxCellVolume_(std::move(maxCellVolume)),
-      colors_(std::move(compartmentColors)) {
+               const std::vector<QRgb> &compartmentColors,
+               const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+                   &membraneIdColorPairs)
+    : compartmentMaxCellVolume_(std::move(maxCellVolume)) {
   if (imageStack.empty()) {
     errorMessage_ = "Compartment geometry image missing";
     return;
@@ -162,21 +205,41 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   const auto &colorTable = imageStack_.colorTable();
   SPDLOG_INFO("ImageStack {}x{}x{} with {} colors", vol.width(), vol.height(),
               vol.depth(), colorTable.size());
-  for (auto color : colors_) {
+  for (auto color : compartmentColors) {
     if (!colorTable.contains(color)) {
       SPDLOG_WARN("Compartment color is not present in geometry image");
       errorMessage_ = "Compartment color is not present in geometry image";
       return;
     }
   }
+  setColors(compartmentColors, membraneIdColorPairs);
+
+  compartmentsToMembraneIndex_.assign(compartmentColors.size() *
+                                          compartmentColors.size(),
+                                      NullCompartmentIndex);
+  constexpr auto invalidIndex = std::numeric_limits<std::size_t>::max();
+  for (std::uint8_t i = 0; const auto &[id, colors] : membraneIdColorPairs) {
+    auto c1 =
+        common::element_index(compartmentColors, colors.first, invalidIndex);
+    auto c2 =
+        common::element_index(compartmentColors, colors.second, invalidIndex);
+    if (c1 == invalidIndex || c2 == invalidIndex) {
+      SPDLOG_WARN("Membrane color is not present in geometry image");
+      errorMessage_ = "Membrane color is not present in geometry image";
+      return;
+    }
+    compartmentsToMembraneIndex_[c1 * compartmentColors.size() + c2] = i;
+    compartmentsToMembraneIndex_[c2 * compartmentColors.size() + c1] = i;
+    ++i;
+  }
 
   // convert from label to compartment index: label 0 is reserved for out of
   // mesh voxels, so label n is colorIndex n-1 from the image colorTable
   labelToCompartmentIndex_.assign(
       static_cast<std::size_t>(colorTable.size()) + 1, NullCompartmentIndex);
-  for (std::size_t compartmentIndex = 0; compartmentIndex < colors_.size();
-       ++compartmentIndex) {
-    auto compartmentColor = colors_[compartmentIndex];
+  for (std::size_t compartmentIndex = 0;
+       compartmentIndex < compartmentColors.size(); ++compartmentIndex) {
+    auto compartmentColor = compartmentColors[compartmentIndex];
     auto colorIndex = colorTable.indexOf(compartmentColor);
     if (colorIndex >= 0) {
       auto label = static_cast<std::size_t>(colorIndex) + 1;
@@ -216,14 +279,15 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   SPDLOG_INFO("Constructed {}x{}x{} Image_3", image3_->xdim(), image3_->ydim(),
               image3_->zdim());
 
-  tetrahedronVertexIndices_.resize(colors_.size());
-  tetrahedra_.resize(colors_.size());
+  tetrahedronVertexIndices_.resize(compartmentColors.size());
+  tetrahedra_.resize(compartmentColors.size());
+  membraneTriangleVertexIndices_.resize(membraneIdColorPairs.size());
 
-  if (compartmentMaxCellVolume_.size() != colors_.size()) {
+  if (compartmentMaxCellVolume_.size() != getNumberOfCompartments()) {
     // if cell volumes are not correctly specified use default value
     constexpr std::size_t defaultCompartmentMaxCellVolume{5};
     compartmentMaxCellVolume_ = std::vector<std::size_t>(
-        colors_.size(), defaultCompartmentMaxCellVolume);
+        getNumberOfCompartments(), defaultCompartmentMaxCellVolume);
     SPDLOG_INFO("no max cell volumes specified, using default value: {}",
                 defaultCompartmentMaxCellVolume);
   }
@@ -251,17 +315,13 @@ void Mesh3d::setCompartmentMaxCellVolume(std::size_t compartmentIndex,
     SPDLOG_INFO("  -> max cell volume unchanged");
     return;
   }
-  // ensure maxCellVolume values for each compartment do not differ by more than
-  // a factor 2 from each other, as this can lead to CGAL segfaults
-  constexpr std::size_t maxRelDiff{2};
+  // for now enforce that all compartments have the same max cell volume to
+  // avoid CGAL segfaulting for some combinations of max cell volumes (see
+  // #1037)
+  SPDLOG_INFO("  -> setting all max cell volumes to {}", maxCellVolume);
   for (auto &cellVolume : compartmentMaxCellVolume_) {
-    if (cellVolume * maxRelDiff < maxCellVolume) {
-      cellVolume = static_cast<std::size_t>(maxCellVolume / maxRelDiff);
-    } else if (cellVolume > maxRelDiff * maxCellVolume) {
-      cellVolume = maxRelDiff * maxCellVolume;
-    }
+    cellVolume = maxCellVolume;
   }
-  currentMaxCellVolume = maxCellVolume;
   constructMesh();
 }
 
@@ -308,6 +368,10 @@ std::size_t Mesh3d::getNumberOfCompartments() const {
   return tetrahedronVertexIndices_.size();
 }
 
+std::size_t Mesh3d::getNumberOfMembranes() const {
+  return membraneTriangleVertexIndices_.size();
+}
+
 std::vector<int>
 Mesh3d::getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const {
 
@@ -327,6 +391,11 @@ Mesh3d::getTetrahedronIndicesAsFlatArray(std::size_t compartmentIndex) const {
 const std::vector<std::vector<TetrahedronVertexIndices>> &
 Mesh3d::getTetrahedronIndices() const {
   return tetrahedronVertexIndices_;
+}
+
+const std::vector<std::vector<TriangleVertexIndices>> &
+Mesh3d::getMembraneTriangleIndices() const {
+  return membraneTriangleVertexIndices_;
 }
 
 QString Mesh3d::getGMSH() const {
@@ -378,8 +447,14 @@ QString Mesh3d::getGMSH() const {
 
 const std::vector<QRgb> &Mesh3d::getColors() const { return colors_; }
 
-void Mesh3d::setColors(std::vector<QRgb> colors) {
-  colors_ = std::move(colors);
+void Mesh3d::setColors(
+    const std::vector<QRgb> &compartmentColors,
+    const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+        &membraneIdColorPairs) {
+  colors_ = compartmentColors;
+  for (const auto &[id, colors] : membraneIdColorPairs) {
+    colors_.push_back(interpolate(colors.first, colors.second));
+  }
 }
 
 } // namespace sme::mesh

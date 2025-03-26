@@ -2,8 +2,14 @@
 #include "dialogoptimize.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include <QCheckBox>
 #include <QComboBox>
+#include <QLabel>
 #include <QPushButton>
+#include <QSlider>
+#include <catch2/catch_test_macros.hpp>
+#include <qtabwidget.h>
+#include <qwidget.h>
 
 using namespace sme;
 using namespace sme::test;
@@ -13,10 +19,40 @@ struct DialogOptimizeWidgets {
     GET_DIALOG_WIDGET(QComboBox, cmbTarget);
     GET_DIALOG_WIDGET(QPushButton, btnSetup);
     GET_DIALOG_WIDGET(QPushButton, btnStartStop);
+    GET_DIALOG_WIDGET(QComboBox, cmbMode);
+    GET_DIALOG_WIDGET(QLabel, lblResultLabel);
+    GET_DIALOG_WIDGET(QLabel, lblTargetLabel);
+    GET_DIALOG_WIDGET(QLabel, zlabelDifference);
+    GET_DIALOG_WIDGET(QLabel, zlabelValues);
+    GET_DIALOG_WIDGET(QSlider, zaxisValues);
+    GET_DIALOG_WIDGET(QSlider, zaxisDifference);
+    GET_DIALOG_WIDGET(QWidget, lblTarget);
+    GET_DIALOG_WIDGET(QWidget, lblResult);
+    GET_DIALOG_WIDGET(QWidget, lblTarget3D);
+    GET_DIALOG_WIDGET(QWidget, lblResult3D);
+    GET_DIALOG_WIDGET(QWidget, lblDifference);
+    GET_DIALOG_WIDGET(QWidget, lblDifference3D);
+    GET_DIALOG_WIDGET(QLabel, lblDifferenceLabel);
+    GET_DIALOG_WIDGET(QTabWidget, tabWidget);
   }
   QComboBox *cmbTarget;
   QPushButton *btnSetup;
   QPushButton *btnStartStop;
+  QComboBox *cmbMode;
+  QLabel *lblResultLabel;
+  QLabel *lblTargetLabel;
+  QLabel *lblDifferenceLabel;
+  QLabel *zlabelDifference;
+  QLabel *zlabelValues;
+  QSlider *zaxisValues;
+  QSlider *zaxisDifference;
+  QWidget *lblTarget;
+  QWidget *lblResult;
+  QWidget *lblTarget3D;
+  QWidget *lblResult3D;
+  QWidget *lblDifference;
+  QWidget *lblDifference3D;
+  QTabWidget *tabWidget;
 };
 
 TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
@@ -45,6 +81,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     DialogOptimize dia(model);
     DialogOptimizeWidgets widgets(&dia);
     dia.show();
+    QTest::qWait(100);
     // no valid initial optimize options
     REQUIRE(widgets.btnStartStop->text() == "Start");
     REQUIRE(widgets.btnStartStop->isEnabled() == false);
@@ -55,6 +92,7 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     DialogOptimize dia(model);
     DialogOptimizeWidgets widgets(&dia);
     dia.show();
+    QTest::qWait(100);
     // valid initial optimize options
     REQUIRE(widgets.btnStartStop->isEnabled() == true);
     REQUIRE(widgets.btnSetup->isEnabled() == true);
@@ -66,5 +104,82 @@ TEST_CASE("DialogOptimize", "[gui/dialogs/optcost][gui/"
     sendMouseClick(widgets.btnStartStop);
     auto lines{dia.getParametersString().split("\n")};
     REQUIRE(lines.size() == 1);
+  }
+  SECTION("visualization modes") {
+    DialogOptimize dia(model);
+    DialogOptimizeWidgets widgets(&dia);
+    dia.show();
+    // evolve params for 3secs
+    sendMouseClick(widgets.btnStartStop);
+    wait(3000);
+    sendMouseClick(widgets.btnStartStop);
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
+    REQUIRE(widgets.tabWidget->currentIndex() == 0);
+    REQUIRE(widgets.lblResult->isVisible() == true);
+    REQUIRE(widgets.lblTarget->isVisible() == true);
+    REQUIRE(widgets.zaxisValues->isVisible() == true);
+    REQUIRE(widgets.zlabelValues->isVisible() == true);
+    REQUIRE(widgets.lblDifference->isVisible() == false);
+    REQUIRE(widgets.zaxisDifference->isVisible() == false);
+    REQUIRE(widgets.zlabelDifference->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblDifference3D->isVisible() == false);
+
+    // switch to difference tab
+    widgets.tabWidget->setCurrentIndex(1);
+    REQUIRE(widgets.tabWidget->currentIndex() == 1);
+    REQUIRE(widgets.lblResult->isVisible() == false);
+    REQUIRE(widgets.lblTarget->isVisible() == false);
+    REQUIRE(widgets.zaxisValues->isVisible() == false);
+    REQUIRE(widgets.zlabelValues->isVisible() == false);
+    REQUIRE(widgets.lblDifference->isVisible() == true);
+    REQUIRE(widgets.zaxisDifference->isVisible() == true);
+    REQUIRE(widgets.zlabelDifference->isVisible() == true);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblDifference3D->isVisible() == false);
+
+    widgets.cmbMode->setCurrentIndex(1); // switch to 3D visualization
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_3D);
+    REQUIRE(widgets.tabWidget->currentIndex() == 1);
+    REQUIRE(widgets.lblResult->isVisible() == false);
+    REQUIRE(widgets.lblTarget->isVisible() == false);
+    REQUIRE(widgets.zaxisValues->isVisible() == false);
+    REQUIRE(widgets.zlabelValues->isVisible() == false);
+    REQUIRE(widgets.lblDifference->isVisible() == false);
+    REQUIRE(widgets.zaxisDifference->isVisible() == false);
+    REQUIRE(widgets.zlabelDifference->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblDifference3D->isVisible() == true);
+
+    widgets.tabWidget->setCurrentIndex(0); // switch back to target/result tab
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_3D);
+    REQUIRE(widgets.tabWidget->currentIndex() == 0);
+    REQUIRE(widgets.lblResult->isVisible() == false);
+    REQUIRE(widgets.lblTarget->isVisible() == false);
+    REQUIRE(widgets.zaxisValues->isVisible() == false);
+    REQUIRE(widgets.zlabelValues->isVisible() == false);
+    REQUIRE(widgets.lblDifference->isVisible() == false);
+    REQUIRE(widgets.zaxisDifference->isVisible() == false);
+    REQUIRE(widgets.zlabelDifference->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == true);
+    REQUIRE(widgets.lblTarget3D->isVisible() == true);
+    REQUIRE(widgets.lblDifference3D->isVisible() == false);
+
+    widgets.cmbMode->setCurrentIndex(0); // switch to 2D visualization again
+    REQUIRE(dia.getVizMode() == DialogOptimize::VizMode::_2D);
+    REQUIRE(widgets.tabWidget->currentIndex() == 0);
+    REQUIRE(widgets.lblResult->isVisible() == true);
+    REQUIRE(widgets.lblTarget->isVisible() == true);
+    REQUIRE(widgets.zaxisValues->isVisible() == true);
+    REQUIRE(widgets.zlabelValues->isVisible() == true);
+    REQUIRE(widgets.lblDifference->isVisible() == false);
+    REQUIRE(widgets.zaxisDifference->isVisible() == false);
+    REQUIRE(widgets.zlabelDifference->isVisible() == false);
+    REQUIRE(widgets.lblResult3D->isVisible() == false);
+    REQUIRE(widgets.lblTarget3D->isVisible() == false);
+    REQUIRE(widgets.lblDifference3D->isVisible() == false);
   }
 }

@@ -311,10 +311,14 @@ TEST_CASE("Mesh3d more complex geometries",
     }
     SECTION("Nucleus+Cell only") {
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          {colNucleus, colCell});
+                          {colNucleus, colCell},
+                          {{"nucl-cell-membrane", {colNucleus, colCell}}});
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getNumberOfCompartments() == 2);
+      REQUIRE(mesh3d.getNumberOfMembranes() == 1);
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
+      REQUIRE(mesh3d.getMembraneTriangleIndices().size() == 1);
       // nucleus
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 0,
                                colOutside) == dbl_approx(0));
@@ -329,13 +333,19 @@ TEST_CASE("Mesh3d more complex geometries",
                                colCell) >= 0.90);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 1,
                                colNucleus) <= 0.08);
+      // nuc-cell membrane
+      REQUIRE(!mesh3d.getMembraneTriangleIndices()[0].empty());
     }
     SECTION("Nucleus+Outside only") {
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          {colNucleus, colOutside});
+                          {colNucleus, colOutside},
+                          {{"nucl-out-membrane", {colNucleus, colOutside}}});
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getNumberOfCompartments() == 2);
+      REQUIRE(mesh3d.getNumberOfMembranes() == 1);
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
+      REQUIRE(mesh3d.getMembraneTriangleIndices().size() == 1);
       // nucleus
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 0,
                                colOutside) == dbl_approx(0));
@@ -350,13 +360,19 @@ TEST_CASE("Mesh3d more complex geometries",
                                colCell) <= 0.05);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 1,
                                colNucleus) == dbl_approx(0));
+      // nuc-out membrane contains no triangles
+      REQUIRE(mesh3d.getMembraneTriangleIndices()[0].empty());
     }
     SECTION("Cell+Outside only") {
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          {colOutside, colCell});
+                          {colOutside, colCell},
+                          {{"cell-out-membrane", {colCell, colOutside}}});
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getNumberOfCompartments() == 2);
+      REQUIRE(mesh3d.getNumberOfMembranes() == 1);
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
+      REQUIRE(mesh3d.getMembraneTriangleIndices().size() == 1);
       // outside
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 0,
                                colOutside) >= 0.95);
@@ -371,20 +387,31 @@ TEST_CASE("Mesh3d more complex geometries",
                                colCell) >= 0.90);
       REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint, 1,
                                colNucleus) <= 0.08);
+      // cell-out membrane
+      REQUIRE(!mesh3d.getMembraneTriangleIndices()[0].empty());
     }
     SECTION("All three compartments") {
       auto colorsAsStdVec = sme::common::toStdVec(colors);
       mesh::Mesh3d mesh3d(imageStack, maxCellVolume, voxelSize, originPoint,
-                          colorsAsStdVec);
+                          colorsAsStdVec,
+                          {{"nucl-cell-membrane", {colNucleus, colCell}},
+                           {"cell-out-membrane", {colCell, colOutside}}});
       REQUIRE(mesh3d.isValid() == true);
       REQUIRE(mesh3d.getErrorMessage().empty());
+      REQUIRE(mesh3d.getNumberOfCompartments() == 3);
+      REQUIRE(mesh3d.getNumberOfMembranes() == 2);
       REQUIRE(mesh3d.getTetrahedronIndices().size() == 3);
+      REQUIRE(mesh3d.getMembraneTriangleIndices().size() == 2);
       for (auto compartmentIndex : std::vector<std::size_t>{0, 1, 2}) {
         CAPTURE(compartmentIndex);
         REQUIRE(matchingFraction(imageStack, mesh3d, voxelSize, originPoint,
                                  compartmentIndex,
                                  colorsAsStdVec[compartmentIndex]) >= 0.90);
       }
+      // nucl-cell membrane
+      REQUIRE(!mesh3d.getMembraneTriangleIndices()[0].empty());
+      // cell-out membrane
+      REQUIRE(!mesh3d.getMembraneTriangleIndices()[1].empty());
     }
   }
   SECTION("Two disconnected eggs") {
@@ -550,35 +577,14 @@ TEST_CASE("Mesh3d max cell volume",
     REQUIRE(mesh3d != nullptr);
     REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 5);
     REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 5);
-    // make max cell volume for compartment zero much larger:
-    mesh3d->setCompartmentMaxCellVolume(0, 50);
-    // note: CGAL segfaults when the max cell volumes are too different (see
-    // #1037) so we also automatically adjust the other values to keep them all
-    // within a factor of 2 of the value that was changed
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 25);
-    mesh3d->setCompartmentMaxCellVolume(0, 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 8);
-    mesh3d->setCompartmentMaxCellVolume(1, 100);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 50);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 100);
-    mesh3d->setCompartmentMaxCellVolume(1, 4);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == 8);
-    REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == 4);
-    mesh3d->setCompartmentMaxCellVolume(1, 200);
-    for (std::size_t i = 100; i >= 4; --i) {
+    REQUIRE(mesh3d->isValid());
+    for (std::size_t i = 100; i >= 3; --i) {
       CAPTURE(i);
       mesh3d->setCompartmentMaxCellVolume(0, i);
       REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) == i);
-      REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) <= 2 * i);
-    }
-    mesh3d->setCompartmentMaxCellVolume(0, 200);
-    for (std::size_t i = 100; i >= 4; --i) {
-      CAPTURE(i);
-      mesh3d->setCompartmentMaxCellVolume(1, i);
+      // setting max cell volume for one compartment should set it for all
       REQUIRE(mesh3d->getCompartmentMaxCellVolume(1) == i);
-      REQUIRE(mesh3d->getCompartmentMaxCellVolume(0) <= 2 * i);
+      REQUIRE(mesh3d->isValid());
     }
   }
 }
