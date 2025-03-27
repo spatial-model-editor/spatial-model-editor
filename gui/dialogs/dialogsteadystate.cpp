@@ -1,6 +1,9 @@
 #include "dialogsteadystate.hpp"
-#include "sme/utils.hpp"
+#include "dialogdisplayoptions.hpp"
+#include "ui_dialogdisplayoptions.h"
 #include "ui_dialogsteadystate.h"
+
+#include "sme/utils.hpp"
 
 #include <chrono>
 #include <memory>
@@ -81,6 +84,12 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
 
   connect(ui->btnReset, &QPushButton::clicked, this,
           &DialogSteadystate::btnResetClicked);
+
+  connect(ui->btnDisplayOptions, &QPushButton::clicked, this, [this]() {
+    DialogDisplayOptions dialog(m_model, speciesNames, displayOptions,
+                                plotWrapperObservables this);
+    dialog.exec();
+  });
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogSteadystate::btnOkClicked);
@@ -271,7 +280,8 @@ void DialogSteadystate::initPlots() {
 
 void DialogSteadystate::resetPlots() {
   ui->errorPlot->clearGraphs();
-  ui->valuesPlot->clear();
+  ui->valuesPlot->setImage(sme::common::ImageStack{});
+  ui->valuesPlot3D->setImage(sme::common::ImageStack{});
 
   initPlots();
 }

@@ -61,6 +61,7 @@ private:
   void btnResetClicked();
   void btnOkClicked();
   void btnCancelClicked();
+  void btnDisplayOptionsClicked();
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,
