@@ -2,6 +2,7 @@
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/duneconverter.hpp"
+#include "sme/image_stack.hpp"
 #include "sme/simulate_options.hpp"
 #include <QElapsedTimer>
 #include <QFile>
@@ -42,6 +43,7 @@ void SteadyStateSimulation::initModel() {
   int i = 0;
   m_compartmentIds.clear();
   m_compartmentSpeciesIds.clear();
+  m_compartmentSpeciesIdxs.clear();
   m_compartmentSpeciesColors.clear();
   m_compartmentIdxs.clear();
   m_compartments.clear();
@@ -49,15 +51,23 @@ void SteadyStateSimulation::initModel() {
   // TODO: compare this to simulate::initModel and check that I didn't mess up
   // the ordering
   for (const auto &compartmentId : m_model.getCompartments().getIds()) {
+
     m_compartmentIdxs.push_back(i);
     m_compartmentIds.push_back(compartmentId.toStdString());
     m_compartmentSpeciesIds.push_back({});
     m_compartmentSpeciesColors.push_back({});
+    m_compartmentSpeciesIdxs.push_back({});
+
     auto comp = m_model.getCompartments().getCompartment(compartmentId);
     m_compartments.push_back(comp);
+
+    std::size_t j = 0;
     for (const auto &s : m_model.getSpecies().getIds(compartmentId)) {
+
       if (!m_model.getSpecies().getIsConstant(s)) {
         m_compartmentSpeciesIds[i].push_back(s.toStdString());
+        m_compartmentSpeciesIdxs[i].push_back(j);
+        j++; // FIXME: this could be wrong, check!
         const auto &field = m_model.getSpecies().getField(s);
         m_compartmentSpeciesColors[i].push_back(field->getColor());
       }
@@ -110,10 +120,67 @@ double SteadyStateSimulation::computeStoppingCriterion(
 
 //////////////////////////////////////////////////////////////////////////////////
 // helpers for data
+void SteadyStateSimulation::normaliseOverAllSpecies() {}
+
+void SteadyStateSimulation::normaliseOverAllTimepoints() {}
+
+void SteadyStateSimulation::fillImage(
+    sme::common::ImageStack &concentrationImageStack,
+    const std::vector<std::vector<std::size_t>> &speciesToDraw) {
+
+  // turn the data at all voxels into rgb data
+  for (std::size_t i = 0; i < m_compartments.size(); ++i) {
+    SPDLOG_DEBUG("  - compartment: {}", m_compartmentIds[i]);
+    const auto &voxels = m_compartments[i]->getVoxels();
+    std::size_t nSpecies = speciesToDraw[i].size();
+    const auto concentrations = m_simulator->getConcentrations(i);
+    const auto concentrationPadding = m_simulator->getConcentrationPadding();
+
+    for (std::size_t vi = 0; vi < voxels.size(); ++vi) {
+      int r = 0;
+      int g = 0;
+      int b = 0;
+
+      for (std::size_t is : m_compartmentSpeciesIdxs[i]) {
+        double c = concentrations[vi * (nSpecies + concentrationPadding) + is];
+        const auto &col = m_compartmentSpeciesColors[i][is];
+        r += static_cast<int>(qRed(col) * c);
+        g += static_cast<int>(qGreen(col) * c);
+        b += static_cast<int>(qBlue(col) * c);
+      }
+
+      r = r < 256 ? r : 255;
+      g = g < 256 ? g : 255;
+      b = b < 256 ? b : 255;
+
+      concentrationImageStack[voxels[vi].z].setPixel(voxels[vi].p,
+                                                     qRgb(r, g, b));
+    }
+  }
+}
+
 void SteadyStateSimulation::recordData(double timestep, double error) {
-  common::ImageStack concImgStack = m_model.getGeometry().getImages();
-  m_data.store(
-      std::make_shared<SteadyStateData>(timestep, error, concImgStack));
+
+  auto imageSize = m_model.getGeometry().getImages().volume();
+
+  const auto &speciesToDraw = m_compartmentSpeciesIdxs;
+
+  sme::common::ImageStack concentrationImageStack(
+      imageSize, QImage::Format_ARGB32_Premultiplied);
+  concentrationImageStack.setVoxelSize(m_model.getGeometry().getVoxelSize());
+  concentrationImageStack.fill(0);
+
+  if (m_compartments.empty()) {
+    // no compartments --> no image
+    m_data.store(std::make_shared<SteadyStateData>(timestep, error,
+                                                   concentrationImageStack));
+    return;
+  }
+
+  fillImage(concentrationImageStack, speciesToDraw);
+
+  m_data.store(std::make_shared<SteadyStateData>(timestep, error,
+                                                 concentrationImageStack));
 }
 
 void SteadyStateSimulation::resetData() {
@@ -358,88 +425,6 @@ bool SteadyStateSimulation::getSolverStopRequested() const {
 
 double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
 
-common::ImageStack SteadyStateSimulation::getConcImage(
-    std::size_t timeIndex,
-    const std::vector<std::vector<std::size_t>> &speciesToDraw,
-    bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const {
-  // README: adjusted copy from simulate::getConcImage. What to do to reuse this
-  // stuff?
-  if (m_compartments.empty()) {
-    return common::ImageStack{};
-  }
-  constexpr double minimumNonzeroConc{100.0 *
-                                      std::numeric_limits<double>::min()};
-  const auto *speciesIndices = &speciesToDraw;
-  // default to drawing all species if not specified
-  if (speciesToDraw.empty()) {
-    speciesIndices = &m_compartmentSpeciesIds; // TODO: fix the type here
-  }
-  // calculate normalisation for each species
-  auto maxConcs{
-      data->concentrationMax[nCompletedTimesteps.load(
-                                 std::memory_order_seq_cst) -
-                             1]}; // TODO: this is not really necessary. just
-                                  // get the latest and maintain a running max
-  if (!normaliseOverAllTimepoints) {
-    // get max for each species at this timepoint
-    for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
-      for (std::size_t is : (*speciesIndices)[ic]) {
-        maxConcs[ic][is] = data->avgMinMax[timeIndex][ic][is].max;
-      }
-    }
-  }
-
-  // TODO: extract this into a separate function to make it a bit cleaner
-  if (normaliseOverAllSpecies) {
-    // normalise over max of all visible species
-    double maxC{minimumNonzeroConc};
-    for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
-      for (std::size_t is : (*speciesIndices)[ic]) {
-        maxC = std::max(maxC, maxConcs[ic][is]);
-      }
-    }
-    for (auto &c : maxConcs) {
-      std::ranges::fill(c, maxC);
-    }
-  }
-  // apply minimum (avoid dividing by zero)
-  for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
-    for (std::size_t is : (*speciesIndices)[ic]) {
-      if (maxConcs[ic][is] < minimumNonzeroConc) {
-        maxConcs[ic][is] = minimumNonzeroConc;
-      }
-    }
-  }
-
-  // TODO: extract this into separate functions?
-  common::ImageStack imgs(imageSize, QImage::Format_ARGB32_Premultiplied);
-  imgs.setVoxelSize(m_model.getGeometry().getVoxelSize());
-  imgs.fill(0);
-  // iterate over compartments
-  for (std::size_t ic = 0; ic < m_compartments.size(); ++ic) {
-    const auto &voxels{m_compartments[ic]->getVoxels()};
-    const auto &conc{data->concentration[timeIndex][ic]};
-    std::size_t nSpecies = m_compartmentSpeciesIds[ic].size();
-    std::size_t stride{nSpecies + data->concPadding[timeIndex]};
-    for (std::size_t ix = 0; ix < voxels.size(); ++ix) {
-      int r = 0;
-      int g = 0;
-      int b = 0;
-      for (std::size_t is : (*speciesIndices)[ic]) {
-        double c = conc[ix * stride + is] / maxConcs[ic][is];
-        const auto &col = m_compartmentSpeciesColors[ic][is];
-        r += static_cast<int>(qRed(col) * c);
-        g += static_cast<int>(qGreen(col) * c);
-        b += static_cast<int>(qBlue(col) * c);
-      }
-      r = r < 256 ? r : 255;
-      g = g < 256 ? g : 255;
-      b = b < 256 ? b : 255;
-      imgs[voxels[ix].z].setPixel(voxels[ix].p, qRgb(r, g, b));
-    }
-  }
-  return imgs;
-}
 //////////////////////////////////////////////////////////////////////////////////
 // state setters
 

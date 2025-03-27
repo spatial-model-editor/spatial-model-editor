@@ -24,12 +24,12 @@ class SteadyStateSimulation final {
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
   SteadystateConvergenceMode m_stop_mode;
-  // use tbb concurrent_vector: thread-safe writing, lock-free reading
   std::atomic<std::shared_ptr<SteadyStateData>> m_data;
   std::vector<const geometry::Compartment *> m_compartments;
   std::vector<int> m_compartmentIdxs;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
+  std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs;
   std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
   double m_dt; // timestep to check for convergence, not solver timestep
   bool m_stopRequested;
@@ -47,6 +47,11 @@ class SteadyStateSimulation final {
                            const std::vector<double> &c_new);
 
   // helper functions for data
+  void normaliseOverAllTimepoints();
+  void normaliseOverAllSpecies();
+  void fillImage(sme::common::ImageStack &concentrationImageStack,
+                 const std::vector<std::vector<std::size_t>> &speciesToDraw);
+  void makeImage(bool speciesNormalization, bool timeNormalization);
   void recordData(double timestep, double error);
   void resetData();
 
@@ -177,11 +182,10 @@ public:
    * @param normaliseOverAllSpecies
    * @return common::ImageStack
    */
-  [[nodiscard]] common::ImageStack
-  getConcImage(std::size_t timeIndex,
-               const std::vector<std::vector<std::size_t>> &speciesToDraw,
-               bool normaliseOverAllTimepoints,
-               bool normaliseOverAllSpecies) const;
+  [[nodiscard]] common::ImageStack getConcentrationImage(
+      std::size_t timeIndex,
+      const std::vector<std::vector<std::size_t>> &speciesToDraw,
+      bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const;
 
   // setters
 
