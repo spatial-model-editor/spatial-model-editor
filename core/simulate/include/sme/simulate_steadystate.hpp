@@ -26,11 +26,13 @@ class SteadyStateSimulation final {
   SteadystateConvergenceMode m_stop_mode;
   std::atomic<std::shared_ptr<SteadyStateData>> m_data;
   std::vector<const geometry::Compartment *> m_compartments;
-  std::vector<int> m_compartmentIdxs;
   std::vector<std::string> m_compartmentIds;
+  std::vector<std::size_t> m_compartmentIndices;
   std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
   std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs;
+  std::vector<std::vector<std::string>> m_compartmentSpeciesNames;
   std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
+
   double m_dt; // timestep to check for convergence, not solver timestep
   bool m_stopRequested;
 

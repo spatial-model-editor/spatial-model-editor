@@ -29,8 +29,8 @@ SteadyStateSimulation::SteadyStateSimulation(
     : m_has_converged(false), m_model(model),
       m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
-      m_stop_mode(convergence_mode), m_data(), m_compartmentIdxs(),
-      m_compartmentIds(), m_compartmentSpeciesIds(),
+      m_stop_mode(convergence_mode), m_data(), m_compartmentIds(),
+      m_compartmentSpeciesIds(), m_compartmentSpeciesNames(),
       m_compartmentSpeciesColors(), m_dt(dt), m_stopRequested(false) {
   m_model.getSimulationSettings().simulatorType = type;
   initModel();
@@ -45,35 +45,46 @@ void SteadyStateSimulation::initModel() {
   m_compartmentSpeciesIds.clear();
   m_compartmentSpeciesIdxs.clear();
   m_compartmentSpeciesColors.clear();
-  m_compartmentIdxs.clear();
+  m_compartmentSpeciesNames.clear();
+  m_compartmentIndices.clear();
   m_compartments.clear();
 
-  // TODO: compare this to simulate::initModel and check that I didn't mess up
-  // the ordering
   for (const auto &compartmentId : m_model.getCompartments().getIds()) {
-
-    m_compartmentIdxs.push_back(i);
-    m_compartmentIds.push_back(compartmentId.toStdString());
-    m_compartmentSpeciesIds.push_back({});
-    m_compartmentSpeciesColors.push_back({});
-    m_compartmentSpeciesIdxs.push_back({});
-
-    auto comp = m_model.getCompartments().getCompartment(compartmentId);
-    m_compartments.push_back(comp);
-
-    std::size_t j = 0;
+    m_compartmentIndices.push_back(i);
+    std::vector<std::string> sIds;
+    std::vector<QRgb> cols;
+    const geometry::Compartment *comp = nullptr;
     for (const auto &s : m_model.getSpecies().getIds(compartmentId)) {
-
       if (!m_model.getSpecies().getIsConstant(s)) {
-        m_compartmentSpeciesIds[i].push_back(s.toStdString());
-        m_compartmentSpeciesIdxs[i].push_back(j);
-        j++; // FIXME: this could be wrong, check!
+        sIds.push_back(s.toStdString());
         const auto &field = m_model.getSpecies().getField(s);
-        m_compartmentSpeciesColors[i].push_back(field->getColor());
+        cols.push_back(field->getColor());
+        comp = field->getCompartment();
       }
     }
-    i++;
+
+    if (!sIds.empty()) {
+      auto sIndices = std::vector<std::size_t>(sIds.size());
+      std::iota(sIndices.begin(), sIndices.end(), 0);
+      m_compartmentIds.push_back(compartmentId.toStdString());
+      m_compartmentSpeciesIds.push_back(std::move(sIds));
+      auto &names = m_compartmentSpeciesNames.emplace_back();
+      for (const auto &id : m_compartmentSpeciesIds.back()) {
+        names.push_back(m_model.getSpecies().getName(id.c_str()).toStdString());
+      }
+      m_compartmentSpeciesIdxs.push_back(std::move(sIndices));
+      m_compartmentSpeciesColors.push_back(std::move(cols));
+      m_compartments.push_back(comp);
+    }
+    ++i;
   }
+
+  SPDLOG_CRITICAL("  init Model done, variable sizes: {} {} {} {} {}, {}, {}",
+                  m_compartmentIds.size(), m_compartmentSpeciesIds.size(),
+                  m_compartmentSpeciesIdxs.size(),
+                  m_compartmentSpeciesNames.size(),
+                  m_compartmentSpeciesColors.size(), m_compartments.size(),
+                  m_compartmentIndices.size());
 }
 
 void SteadyStateSimulation::selectSimulator() {
@@ -97,6 +108,7 @@ void SteadyStateSimulation::resetSolver() {
 
 double SteadyStateSimulation::computeStoppingCriterion(
     const std::vector<double> &c_old, const std::vector<double> &c_new) {
+
   double sum_squared_dcdt = 0.0;
   double sum_squared_c = 0.0;
 
@@ -113,7 +125,7 @@ double SteadyStateSimulation::computeStoppingCriterion(
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
   }
 
-  SPDLOG_DEBUG("    - c_norm: {}, dcdt_norm: {}", c_norm, dcdt_norm);
+  SPDLOG_CRITICAL("    - c_norm: {}, dcdt_norm: {}", c_norm, dcdt_norm);
 
   return dcdt_norm;
 }
@@ -130,7 +142,7 @@ void SteadyStateSimulation::fillImage(
 
   // turn the data at all voxels into rgb data
   for (std::size_t i = 0; i < m_compartments.size(); ++i) {
-    SPDLOG_DEBUG("  - compartment: {}", m_compartmentIds[i]);
+    SPDLOG_CRITICAL("  - compartment: {}", m_compartmentIds[i]);
     const auto &voxels = m_compartments[i]->getVoxels();
     std::size_t nSpecies = speciesToDraw[i].size();
     const auto concentrations = m_simulator->getConcentrations(i);
@@ -218,16 +230,16 @@ void SteadyStateSimulation::runPixel(double time) {
     if (std::isnan(current_error) or std::isinf(current_error)) {
       m_simulator->setCurrentErrormessage(
           "Simulation failed: NaN  of Inf detected in norm");
-      SPDLOG_DEBUG(m_simulator->errorMessage());
+      SPDLOG_CRITICAL(m_simulator->errorMessage());
       m_simulator->setStopRequested(true);
       break;
     }
 
-    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
-                 "steps_below_tolerance: "
-                 "{}",
-                 tNow, current_error, m_convergence_tolerance,
-                 m_steps_below_tolerance);
+    SPDLOG_CRITICAL("  - time: {}, current error: {}, tolerance: {}, "
+                    "steps_below_tolerance: "
+                    "{}",
+                    tNow, current_error, m_convergence_tolerance,
+                    m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       m_steps_below_tolerance++;
@@ -241,11 +253,11 @@ void SteadyStateSimulation::runPixel(double time) {
       SPDLOG_CRITICAL("Simulation has converged");
       break;
     }
-    SPDLOG_DEBUG(" timeout situation: {}, {}", m_timeout_ms,
-                 static_cast<double>(timer.elapsed()));
+    SPDLOG_CRITICAL(" timeout situation: {}, {}", m_timeout_ms,
+                    static_cast<double>(timer.elapsed()));
     if (m_timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= m_timeout_ms) {
-      SPDLOG_DEBUG("Simulation timeout: requesting stop");
+      SPDLOG_CRITICAL("Simulation timeout: requesting stop");
       m_simulator->setStopRequested(true);
       m_simulator->setCurrentErrormessage("Simulation timed out");
       break;
@@ -253,7 +265,7 @@ void SteadyStateSimulation::runPixel(double time) {
 
     if (m_simulator->getStopRequested()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
-      SPDLOG_DEBUG("Simulation timeout or stopped early");
+      SPDLOG_CRITICAL("Simulation timeout or stopped early");
       break;
     }
 
@@ -301,7 +313,7 @@ void SteadyStateSimulation::runDune(double time) {
     if (std::isnan(current_error) or std::isinf(current_error)) {
       m_simulator->setCurrentErrormessage(
           "Simulation failed: NaN  of Inf detected in norm");
-      SPDLOG_DEBUG(m_simulator->errorMessage());
+      SPDLOG_CRITICAL(m_simulator->errorMessage());
       m_simulator->setStopRequested(true);
       break;
     }
@@ -329,7 +341,7 @@ void SteadyStateSimulation::runDune(double time) {
 
     if (m_timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= m_timeout_ms) {
-      SPDLOG_DEBUG("Simulation timeout: requesting stop");
+      SPDLOG_CRITICAL("Simulation timeout: requesting stop");
       m_simulator->setCurrentErrormessage("Simulation timed out");
       m_simulator->setStopRequested(true);
       break;
@@ -337,7 +349,7 @@ void SteadyStateSimulation::runDune(double time) {
 
     if (m_simulator->getStopRequested()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
-      SPDLOG_DEBUG("Simulation timeout or stopped early");
+      SPDLOG_CRITICAL("Simulation timeout or stopped early");
       break;
     }
 
@@ -395,11 +407,19 @@ double SteadyStateSimulation::getStopTolerance() const {
 
 std::vector<double> SteadyStateSimulation::getConcentrations() const {
   std::vector<double> concs;
-
-  for (auto &&idx : m_compartmentIdxs) {
+  SPDLOG_CRITICAL("m_compartmentIndices: {}", m_compartmentIndices.size());
+  for (auto &&idx : m_compartmentIndices) {
     auto c = m_simulator->getConcentrations(idx);
     concs.insert(concs.end(), c.begin(), c.end());
+    SPDLOG_CRITICAL("size of concs for index {}: {} ", idx, c.size());
+    SPDLOG_CRITICAL("  concs minmax for index {}: {}, {}", idx,
+                    *std::min_element(concs.begin(), concs.end()),
+                    *std::max_element(concs.begin(), concs.end()));
   }
+
+  SPDLOG_CRITICAL("concs minmax: {}, {}",
+                  *std::min_element(concs.begin(), concs.end()),
+                  *std::max_element(concs.begin(), concs.end()));
 
   return concs;
 }

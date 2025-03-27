@@ -20,7 +20,7 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
     : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       sim(sme::simulate::SteadyStateSimulation(
           model, sme::simulate::SimulatorType::Pixel, 1e-6, 10,
-          sme::simulate::SteadystateConvergenceMode::relative, 10000, 1)),
+          sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)),
       m_simulationFuture(), m_plotRefreshTimer(), vizmode(VizMode::_2D),
       isRunning(false) {
 
@@ -265,6 +265,8 @@ void DialogSteadystate::initPlots() {
   ui->valuesPlot->setPhysicalUnits(m_model.getUnits().getLength().name);
 
   ui->valuesPlot3D->hide();
+
+  SPDLOG_CRITICAL(" - init plots done");
 }
 
 void DialogSteadystate::resetPlots() {
