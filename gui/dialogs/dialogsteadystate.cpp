@@ -103,8 +103,9 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
                                 m_model.getDisplayOptions(),
                                 std::vector<PlotWrapperObservable>{}, this);
 
-    dialog.ui->cmbNormaliseOverAllTimepoints
-        ->hide(); // we don´t care about timetpoints here
+    // we don´t care about timetpoints here
+    dialog.ui->cmbNormaliseOverAllTimepoints->hide();
+
     // we don´t care about adding observables  here either
     dialog.ui->btnAddObservable->hide();
     dialog.ui->btnEditObservable->hide();
@@ -247,6 +248,7 @@ void DialogSteadystate::btnStartStopClicked() {
     m_isRunning = true;
     // start timer to periodically update simulation results
     ui->btnStartStop->setText("Stop");
+    ui->btnReset->setEnabled(false);
     runAndPlot();
   } else {
     m_isRunning = false;
@@ -257,13 +259,13 @@ void DialogSteadystate::btnStartStopClicked() {
       m_simulationFuture.wait();
     }
     m_plotRefreshTimer.stop();
-    finalise();
 
     if (m_sim.hasConverged()) {
       ui->btnStartStop->setText("Resume");
     } else {
       ui->btnStartStop->setText("Start");
     }
+    finalise();
     QMessageBox::information(this, "Simulation stopped",
                              "The simulation has been stopped.");
   }
@@ -318,6 +320,19 @@ void DialogSteadystate::initPlots() {
   ui->valuesPlot->displayGrid(m_model.getDisplayOptions().showGeometryGrid);
   ui->valuesPlot->setPhysicalUnits(m_model.getUnits().getLength().name);
 
+  auto volume = m_model.getGeometry().getImages().volume();
+  // manipulate UI to reduce clutter when solving 2D problem
+  if (volume.depth() == 1) {
+    SPDLOG_CRITICAL("2D problem detected");
+    ui->cmbPlotting->setEnabled(false);
+    ui->zaxis->hide();
+    ui->zlabel->hide();
+  } else {
+    ui->zaxis->setMaximum(int(volume.depth() - 1));
+    ui->zaxis->setMinimum(0);
+    ui->zaxis->setValue(0);
+  }
+  m_vizmode = VizMode::_2D;
   ui->valuesPlot3D->hide();
 
   SPDLOG_CRITICAL(" - init plots done");
@@ -361,6 +376,10 @@ void DialogSteadystate::runAndPlot() {
 
 void DialogSteadystate::update() {
   SPDLOG_CRITICAL("  update UI");
+  SPDLOG_CRITICAL("  - ui->valuesPlot->isVisible(): {}",
+                  ui->valuesPlot->isVisible());
+  SPDLOG_CRITICAL("  - ui->valuesPlot3D->isVisible(): {}",
+                  ui->valuesPlot3D->isVisible());
 
   // update error plot
   sme::simulate::SteadyStateData data = *m_sim.getLatestData().load();
@@ -372,7 +391,7 @@ void DialogSteadystate::update() {
   ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
 
   // update image plot
-  // FIXME: this will probably result in a race condition?
+  // FIXME: this doesn´t work with 3d models?
   auto image = m_sim.getConcentrationImage(
       m_compartmentSpeciesToPlot,
       m_model.getDisplayOptions().normaliseOverAllSpecies);
@@ -411,10 +430,12 @@ void DialogSteadystate::updateSpeciesToPlot() {
 void DialogSteadystate::finalise() {
   SPDLOG_CRITICAL("finalise plots");
   m_plotRefreshTimer.stop();
-  // TODO: implement this bs
+  ui->btnReset->setEnabled(true);
 }
 
 void DialogSteadystate::selectZ() {
-  SPDLOG_CRITICAL("select z");
-  // TODO: implement this bs
+  auto z = ui->zaxis->value();
+  SPDLOG_CRITICAL("z axis value: {}", z);
+  ui->valuesPlot->setZIndex(z);
+  ui->valuesPlot->repaint();
 }

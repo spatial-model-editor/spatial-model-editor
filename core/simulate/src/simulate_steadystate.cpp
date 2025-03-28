@@ -435,6 +435,7 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
   concentrationImageStack.fill(0);
 
   if (m_compartments.empty()) {
+    SPDLOG_CRITICAL("  no compartments --> no image");
     return concentrationImageStack;
   }
 
