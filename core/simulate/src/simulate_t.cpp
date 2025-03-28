@@ -1334,7 +1334,7 @@ TEST_CASE("PyConc",
       REQUIRE(cA1.size() == 100 * 100);
       REQUIRE(cA1[0] == dbl_approx(0.0));
 
-      // onlh have dcdt for last timepoint of pixel sim:
+      // only have dcdt for last timepoint of pixel sim:
       auto pyDcdts1{sim.getPyDcdts(0)};
       if (simType == simulate::SimulatorType::Pixel) {
         REQUIRE(pyDcdts1.size() == 3);
@@ -1343,6 +1343,41 @@ TEST_CASE("PyConc",
         REQUIRE(dA1[0] == dbl_approx(0.0));
       } else {
         REQUIRE(pyDcdts1.size() == 0);
+      }
+    }
+  }
+  SECTION("VerySimpleModel3d") {
+    auto s{getExampleModel(Mod::VerySimpleModel3D)};
+    for (auto simType :
+         {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
+      s.getSimulationSettings().simulatorType = simType;
+      s.getSimulationData().clear();
+      simulate::Simulation sim(s);
+      sim.doTimesteps(0.01, 1);
+      REQUIRE(sim.getTimePoints().size() == 2);
+      REQUIRE(sim.getPyNames(0).size() == 1);
+      REQUIRE(sim.getPyNames(0)[0] == "B_out");
+      REQUIRE(sim.getPyNames(1).size() == 2);
+      REQUIRE(sim.getPyNames(1)[0] == "A_cell");
+      REQUIRE(sim.getPyNames(1)[1] == "B_cell");
+      REQUIRE(sim.getPyNames(2).size() == 2);
+      REQUIRE(sim.getPyNames(2)[0] == "A_nucl");
+      REQUIRE(sim.getPyNames(2)[1] == "B_nucl");
+      auto pyConcs0{sim.getPyConcs(0, 1)};
+      REQUIRE(pyConcs0.size() == 2);
+      const auto &cA_cell_t0 = pyConcs0[0];
+      REQUIRE(cA_cell_t0.size() == 40 * 40 * 40);
+      for (std::size_t i = 0; i < cA_cell_t0.size(); ++i) {
+        REQUIRE(cA_cell_t0[i] == dbl_approx(0.0));
+      }
+      // only have dcdt for last timepoint of pixel sim:
+      auto pyDcdts1{sim.getPyDcdts(1)};
+      if (simType == simulate::SimulatorType::Pixel) {
+        REQUIRE(pyDcdts1.size() == 2);
+        const auto &dA_cell_t0 = pyDcdts1[0];
+        REQUIRE(dA_cell_t0.size() == 40 * 40 * 40);
+      } else {
+        REQUIRE(pyDcdts1.empty());
       }
     }
   }
