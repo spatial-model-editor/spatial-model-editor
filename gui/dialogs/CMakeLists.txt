@@ -26,6 +26,8 @@ target_sources(
           dialogoptcost.ui
           dialogoptimize.cpp
           dialogoptimize.ui
+          dialogsteadystate.cpp
+          dialogsteadystate.ui
           dialogoptparam.cpp
           dialogoptparam.ui
           dialogoptsetup.cpp

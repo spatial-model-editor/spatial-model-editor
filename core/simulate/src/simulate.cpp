@@ -511,6 +511,10 @@ common::ImageStack Simulation::getConcImage(
       int g = 0;
       int b = 0;
       for (std::size_t is : (*speciesIndices)[ic]) {
+        SPDLOG_CRITICAL(
+            "    - species: {}, species should: {}, index: {}, full_index: {}",
+            speciesToDraw[ic], compartmentSpeciesIds[ic][is], is,
+            ix * stride + is);
         double c = conc[ix * stride + is] / maxConcs[ic][is];
         const auto &col = compartmentSpeciesColors[ic][is];
         r += static_cast<int>(qRed(col) * c);

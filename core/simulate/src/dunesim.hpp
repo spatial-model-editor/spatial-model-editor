@@ -53,7 +53,10 @@ public:
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
+
+  [[nodiscard]] bool getStopRequested() const override;
   void setStopRequested(bool stop) override;
+  void setCurrentErrormessage(const std::string &msg) override;
 };
 
 } // namespace simulate

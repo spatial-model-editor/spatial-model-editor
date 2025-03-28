@@ -77,8 +77,8 @@
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>740</width>
-                 <height>560</height>
+                 <width>723</width>
+                 <height>567</height>
                 </rect>
                </property>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -240,7 +240,7 @@
      <x>0</x>
      <y>0</y>
      <width>1400</width>
-     <height>29</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -321,6 +321,7 @@
     <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
     <addaction name="action_Optimization"/>
+    <addaction name="actionSteady_state_analysis"/>
    </widget>
    <widget class="QMenu" name="menu_Advanced">
     <property name="title">
@@ -601,7 +602,7 @@
     <string>&amp;Optimization</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+P</string>
+    <string>Backspace</string>
    </property>
   </action>
   <action name="actionsingle_compartment_diffusion_3d">
@@ -640,6 +641,11 @@
   <action name="action_SelKov3D">
    <property name="text">
     <string>&amp;SelKov3D</string>
+   </property>
+  </action>
+  <action name="actionSteady_state_analysis">
+   <property name="text">
+    <string>Steady state analysis</string>
    </property>
   </action>
   <actiongroup name="actionGroupSimType">
