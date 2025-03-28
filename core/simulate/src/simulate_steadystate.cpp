@@ -12,6 +12,7 @@
 #include <cmath>
 #include <dune/common/exceptions.hh>
 #include <limits>
+#include <mutex>
 #include <oneapi/tbb/global_control.h>
 #include <oneapi/tbb/info.h>
 #include <spdlog/spdlog.h>
@@ -125,74 +126,61 @@ double SteadyStateSimulation::computeStoppingCriterion(
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
   }
 
-  SPDLOG_CRITICAL("    - c_norm: {}, dcdt_norm: {}", c_norm, dcdt_norm);
+  // SPDLOG_CRITICAL("    - c_norm: {}, dcdt_norm: {}", c_norm, dcdt_norm);
 
   return dcdt_norm;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-// helpers for data
-void SteadyStateSimulation::normaliseOverAllSpecies() {}
-
-void SteadyStateSimulation::normaliseOverAllTimepoints() {}
-
-void SteadyStateSimulation::fillImage(
-    sme::common::ImageStack &concentrationImageStack,
-    const std::vector<std::vector<std::size_t>> &speciesToDraw) {
-
-  // turn the data at all voxels into rgb data
-  for (std::size_t i = 0; i < m_compartments.size(); ++i) {
-    SPDLOG_CRITICAL("  - compartment: {}", m_compartmentIds[i]);
-    const auto &voxels = m_compartments[i]->getVoxels();
-    std::size_t nSpecies = speciesToDraw[i].size();
-    const auto concentrations = m_simulator->getConcentrations(i);
-    const auto concentrationPadding = m_simulator->getConcentrationPadding();
-
-    for (std::size_t vi = 0; vi < voxels.size(); ++vi) {
-      int r = 0;
-      int g = 0;
-      int b = 0;
-
-      for (std::size_t is : m_compartmentSpeciesIdxs[i]) {
-        double c = concentrations[vi * (nSpecies + concentrationPadding) + is];
-        const auto &col = m_compartmentSpeciesColors[i][is];
-        r += static_cast<int>(qRed(col) * c);
-        g += static_cast<int>(qGreen(col) * c);
-        b += static_cast<int>(qBlue(col) * c);
+std::vector<std::vector<double>>
+SteadyStateSimulation::computeConcentrationNormalisation(
+    const std::vector<std::vector<std::size_t>> &speciesToDraw,
+    bool normaliseOverAllSpecies) const {
+  SPDLOG_CRITICAL(
+      " computeConcentrationNormalisation: normalise over all species? {}",
+      normaliseOverAllSpecies);
+  std::vector<std::vector<double>> maxConcs;
+  double absoluteMin = 100.0 * std::numeric_limits<double>::min();
+  if (normaliseOverAllSpecies) {
+    double absoluteMax = 0;
+    // README: is this what 'simulate' intends to do as well?
+    for (std::size_t i = 0; i < m_compartments.size(); ++i) {
+      maxConcs.emplace_back(speciesToDraw[i].size(), absoluteMin);
+      const auto c = m_simulator->getConcentrations(i);
+      for (std::size_t is : (speciesToDraw)[i]) {
+        absoluteMax = std::max(absoluteMax, *std::ranges::max_element(c));
       }
+    }
 
-      r = r < 256 ? r : 255;
-      g = g < 256 ? g : 255;
-      b = b < 256 ? b : 255;
-
-      concentrationImageStack[voxels[vi].z].setPixel(voxels[vi].p,
-                                                     qRgb(r, g, b));
+    for (auto &&c : maxConcs) {
+      std::ranges::fill(c,
+                        absoluteMax < absoluteMin ? absoluteMin : absoluteMax);
+    }
+  } else {
+    // get max for each species at this timepoint
+    for (std::size_t i = 0; i < m_compartments.size(); ++i) {
+      double speciesMax = 0;
+      const auto c = m_simulator->getConcentrations(i);
+      for (std::size_t is : (speciesToDraw)[i]) {
+        speciesMax = std::max(speciesMax, c[is]);
+      }
+      maxConcs.emplace_back(speciesToDraw[i].size(), speciesMax < absoluteMin
+                                                         ? absoluteMin
+                                                         : speciesMax);
     }
   }
+  return maxConcs;
 }
 
 void SteadyStateSimulation::recordData(double timestep, double error) {
 
-  auto imageSize = m_model.getGeometry().getImages().volume();
-
-  const auto &speciesToDraw = m_compartmentSpeciesIdxs;
-
-  sme::common::ImageStack concentrationImageStack(
-      imageSize, QImage::Format_ARGB32_Premultiplied);
-  concentrationImageStack.setVoxelSize(m_model.getGeometry().getVoxelSize());
-  concentrationImageStack.fill(0);
-
   if (m_compartments.empty()) {
     // no compartments --> no image
-    m_data.store(std::make_shared<SteadyStateData>(timestep, error,
-                                                   concentrationImageStack));
+    m_data.store(std::make_shared<SteadyStateData>(timestep, error));
     return;
   }
 
-  fillImage(concentrationImageStack, speciesToDraw);
-
-  m_data.store(std::make_shared<SteadyStateData>(timestep, error,
-                                                 concentrationImageStack));
+  m_data.store(std::make_shared<SteadyStateData>(timestep, error));
 }
 
 void SteadyStateSimulation::resetData() {
@@ -218,9 +206,10 @@ void SteadyStateSimulation::runPixel(double time) {
   timer.start();
   while (tNow + time * relativeTolerance < time) {
 
+    // lock/unlock by hand because no sensibly small scoep to use lockguard is
+    // available here
     m_simulator->run(m_dt, m_timeout_ms,
                      [&]() { return m_simulator->getStopRequested(); });
-
     c_new = getConcentrations();
 
     auto current_error = computeStoppingCriterion(c_old, c_new);
@@ -235,11 +224,11 @@ void SteadyStateSimulation::runPixel(double time) {
       break;
     }
 
-    SPDLOG_CRITICAL("  - time: {}, current error: {}, tolerance: {}, "
-                    "steps_below_tolerance: "
-                    "{}",
-                    tNow, current_error, m_convergence_tolerance,
-                    m_steps_below_tolerance);
+    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
+                 "steps_below_tolerance: "
+                 "{}",
+                 tNow, current_error, m_convergence_tolerance,
+                 m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       m_steps_below_tolerance++;
@@ -253,8 +242,7 @@ void SteadyStateSimulation::runPixel(double time) {
       SPDLOG_CRITICAL("Simulation has converged");
       break;
     }
-    SPDLOG_CRITICAL(" timeout situation: {}, {}", m_timeout_ms,
-                    static_cast<double>(timer.elapsed()));
+
     if (m_timeout_ms >= 0.0 &&
         static_cast<double>(timer.elapsed()) >= m_timeout_ms) {
       SPDLOG_CRITICAL("Simulation timeout: requesting stop");
@@ -407,20 +395,10 @@ double SteadyStateSimulation::getStopTolerance() const {
 
 std::vector<double> SteadyStateSimulation::getConcentrations() const {
   std::vector<double> concs;
-  SPDLOG_CRITICAL("m_compartmentIndices: {}", m_compartmentIndices.size());
   for (auto &&idx : m_compartmentIndices) {
     auto c = m_simulator->getConcentrations(idx);
     concs.insert(concs.end(), c.begin(), c.end());
-    SPDLOG_CRITICAL("size of concs for index {}: {} ", idx, c.size());
-    SPDLOG_CRITICAL("  concs minmax for index {}: {}, {}", idx,
-                    *std::min_element(concs.begin(), concs.end()),
-                    *std::max_element(concs.begin(), concs.end()));
   }
-
-  SPDLOG_CRITICAL("concs minmax: {}, {}",
-                  *std::min_element(concs.begin(), concs.end()),
-                  *std::max_element(concs.begin(), concs.end()));
-
   return concs;
 }
 
@@ -444,6 +422,58 @@ bool SteadyStateSimulation::getSolverStopRequested() const {
 }
 
 double SteadyStateSimulation::getTimeout() const { return m_timeout_ms; }
+
+sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
+    const std::vector<std::vector<std::size_t>> &speciesToDraw,
+    bool normaliseOverAllSpecies) {
+
+  auto imageSize = m_model.getGeometry().getImages().volume();
+
+  sme::common::ImageStack concentrationImageStack(
+      imageSize, QImage::Format_ARGB32_Premultiplied);
+  concentrationImageStack.setVoxelSize(m_model.getGeometry().getVoxelSize());
+  concentrationImageStack.fill(0);
+
+  if (m_compartments.empty()) {
+    return concentrationImageStack;
+  }
+
+  auto maxConcs =
+      computeConcentrationNormalisation(speciesToDraw, normaliseOverAllSpecies);
+  // turn the data at all voxels into rgb data
+  for (std::size_t i = 0; i < m_compartments.size(); ++i) {
+    const auto &voxels = m_compartments[i]->getVoxels();
+    std::size_t nSpecies = m_compartmentSpeciesIds[i].size();
+    // place this under lock to avoid reading data while it is written to by the
+    // runner thread
+    const auto concentrations = m_simulator->getConcentrations(i);
+    const auto concentrationPadding = m_simulator->getConcentrationPadding();
+
+    for (std::size_t vi = 0; vi < voxels.size(); ++vi) {
+      int r = 0;
+      int g = 0;
+      int b = 0;
+
+      for (std::size_t s : speciesToDraw[i]) {
+        double c = concentrations[vi * (nSpecies + concentrationPadding) + s] /
+                   maxConcs[i][s];
+        const auto &col = m_compartmentSpeciesColors[i][s];
+        r += static_cast<int>(qRed(col) * c);
+        g += static_cast<int>(qGreen(col) * c);
+        b += static_cast<int>(qBlue(col) * c);
+      }
+
+      r = r < 256 ? r : 255;
+      g = g < 256 ? g : 255;
+      b = b < 256 ? b : 255;
+
+      concentrationImageStack[voxels[vi].z].setPixel(voxels[vi].p,
+                                                     qRgb(r, g, b));
+    }
+  }
+
+  return concentrationImageStack;
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 // state setters

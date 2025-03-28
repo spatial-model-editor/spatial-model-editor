@@ -1,6 +1,8 @@
 #pragma once
 
+#include "plotwrapper.hpp"
 #include "sme/model.hpp"
+#include "sme/model_settings.hpp"
 #include "sme/simulate_steadystate.hpp"
 
 #include <QDialog>
@@ -28,27 +30,32 @@ private:
     _3D,
   };
 
-  // simulation parameters
+  // simulation parameters:
   sme::model::Model &m_model;
   std::unique_ptr<Ui::DialogSteadystate> ui;
-  sme::simulate::SteadyStateSimulation sim;
+  sme::simulate::SteadyStateSimulation m_sim;
   std::future<void> m_simulationFuture;
   QTimer m_plotRefreshTimer;
+  QStringList m_compartmentNames;
+  std::vector<QStringList> m_speciesNames;
+  sme::model::DisplayOptions m_displayoptions;
+  std::vector<std::vector<std::size_t>> m_compartmentSpeciesToPlot;
 
-  // helper for plotting
-  VizMode vizmode;
-  bool isRunning;
+  // helpers for plotting:
+  VizMode m_vizmode;
+  bool m_isRunning;
 
   // helpers for simulation
 
   // helper functions
   void initPlots();
   void update();
-  void finalize();
+  void finalise();
   void selectZ();
   void resetPlots();
   void reset();
   void runAndPlot();
+  void updateSpeciesToPlot();
 
   // slots
   void convergenceCurrentIndexChanged(int index);
@@ -62,6 +69,7 @@ private:
   void btnOkClicked();
   void btnCancelClicked();
   void btnDisplayOptionsClicked();
+  void plotUpdateTimerTimeout();
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,

@@ -21,14 +21,27 @@
 // lifecycle
 DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
     : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
-      sim(sme::simulate::SteadyStateSimulation(
+      m_sim(sme::simulate::SteadyStateSimulation(
           model, sme::simulate::SimulatorType::Pixel, 1e-6, 10,
           sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)),
-      m_simulationFuture(), m_plotRefreshTimer(), vizmode(VizMode::_2D),
-      isRunning(false) {
+      m_simulationFuture(), m_plotRefreshTimer(), m_vizmode(VizMode::_2D),
+      m_isRunning(false) {
 
   SPDLOG_CRITICAL("construct dialog steadystate with solver: {}",
-                  static_cast<int>(sim.getSimulatorType()));
+                  static_cast<int>(m_sim.getSimulatorType()));
+
+  // set up bookkeeping data for display options
+  for (auto &&compartment : m_model.getCompartments().getIds()) {
+    m_compartmentNames.append(compartment);
+    QStringList species;
+    std::vector<std::size_t> speciesToPlot;
+    for (int i = 0; i < m_model.getSpecies().getIds(compartment).size(); ++i) {
+      species.append(m_model.getSpecies().getIds(compartment)[i]);
+      speciesToPlot.push_back(i);
+    }
+    m_speciesNames.emplace_back(std::move(species));
+    m_compartmentSpeciesToPlot.emplace_back(std::move(speciesToPlot));
+  }
 
   // set up ui elements
   ui->setupUi(this);
@@ -46,19 +59,19 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   // set validators for input to only allow certain types in the QLineEdits
   ui->timeoutInput->setValidator(
       new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
-  ui->timeoutInput->setText(QString::number(sim.getTimeout() / 1000));
+  ui->timeoutInput->setText(QString::number(m_sim.getTimeout() / 1000));
 
   ui->toleranceInput->setValidator(
-      new QDoubleValidator(0, 1000000000, 2, this));
-  ui->toleranceInput->setText(QString::number(sim.getStopTolerance()));
+      new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
+  ui->toleranceInput->setText(QString::number(m_sim.getStopTolerance()));
 
   ui->tolStepInput->setValidator(
       new QIntValidator(0, std::numeric_limits<int>::max(), this));
-  ui->tolStepInput->setText(QString::number(sim.getStepsToConvergence()));
+  ui->tolStepInput->setText(QString::number(m_sim.getStepsToConvergence()));
 
   ui->convIntervalInput->setValidator(
       new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
-  ui->convIntervalInput->setText(QString::number(sim.getDt()));
+  ui->convIntervalInput->setText(QString::number(m_sim.getDt()));
 
   // connect slots and signals
   connect(ui->cmbConvergence, &QComboBox::currentIndexChanged, this,
@@ -86,9 +99,32 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
           &DialogSteadystate::btnResetClicked);
 
   connect(ui->btnDisplayOptions, &QPushButton::clicked, this, [this]() {
-    DialogDisplayOptions dialog(m_model, speciesNames, displayOptions,
-                                plotWrapperObservables this);
-    dialog.exec();
+    DialogDisplayOptions dialog(m_compartmentNames, m_speciesNames,
+                                m_model.getDisplayOptions(),
+                                std::vector<PlotWrapperObservable>{}, this);
+
+    dialog.ui->cmbNormaliseOverAllTimepoints
+        ->hide(); // we don´t care about timetpoints here
+    // we don´t care about adding observables  here either
+    dialog.ui->btnAddObservable->hide();
+    dialog.ui->btnEditObservable->hide();
+    dialog.ui->btnRemoveObservable->hide();
+    dialog.ui->listObservables->hide();
+    dialog.ui->chkShowMinMaxRanges->hide();
+
+    if (dialog.exec() == QDialog::Accepted) {
+      m_displayoptions.showMinMax = dialog.getShowMinMax();
+      SPDLOG_CRITICAL("  currently selected species: {}",
+                      dialog.getShowSpecies());
+      m_displayoptions.showSpecies = dialog.getShowSpecies();
+      m_displayoptions.normaliseOverAllTimepoints = false;
+      m_displayoptions.normaliseOverAllSpecies =
+          dialog.getNormaliseOverAllSpecies();
+      m_model.setDisplayOptions(m_displayoptions);
+      updateSpeciesToPlot();
+      update();
+      finalise();
+    }
   });
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
@@ -100,52 +136,58 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
   // set up gui update slot: update Gui every second
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   m_plotRefreshTimer.setInterval(1000);
-  connect(&m_plotRefreshTimer, &QTimer::timeout, this, [this]() {
-    SPDLOG_CRITICAL("refresh timer function");
-    update();
+  connect(&m_plotRefreshTimer, &QTimer::timeout, this,
+          &DialogSteadystate::plotUpdateTimerTimeout);
 
-    // check if simulation has converged or stopped early
-    if (m_simulationFuture.valid() &&
-        m_simulationFuture.wait_for(std::chrono::seconds(0)) ==
-            std::future_status::ready) {
-
-      if (sim.hasConverged()) {
-        isRunning = false;
-        SPDLOG_CRITICAL("Simulation has converged: {}",
-                        sim.getStepsBelowTolerance());
-        QMessageBox::information(this, "Simulation converged",
-                                 "The simulation has converged.");
-      } else if (sim.getSolverStopRequested()) {
-        isRunning = false;
-        SPDLOG_CRITICAL("Simulation has stopped early");
-        if (sim.getSolverErrormessage() == "Simulation timed out") {
-          QMessageBox::critical(this, "Simulation timed out",
-                                sim.getSolverErrormessage().c_str());
-        } else {
-          QMessageBox::critical(this, "Simulation stopped early",
-                                sim.getSolverErrormessage().c_str());
-        }
-      } else {
-        // do nothing
-      }
-    }
-
-    if (!isRunning) {
-      ui->btnStartStop->setText("Start");
-      finalize();
-    }
-  });
+  initPlots();
 }
 
 DialogSteadystate::~DialogSteadystate() = default;
 
 ////////////////////////////////////////////////////////////////////////////////
 // slots
+void DialogSteadystate::plotUpdateTimerTimeout() {
+  SPDLOG_CRITICAL("refresh timer function");
+  update();
+
+  // check if simulation has converged or stopped early
+  if (m_simulationFuture.valid() &&
+      m_simulationFuture.wait_for(std::chrono::seconds(0)) ==
+          std::future_status::ready) {
+
+    if (m_sim.hasConverged()) {
+      SPDLOG_CRITICAL("Simulation has converged: {}",
+                      m_sim.getStepsBelowTolerance());
+      m_isRunning = false;
+      ui->btnStartStop->setText("Start");
+      QMessageBox::information(this, "Simulation converged",
+                               "The simulation has converged.");
+      finalise();
+    } else if (m_sim.getSolverStopRequested()) {
+      m_isRunning = false;
+      ui->btnStartStop->setText("Resume");
+      SPDLOG_CRITICAL("Simulation has stopped early");
+      if (m_sim.getSolverErrormessage() == "Simulation timed out") {
+        QMessageBox::critical(this, "Simulation timed out",
+                              m_sim.getSolverErrormessage().c_str());
+      } else {
+        QMessageBox::critical(this, "Simulation stopped early",
+                              m_sim.getSolverErrormessage().c_str());
+      }
+      finalise();
+    } else {
+      // do nothing
+    }
+  }
+}
+
 void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
   if (index == 0) {
-    sim.setConvergenceMode(sme::simulate::SteadystateConvergenceMode::absolute);
+    m_sim.setConvergenceMode(
+        sme::simulate::SteadystateConvergenceMode::absolute);
   } else {
-    sim.setConvergenceMode(sme::simulate::SteadystateConvergenceMode::relative);
+    m_sim.setConvergenceMode(
+        sme::simulate::SteadystateConvergenceMode::relative);
   }
   SPDLOG_CRITICAL("convergence clicked {}", index);
 }
@@ -154,71 +196,74 @@ void DialogSteadystate::plottingCurrentIndexChanged(
     [[maybe_unused]] int index) {
   SPDLOG_CRITICAL("plotting clicked {}", index);
 
-  if (vizmode == VizMode::_2D) {
+  if (m_vizmode == VizMode::_2D) {
     SPDLOG_CRITICAL("2D -> 3D");
     ui->valuesPlot->hide();
     ui->valuesPlot3D->show();
     ui->zaxis->hide();
     ui->zlabel->hide();
-    vizmode = VizMode::_3D;
+    m_vizmode = VizMode::_3D;
   } else {
     SPDLOG_CRITICAL("3D -> 2D");
     ui->valuesPlot->show();
     ui->valuesPlot3D->hide();
     ui->zaxis->show();
     ui->zlabel->show();
-    vizmode = VizMode::_2D;
+    m_vizmode = VizMode::_2D;
   }
-  SPDLOG_CRITICAL(" - vizmode: {}", static_cast<int>(vizmode));
+  SPDLOG_CRITICAL(" - m_vizmode: {}", static_cast<int>(m_vizmode));
 }
 
 void DialogSteadystate::timeoutInputChanged() {
   // input is in seconds, but we store it in milliseconds
-  sim.setTimeout(ui->timeoutInput->text().toDouble() * 1000);
+  m_sim.setTimeout(ui->timeoutInput->text().toDouble() * 1000);
   SPDLOG_CRITICAL("timeout change to {}, newly set: {}",
-                  ui->timeoutInput->text().toDouble(), sim.getTimeout());
+                  ui->timeoutInput->text().toDouble(), m_sim.getTimeout());
 }
 
 void DialogSteadystate::toleranceInputChanged() {
-  sim.setStopTolerance(ui->toleranceInput->text().toDouble());
+  m_sim.setStopTolerance(ui->toleranceInput->text().toDouble());
   SPDLOG_CRITICAL("tolerance changed to {}, newly set: {}",
                   ui->toleranceInput->text().toDouble(),
-                  sim.getStopTolerance());
+                  m_sim.getStopTolerance());
 }
 
 void DialogSteadystate::stepsWithinToleranceInputChanged() {
-  sim.setStepsToConvergence(ui->tolStepInput->text().toInt());
+  m_sim.setStepsToConvergence(ui->tolStepInput->text().toInt());
   SPDLOG_CRITICAL("steps within tolerance changed to {}, newly set: {}",
                   ui->tolStepInput->text().toInt(),
-                  sim.getStepsToConvergence());
+                  m_sim.getStepsToConvergence());
 }
 
 void DialogSteadystate::convIntervalInputChanged() {
-  sim.setDt(ui->convIntervalInput->text().toDouble());
+  m_sim.setDt(ui->convIntervalInput->text().toDouble());
   SPDLOG_CRITICAL("convergence interval changed to {}, newly set: {}",
-                  ui->convIntervalInput->text().toDouble(), sim.getDt());
+                  ui->convIntervalInput->text().toDouble(), m_sim.getDt());
 }
 
 void DialogSteadystate::btnStartStopClicked() {
-  SPDLOG_CRITICAL("start/stop clicked {}", isRunning);
-  if (!isRunning) {
-    SPDLOG_CRITICAL("run the thing");
-    isRunning = true;
+  SPDLOG_CRITICAL("start/stop clicked {}", m_isRunning);
+  if (!m_isRunning) {
+    m_isRunning = true;
     // start timer to periodically update simulation results
     ui->btnStartStop->setText("Stop");
     runAndPlot();
   } else {
-    SPDLOG_CRITICAL("stop the thing");
-    isRunning = false;
-    sim.requestStop();
+    m_isRunning = false;
+    m_sim.requestStop();
 
     if (m_simulationFuture.valid()) {
       SPDLOG_CRITICAL(" waiting for simulation to finish");
       m_simulationFuture.wait();
     }
     m_plotRefreshTimer.stop();
-    finalize();
-    ui->btnStartStop->setText("Start");
+    finalise();
+
+    if (m_sim.hasConverged()) {
+      ui->btnStartStop->setText("Resume");
+    } else {
+      ui->btnStartStop->setText("Start");
+    }
     QMessageBox::information(this, "Simulation stopped",
                              "The simulation has been stopped.");
   }
@@ -228,13 +273,13 @@ void DialogSteadystate::btnResetClicked() { reset(); }
 
 void DialogSteadystate::btnOkClicked() {
   SPDLOG_CRITICAL("ok clicked");
-  finalize();
+  finalise();
   accept();
 }
 
 void DialogSteadystate::btnCancelClicked() {
   SPDLOG_CRITICAL("cancel clicked");
-  finalize();
+  finalise();
   reject();
 }
 
@@ -288,52 +333,83 @@ void DialogSteadystate::resetPlots() {
 
 void DialogSteadystate::reset() {
   SPDLOG_CRITICAL("reset");
-  sim.reset();
+
+  if (m_isRunning) {
+    SPDLOG_CRITICAL("  cannot reset while simulation is running");
+    QMessageBox::warning(this, "Reset",
+                         "Cannot reset while simulation is running.");
+    return;
+  }
+  m_sim.reset();
   SPDLOG_CRITICAL("sim values: stopTol: {}, stepsTilConvergence: {}, "
                   "stepsBelowTol: {}, timeout: {}",
-                  sim.getStopTolerance(), sim.getStepsToConvergence(),
-                  sim.getStepsBelowTolerance(), sim.getTimeout());
+                  m_sim.getStopTolerance(), m_sim.getStepsToConvergence(),
+                  m_sim.getStepsBelowTolerance(), m_sim.getTimeout());
   ui->btnStartStop->setText("Start");
-  isRunning = false;
+  m_isRunning = false;
   resetPlots();
 }
 
 void DialogSteadystate::runAndPlot() {
   SPDLOG_CRITICAL(" run and plot");
-  resetPlots();
   m_plotRefreshTimer.start();
 
   /// start simulation in a different thread
   m_simulationFuture = std::async(
-      std::launch::async, &sme::simulate::SteadyStateSimulation::run, &sim);
+      std::launch::async, &sme::simulate::SteadyStateSimulation::run, &m_sim);
 }
 
 void DialogSteadystate::update() {
   SPDLOG_CRITICAL("  update UI");
 
   // update error plot
-  sme::simulate::SteadyStateData data = *sim.getLatestData().load();
-  SPDLOG_CRITICAL(" latest data: step: {}, error: {}", data.step, data.error);
+  sme::simulate::SteadyStateData data = *m_sim.getLatestData().load();
+  SPDLOG_CRITICAL(" latest data: step: {}, error: {}, hasconverged? {}",
+                  data.step, data.error, m_sim.hasConverged());
   ui->errorPlot->graph(0)->addData(data.step, data.error);
-  ui->errorPlot->graph(1)->addData(data.step, sim.getStopTolerance());
+  ui->errorPlot->graph(1)->addData(data.step, m_sim.getStopTolerance());
   ui->errorPlot->rescaleAxes(true);
   ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
 
   // update image plot
-  if (vizmode == VizMode::_2D) {
+  // FIXME: this will probably result in a race condition?
+  auto image = m_sim.getConcentrationImage(
+      m_compartmentSpeciesToPlot,
+      m_model.getDisplayOptions().normaliseOverAllSpecies);
+  if (m_vizmode == VizMode::_2D) {
     SPDLOG_CRITICAL("update 2D plot");
-    ui->valuesPlot->setImage(data.concentrationImageStack);
+    ui->valuesPlot->setImage(image);
     ui->valuesPlot->setZIndex(ui->zaxis->value());
     ui->valuesPlot->repaint();
   } else {
     SPDLOG_CRITICAL("update 3D plot");
-    ui->valuesPlot3D->setImage(data.concentrationImageStack);
-    ui->valuesPlot->repaint();
+    ui->valuesPlot3D->setImage(image);
+    ui->valuesPlot3D->repaint();
   }
 }
 
-void DialogSteadystate::finalize() {
-  SPDLOG_CRITICAL("finalize plots");
+void DialogSteadystate::updateSpeciesToPlot() {
+  m_compartmentSpeciesToPlot.clear();
+  for (auto &&compSpecies : m_speciesNames) {
+    std::vector<std::size_t> speciesToPlot;
+    for (std::size_t i = 0; i < static_cast<std::size_t>(compSpecies.size());
+         ++i) {
+      if (m_displayoptions.showSpecies[i]) {
+        speciesToPlot.push_back(i);
+      }
+    }
+    m_compartmentSpeciesToPlot.emplace_back(std::move(speciesToPlot));
+  }
+
+  for (auto &&species : m_compartmentSpeciesToPlot) {
+    for (auto &&s : species) {
+      SPDLOG_CRITICAL("  - species to plot: {}", s);
+    }
+  }
+}
+
+void DialogSteadystate::finalise() {
+  SPDLOG_CRITICAL("finalise plots");
   m_plotRefreshTimer.stop();
   // TODO: implement this bs
 }

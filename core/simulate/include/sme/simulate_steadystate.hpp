@@ -11,11 +11,10 @@ enum class SteadystateConvergenceMode { absolute, relative };
 struct SteadyStateData {
   double step;
   double error;
-  common::ImageStack concentrationImageStack;
 };
 class SteadyStateSimulation final {
 
-  // data members
+  // data members for simulation
   std::atomic<bool> m_has_converged;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
@@ -24,17 +23,20 @@ class SteadyStateSimulation final {
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
   SteadystateConvergenceMode m_stop_mode;
+  double m_dt; // timestep to check for convergence, not solver timestep
+  bool m_stopRequested;
+  std::mutex m_concentration_mutex;
+
+  // data members for plotting
   std::atomic<std::shared_ptr<SteadyStateData>> m_data;
   std::vector<const geometry::Compartment *> m_compartments;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::size_t> m_compartmentIndices;
-  std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
+  std::vector<std::vector<std::string>>
+      m_compartmentSpeciesIds; // FIXME: this is the same as SpeciesNames, no?
   std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs;
   std::vector<std::vector<std::string>> m_compartmentSpeciesNames;
   std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
-
-  double m_dt; // timestep to check for convergence, not solver timestep
-  bool m_stopRequested;
 
   // helper functions for solvers
   void initModel();
@@ -49,11 +51,9 @@ class SteadyStateSimulation final {
                            const std::vector<double> &c_new);
 
   // helper functions for data
-  void normaliseOverAllTimepoints();
-  void normaliseOverAllSpecies();
-  void fillImage(sme::common::ImageStack &concentrationImageStack,
-                 const std::vector<std::vector<std::size_t>> &speciesToDraw);
-  void makeImage(bool speciesNormalization, bool timeNormalization);
+  std::vector<std::vector<double>> computeConcentrationNormalisation(
+      const std::vector<std::vector<std::size_t>> &speciesToDraw,
+      bool normaliseOverAllSpecies) const;
   void recordData(double timestep, double error);
   void resetData();
 
@@ -178,16 +178,15 @@ public:
   /**
    * @brief Get the concentration image stack for a given timepoint
    *
-   * @param timeIndex
-   * @param speciesToDraw
-   * @param normaliseOverAllTimepoints
-   * @param normaliseOverAllSpecies
+   * @param speciesToDraw vector of lists of species indices that should be
+   * included into the image
+   * @param normaliseOverAllSpecies bool: if true, the image will be normalised
+   * over all species
    * @return common::ImageStack
    */
   [[nodiscard]] common::ImageStack getConcentrationImage(
-      std::size_t timeIndex,
       const std::vector<std::vector<std::size_t>> &speciesToDraw,
-      bool normaliseOverAllTimepoints, bool normaliseOverAllSpecies) const;
+      bool normaliseOverAllSpecies);
 
   // setters
 
