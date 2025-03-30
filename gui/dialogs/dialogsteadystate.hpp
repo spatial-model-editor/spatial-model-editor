@@ -48,10 +48,11 @@ private:
   // helpers for simulation
 
   // helper functions
+  void initUi(); 
+  void connectSlots();
   void initPlots();
   void update();
   void finalise();
-  void selectZ();
   void resetPlots();
   void reset();
   void runAndPlot();
@@ -70,6 +71,7 @@ private:
   void btnCancelClicked();
   void btnDisplayOptionsClicked();
   void plotUpdateTimerTimeout();
+  void displayOptionsClicked();
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,
