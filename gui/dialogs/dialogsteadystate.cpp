@@ -86,6 +86,9 @@ void DialogSteadystate::connectSlots() {
   connect(ui->buttonBox, &QDialogButtonBox::rejected, this,
           &DialogSteadystate::btnCancelClicked);
 
+  connect(ui->zaxis, &QSlider::valueChanged, this,
+          &DialogSteadystate::zaxisValueChanged);
+
   // set up gui update slot: update Gui every second
   m_plotRefreshTimer.setTimerType(Qt::TimerType::VeryCoarseTimer);
   m_plotRefreshTimer.setInterval(1000);
@@ -95,7 +98,6 @@ void DialogSteadystate::connectSlots() {
 
 void DialogSteadystate::initPlots() {
   SPDLOG_CRITICAL("init plots");
-
   // init error plot
   QCPGraph *errorPlotParams = ui->errorPlot->addGraph();
   errorPlotParams->setPen(sme::common::indexedColors()[0]);
@@ -119,7 +121,7 @@ void DialogSteadystate::initPlots() {
   ui->errorPlot->replot();
 
   // init image plots
-  ui->valuesPlot->show();
+  ui->valuesPlot->setVisible(true);
   ui->valuesPlot->invertYAxis(m_model.getDisplayOptions().invertYAxis);
   ui->valuesPlot->displayScale(m_model.getDisplayOptions().showGeometryScale);
   ui->valuesPlot->displayGrid(m_model.getDisplayOptions().showGeometryGrid);
@@ -139,15 +141,17 @@ void DialogSteadystate::initPlots() {
   }
   m_vizmode = VizMode::_2D;
   ui->valuesPlot3D->hide();
+  // Force visibility changes to be processed
+  QCoreApplication::processEvents();
+  QTimer::singleShot(0, this, &DialogSteadystate::update);
 
+  SPDLOG_CRITICAL("  - valuesPlot: {}, valuesPlot3D: {}",
+                  ui->valuesPlot->isVisible(), ui->valuesPlot3D->isVisible());
   SPDLOG_CRITICAL(" - init plots done");
 }
 
 void DialogSteadystate::resetPlots() {
   ui->errorPlot->clearGraphs();
-  ui->valuesPlot->setImage(sme::common::ImageStack{});
-  ui->valuesPlot3D->setImage(sme::common::ImageStack{});
-
   initPlots();
 }
 
@@ -180,32 +184,27 @@ void DialogSteadystate::runAndPlot() {
 }
 
 void DialogSteadystate::update() {
-  SPDLOG_CRITICAL("  update UI");
-  SPDLOG_CRITICAL("  - ui->valuesPlot->isVisible(): {}",
-                  ui->valuesPlot->isVisible());
-  SPDLOG_CRITICAL("  - ui->valuesPlot3D->isVisible(): {}",
-                  ui->valuesPlot3D->isVisible());
 
   // update error plot
-  sme::simulate::SteadyStateData data = *m_sim.getLatestData().load();
-  SPDLOG_CRITICAL(" latest data: step: {}, error: {}, hasconverged? {}",
-                  data.step, data.error, m_sim.hasConverged());
-  ui->errorPlot->graph(0)->addData(data.step, data.error);
-  ui->errorPlot->graph(1)->addData(data.step, m_sim.getStopTolerance());
-  ui->errorPlot->rescaleAxes(true);
-  ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+  std::shared_ptr<sme::simulate::SteadyStateData> data =
+      m_sim.getLatestData().load();
 
+  if (data != nullptr) {
+    ui->errorPlot->graph(0)->addData(data->step, data->error);
+    ui->errorPlot->graph(1)->addData(data->step, m_sim.getStopTolerance());
+    ui->errorPlot->rescaleAxes(true);
+    ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
+  }
   // update image plot
   auto image = m_sim.getConcentrationImage(
       m_compartmentSpeciesToPlot,
       m_model.getDisplayOptions().normaliseOverAllSpecies);
+
   if (m_vizmode == VizMode::_2D) {
-    SPDLOG_CRITICAL("update 2D plot");
     ui->valuesPlot->setImage(image);
     ui->valuesPlot->setZIndex(ui->zaxis->value());
     ui->valuesPlot->repaint();
   } else {
-    SPDLOG_CRITICAL("update 3D plot");
     ui->valuesPlot3D->setImage(image);
     ui->valuesPlot3D->repaint();
   }
@@ -222,12 +221,6 @@ void DialogSteadystate::updateSpeciesToPlot() {
       }
     }
     m_compartmentSpeciesToPlot.emplace_back(std::move(speciesToPlot));
-  }
-
-  for (auto &&species : m_compartmentSpeciesToPlot) {
-    for (auto &&s : species) {
-      SPDLOG_CRITICAL("  - species to plot: {}", s);
-    }
   }
 }
 
@@ -251,17 +244,7 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
                   static_cast<int>(m_sim.getSimulatorType()));
 
   // set up bookkeeping data for display options
-  for (auto &&compartment : m_model.getCompartments().getIds()) {
-    m_compartmentNames.append(compartment);
-    QStringList species;
-    std::vector<std::size_t> speciesToPlot;
-    for (int i = 0; i < m_model.getSpecies().getIds(compartment).size(); ++i) {
-      species.append(m_model.getSpecies().getIds(compartment)[i]);
-      speciesToPlot.push_back(i);
-    }
-    m_speciesNames.emplace_back(std::move(species));
-    m_compartmentSpeciesToPlot.emplace_back(std::move(speciesToPlot));
-  }
+  m_compartmentSpeciesToPlot = m_sim.getCompartmentSpeciesIdxs();
 
   initUi();
   connectSlots();
@@ -297,8 +280,8 @@ void DialogSteadystate::displayOptionsClicked() {
         dialog.getNormaliseOverAllSpecies();
     m_model.setDisplayOptions(m_displayoptions);
     updateSpeciesToPlot();
-    update();
-    finalise();
+    QCoreApplication::processEvents();
+    QTimer::singleShot(0, this, &DialogSteadystate::update);
   }
 }
 
@@ -372,7 +355,8 @@ void DialogSteadystate::plottingCurrentIndexChanged(
     ui->valuesPlot->setZIndex(ui->zaxis->value());
     m_vizmode = VizMode::_2D;
   }
-  update();
+  QCoreApplication::processEvents();
+  QTimer::singleShot(0, this, &DialogSteadystate::update);
   SPDLOG_CRITICAL(" - m_vizmode: {}", static_cast<int>(m_vizmode));
 }
 
@@ -444,4 +428,11 @@ void DialogSteadystate::btnCancelClicked() {
   SPDLOG_CRITICAL("cancel clicked");
   finalise();
   reject();
+}
+
+void DialogSteadystate::zaxisValueChanged(int value) {
+  SPDLOG_CRITICAL("zaxis value changed to {}", value);
+  ui->valuesPlot->setZIndex(value);
+  QCoreApplication::processEvents();
+  QTimer::singleShot(0, this, &DialogSteadystate::update);
 }

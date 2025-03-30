@@ -12,7 +12,6 @@
 #include <cmath>
 #include <dune/common/exceptions.hh>
 #include <limits>
-#include <mutex>
 #include <oneapi/tbb/global_control.h>
 #include <oneapi/tbb/info.h>
 #include <spdlog/spdlog.h>
@@ -30,9 +29,9 @@ SteadyStateSimulation::SteadyStateSimulation(
     : m_has_converged(false), m_model(model),
       m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
-      m_stop_mode(convergence_mode), m_data(), m_compartmentIds(),
-      m_compartmentSpeciesIds(), m_compartmentSpeciesNames(),
-      m_compartmentSpeciesColors(), m_dt(dt), m_stopRequested(false) {
+      m_stop_mode(convergence_mode), m_data(nullptr), m_compartmentIds(),
+      m_compartmentSpeciesIds(), m_compartmentSpeciesColors(), m_dt(dt),
+      m_stopRequested(false) {
   m_model.getSimulationSettings().simulatorType = type;
   initModel();
   selectSimulator();
@@ -46,7 +45,6 @@ void SteadyStateSimulation::initModel() {
   m_compartmentSpeciesIds.clear();
   m_compartmentSpeciesIdxs.clear();
   m_compartmentSpeciesColors.clear();
-  m_compartmentSpeciesNames.clear();
   m_compartmentIndices.clear();
   m_compartments.clear();
 
@@ -69,10 +67,6 @@ void SteadyStateSimulation::initModel() {
       std::iota(sIndices.begin(), sIndices.end(), 0);
       m_compartmentIds.push_back(compartmentId.toStdString());
       m_compartmentSpeciesIds.push_back(std::move(sIds));
-      auto &names = m_compartmentSpeciesNames.emplace_back();
-      for (const auto &id : m_compartmentSpeciesIds.back()) {
-        names.push_back(m_model.getSpecies().getName(id.c_str()).toStdString());
-      }
       m_compartmentSpeciesIdxs.push_back(std::move(sIndices));
       m_compartmentSpeciesColors.push_back(std::move(cols));
       m_compartments.push_back(comp);
@@ -80,12 +74,11 @@ void SteadyStateSimulation::initModel() {
     ++i;
   }
 
-  SPDLOG_CRITICAL("  init Model done, variable sizes: {} {} {} {} {}, {}, {}",
-                  m_compartmentIds.size(), m_compartmentSpeciesIds.size(),
-                  m_compartmentSpeciesIdxs.size(),
-                  m_compartmentSpeciesNames.size(),
-                  m_compartmentSpeciesColors.size(), m_compartments.size(),
-                  m_compartmentIndices.size());
+  SPDLOG_CRITICAL(
+      "  init Model done, variable sizes: {}, {}, {}, {}, {}, {}, {}",
+      m_compartmentIds.size(), m_compartmentSpeciesIds.size(),
+      m_compartmentSpeciesIdxs.size(), m_compartmentSpeciesColors.size(),
+      m_compartments.size(), m_compartmentIndices.size(), 0);
 }
 
 void SteadyStateSimulation::selectSimulator() {
@@ -126,8 +119,6 @@ double SteadyStateSimulation::computeStoppingCriterion(
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
   }
 
-  // SPDLOG_CRITICAL("    - c_norm: {}, dcdt_norm: {}", c_norm, dcdt_norm);
-
   return dcdt_norm;
 }
 
@@ -143,6 +134,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
   double absoluteMin = 100.0 * std::numeric_limits<double>::min();
   if (normaliseOverAllSpecies) {
     double absoluteMax = 0;
+
     // README: is this what 'simulate' intends to do as well?
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       maxConcs.emplace_back(speciesToDraw[i].size(), absoluteMin);
@@ -429,6 +421,13 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
 
   auto imageSize = m_model.getGeometry().getImages().volume();
 
+  SPDLOG_CRITICAL(" getConcentrationImage: image size: {} x {} x {}",
+                  imageSize.width(), imageSize.height(), imageSize.depth());
+
+  SPDLOG_CRITICAL(
+      " getConcentrationImage: compartments: {}, species to draw: {}",
+      m_compartments.size(), speciesToDraw.size());
+
   sme::common::ImageStack concentrationImageStack(
       imageSize, QImage::Format_ARGB32_Premultiplied);
   concentrationImageStack.setVoxelSize(m_model.getGeometry().getVoxelSize());
@@ -474,6 +473,31 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
   }
 
   return concentrationImageStack;
+}
+
+/**
+ * @brief Get the Compartment Species Ids object
+ *
+ * @return std::vector<std::vector<std::size_t>>
+ */
+[[nodiscard]] std::vector<std::vector<std::size_t>>
+SteadyStateSimulation::getCompartmentSpeciesIdxs() const {
+  return m_compartmentSpeciesIdxs;
+}
+
+/**
+ * @brief Get the Compartment Species Colors object
+ *
+ * @return std::vector<std::vector<QRgb>>
+ */
+[[nodiscard]] std::vector<std::vector<QRgb>>
+SteadyStateSimulation::getCompartmentSpeciesColors() const {
+  return m_compartmentSpeciesColors;
+}
+
+[[nodiscard]] std::vector<std::vector<std::string>>
+SteadyStateSimulation::getCompartmentSpeciesIds() const {
+  return m_compartmentSpeciesIds;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

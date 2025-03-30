@@ -32,10 +32,8 @@ class SteadyStateSimulation final {
   std::vector<const geometry::Compartment *> m_compartments;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::size_t> m_compartmentIndices;
-  std::vector<std::vector<std::string>>
-      m_compartmentSpeciesIds; // FIXME: this is the same as SpeciesNames, no?
+  std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
   std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs;
-  std::vector<std::vector<std::string>> m_compartmentSpeciesNames;
   std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
 
   // helper functions for solvers
@@ -174,6 +172,30 @@ public:
    * @return double
    */
   [[nodiscard]] double getTimeout() const;
+
+  /**
+   * @brief Get the Compartment Species Ids object
+   *
+   * @return std::vector<std::vector<std::size_t>>
+   */
+  [[nodiscard]] std::vector<std::vector<std::size_t>>
+  getCompartmentSpeciesIdxs() const;
+
+  /**
+   * @brief Get the Compartment Species Colors object
+   *
+   * @return std::vector<std::vector<QRgb>>
+   */
+  [[nodiscard]] std::vector<std::vector<QRgb>>
+  getCompartmentSpeciesColors() const;
+
+  /**
+   * @brief Get the Compartment Species Ids object
+   *
+   * @return std::vector<std::vector<std::string>>
+   */
+  [[nodiscard]] std::vector<std::vector<std::string>>
+  getCompartmentSpeciesIds() const;
 
   /**
    * @brief Get the concentration image stack for a given timepoint

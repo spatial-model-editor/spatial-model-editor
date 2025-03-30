@@ -72,6 +72,7 @@ private:
   void btnDisplayOptionsClicked();
   void plotUpdateTimerTimeout();
   void displayOptionsClicked();
+  void zaxisValueChanged(int value);
 
 public:
   explicit DialogSteadystate(sme::model::Model &model,
