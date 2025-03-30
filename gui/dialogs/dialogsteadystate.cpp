@@ -302,7 +302,6 @@ void DialogSteadystate::displayOptionsClicked() {
   }
 }
 
-
 void DialogSteadystate::plotUpdateTimerTimeout() {
   SPDLOG_CRITICAL("refresh timer function");
   update();
@@ -366,7 +365,8 @@ void DialogSteadystate::plottingCurrentIndexChanged(
     ui->valuesPlot3D->hide();
     ui->zaxis->show();
     ui->zlabel->show();
-    ui->zaxis->setMaximum(int(m_model.getGeometry().getImages().volume().depth() - 1));
+    ui->zaxis->setMaximum(
+        int(m_model.getGeometry().getImages().volume().depth() - 1));
     ui->zaxis->setMinimum(0);
     ui->zaxis->setValue(0);
     ui->valuesPlot->setZIndex(ui->zaxis->value());

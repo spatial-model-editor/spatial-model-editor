@@ -48,7 +48,7 @@ private:
   // helpers for simulation
 
   // helper functions
-  void initUi(); 
+  void initUi();
   void connectSlots();
   void initPlots();
   void update();
