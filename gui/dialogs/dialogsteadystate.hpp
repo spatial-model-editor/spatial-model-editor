@@ -76,7 +76,21 @@ private:
   void zaxisValueChanged(int value);
 
 public:
+  /**
+   * @brief Construct a new Dialog Steadystate object
+   *
+   * @param model Model to run the simulation on
+   * @param parent Parent widget. Default is nullptr
+   */
   explicit DialogSteadystate(sme::model::Model &model,
                              QWidget *parent = nullptr);
   ~DialogSteadystate();
+
+  /**
+   * @brief Get the Simulator object
+   *
+   * @return const sme::simulate::SteadyStateSimulation&
+   */
+  [[nodiscard]] const sme::simulate::SteadyStateSimulation &
+  getSimulator() const;
 };

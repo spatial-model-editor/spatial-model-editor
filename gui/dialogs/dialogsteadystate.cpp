@@ -240,6 +240,11 @@ void DialogSteadystate::finalise() {
   ui->btnReset->setEnabled(true);
 }
 
+const sme::simulate::SteadyStateSimulation &
+DialogSteadystate::getSimulator() const {
+  return m_sim;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
 DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)

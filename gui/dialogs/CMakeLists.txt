@@ -57,5 +57,6 @@ if(BUILD_TESTING)
            dialogoptparam_t.cpp
            dialogoptsetup_t.cpp
            dialogsimulationoptions_t.cpp
-           dialogunits_t.cpp)
+           dialogunits_t.cpp
+           dialogsteadystate_t.cpp)
 endif()

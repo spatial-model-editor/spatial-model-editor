@@ -378,7 +378,7 @@ bool SteadyStateSimulation::hasConverged() const {
   return m_has_converged.load();
 }
 
-SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() {
+SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() const {
   return m_stop_mode;
 }
 
@@ -386,7 +386,7 @@ std::size_t SteadyStateSimulation::getStepsBelowTolerance() const {
   return m_steps_below_tolerance;
 }
 
-SimulatorType SteadyStateSimulation::getSimulatorType() {
+SimulatorType SteadyStateSimulation::getSimulatorType() const {
   return m_model.getSimulationSettings().simulatorType;
 }
 

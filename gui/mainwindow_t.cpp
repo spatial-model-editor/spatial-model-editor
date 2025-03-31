@@ -247,7 +247,9 @@ TEST_CASE("MainWindow: tools menu", tags) {
   auto *actionSimTypePixel{w.findChild<QAction *>("actionSimTypePixel")};
   REQUIRE(actionSimTypePixel != nullptr);
   // TODO: add tests for steady state menu items here
-  REQUIRE(3 == 6);
+  auto *action_steadystate_analysis_triggered{
+      w.findChild<QAction *>("action_steadystate_analysis_triggered")};
+  REQUIRE(action_steadystate_analysis_triggered != nullptr);
   w.show();
   waitFor(&w);
   ModalWidgetTimer mwt;

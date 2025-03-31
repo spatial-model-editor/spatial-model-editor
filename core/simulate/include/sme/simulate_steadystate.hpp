@@ -95,7 +95,7 @@ public:
    *
    * @return SteadystateConvergenceMode
    */
-  [[nodiscard]] SteadystateConvergenceMode getConvergenceMode();
+  [[nodiscard]] SteadystateConvergenceMode getConvergenceMode() const;
 
   /**
    * @brief Get the number of steps below tolerance required to consider the
@@ -110,7 +110,7 @@ public:
    *
    * @return SimulatorType: Dune or Pixel
    */
-  [[nodiscard]] SimulatorType getSimulatorType();
+  [[nodiscard]] SimulatorType getSimulatorType() const;
 
   /**
    * @brief Get the tolerance used to determine convergence
