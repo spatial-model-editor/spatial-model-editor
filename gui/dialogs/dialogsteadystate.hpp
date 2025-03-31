@@ -50,7 +50,8 @@ private:
   // helper functions
   void initUi();
   void connectSlots();
-  void initPlots();
+  void initErrorPlot();
+  void initConcPlot();
   void update();
   void finalise();
   void resetPlots();

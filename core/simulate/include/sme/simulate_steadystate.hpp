@@ -16,6 +16,7 @@ class SteadyStateSimulation final {
 
   // data members for simulation
   std::atomic<bool> m_has_converged;
+  std::atomic<bool> m_stopRequested;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
   double m_convergence_tolerance;
@@ -24,7 +25,6 @@ class SteadyStateSimulation final {
   double m_timeout_ms;
   SteadystateConvergenceMode m_stop_mode;
   double m_dt; // timestep to check for convergence, not solver timestep
-  bool m_stopRequested;
   std::mutex m_concentration_mutex;
 
   // data members for plotting
@@ -38,6 +38,7 @@ class SteadyStateSimulation final {
 
   // helper functions for solvers
   void initModel();
+  void resetModel();
   void resetSolver();
   void selectSimulator();
 

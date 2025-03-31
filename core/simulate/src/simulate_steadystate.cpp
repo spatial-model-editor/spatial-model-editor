@@ -92,6 +92,11 @@ void SteadyStateSimulation::selectSimulator() {
   }
 }
 
+void SteadyStateSimulation::resetModel() {
+  m_model.getSimulationData().clear();
+  m_model.getSimulationSettings().times.clear();
+}
+
 void SteadyStateSimulation::resetSolver() {
   m_simulator = nullptr;
   m_steps_below_tolerance = 0;
@@ -127,9 +132,6 @@ std::vector<std::vector<double>>
 SteadyStateSimulation::computeConcentrationNormalisation(
     const std::vector<std::vector<std::size_t>> &speciesToDraw,
     bool normaliseOverAllSpecies) const {
-  SPDLOG_CRITICAL(
-      " computeConcentrationNormalisation: normalise over all species? {}",
-      normaliseOverAllSpecies);
   std::vector<std::vector<double>> maxConcs;
   double absoluteMin = 100.0 * std::numeric_limits<double>::min();
   if (normaliseOverAllSpecies) {
@@ -194,7 +196,6 @@ void SteadyStateSimulation::runPixel(double time) {
   // do timesteps until we reach t
   double tNow = 0;
   constexpr double relativeTolerance = 1e-12;
-
   timer.start();
   while (tNow + time * relativeTolerance < time) {
 
@@ -249,7 +250,7 @@ void SteadyStateSimulation::runPixel(double time) {
       break;
     }
 
-    if (m_stopRequested) {
+    if (m_stopRequested.load()) {
       break;
     }
 
@@ -273,7 +274,6 @@ void SteadyStateSimulation::runDune(double time) {
   std::vector<double> c_new;
   c_new.reserve(c_old.capacity());
   c_new.resize(c_old.size());
-
   // use dt here to avoid too long intervals for checking the stopping criterion
   while (tNow + time * relativeTolerance < time) {
     try {
@@ -335,7 +335,7 @@ void SteadyStateSimulation::runDune(double time) {
 
     tNow += m_dt;
 
-    if (m_stopRequested) {
+    if (m_stopRequested.load()) {
       break;
     }
 
@@ -355,10 +355,17 @@ void SteadyStateSimulation::run() {
 
 void SteadyStateSimulation::requestStop() {
   m_simulator->setStopRequested(true);
-  m_stopRequested = true;
+  m_stopRequested.store(true);
 }
 
 void SteadyStateSimulation::reset() {
+
+  if (m_simulator == nullptr) {
+    SPDLOG_CRITICAL("  no simulator to reset");
+    return;
+  }
+
+  resetModel();
   resetData();
   resetSolver();
 }
@@ -421,12 +428,19 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
 
   auto imageSize = m_model.getGeometry().getImages().volume();
 
-  SPDLOG_CRITICAL(" getConcentrationImage: image size: {} x {} x {}",
-                  imageSize.width(), imageSize.height(), imageSize.depth());
+  auto nestedVecToStr = [](const auto &vec) {
+    std::string str = "[";
+    for (const auto &v : vec) {
+      str += std::to_string(v) + ",";
+    }
+    return str;
+  };
 
   SPDLOG_CRITICAL(
-      " getConcentrationImage: compartments: {}, species to draw: {}",
-      m_compartments.size(), speciesToDraw.size());
+      " getConcentrationImage: compartments: {}, species to draw: {}, "
+      "image size: {} x {} x {}",
+      m_compartments.size(), speciesToDraw.size(), imageSize.width(),
+      imageSize.height(), imageSize.depth());
 
   sme::common::ImageStack concentrationImageStack(
       imageSize, QImage::Format_ARGB32_Premultiplied);
@@ -440,12 +454,12 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
 
   auto maxConcs =
       computeConcentrationNormalisation(speciesToDraw, normaliseOverAllSpecies);
-  // turn the data at all voxels into rgb data
+  // turn the data at all voxels into rgb
   for (std::size_t i = 0; i < m_compartments.size(); ++i) {
     const auto &voxels = m_compartments[i]->getVoxels();
     std::size_t nSpecies = m_compartmentSpeciesIds[i].size();
-    // place this under lock to avoid reading data while it is written to by the
-    // runner thread
+    // TODO: place this under lock to avoid reading data while it is written to
+    // by the runner thread
     const auto concentrations = m_simulator->getConcentrations(i);
     const auto concentrationPadding = m_simulator->getConcentrationPadding();
 
@@ -519,8 +533,7 @@ void SteadyStateSimulation::setStopTolerance(double stop_tolerance) {
 
 void SteadyStateSimulation::setSimulatorType(SimulatorType type) {
   m_model.getSimulationSettings().simulatorType = type;
-  resetData();
-  resetSolver();
+  reset();
   initModel();
   selectSimulator();
 }

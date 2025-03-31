@@ -623,7 +623,9 @@ void MainWindow::action_steadystate_analysis_triggered() {
   }
   DialogSteadystate dialogSteadystate(model);
   if (dialogSteadystate.exec() == QDialog::Accepted) {
-    SPDLOG_CRITICAL("Steadystate analysis shit accepted");
+    SPDLOG_DEBUG("Steadystate analysis accepted");
+  } else {
+    SPDLOG_DEBUG("Steadystate analysis cancelled");
   }
 }
 

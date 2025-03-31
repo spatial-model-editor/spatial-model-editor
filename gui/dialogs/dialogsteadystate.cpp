@@ -96,9 +96,7 @@ void DialogSteadystate::connectSlots() {
           &DialogSteadystate::plotUpdateTimerTimeout);
 }
 
-void DialogSteadystate::initPlots() {
-  SPDLOG_CRITICAL("init plots");
-  // init error plot
+void DialogSteadystate::initErrorPlot() {
   QCPGraph *errorPlotParams = ui->errorPlot->addGraph();
   errorPlotParams->setPen(sme::common::indexedColors()[0]);
   errorPlotParams->setScatterStyle(
@@ -119,8 +117,9 @@ void DialogSteadystate::initPlots() {
   ui->errorPlot->yAxis->setScaleType(QCPAxis::stLogarithmic);
   ui->errorPlot->rescaleAxes(true);
   ui->errorPlot->replot();
+}
 
-  // init image plots
+void DialogSteadystate::initConcPlot() {
   ui->valuesPlot->setVisible(true);
   ui->valuesPlot->invertYAxis(m_model.getDisplayOptions().invertYAxis);
   ui->valuesPlot->displayScale(m_model.getDisplayOptions().showGeometryScale);
@@ -130,7 +129,7 @@ void DialogSteadystate::initPlots() {
   auto volume = m_model.getGeometry().getImages().volume();
   // manipulate UI to reduce clutter when solving 2D problem
   if (volume.depth() == 1) {
-    SPDLOG_CRITICAL("2D problem detected");
+    SPDLOG_DEBUG("2D problem detected, adjusting UI");
     ui->cmbPlotting->setEnabled(false);
     ui->zaxis->hide();
     ui->zlabel->hide();
@@ -144,15 +143,12 @@ void DialogSteadystate::initPlots() {
   // Force visibility changes to be processed
   QCoreApplication::processEvents();
   QTimer::singleShot(0, this, &DialogSteadystate::update);
-
-  SPDLOG_CRITICAL("  - valuesPlot: {}, valuesPlot3D: {}",
-                  ui->valuesPlot->isVisible(), ui->valuesPlot3D->isVisible());
-  SPDLOG_CRITICAL(" - init plots done");
 }
 
 void DialogSteadystate::resetPlots() {
   ui->errorPlot->clearGraphs();
-  initPlots();
+  initErrorPlot();
+  initConcPlot();
 }
 
 void DialogSteadystate::reset() {
@@ -164,14 +160,26 @@ void DialogSteadystate::reset() {
                          "Cannot reset while simulation is running.");
     return;
   }
-  m_sim.reset();
-  SPDLOG_CRITICAL("sim values: stopTol: {}, stepsTilConvergence: {}, "
-                  "stepsBelowTol: {}, timeout: {}",
-                  m_sim.getStopTolerance(), m_sim.getStepsToConvergence(),
-                  m_sim.getStepsBelowTolerance(), m_sim.getTimeout());
-  ui->btnStartStop->setText("Start");
-  m_isRunning = false;
-  resetPlots();
+
+  // if the simulation future is valid, it has to be done before we can reset.
+  // otherwise it's not running to begin with and can be reset
+  if ((m_simulationFuture.valid() and
+       m_simulationFuture.wait_for(std::chrono::seconds(0)) ==
+           std::future_status::ready) or
+      not m_simulationFuture.valid()) {
+    SPDLOG_CRITICAL("  simulation is complete, resetting");
+
+    m_sim.reset();
+    SPDLOG_CRITICAL("sim values: stopTol: {}, stepsTilConvergence: {}, "
+                    "stepsBelowTol: {}, timeout: {}",
+                    m_sim.getStopTolerance(), m_sim.getStepsToConvergence(),
+                    m_sim.getStepsBelowTolerance(), m_sim.getTimeout());
+    ui->btnStartStop->setText("Start");
+    m_isRunning = false;
+    resetPlots();
+  } else {
+    SPDLOG_CRITICAL("  - unexpectedly cannot reset the simulation");
+  }
 }
 
 void DialogSteadystate::runAndPlot() {
@@ -245,10 +253,48 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
 
   // set up bookkeeping data for display options
   m_compartmentSpeciesToPlot = m_sim.getCompartmentSpeciesIdxs();
+  m_compartmentNames = m_model.getCompartments().getIds();
+  m_speciesNames.resize(m_compartmentNames.size());
+  for (std::size_t i = 0; i < m_compartmentNames.size(); ++i) {
+    m_speciesNames[i] = m_model.getSpecies().getNames(m_compartmentNames[i]);
+  }
+  m_displayoptions = m_model.getDisplayOptions(); // get default display options
 
+  // initialize ui elements and plotting panes
   initUi();
+  initErrorPlot();
+  initConcPlot();
+
+  // connect slots and signals to make the ui functional
   connectSlots();
-  initPlots();
+
+  SPDLOG_CRITICAL(
+      " - m_speciesNames: {}",
+      std::accumulate(m_speciesNames.begin(), m_speciesNames.end(),
+                      std::string(""), [](const auto &a, const auto &b) {
+                        std::string sublist = "[";
+                        for (auto &&qstr : b) {
+                          sublist = sublist + ", " + qstr.toStdString();
+                        }
+                        sublist += "], ";
+                        return a + sublist;
+                      }));
+  SPDLOG_CRITICAL(
+      " - m_compartmentSpeciesToPlot size: {}",
+      std::accumulate(m_compartmentSpeciesToPlot.begin(),
+                      m_compartmentSpeciesToPlot.end(), std::string(""),
+                      [](const auto &a, const auto &b) {
+                        std::string sublist = "[";
+                        for (auto &&idx : b) {
+                          sublist = sublist + ", " + std::to_string(idx);
+                        }
+                        sublist += "], ";
+                        return a + sublist;
+                      }));
+
+  SPDLOG_CRITICAL("  - valuesPlot: {}, valuesPlot3D: {}",
+                  ui->valuesPlot->isVisible(), ui->valuesPlot3D->isVisible());
+  SPDLOG_CRITICAL(" - init plots done");
 }
 
 DialogSteadystate::~DialogSteadystate() = default;
@@ -263,7 +309,8 @@ void DialogSteadystate::displayOptionsClicked() {
   // we don´t care about timetpoints here
   dialog.ui->cmbNormaliseOverAllTimepoints->hide();
 
-  // we don´t care about adding observables  here either
+  // we don´t care about adding observables here either for now. TODO: do we
+  // really don´t care?
   dialog.ui->btnAddObservable->hide();
   dialog.ui->btnEditObservable->hide();
   dialog.ui->btnRemoveObservable->hide();
@@ -272,21 +319,25 @@ void DialogSteadystate::displayOptionsClicked() {
 
   if (dialog.exec() == QDialog::Accepted) {
     m_displayoptions.showMinMax = dialog.getShowMinMax();
-    SPDLOG_CRITICAL("  currently selected species: {}",
-                    dialog.getShowSpecies());
+    SPDLOG_CRITICAL("  currently selected species: {}", dialog.getShowSpecies(),
+                    m_speciesNames.size());
     m_displayoptions.showSpecies = dialog.getShowSpecies();
     m_displayoptions.normaliseOverAllTimepoints = false;
     m_displayoptions.normaliseOverAllSpecies =
         dialog.getNormaliseOverAllSpecies();
     m_model.setDisplayOptions(m_displayoptions);
     updateSpeciesToPlot();
+
+    // use this to wait for the dialog to finish updating before continuing
+    // interval of 0 in the 'singleshot' calls immediatelly queues the update
+    // function
     QCoreApplication::processEvents();
     QTimer::singleShot(0, this, &DialogSteadystate::update);
   }
 }
 
 void DialogSteadystate::plotUpdateTimerTimeout() {
-  SPDLOG_CRITICAL("refresh timer function");
+  SPDLOG_DEBUG("refresh timer function");
   update();
 
   // check if simulation has converged or stopped early
@@ -321,6 +372,8 @@ void DialogSteadystate::plotUpdateTimerTimeout() {
 }
 
 void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
+  SPDLOG_DEBUG("convergence clicked {}", index);
+
   if (index == 0) {
     m_sim.setConvergenceMode(
         sme::simulate::SteadystateConvergenceMode::absolute);
@@ -328,22 +381,21 @@ void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
     m_sim.setConvergenceMode(
         sme::simulate::SteadystateConvergenceMode::relative);
   }
-  SPDLOG_CRITICAL("convergence clicked {}", index);
 }
 
 void DialogSteadystate::plottingCurrentIndexChanged(
     [[maybe_unused]] int index) {
-  SPDLOG_CRITICAL("plotting clicked {}", index);
+  SPDLOG_DEBUG("plotting clicked {}", index);
 
   if (m_vizmode == VizMode::_2D) {
-    SPDLOG_CRITICAL("2D -> 3D");
+    SPDLOG_DEBUG("2D -> 3D");
     ui->valuesPlot->hide();
     ui->valuesPlot3D->show();
     ui->zaxis->hide();
     ui->zlabel->hide();
     m_vizmode = VizMode::_3D;
   } else {
-    SPDLOG_CRITICAL("3D -> 2D");
+    SPDLOG_DEBUG("3D -> 2D");
     ui->valuesPlot->show();
     ui->valuesPlot3D->hide();
     ui->zaxis->show();
@@ -363,32 +415,30 @@ void DialogSteadystate::plottingCurrentIndexChanged(
 void DialogSteadystate::timeoutInputChanged() {
   // input is in seconds, but we store it in milliseconds
   m_sim.setTimeout(ui->timeoutInput->text().toDouble() * 1000);
-  SPDLOG_CRITICAL("timeout change to {}, newly set: {}",
-                  ui->timeoutInput->text().toDouble(), m_sim.getTimeout());
+  SPDLOG_DEBUG("timeout change to {}, newly set: {}",
+               ui->timeoutInput->text().toDouble(), m_sim.getTimeout());
 }
 
 void DialogSteadystate::toleranceInputChanged() {
   m_sim.setStopTolerance(ui->toleranceInput->text().toDouble());
-  SPDLOG_CRITICAL("tolerance changed to {}, newly set: {}",
-                  ui->toleranceInput->text().toDouble(),
-                  m_sim.getStopTolerance());
+  SPDLOG_DEBUG("tolerance changed to {}, newly set: {}",
+               ui->toleranceInput->text().toDouble(), m_sim.getStopTolerance());
 }
 
 void DialogSteadystate::stepsWithinToleranceInputChanged() {
   m_sim.setStepsToConvergence(ui->tolStepInput->text().toInt());
-  SPDLOG_CRITICAL("steps within tolerance changed to {}, newly set: {}",
-                  ui->tolStepInput->text().toInt(),
-                  m_sim.getStepsToConvergence());
+  SPDLOG_DEBUG("steps within tolerance changed to {}, newly set: {}",
+               ui->tolStepInput->text().toInt(), m_sim.getStepsToConvergence());
 }
 
 void DialogSteadystate::convIntervalInputChanged() {
   m_sim.setDt(ui->convIntervalInput->text().toDouble());
-  SPDLOG_CRITICAL("convergence interval changed to {}, newly set: {}",
-                  ui->convIntervalInput->text().toDouble(), m_sim.getDt());
+  SPDLOG_DEBUG("convergence interval changed to {}, newly set: {}",
+               ui->convIntervalInput->text().toDouble(), m_sim.getDt());
 }
 
 void DialogSteadystate::btnStartStopClicked() {
-  SPDLOG_CRITICAL("start/stop clicked {}", m_isRunning);
+  SPDLOG_DEBUG("start/stop clicked {}", m_isRunning);
   if (!m_isRunning) {
     m_isRunning = true;
     // start timer to periodically update simulation results
@@ -403,6 +453,7 @@ void DialogSteadystate::btnStartStopClicked() {
       SPDLOG_CRITICAL(" waiting for simulation to finish");
       m_simulationFuture.wait();
     }
+
     m_plotRefreshTimer.stop();
 
     if (m_sim.hasConverged()) {
@@ -419,19 +470,19 @@ void DialogSteadystate::btnStartStopClicked() {
 void DialogSteadystate::btnResetClicked() { reset(); }
 
 void DialogSteadystate::btnOkClicked() {
-  SPDLOG_CRITICAL("ok clicked");
+  SPDLOG_DEBUG("ok clicked");
   finalise();
   accept();
 }
 
 void DialogSteadystate::btnCancelClicked() {
-  SPDLOG_CRITICAL("cancel clicked");
+  SPDLOG_DEBUG("cancel clicked");
   finalise();
   reject();
 }
 
 void DialogSteadystate::zaxisValueChanged(int value) {
-  SPDLOG_CRITICAL("zaxis value changed to {}", value);
+  SPDLOG_DEBUG("zaxis value changed to {}", value);
   ui->valuesPlot->setZIndex(value);
   QCoreApplication::processEvents();
   QTimer::singleShot(0, this, &DialogSteadystate::update);
