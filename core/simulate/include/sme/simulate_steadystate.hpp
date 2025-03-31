@@ -220,14 +220,6 @@ public:
   void setConvergenceMode(SteadystateConvergenceMode mode);
 
   /**
-   * @brief Set the number of steps below tolerance required to consider the
-   * simulation converged
-   *
-   * @param new_numstepssteady std::size_t
-   */
-  void setStepsBelowTolerance(std::size_t new_numstepssteady);
-
-  /**
    * @brief Set the tolerance used to determine convergence
    *
    * @param stop_tolerance double

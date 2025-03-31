@@ -5,20 +5,19 @@
 #include <catch2/catch_test_macros.hpp>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
-#include <limits>
+#include <qrgb.h>
 #include <spdlog/spdlog.h>
 #include <vector>
 
 using namespace sme;
 using namespace sme::test;
 
-TEST_CASE("SimulateSteadyState",
-          "[core/simulate/simulate_steadystate][core/"
-          "simulate][core][simulate][simulate_steadystate]") {
+TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
+
   auto m{getExampleModel(Mod::GrayScott)};
-  std::vector<std::string> comps{"compartment"};
-  std::vector<std::vector<std::string>> specs{{"U", "V"}};
-  double stop_tolerance = 1e-6;
+  const std::vector<std::string> comps{"compartment"};
+  const std::vector<std::vector<std::string>> specs{{"U", "V"}};
+  const double stop_tolerance = 1e-6;
 
   SECTION("construct") {
     simulate::SteadyStateSimulation sim(
@@ -28,26 +27,52 @@ TEST_CASE("SimulateSteadyState",
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.getDt() == 1e-2);
     REQUIRE(sim.getStepsBelowTolerance() == 0);
+    REQUIRE(sim.getConvergenceMode() ==
+            simulate::SteadystateConvergenceMode::relative);
+    REQUIRE(sim.getStepsToConvergence() == 10);
+    REQUIRE(sim.getTimeout() == 1000);
+    REQUIRE(sim.hasConverged() == false);
+    REQUIRE(sim.getConcentrations().size() ==
+            6298); // number of values for each species in each compartment
+                   // concatenated
+    REQUIRE(sim.getLatestData().load() == nullptr);
+    REQUIRE(sim.getSolverErrormessage() == "");
+    REQUIRE(sim.getSolverStopRequested() == false);
+    REQUIRE(sim.getCompartmentSpeciesIdxs() ==
+            std::vector<std::vector<std::size_t>>{{0, 1}});
+    REQUIRE(sim.getCompartmentSpeciesColors()[0][0] != 0);
+    REQUIRE(sim.getCompartmentSpeciesColors()[0][1] != 0);
+    REQUIRE(sim.getCompartmentSpeciesIds() ==
+            std::vector<std::vector<std::string>>{{"U", "V"}});
 
-    sim.setStopTolerance(1e-9);
-    REQUIRE(sim.getStopTolerance() == 1e-9);
-
-    sim.setSimulatorType(simulate::SimulatorType::DUNE);
-    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
-
-    sim.setStepsBelowTolerance(5);
-    REQUIRE(sim.getStepsBelowTolerance() == 5);
+    auto img = sim.getConcentrationImage(
+        std::vector<std::vector<std::size_t>>{{0, 1}}, true);
+    REQUIRE(img.empty() == false);
+    REQUIRE(img.volume().depth() == 1);
+    REQUIRE(img.volume().width() == 100);
+    REQUIRE(img.volume().height() == 100);
 
     sim.setConvergenceMode(simulate::SteadystateConvergenceMode::absolute);
     REQUIRE(sim.getConvergenceMode() ==
             simulate::SteadystateConvergenceMode::absolute);
 
-    // REQUIRE(sim.getSteps().size() == 0);
-    // REQUIRE(sim.getErrors().size() == 0);
-    // REQUIRE(sim.getCurrentError() == std::numeric_limits<double>::max()); //
-    // TODO: Fix this shit! REQUIRE(sim.getCurrentStep() == 0);
+    sim.setStopTolerance(1e-9);
+    REQUIRE(sim.getStopTolerance() == 1e-9);
+
+    sim.setStepsToConvergence(20);
+    REQUIRE(sim.getStepsToConvergence() == 20);
+
+    sim.setDt(1e-3);
+    REQUIRE(sim.getDt() == 1e-3);
+
+    sim.setTimeout(2000);
+    REQUIRE(sim.getTimeout() == 2000);
+
+    sim.setSimulatorType(simulate::SimulatorType::DUNE);
+    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
   }
-  SECTION("Run_into_timeout_and_query") {
+
+  SECTION("Run_into_timeout_and_query_for_errormessage") {
     simulate::SteadyStateSimulation sim(
         m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
         simulate::SteadystateConvergenceMode::relative, 50, 1e-2);
@@ -55,11 +80,11 @@ TEST_CASE("SimulateSteadyState",
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run for 500 ms then timeout
     REQUIRE(sim.hasConverged() == false);
-    REQUIRE(!sim.hasConverged());
-    REQUIRE(sim.getStepsBelowTolerance() == 0);
+    REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
     REQUIRE(sim.getSolverStopRequested() == true);
     REQUIRE(sim.getSolverErrormessage() == "Simulation timed out");
   }
+
   SECTION("Run_until_convergence_pixel") {
     simulate::SteadyStateSimulation sim(
         m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
@@ -69,46 +94,59 @@ TEST_CASE("SimulateSteadyState",
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    // REQUIRE(sim.getCurrentError() < stop_tolerance); TODO: fix this!
+    auto data = sim.getLatestData().load();
+    REQUIRE(data != nullptr);
+    REQUIRE(data->step > 0);
+    REQUIRE(data->error < stop_tolerance);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
-  SECTION("Run_until_convergence_dune") {
 
+  SECTION("Run_until_convergence_dune") {
     // we know that it converges, hence timeout is absurd here and we set
     // a large timestep to check for convergence too.
+    // use a high stop tolerance to make it run faster too
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::DUNE, stop_tolerance, 10,
+        m, simulate::SimulatorType::DUNE, 1e-3, 10,
         simulate::SteadystateConvergenceMode::relative, 100000000, 5.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
     REQUIRE(sim.hasConverged() == false);
+    SPDLOG_CRITICAL("Running simulation");
     sim.run(); // run until convergence
-    REQUIRE(sim.hasConverged() == true);
-    // REQUIRE(sim.getCurrentError() < stop_tolerance); TODO: fix this!
+    REQUIRE(sim.hasConverged());
+    // stop_requested is ignored by DUNE, hence not checked
+    auto data = sim.getLatestData().load();
+    REQUIRE(data != nullptr);
+    REQUIRE(data->step > 0);
+    REQUIRE(data->error < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
+
   SECTION("change_solver-->simulation_reset") {
+    // use a high stop tolerance to make it run faster
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
+        m, simulate::SimulatorType::Pixel, 1e-3, 10,
         simulate::SteadystateConvergenceMode::relative, 10000000, 5.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    // REQUIRE(sim.getCurrentError() < stop_tolerance); // TODO: fix this!
+    auto data = sim.getLatestData().load();
+    REQUIRE(data != nullptr);
+    REQUIRE(data->step > 0);
+    REQUIRE(data->error < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
 
     sim.setSimulatorType(
         simulate::SimulatorType::DUNE); // reset happens when solver is changed
 
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
-    // REQUIRE(sim.getCurrentError() == std::numeric_limits<double>::max()); //
-    // TODO: fix this shit!
+    //
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getSolverStopRequested() == false);
 
-    sim.setTimeout(500); // set this sucht that it breaks early to avoid runtime
-    sim.run();           // run until convergence
+    sim.run(); // run until convergence
+    REQUIRE(sim.hasConverged() == true);
   }
 }

@@ -523,11 +523,6 @@ void SteadyStateSimulation::setConvergenceMode(
   m_stop_mode = mode;
 }
 
-void SteadyStateSimulation::setStepsBelowTolerance(
-    std::size_t new_numstepssteady) {
-  m_steps_below_tolerance = new_numstepssteady;
-}
-
 void SteadyStateSimulation::setStopTolerance(double stop_tolerance) {
   m_convergence_tolerance = stop_tolerance;
 }
