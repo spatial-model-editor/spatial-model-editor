@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.9.0] - 2025-03-31
+### Added
+- documentation for example models [#1025](https://github.com/spatial-model-editor/spatial-model-editor/issues/1025)
+- linux aarch64 / arm64 binaries [#1045](https://github.com/spatial-model-editor/spatial-model-editor/issues/1045)
+- NLP optimization algorithms [#1053](https://github.com/spatial-model-editor/spatial-model-editor/issues/1053)
+- 3d mesh rendering of membranes between compartments [#1054](https://github.com/spatial-model-editor/spatial-model-editor/issues/1054)
+- 3d visualization and 'difference' visualization in optimization [#1057](https://github.com/spatial-model-editor/spatial-model-editor/issues/1057)
+
+### Fixed
+- crash on compartment re-assignment after color change [#1038](https://github.com/spatial-model-editor/spatial-model-editor/issues/1038)
+- crash when meshing 3d geometries with different max cell volumes in different compartments [#1055](https://github.com/spatial-model-editor/spatial-model-editor/issues/1055)
+- incorrect concentrations for 3d model simulations in python interface [#1063](https://github.com/spatial-model-editor/spatial-model-editor/issues/1063)
+
 ## [1.8.0] - 2025-01-29
 ### Added
 - improved mesh visualizations [#1021](https://github.com/spatial-model-editor/spatial-model-editor/issues/1021)
