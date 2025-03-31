@@ -16,7 +16,6 @@ class SteadyStateSimulation final {
 
   // data members for simulation
   std::atomic<bool> m_has_converged;
-  std::atomic<bool> m_stopRequested;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
   double m_convergence_tolerance;
