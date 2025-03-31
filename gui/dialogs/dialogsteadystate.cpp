@@ -49,6 +49,8 @@ void DialogSteadystate::initUi() {
   ui->convIntervalInput->setValidator(
       new QDoubleValidator(0, std::numeric_limits<double>::max(), 2, this));
   ui->convIntervalInput->setText(QString::number(m_sim.getDt()));
+
+  ui->valuesPlot->setZSlider(ui->zaxis);
 }
 
 void DialogSteadystate::connectSlots() {

@@ -176,9 +176,7 @@ void SteadyStateSimulation::recordData(double timestep, double error) {
   m_data.store(std::make_shared<SteadyStateData>(timestep, error));
 }
 
-void SteadyStateSimulation::resetData() {
-  m_data.store(std::make_shared<SteadyStateData>());
-}
+void SteadyStateSimulation::resetData() { m_data.store(nullptr); }
 
 //////////////////////////////////////////////////////////////////////////////////
 // helper functions to run stuff
