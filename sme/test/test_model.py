@@ -103,6 +103,19 @@ def test_simulate():
         m = sme.open_example_model()
         sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
         assert len(sim_results) == 3
+        assert sim_results[0].time_point == pytest.approx(0.0)
+        assert np.mean(sim_results[0].species_concentration["A_cell"]) == pytest.approx(
+            0.0
+        )
+        assert np.mean(sim_results[0].species_concentration["B_cell"]) == pytest.approx(
+            0.0
+        )
+        assert np.mean(sim_results[0].species_concentration["A_nucl"]) == pytest.approx(
+            0.0
+        )
+        assert np.mean(sim_results[0].species_concentration["B_nucl"]) == pytest.approx(
+            0.0
+        )
 
         sim_results2 = m.simulation_results()
         assert len(sim_results) == len(sim_results2)
@@ -196,6 +209,50 @@ def test_simulate():
         # but results are still available from the model
         sim_results2 = m.simulation_results()
         assert len(sim_results2) == 3
+
+
+def test_simulate_3d():
+    for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
+        m = sme.open_example_model("very-simple-model-3d")
+        m.compartments["Cell"].species["B_cell"].uniform_concentration = 2.54345
+        m.compartments["Nucleus"].species["A_nucl"].uniform_concentration = 1.123
+        m.compartments["Nucleus"].species["B_nucl"].uniform_concentration = 0.10123
+        sim_results = m.simulate(0.002, 0.001, simulator_type=sim_type)
+        assert len(sim_results) == 3
+        assert sim_results[0].time_point == pytest.approx(0.0)
+        assert np.mean(sim_results[0].species_concentration["A_cell"]) == pytest.approx(
+            0.0
+        )
+        assert np.mean(
+            sim_results[0].species_concentration["B_cell"][
+                ~m.compartments["Cell"].geometry_mask
+            ]
+        ) == pytest.approx(0.0)
+        assert np.mean(
+            sim_results[0].species_concentration["B_cell"][
+                m.compartments["Cell"].geometry_mask
+            ]
+        ) == pytest.approx(2.54345)
+        assert np.mean(
+            sim_results[0].species_concentration["A_nucl"][
+                ~m.compartments["Nucleus"].geometry_mask
+            ]
+        ) == pytest.approx(0.0)
+        assert np.mean(
+            sim_results[0].species_concentration["A_nucl"][
+                m.compartments["Nucleus"].geometry_mask
+            ]
+        ) == pytest.approx(1.123)
+        assert np.mean(
+            sim_results[0].species_concentration["B_nucl"][
+                ~m.compartments["Nucleus"].geometry_mask
+            ]
+        ) == pytest.approx(0.0)
+        assert np.mean(
+            sim_results[0].species_concentration["B_nucl"][
+                m.compartments["Nucleus"].geometry_mask
+            ]
+        ) == pytest.approx(0.10123)
 
 
 def test_import_geometry_from_image_invalid():
