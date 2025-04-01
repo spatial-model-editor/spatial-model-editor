@@ -232,10 +232,13 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
 
     REQUIRE(sim.hasConverged() == true);
     REQUIRE(sim.getStepsBelowTolerance() >= sim.getStepsToConvergence());
+    REQUIRE(dia3D.isRunning() == true);
     REQUIRE(checker.messageContent == "Simulation converged");
     checker.stop();
     QTest::qWait(2000);
+    REQUIRE(dia3D.isRunning() == false);
 
+    // check plot updates
     REQUIRE(widgets3D.errorPlot->graphCount() == 2);
     auto errorGraph = widgets3D.errorPlot->graph(0);
     auto tolGraph = widgets3D.errorPlot->graph(1);
@@ -267,7 +270,9 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(checker.messageContent == "Simulation stopped");
     REQUIRE(widgets3D.btnStartStop->text() == "Resume");
     REQUIRE(widgets3D.btnReset->isEnabled() == true);
+    REQUIRE(dia3D.isRunning() == true);
     checker.stop();
+    REQUIRE(dia3D.isRunning() == false);
 
     // resume simulation and run until convergence
     ModalChecker convChecker;
@@ -365,5 +370,29 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
 
     // open display options dialog
     sendMouseClick(widgets3D.btnDisplayOptions);
+  }
+
+  SECTION("run_then_reject") {
+    DialogSteadystate dia3D(model3D);
+    DialogSteadystateWidgets widgets3D(&dia3D);
+    dia3D.show();
+
+    // add this here to avoid blocking by dialog
+    QTimer::singleShot(2000, [&]() {
+      sendMouseClick(widgets3D.buttonBox->button(QDialogButtonBox::Cancel));
+      QTest::qWait(1000);
+    });
+
+    ModalChecker checker;
+    checker.waitForConvergence(dia3D, widgets3D);
+    checker.stop();
+    QTest::qWait(1500);
+    const auto &sim = dia3D.getSimulator();
+    REQUIRE(sim.hasConverged() == false);
+    REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
+    REQUIRE(sim.getLatestError().load() < std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(dia3D.isRunning() == false);
+    REQUIRE(dia3D.isVisible() == false);
   }
 }

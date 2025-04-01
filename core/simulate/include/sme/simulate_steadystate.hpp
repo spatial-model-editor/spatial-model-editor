@@ -16,6 +16,7 @@ class SteadyStateSimulation final {
 
   // data members for simulation
   std::atomic<bool> m_has_converged;
+  std::atomic<bool> m_stop_requested;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
   double m_convergence_tolerance;
@@ -86,10 +87,16 @@ public:
   /**
    * @brief Check if the simulation has converged
    *
-   * @return true if has converged according to stoppingcriterion and tolerance
-   * @return false otherwise
+   * @return const std::atomic<bool>&
    */
-  [[nodiscard]] bool hasConverged() const;
+  [[nodiscard]] const std::atomic<bool> &hasConverged() const;
+
+  /**
+   * @brief Check if the simulation has been requested to stop
+   *
+   * @return const std::atomic<bool>&
+   */
+  [[nodiscard]] const std::atomic<bool> &getStopRequested() const;
 
   /**
    * @brief Get the convergence mode

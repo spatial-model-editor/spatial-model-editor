@@ -26,7 +26,7 @@ SteadyStateSimulation::SteadyStateSimulation(
     double tolerance, std::size_t steps_to_convergence,
     SteadystateConvergenceMode convergence_mode, std::size_t timeout_ms,
     double dt)
-    : m_has_converged(false), m_model(model),
+    : m_has_converged(false), m_stop_requested(false), m_model(model),
       m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
       m_stop_mode(convergence_mode),
@@ -83,11 +83,12 @@ void SteadyStateSimulation::initModel() {
 }
 
 void SteadyStateSimulation::selectSimulator() {
-
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE &&
-      m_model.getGeometry().getIsMeshValid())
+      m_model.getGeometry().getIsMeshValid()) {
+    SPDLOG_CRITICAL(" DUNE Simulator selected");
     m_simulator = std::make_unique<DuneSim>(m_model, m_compartmentIds);
-  else {
+  } else {
+    SPDLOG_CRITICAL(" Pixel Simulator selected");
     m_simulator = std::make_unique<PixelSim>(m_model, m_compartmentIds,
                                              m_compartmentSpeciesIds);
   }
@@ -96,33 +97,46 @@ void SteadyStateSimulation::selectSimulator() {
 void SteadyStateSimulation::resetModel() {
   m_model.getSimulationData().clear();
   m_model.getSimulationSettings().times.clear();
+  initModel();
 }
 
 void SteadyStateSimulation::resetSolver() {
   m_simulator = nullptr;
   m_steps_below_tolerance = 0;
   m_has_converged.store(false);
-  initModel();
+  m_stop_requested.store(false);
   selectSimulator();
 }
 
 double SteadyStateSimulation::computeStoppingCriterion(
     const std::vector<double> &c_old, const std::vector<double> &c_new) {
+  // TODO: can I get dc/dt from the solvers somewhere?
 
   double sum_squared_dcdt = 0.0;
-  double sum_squared_c = 0.0;
-
-  for (size_t i = 0; i < c_new.size(); ++i) {
-    double dcdt = (c_new[i] - c_old[i]) / std::max(m_dt, 1e-12);
-    // Sum squares for L2 norm calculations
-    sum_squared_dcdt += dcdt * dcdt;
-    sum_squared_c += c_new[i] * c_new[i];
-  }
-
-  double c_norm = std::sqrt(sum_squared_c);
-  double dcdt_norm = std::sqrt(sum_squared_dcdt);
+  double dcdt_norm = 0.0;
   if (m_stop_mode == SteadystateConvergenceMode::relative) {
+    double sum_squared_c = 0.0;
+
+    for (size_t i = 0; i < c_new.size(); ++i) {
+      double dcdt = (c_new[i] - c_old[i]) / std::max(m_dt, 1e-12);
+      // Sum of squares for L2 norm calculations
+      sum_squared_dcdt += dcdt * dcdt;
+      sum_squared_c += c_new[i] * c_new[i];
+    }
+
+    dcdt_norm = std::sqrt(sum_squared_dcdt);
+    double c_norm = std::sqrt(sum_squared_c);
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
+
+  } else {
+
+    for (size_t i = 0; i < c_new.size(); ++i) {
+      double dcdt = (c_new[i] - c_old[i]) / std::max(m_dt, 1e-12);
+      // Sum of squares for L2 norm calculations
+      sum_squared_dcdt += dcdt * dcdt;
+    }
+
+    dcdt_norm = std::sqrt(sum_squared_dcdt);
   }
 
   return dcdt_norm;
@@ -246,7 +260,7 @@ void SteadyStateSimulation::runPixel(double time) {
       break;
     }
 
-    if (m_simulator->getStopRequested()) {
+    if (m_simulator->getStopRequested() || m_stop_requested.load()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
       SPDLOG_DEBUG("Simulation timeout or stopped early");
       break;
@@ -325,7 +339,7 @@ void SteadyStateSimulation::runDune(double time) {
       break;
     }
 
-    if (m_simulator->getStopRequested()) {
+    if (m_simulator->getStopRequested() || m_stop_requested.load()) {
       m_simulator->setCurrentErrormessage("Simulation stopped early");
       SPDLOG_DEBUG("Simulation timeout or stopped early");
       break;
@@ -341,12 +355,13 @@ void SteadyStateSimulation::run() {
   // since we expect the simulation to either converge or run into timeout,
   // we can set the time to run to infinity for all intents and purposes
   m_simulator->setStopRequested(false);
+  m_stop_requested.store(false);
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE) {
-    SPDLOG_DEBUG("  - runDune");
+    SPDLOG_CRITICAL("  - runDune");
     runDune(std::numeric_limits<double>::max());
   } else if (m_model.getSimulationSettings().simulatorType ==
              SimulatorType::Pixel) {
-    SPDLOG_DEBUG("  - runPixel");
+    SPDLOG_CRITICAL("  - runPixel");
     runPixel(std::numeric_limits<double>::max());
   } else {
     SPDLOG_ERROR("Unknown simulator type");
@@ -355,6 +370,7 @@ void SteadyStateSimulation::run() {
 
 void SteadyStateSimulation::requestStop() {
   m_simulator->setStopRequested(true);
+  m_stop_requested.store(true);
 }
 
 void SteadyStateSimulation::reset() {
@@ -365,14 +381,18 @@ void SteadyStateSimulation::reset() {
   }
 
   resetModel();
-  resetData();
   resetSolver();
+  resetData();
 }
 
 //////////////////////////////////////////////////////////////////////////////////
 // state getters
-bool SteadyStateSimulation::hasConverged() const {
-  return m_has_converged.load();
+const std::atomic<bool> &SteadyStateSimulation::hasConverged() const {
+  return m_has_converged;
+}
+
+const std::atomic<bool> &SteadyStateSimulation::getStopRequested() const {
+  return m_stop_requested;
 }
 
 SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() const {

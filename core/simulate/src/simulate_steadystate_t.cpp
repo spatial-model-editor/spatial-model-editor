@@ -101,6 +101,24 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getSolverErrormessage() == "");
   }
 
+  SECTION("Run_until_convergence_pixel_absolute_mode") {
+    simulate::SteadyStateSimulation sim(
+        m, simulate::SimulatorType::Pixel, 1e-3, 10,
+        simulate::SteadystateConvergenceMode::absolute, 100000000, 5.0);
+
+    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
+    REQUIRE(sim.hasConverged() == false);
+    REQUIRE(sim.getConvergenceMode() ==
+            simulate::SteadystateConvergenceMode::absolute);
+    sim.run(); // run until convergence
+    REQUIRE(sim.hasConverged());
+    REQUIRE(sim.getSolverStopRequested());
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(sim.getLatestError().load() < 1e-3);
+    REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
+    REQUIRE(sim.getSolverErrormessage() == "");
+  }
+
   SECTION("Run_until_convergence_dune") {
     // we know that it converges, hence timeout is absurd here and we set
     // a large timestep to check for convergence too.

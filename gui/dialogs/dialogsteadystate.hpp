@@ -56,7 +56,7 @@ private:
   void finalise();
   void resetPlots();
   void reset();
-  void runAndPlot();
+  void runSim();
   void updateSpeciesToPlot();
 
   // slots
@@ -93,4 +93,14 @@ public:
    */
   [[nodiscard]] const sme::simulate::SteadyStateSimulation &
   getSimulator() const;
+
+  /**
+   * @brief Check if a simulation is still running
+   *
+   * @return true
+   * @return false
+   */
+  [[nodiscard]] bool isRunning() const;
+
+  [[nodiscard]] bool getStopRequested() const { return m_sim.hasConverged(); }
 };

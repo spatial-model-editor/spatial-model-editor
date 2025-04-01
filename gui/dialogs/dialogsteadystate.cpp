@@ -183,7 +183,7 @@ void DialogSteadystate::reset() {
   }
 }
 
-void DialogSteadystate::runAndPlot() {
+void DialogSteadystate::runSim() {
   m_plotRefreshTimer.start();
 
   /// start simulation in a different thread
@@ -196,7 +196,9 @@ void DialogSteadystate::update() {
   // update error plot
   auto error = m_sim.getLatestError().load();
   auto step = m_sim.getLatestStep().load();
+  SPDLOG_CRITICAL("  updating plot: step: {}, error: {}", step, error);
 
+  // numeric_limits used as an indicator for 'no data' here
   if (error < std::numeric_limits<double>::max()) {
     SPDLOG_DEBUG(" - update data: step: {}, error: {}", step, error);
     ui->errorPlot->graph(0)->addData(step, error);
@@ -248,12 +250,14 @@ DialogSteadystate::getSimulator() const {
   return m_sim;
 }
 
+bool DialogSteadystate::isRunning() const { return m_isRunning; }
+
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
 DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
     : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       m_sim(sme::simulate::SteadyStateSimulation(
-          model, sme::simulate::SimulatorType::Pixel, 1e-6, 10,
+          model, model.getSimulationSettings().simulatorType, 1e-6, 10,
           sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)),
       m_simulationFuture(), m_plotRefreshTimer(), m_vizmode(VizMode::_2D),
       m_isRunning(false) {
@@ -425,7 +429,7 @@ void DialogSteadystate::btnStartStopClicked() {
     // start timer to periodically update simulation results
     ui->btnStartStop->setText("Stop");
     ui->btnReset->setEnabled(false);
-    runAndPlot();
+    runSim();
   } else {
     SPDLOG_DEBUG(" stop simulation");
     m_isRunning = false;
@@ -451,12 +455,26 @@ void DialogSteadystate::btnResetClicked() { reset(); }
 
 void DialogSteadystate::btnOkClicked() {
   SPDLOG_DEBUG("ok clicked");
+  if (m_isRunning) {
+    SPDLOG_DEBUG(" - simulation is running, stop it");
+    m_sim.requestStop();
+    m_simulationFuture.wait();
+    m_isRunning = false;
+  }
   finalise();
+
+  SPDLOG_DEBUG(" - simulation is done, finalise");
   accept();
 }
 
 void DialogSteadystate::btnCancelClicked() {
   SPDLOG_DEBUG("cancel clicked");
+  if (m_isRunning) {
+    SPDLOG_DEBUG(" - simulation is running, stop it");
+    m_sim.requestStop();
+    m_simulationFuture.wait();
+    m_isRunning = false;
+  }
   finalise();
   reject();
 }
