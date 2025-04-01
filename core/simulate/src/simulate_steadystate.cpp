@@ -29,8 +29,10 @@ SteadyStateSimulation::SteadyStateSimulation(
     : m_has_converged(false), m_model(model),
       m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
-      m_stop_mode(convergence_mode), m_data(nullptr), m_compartmentIds(),
-      m_compartmentSpeciesIds(), m_compartmentSpeciesColors(), m_dt(dt) {
+      m_stop_mode(convergence_mode),
+      m_error(std::numeric_limits<double>::max()), m_step(0),
+      m_compartmentIds(), m_compartmentSpeciesIds(),
+      m_compartmentSpeciesColors(), m_dt(dt) {
   m_model.getSimulationSettings().simulatorType = type;
   initModel();
   selectSimulator();
@@ -166,17 +168,14 @@ SteadyStateSimulation::computeConcentrationNormalisation(
 }
 
 void SteadyStateSimulation::recordData(double timestep, double error) {
-
-  if (m_compartments.empty()) {
-    // no compartments --> no image
-    m_data.store(std::make_shared<SteadyStateData>(timestep, error));
-    return;
-  }
-
-  m_data.store(std::make_shared<SteadyStateData>(timestep, error));
+  m_error.store(error);
+  m_step.store(timestep);
 }
 
-void SteadyStateSimulation::resetData() { m_data.store(nullptr); }
+void SteadyStateSimulation::resetData() {
+  m_error.store(std::numeric_limits<double>::max());
+  m_step.store(0);
+}
 
 //////////////////////////////////////////////////////////////////////////////////
 // helper functions to run stuff
@@ -401,9 +400,12 @@ std::vector<double> SteadyStateSimulation::getConcentrations() const {
   return concs;
 }
 
-const std::atomic<std::shared_ptr<SteadyStateData>> &
-SteadyStateSimulation::getLatestData() const {
-  return m_data;
+const std::atomic<double> &SteadyStateSimulation::getLatestStep() const {
+  return m_step;
+}
+
+const std::atomic<double> &SteadyStateSimulation::getLatestError() const {
+  return m_error;
 }
 
 std::size_t SteadyStateSimulation::getStepsToConvergence() const {

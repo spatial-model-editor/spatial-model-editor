@@ -35,7 +35,8 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getConcentrations().size() ==
             6298); // number of values for each species in each compartment
                    // concatenated
-    REQUIRE(sim.getLatestData().load() == nullptr);
+    REQUIRE(sim.getLatestError().load() == std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep().load() == 0.0);
     REQUIRE(sim.getSolverErrormessage() == "");
     REQUIRE(sim.getSolverStopRequested() == false);
     REQUIRE(sim.getCompartmentSpeciesIdxs() ==
@@ -94,10 +95,8 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    auto data = sim.getLatestData().load();
-    REQUIRE(data != nullptr);
-    REQUIRE(data->step > 0);
-    REQUIRE(data->error < stop_tolerance);
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(sim.getLatestError().load() < stop_tolerance);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -111,14 +110,12 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
         simulate::SteadystateConvergenceMode::relative, 100000000, 5.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
     REQUIRE(sim.hasConverged() == false);
-    SPDLOG_CRITICAL("Running simulation");
     sim.run(); // run until convergence
+
     REQUIRE(sim.hasConverged());
     // stop_requested is ignored by DUNE, hence not checked
-    auto data = sim.getLatestData().load();
-    REQUIRE(data != nullptr);
-    REQUIRE(data->step > 0);
-    REQUIRE(data->error < 1e-3);
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(sim.getLatestError().load() < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -132,17 +129,14 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    auto data = sim.getLatestData().load();
-    REQUIRE(data != nullptr);
-    REQUIRE(data->step > 0);
-    REQUIRE(data->error < 1e-3);
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(sim.getLatestError().load() < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
 
     sim.setSimulatorType(
         simulate::SimulatorType::DUNE); // reset happens when solver is changed
 
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
-    //
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getSolverStopRequested() == false);
 

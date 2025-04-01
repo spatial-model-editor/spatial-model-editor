@@ -27,7 +27,8 @@ class SteadyStateSimulation final {
   std::mutex m_concentration_mutex;
 
   // data members for plotting
-  std::atomic<std::shared_ptr<SteadyStateData>> m_data;
+  std::atomic<double> m_error;
+  std::atomic<double> m_step;
   std::vector<const geometry::Compartment *> m_compartments;
   std::vector<std::string> m_compartmentIds;
   std::vector<std::size_t> m_compartmentIndices;
@@ -127,14 +128,21 @@ public:
   [[nodiscard]] std::vector<double> getConcentrations() const;
 
   /**
-   * @brief Get the latest data point
+   * @brief Get the latest error value of the simulation
    *
-   * @return const std::atomic<std::shared_ptr<SteadyStateData>> &
+   * @return const std::atomic<double> &
+
    A pointer to a struct containing the step, error and
    * concentration image stack of the latest step of the simulation.
    */
-  [[nodiscard]] const std::atomic<std::shared_ptr<SteadyStateData>> &
-  getLatestData() const;
+  [[nodiscard]] const std::atomic<double> &getLatestError() const;
+
+  /**
+   * @brief Get the latest simulation step
+   *
+   * @return const std::atomic<double>&
+   */
+  [[nodiscard]] const std::atomic<double> &getLatestStep() const;
 
   /**
    * @brief Get the number of steps the simulation needs to have a stable

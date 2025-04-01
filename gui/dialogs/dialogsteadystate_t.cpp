@@ -246,7 +246,8 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
 
     REQUIRE(data->size() == toldata->size());
     REQUIRE(data->size() > 0);
-    REQUIRE(lastData->value == sim.getLatestData().load()->error);
+    auto error = sim.getLatestError().load();
+    REQUIRE(lastData->value == error);
     REQUIRE(lastTol->value == sim.getStopTolerance());
     REQUIRE(lastData->key == lastTol->key);
   }
@@ -291,7 +292,8 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
     REQUIRE(checker.messageContent == "Simulation stopped");
-    REQUIRE(sim.getLatestData().load() != nullptr);
+    REQUIRE(sim.getLatestError().load() < std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep().load() > 0.0);
 
     checker.stop();
 
@@ -306,7 +308,8 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.getStopTolerance() == 1e-6);
     REQUIRE(sim.getDt() == 1);
     REQUIRE(sim.getTimeout() == 3600000); // 1 hour in milliseconds
-    REQUIRE(sim.getLatestData().load() == nullptr);
+    REQUIRE(sim.getLatestError().load() == std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep().load() == 0.0);
 
     QTest::qWait(1000);
   }

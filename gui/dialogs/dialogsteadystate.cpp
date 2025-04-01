@@ -6,6 +6,7 @@
 #include "sme/utils.hpp"
 
 #include <chrono>
+#include <limits>
 #include <memory>
 
 #include <qcombobox.h>
@@ -193,19 +194,19 @@ void DialogSteadystate::runAndPlot() {
 void DialogSteadystate::update() {
 
   // update error plot
-  std::shared_ptr<sme::simulate::SteadyStateData> data =
-      m_sim.getLatestData().load();
+  auto error = m_sim.getLatestError().load();
+  auto step = m_sim.getLatestStep().load();
 
-  if (data != nullptr) {
-    SPDLOG_DEBUG(" - update data: step: {}, error: {}", data->step,
-                 data->error);
-    ui->errorPlot->graph(0)->addData(data->step, data->error);
-    ui->errorPlot->graph(1)->addData(data->step, m_sim.getStopTolerance());
+  if (error < std::numeric_limits<double>::max()) {
+    SPDLOG_DEBUG(" - update data: step: {}, error: {}", step, error);
+    ui->errorPlot->graph(0)->addData(step, error);
+    ui->errorPlot->graph(1)->addData(step, m_sim.getStopTolerance());
     ui->errorPlot->rescaleAxes(true);
     ui->errorPlot->replot(QCustomPlot::RefreshPriority::rpQueuedReplot);
   } else {
     SPDLOG_DEBUG("  - no data to update");
   }
+
   // update image plot
   auto image = m_sim.getConcentrationImage(
       m_compartmentSpeciesToPlot,
