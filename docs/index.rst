@@ -55,6 +55,7 @@ Spatial Model Editor Documentation
    reference/dune
    reference/pixel
    reference/parameter-fitting
+   reference/steady-state
    reference/mesh
    reference/cli
    reference/maths
