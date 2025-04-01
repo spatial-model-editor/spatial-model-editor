@@ -48,13 +48,14 @@ public:
   ~DuneSim() override;
   std::size_t run(double time, double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
+
   [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
   [[nodiscard]] const std::string &errorMessage() const override;
   [[nodiscard]] const common::ImageStack &errorImages() const override;
-
   [[nodiscard]] bool getStopRequested() const override;
+
   void setStopRequested(bool stop) override;
   void setCurrentErrormessage(const std::string &msg) override;
 };
