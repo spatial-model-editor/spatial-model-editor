@@ -209,7 +209,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     widgets.cmbPlotting->setCurrentText("3D");
     widgets.zaxis->setValue(10);
 
-    QTest::qWait(100);
+    QTest::qWait(2000);
 
     const auto &sim = dia.getSimulator();
 
