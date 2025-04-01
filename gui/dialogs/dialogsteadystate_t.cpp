@@ -209,7 +209,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     widgets.cmbPlotting->setCurrentText("3D");
     widgets.zaxis->setValue(10);
 
-    QTest::qWait(2000);
+    QTest::qWait(500);
 
     const auto &sim = dia.getSimulator();
 
@@ -219,7 +219,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.getTimeout() == 10000); // 10 seconds in milliseconds
     REQUIRE(sim.getConvergenceMode() ==
             sme::simulate::SteadystateConvergenceMode::relative);
-    REQUIRE(sim.getSimulatorType() == sme::simulate::SimulatorType::Pixel);
+    REQUIRE(sim.getSimulatorType() == sme::simulate::SimulatorType::DUNE);
   }
 
   SECTION("run_to_convergence") {
