@@ -196,7 +196,6 @@ void DialogSteadystate::update() {
   // update error plot
   auto error = m_sim.getLatestError().load();
   auto step = m_sim.getLatestStep().load();
-  SPDLOG_CRITICAL("  updating plot: step: {}, error: {}", step, error);
 
   // numeric_limits used as an indicator for 'no data' here
   if (error < std::numeric_limits<double>::max()) {
