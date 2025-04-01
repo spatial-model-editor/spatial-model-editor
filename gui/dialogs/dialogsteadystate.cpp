@@ -179,7 +179,7 @@ void DialogSteadystate::reset() {
     m_isRunning = false;
     resetPlots();
   } else {
-    SPDLOG_CRITICAL("  - unexpectedly cannot reset the simulation");
+    SPDLOG_ERROR("  - unexpectedly cannot reset the simulation");
   }
 }
 
@@ -199,6 +199,19 @@ void DialogSteadystate::update() {
 
   // numeric_limits used as an indicator for 'no data' here
   if (error < std::numeric_limits<double>::max()) {
+
+    if (ui->errorPlot->graph(0)->dataCount() > 0) {
+      // adjust x value to avoid overtyping
+      auto lastX = ui->errorPlot->graph(0)->dataMainKey(
+          ui->errorPlot->graph(0)->dataCount() - 1);
+
+      if (step <= lastX) {
+        step = lastX + step;
+      }
+
+      SPDLOG_DEBUG("  - update data: step: {}, error: {}", step, error);
+    }
+
     SPDLOG_DEBUG(" - update data: step: {}, error: {}", step, error);
     ui->errorPlot->graph(0)->addData(step, error);
     ui->errorPlot->graph(1)->addData(step, m_sim.getStopTolerance());

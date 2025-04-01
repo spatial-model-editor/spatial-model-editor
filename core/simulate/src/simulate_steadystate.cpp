@@ -85,10 +85,10 @@ void SteadyStateSimulation::initModel() {
 void SteadyStateSimulation::selectSimulator() {
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE &&
       m_model.getGeometry().getIsMeshValid()) {
-    SPDLOG_CRITICAL(" DUNE Simulator selected");
+    SPDLOG_DEBUG(" DUNE Simulator selected");
     m_simulator = std::make_unique<DuneSim>(m_model, m_compartmentIds);
   } else {
-    SPDLOG_CRITICAL(" Pixel Simulator selected");
+    SPDLOG_DEBUG(" Pixel Simulator selected");
     m_simulator = std::make_unique<PixelSim>(m_model, m_compartmentIds,
                                              m_compartmentSpeciesIds);
   }
@@ -357,11 +357,11 @@ void SteadyStateSimulation::run() {
   m_simulator->setStopRequested(false);
   m_stop_requested.store(false);
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE) {
-    SPDLOG_CRITICAL("  - runDune");
+    SPDLOG_DEBUG("  - runDune");
     runDune(std::numeric_limits<double>::max());
   } else if (m_model.getSimulationSettings().simulatorType ==
              SimulatorType::Pixel) {
-    SPDLOG_CRITICAL("  - runPixel");
+    SPDLOG_DEBUG("  - runPixel");
     runPixel(std::numeric_limits<double>::max());
   } else {
     SPDLOG_ERROR("Unknown simulator type");
