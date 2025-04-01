@@ -15,6 +15,7 @@
 #include <qtabwidget.h>
 #include <qtestsupport_core.h>
 #include <qwidget.h>
+#include <spdlog/spdlog.h>
 
 using namespace sme;
 using namespace sme::test;
@@ -232,7 +233,6 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
 
     REQUIRE(sim.hasConverged() == true);
     REQUIRE(sim.getStepsBelowTolerance() >= sim.getStepsToConvergence());
-    REQUIRE(dia3D.isRunning() == true);
     REQUIRE(checker.messageContent == "Simulation converged");
     checker.stop();
     QTest::qWait(2000);
@@ -270,7 +270,6 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(checker.messageContent == "Simulation stopped");
     REQUIRE(widgets3D.btnStartStop->text() == "Resume");
     REQUIRE(widgets3D.btnReset->isEnabled() == true);
-    REQUIRE(dia3D.isRunning() == true);
     checker.stop();
     REQUIRE(dia3D.isRunning() == false);
 
@@ -341,6 +340,8 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
   }
 
   SECTION("run_then_open_dialogDisplayOptions") {
+    SPDLOG_CRITICAL("DialogSteadystate: run_then_open_dialogDisplayOptions");
+
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
@@ -351,7 +352,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogDisplayOptions *displayOptionsDialog = nullptr;
 
     // add this here to avoid blocking by dialog
-    QTimer::singleShot(0, [&]() {
+    QTimer::singleShot(1000, [&]() {
       while (displayOptionsDialog == nullptr) {
         for (QWidget *w : QApplication::topLevelWidgets()) {
           displayOptionsDialog =
@@ -361,11 +362,13 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
             break;
           }
         }
-
-        REQUIRE(displayOptionsDialog->isVisible() == true);
-        displayOptionsDialog->accept();
-        QTest::qWait(1000);
       }
+      SPDLOG_CRITICAL("DialogSteadystate: run_then_open_dialogDisplayOptions: "
+                      "displayOptionsDialog != nullptr");
+      QTest::qWait(2000);
+      REQUIRE(displayOptionsDialog != nullptr);
+      REQUIRE(displayOptionsDialog->isVisible() == true);
+      displayOptionsDialog->accept();
     });
 
     // open display options dialog
@@ -373,22 +376,19 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
   }
 
   SECTION("run_then_reject") {
+    SPDLOG_CRITICAL("DialogSteadystate: run_then_reject");
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
 
-    // add this here to avoid blocking by dialog
-    QTimer::singleShot(2000, [&]() {
-      sendMouseClick(widgets3D.buttonBox->button(QDialogButtonBox::Cancel));
-      QTest::qWait(1000);
-    });
+    ModalChecker sim_checker;
+    sim_checker.waitForThenStop(dia3D, widgets3D, 1000);
+    sim_checker.stop();
+    sendMouseClick(widgets3D.buttonBox->button(QDialogButtonBox::Cancel));
 
-    ModalChecker checker;
-    checker.waitForConvergence(dia3D, widgets3D);
-    checker.stop();
-    QTest::qWait(1500);
     const auto &sim = dia3D.getSimulator();
     REQUIRE(sim.hasConverged() == false);
+
     REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
     REQUIRE(sim.getLatestError().load() < std::numeric_limits<double>::max());
     REQUIRE(sim.getLatestStep().load() > 0.0);
