@@ -268,7 +268,7 @@ bool DialogSteadystate::isRunning() const { return m_isRunning; }
 // lifecycle
 DialogSteadystate::DialogSteadystate(sme::model::Model &model,
                                      const QWidget *parent)
-    : m_model(model),
+    : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       m_sim(sme::simulate::SteadyStateSimulation(
           model, model.getSimulationSettings().simulatorType, 1e-6, 10,
           sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)) {

@@ -32,8 +32,7 @@ private:
 
   // simulation parameters:
   sme::model::Model &m_model;
-  std::unique_ptr<Ui::DialogSteadystate> ui =
-      std::make_unique<Ui::DialogSteadystate>();
+  std::unique_ptr<Ui::DialogSteadystate> ui;
   sme::simulate::SteadyStateSimulation m_sim;
   std::future<void> m_simulationFuture;
   QTimer m_plotRefreshTimer;
@@ -44,7 +43,7 @@ private:
 
   // helpers for plotting:
   VizMode m_vizmode = VizMode::_2D;
-  bool m_isRunning = ;
+  bool m_isRunning = false;
 
   // helpers for simulation
 
