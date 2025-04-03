@@ -96,6 +96,21 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getSolverErrormessage() == "");
   }
 
+  SECTION("Run_until_convergence_dune") {
+    simulate::SteadyStateSimulation sim(
+        m, simulate::SimulatorType::DUNE, 1e-4, 3,
+        simulate::SteadystateConvergenceMode::relative, 100000000, 1.0);
+    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
+    REQUIRE(sim.hasConverged() == false);
+    sim.run(); // run until convergence
+    REQUIRE(sim.hasConverged());
+    // stop_requested is ignored by DUNE, hence not checked
+    REQUIRE(sim.getLatestStep().load() > 0.0);
+    REQUIRE(sim.getLatestError().load() < 1e-4);
+    REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
+    REQUIRE(sim.getSolverErrormessage() == "");
+  }
+
   SECTION("Run_until_convergence_pixel_absolute_mode") {
     simulate::SteadyStateSimulation sim(
         m, simulate::SimulatorType::Pixel, 1e-3, 10,
@@ -115,8 +130,6 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
   }
 
   SECTION("Run_until_convergence_dune") {
-    // we know that it converges, hence timeout is absurd here and we set
-    // a large timestep to check for convergence too.
     // use a high stop tolerance to make it run faster too
     simulate::SteadyStateSimulation sim(
         m, simulate::SimulatorType::DUNE, 1e-3, 10,

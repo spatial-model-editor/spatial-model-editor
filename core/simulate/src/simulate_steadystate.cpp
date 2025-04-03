@@ -91,11 +91,12 @@ void SteadyStateSimulation::selectSimulator() {
 
 double SteadyStateSimulation::computeStoppingCriterion(
     const std::vector<double> &c_old, const std::vector<double> &c_new) {
-  // TODO: can I get dc/dt from the solvers somewhere?
+  // can I get dc/dt from the solvers somewhere?
 
   double sum_squared_dcdt = 0.0;
   double dcdt_norm = 0.0;
   if (m_stop_mode == SteadystateConvergenceMode::relative) {
+    SPDLOG_DEBUG("  - relative convergence mode");
     double sum_squared_c = 0.0;
 
     for (size_t i = 0; i < c_new.size(); ++i) {
@@ -110,7 +111,7 @@ double SteadyStateSimulation::computeStoppingCriterion(
     dcdt_norm = dcdt_norm / std::max(c_norm, 1e-12);
 
   } else {
-
+    SPDLOG_DEBUG("  - absolute convergence mode");
     for (size_t i = 0; i < c_new.size(); ++i) {
       double dcdt = (c_new[i] - c_old[i]) / std::max(m_dt, 1e-12);
       // Sum of squares for L2 norm calculations
@@ -133,7 +134,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
   if (normaliseOverAllSpecies) {
     double absoluteMax = 0;
 
-    // README: is this what 'simulate' intends to do as well?
+    // README: is this what 'simulate' does as well?
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       maxConcs.emplace_back(speciesToDraw[i].size(), absoluteMin);
       const auto c = m_simulator->getConcentrations(i);
@@ -502,13 +503,6 @@ void SteadyStateSimulation::setConvergenceMode(
 
 void SteadyStateSimulation::setStopTolerance(double stop_tolerance) {
   m_convergence_tolerance = stop_tolerance;
-}
-
-void SteadyStateSimulation::setSimulatorType(SimulatorType type) {
-  m_model.getSimulationSettings().simulatorType = type;
-  reset();
-  initModel();
-  selectSimulator();
 }
 
 void SteadyStateSimulation::setStepsToConvergence(

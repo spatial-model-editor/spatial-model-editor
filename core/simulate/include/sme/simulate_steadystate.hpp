@@ -223,14 +223,6 @@ public:
   void setStopTolerance(double stop_tolerance);
 
   /**
-   * @brief Set the type of simulator used. This resets all data and solver
-   * states and creates a new simulation with the new solver type
-   *
-   * @param type SimulatorType: Dune or Pixel
-   */
-  void setSimulatorType(SimulatorType type);
-
-  /**
    * @brief Set the number of steps the simulation needs to have a stable
    * solution for to consider it converged
    *
