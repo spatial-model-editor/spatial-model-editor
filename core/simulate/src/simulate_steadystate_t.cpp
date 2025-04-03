@@ -41,11 +41,6 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getSolverStopRequested() == false);
     REQUIRE(sim.getCompartmentSpeciesIdxs() ==
             std::vector<std::vector<std::size_t>>{{0, 1}});
-    REQUIRE(sim.getCompartmentSpeciesColors()[0][0] != 0);
-    REQUIRE(sim.getCompartmentSpeciesColors()[0][1] != 0);
-    REQUIRE(sim.getCompartmentSpeciesIds() ==
-            std::vector<std::vector<std::string>>{{"U", "V"}});
-
     auto img = sim.getConcentrationImage(
         std::vector<std::vector<std::size_t>>{{0, 1}}, true);
     REQUIRE(img.empty() == false);

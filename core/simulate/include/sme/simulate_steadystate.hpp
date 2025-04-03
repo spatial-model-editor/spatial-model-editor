@@ -4,8 +4,7 @@
 #include "sme/simulate_options.hpp"
 #include <cstddef>
 
-namespace sme {
-namespace simulate {
+namespace sme::simulate {
 enum class SteadystateConvergenceMode { absolute, relative };
 
 struct SteadyStateData {
@@ -15,32 +14,31 @@ struct SteadyStateData {
 class SteadyStateSimulation final {
 
   // data members for simulation
-  std::atomic<bool> m_has_converged;
-  std::atomic<bool> m_stop_requested;
+  std::atomic<bool> m_has_converged = false;
+  std::atomic<bool> m_stop_requested = false;
   sme::model::Model &m_model;
   std::unique_ptr<BaseSim> m_simulator;
   double m_convergence_tolerance;
-  std::size_t m_steps_below_tolerance;
+  std::size_t m_steps_below_tolerance = 0;
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
   SteadystateConvergenceMode m_stop_mode;
   double m_dt; // timestep to check for convergence, not solver timestep
-  std::mutex m_concentration_mutex;
+  std::mutex m_concentration_mutex = std::mutex();
 
   // data members for plotting
-  std::atomic<double> m_error;
-  std::atomic<double> m_step;
-  std::vector<const geometry::Compartment *> m_compartments;
-  std::vector<std::string> m_compartmentIds;
-  std::vector<std::size_t> m_compartmentIndices;
-  std::vector<std::vector<std::string>> m_compartmentSpeciesIds;
-  std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs;
-  std::vector<std::vector<QRgb>> m_compartmentSpeciesColors;
+  std::atomic<double> m_error = std::numeric_limits<double>::max();
+  std::atomic<double> m_step = 0.0;
+  std::vector<double> m_concentrations = {};
+  std::vector<const geometry::Compartment *> m_compartments = {};
+  std::vector<std::string> m_compartmentIds = {};
+  std::vector<std::size_t> m_compartmentIndices = {};
+  std::vector<std::vector<std::string>> m_compartmentSpeciesIds = {};
+  std::vector<std::vector<std::size_t>> m_compartmentSpeciesIdxs = {};
+  std::vector<std::vector<QRgb>> m_compartmentSpeciesColors = {};
 
   // helper functions for solvers
   void initModel();
-  void resetModel();
-  void resetSolver();
   void selectSimulator();
 
   // .. and for running them
@@ -55,7 +53,6 @@ class SteadyStateSimulation final {
       const std::vector<std::vector<std::size_t>> &speciesToDraw,
       bool normaliseOverAllSpecies) const;
   void recordData(double timestep, double error);
-  void resetData();
 
 public:
   // lifecycle
@@ -74,12 +71,12 @@ public:
    * @param timeout_ms Number of miliseconds the simulation is allowed to run
    * before stopping
    * @param dt Timestep to check for convergence (not solver timestep, this is
-   * set independently by the solver itself (!!))
+   * set independently by the solver itself (!))
    */
   SteadyStateSimulation(sme::model::Model &model, SimulatorType type,
                         double tolerance, std::size_t steps_to_convergence,
                         SteadystateConvergenceMode convergence_mode,
-                        std::size_t timeout_ms, double dt = 1e-2);
+                        double timeout_ms, double dt);
   ~SteadyStateSimulation() = default;
 
   // getters
@@ -132,7 +129,7 @@ public:
    *
    * @return std::vector<double>
    */
-  [[nodiscard]] std::vector<double> getConcentrations() const;
+  [[nodiscard]] const std::vector<double> &getConcentrations();
 
   /**
    * @brief Get the latest error value of the simulation
@@ -195,22 +192,6 @@ public:
    */
   [[nodiscard]] std::vector<std::vector<std::size_t>>
   getCompartmentSpeciesIdxs() const;
-
-  /**
-   * @brief Get the Compartment Species Colors object
-   *
-   * @return std::vector<std::vector<QRgb>>
-   */
-  [[nodiscard]] std::vector<std::vector<QRgb>>
-  getCompartmentSpeciesColors() const;
-
-  /**
-   * @brief Get the Compartment Species Ids object
-   *
-   * @return std::vector<std::vector<std::string>>
-   */
-  [[nodiscard]] std::vector<std::vector<std::string>>
-  getCompartmentSpeciesIds() const;
 
   /**
    * @brief Get the concentration image stack for a given timepoint
@@ -293,5 +274,4 @@ public:
    */
   void reset();
 };
-} // namespace simulate
-} // namespace sme
+} // namespace sme::simulate

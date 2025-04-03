@@ -24,15 +24,10 @@ namespace sme::simulate {
 SteadyStateSimulation::SteadyStateSimulation(
     sme::model::Model &model, sme::simulate::SimulatorType type,
     double tolerance, std::size_t steps_to_convergence,
-    SteadystateConvergenceMode convergence_mode, std::size_t timeout_ms,
-    double dt)
-    : m_has_converged(false), m_stop_requested(false), m_model(model),
-      m_convergence_tolerance(tolerance), m_steps_below_tolerance(0),
+    SteadystateConvergenceMode convergence_mode, double timeout_ms, double dt)
+    : m_model(model), m_convergence_tolerance(tolerance),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
-      m_stop_mode(convergence_mode),
-      m_error(std::numeric_limits<double>::max()), m_step(0),
-      m_compartmentIds(), m_compartmentSpeciesIds(),
-      m_compartmentSpeciesColors(), m_dt(dt) {
+      m_stop_mode(convergence_mode), m_dt(dt) {
   m_model.getSimulationSettings().simulatorType = type;
   initModel();
   selectSimulator();
@@ -92,20 +87,6 @@ void SteadyStateSimulation::selectSimulator() {
     m_simulator = std::make_unique<PixelSim>(m_model, m_compartmentIds,
                                              m_compartmentSpeciesIds);
   }
-}
-
-void SteadyStateSimulation::resetModel() {
-  m_model.getSimulationData().clear();
-  m_model.getSimulationSettings().times.clear();
-  initModel();
-}
-
-void SteadyStateSimulation::resetSolver() {
-  m_simulator = nullptr;
-  m_steps_below_tolerance = 0;
-  m_has_converged.store(false);
-  m_stop_requested.store(false);
-  selectSimulator();
 }
 
 double SteadyStateSimulation::computeStoppingCriterion(
@@ -186,11 +167,6 @@ void SteadyStateSimulation::recordData(double timestep, double error) {
   m_step.store(timestep);
 }
 
-void SteadyStateSimulation::resetData() {
-  m_error.store(std::numeric_limits<double>::max());
-  m_step.store(0);
-}
-
 //////////////////////////////////////////////////////////////////////////////////
 // helper functions to run stuff
 
@@ -218,14 +194,14 @@ void SteadyStateSimulation::runPixel(double time) {
     // lock/unlock by hand because no sensibly small scoep to use lockguard is
     // available here
     m_simulator->run(m_dt, m_timeout_ms,
-                     [&]() { return m_simulator->getStopRequested(); });
+                     [this]() { return m_simulator->getStopRequested(); });
     c_new = getConcentrations();
 
     auto current_error = computeStoppingCriterion(c_old, c_new);
 
     c_old.swap(c_new);
 
-    if (std::isnan(current_error) or std::isinf(current_error)) {
+    if (std::isnan(current_error) || std::isinf(current_error)) {
       m_simulator->setCurrentErrormessage(
           "Simulation failed: NaN  of Inf detected in norm");
       SPDLOG_DEBUG(m_simulator->errorMessage());
@@ -290,7 +266,7 @@ void SteadyStateSimulation::runDune(double time) {
   while (tNow + time * relativeTolerance < time) {
     try {
       m_simulator->run(m_dt, m_timeout_ms,
-                       [&]() { return m_simulator->getStopRequested(); });
+                       [this]() { return m_simulator->getStopRequested(); });
 
     } catch (const Dune::Exception &e) {
       m_simulator->setCurrentErrormessage(e.what());
@@ -302,7 +278,7 @@ void SteadyStateSimulation::runDune(double time) {
 
     double current_error = computeStoppingCriterion(c_old, c_new);
 
-    if (std::isnan(current_error) or std::isinf(current_error)) {
+    if (std::isnan(current_error) || std::isinf(current_error)) {
       m_simulator->setCurrentErrormessage(
           "Simulation failed: NaN  of Inf detected in norm");
       SPDLOG_DEBUG(m_simulator->errorMessage());
@@ -379,10 +355,21 @@ void SteadyStateSimulation::reset() {
     SPDLOG_DEBUG("  no simulator to reset");
     return;
   }
+  // reset model
+  m_model.getSimulationData().clear();
+  m_model.getSimulationSettings().times.clear();
+  initModel();
 
-  resetModel();
-  resetSolver();
-  resetData();
+  // reset simulator
+  m_simulator = nullptr;
+  m_steps_below_tolerance = 0;
+  m_has_converged.store(false);
+  m_stop_requested.store(false);
+  selectSimulator();
+
+  // reset data
+  m_error.store(std::numeric_limits<double>::max());
+  m_step.store(0);
 }
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -411,13 +398,14 @@ double SteadyStateSimulation::getStopTolerance() const {
   return m_convergence_tolerance;
 }
 
-std::vector<double> SteadyStateSimulation::getConcentrations() const {
-  std::vector<double> concs;
+const std::vector<double> &SteadyStateSimulation::getConcentrations() {
+  m_concentrations.clear();
+
   for (auto &&idx : m_compartmentIndices) {
     auto c = m_simulator->getConcentrations(idx);
-    concs.insert(concs.end(), c.begin(), c.end());
+    m_concentrations.insert(m_concentrations.end(), c.begin(), c.end());
   }
-  return concs;
+  return m_concentrations;
 }
 
 const std::atomic<double> &SteadyStateSimulation::getLatestStep() const {
@@ -450,14 +438,6 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
 
   auto imageSize = m_model.getGeometry().getImages().volume();
 
-  auto nestedVecToStr = [](const auto &vec) {
-    std::string str = "[";
-    for (const auto &v : vec) {
-      str += std::to_string(v) + ",";
-    }
-    return str;
-  };
-
   SPDLOG_DEBUG(" getConcentrationImage: compartments: {}, species to draw: {}, "
                "image size: {} x {} x {}",
                m_compartments.size(), speciesToDraw.size(), imageSize.width(),
@@ -479,8 +459,7 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
   for (std::size_t i = 0; i < m_compartments.size(); ++i) {
     const auto &voxels = m_compartments[i]->getVoxels();
     std::size_t nSpecies = m_compartmentSpeciesIds[i].size();
-    // TODO: place this under lock to avoid reading data while it is written to
-    // by the runner thread
+
     const auto concentrations = m_simulator->getConcentrations(i);
     const auto concentrationPadding = m_simulator->getConcentrationPadding();
 
@@ -510,29 +489,9 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
   return concentrationImageStack;
 }
 
-/**
- * @brief Get the Compartment Species Ids object
- *
- * @return std::vector<std::vector<std::size_t>>
- */
 [[nodiscard]] std::vector<std::vector<std::size_t>>
 SteadyStateSimulation::getCompartmentSpeciesIdxs() const {
   return m_compartmentSpeciesIdxs;
-}
-
-/**
- * @brief Get the Compartment Species Colors object
- *
- * @return std::vector<std::vector<QRgb>>
- */
-[[nodiscard]] std::vector<std::vector<QRgb>>
-SteadyStateSimulation::getCompartmentSpeciesColors() const {
-  return m_compartmentSpeciesColors;
-}
-
-[[nodiscard]] std::vector<std::vector<std::string>>
-SteadyStateSimulation::getCompartmentSpeciesIds() const {
-  return m_compartmentSpeciesIds;
 }
 
 //////////////////////////////////////////////////////////////////////////////////
