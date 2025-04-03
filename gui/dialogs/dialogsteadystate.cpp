@@ -164,10 +164,10 @@ void DialogSteadystate::reset() {
 
   // if the simulation future is valid, it has to be done before we can reset.
   // otherwise it's not running to begin with and can be reset
-  if ((m_simulationFuture.valid() and
+  if ((m_simulationFuture.valid() &&
        m_simulationFuture.wait_for(std::chrono::seconds(0)) ==
-           std::future_status::ready) or
-      not m_simulationFuture.valid()) {
+           std::future_status::ready) ||
+      m_simulationFuture.valid() == false) {
 
     m_sim.reset();
     SPDLOG_DEBUG(" - simulation is complete, resetting. sim values: stopTol: "
@@ -266,13 +266,12 @@ bool DialogSteadystate::isRunning() const { return m_isRunning; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
-DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
-    : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
+DialogSteadystate::DialogSteadystate(sme::model::Model &model,
+                                     const QWidget *parent)
+    : m_model(model),
       m_sim(sme::simulate::SteadyStateSimulation(
           model, model.getSimulationSettings().simulatorType, 1e-6, 10,
-          sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)),
-      m_simulationFuture(), m_plotRefreshTimer(), m_vizmode(VizMode::_2D),
-      m_isRunning(false) {
+          sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)) {
 
   SPDLOG_DEBUG("construct dialog steadystate with solver: {}",
                static_cast<int>(m_sim.getSimulatorType()));
@@ -307,8 +306,7 @@ void DialogSteadystate::displayOptionsClicked() {
   // we don´t care about timetpoints here
   dialog.ui->cmbNormaliseOverAllTimepoints->hide();
 
-  // we don´t care about adding observables here either for now. TODO: do we
-  // really don´t care?
+  // we don´t care about adding observables here either for now.
   dialog.ui->btnAddObservable->hide();
   dialog.ui->btnEditObservable->hide();
   dialog.ui->btnRemoveObservable->hide();

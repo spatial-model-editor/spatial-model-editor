@@ -622,11 +622,8 @@ void MainWindow::action_steadystate_analysis_triggered() {
     return;
   }
   DialogSteadystate dialogSteadystate(model);
-  if (dialogSteadystate.exec() == QDialog::Accepted) {
-    SPDLOG_DEBUG("Steadystate analysis accepted");
-  } else {
-    SPDLOG_DEBUG("Steadystate analysis cancelled");
-  }
+
+  // do nothing upon acceptance
 }
 
 void MainWindow::actionGeometry_grid_triggered(bool checked) {

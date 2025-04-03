@@ -137,9 +137,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       maxConcs.emplace_back(speciesToDraw[i].size(), absoluteMin);
       const auto c = m_simulator->getConcentrations(i);
-      for (std::size_t is : (speciesToDraw)[i]) {
-        absoluteMax = std::max(absoluteMax, *std::ranges::max_element(c));
-      }
+      absoluteMax = std::max(absoluteMax, *std::ranges::max_element(c));
     }
 
     for (auto &&c : maxConcs) {
@@ -151,7 +149,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       double speciesMax = 0;
       const auto c = m_simulator->getConcentrations(i);
-      for (std::size_t is : (speciesToDraw)[i]) {
+      for (std::size_t is : speciesToDraw[i]) {
         speciesMax = std::max(speciesMax, c[is]);
       }
       maxConcs.emplace_back(speciesToDraw[i].size(), speciesMax < absoluteMin

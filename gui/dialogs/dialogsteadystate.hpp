@@ -32,7 +32,8 @@ private:
 
   // simulation parameters:
   sme::model::Model &m_model;
-  std::unique_ptr<Ui::DialogSteadystate> ui;
+  std::unique_ptr<Ui::DialogSteadystate> ui =
+      std::make_unique<Ui::DialogSteadystate>();
   sme::simulate::SteadyStateSimulation m_sim;
   std::future<void> m_simulationFuture;
   QTimer m_plotRefreshTimer;
@@ -42,8 +43,8 @@ private:
   std::vector<std::vector<std::size_t>> m_compartmentSpeciesToPlot;
 
   // helpers for plotting:
-  VizMode m_vizmode;
-  bool m_isRunning;
+  VizMode m_vizmode = VizMode::_2D;
+  bool m_isRunning = ;
 
   // helpers for simulation
 
@@ -83,8 +84,8 @@ public:
    * @param parent Parent widget. Default is nullptr
    */
   explicit DialogSteadystate(sme::model::Model &model,
-                             QWidget *parent = nullptr);
-  ~DialogSteadystate();
+                             const QWidget *parent = nullptr);
+  ~DialogSteadystate() override;
 
   /**
    * @brief Get the Simulator object
