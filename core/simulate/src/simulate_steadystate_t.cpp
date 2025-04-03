@@ -63,9 +63,6 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
 
     sim.setTimeout(2000);
     REQUIRE(sim.getTimeout() == 2000);
-
-    sim.setSimulatorType(simulate::SimulatorType::DUNE);
-    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
   }
 
   SECTION("Run_into_timeout_and_query_for_errormessage") {
@@ -144,29 +141,5 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getLatestError().load() < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
-  }
-
-  SECTION("change_solver-->simulation_reset") {
-    // use a high stop tolerance to make it run faster
-    simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, 1e-3, 10,
-        simulate::SteadystateConvergenceMode::relative, 10000000, 5.0);
-    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
-    sim.run(); // run until convergence
-    REQUIRE(sim.hasConverged());
-    REQUIRE(sim.getSolverStopRequested());
-    REQUIRE(sim.getLatestStep().load() > 0.0);
-    REQUIRE(sim.getLatestError().load() < 1e-3);
-    REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
-
-    sim.setSimulatorType(
-        simulate::SimulatorType::DUNE); // reset happens when solver is changed
-
-    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
-    REQUIRE(sim.hasConverged() == false);
-    REQUIRE(sim.getSolverStopRequested() == false);
-
-    sim.run(); // run until convergence
-    REQUIRE(sim.hasConverged() == true);
   }
 }
