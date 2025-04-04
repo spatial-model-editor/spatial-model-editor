@@ -69,12 +69,6 @@ void SteadyStateSimulation::initModel() {
     }
     ++i;
   }
-
-  SPDLOG_DEBUG("  init Model done, variable sizes: {}, {}, {}, {}, {}, {}, {}",
-               m_compartmentIds.size(), m_compartmentSpeciesIds.size(),
-               m_compartmentSpeciesIdxs.size(),
-               m_compartmentSpeciesColors.size(), m_compartments.size(),
-               m_compartmentIndices.size(), 0);
 }
 
 void SteadyStateSimulation::selectSimulator() {
@@ -183,10 +177,6 @@ void SteadyStateSimulation::runPixel(double time) {
   constexpr double relativeTolerance = 1e-12;
   timer.start();
   std::size_t steps = 0;
-  SPDLOG_DEBUG("  - time: {}, current time: {}, steps_below_tolerance: "
-               "{}, stoprequested: {}, timeout: {}",
-               time, tNow, m_steps_below_tolerance,
-               m_simulator->getStopRequested(), m_timeout_ms);
   while (tNow + time * relativeTolerance < time) {
 
     steps++;
@@ -207,12 +197,6 @@ void SteadyStateSimulation::runPixel(double time) {
       m_simulator->setStopRequested(true);
       break;
     }
-
-    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
-                 "steps_below_tolerance: "
-                 "{}",
-                 tNow, current_error, m_convergence_tolerance,
-                 m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       m_steps_below_tolerance++;
@@ -286,12 +270,6 @@ void SteadyStateSimulation::runDune(double time) {
     }
 
     c_old.swap(c_new);
-
-    SPDLOG_DEBUG("  - time: {}, current error: {}, tolerance: {}, "
-                 "steps_below_tolerance: "
-                 "{}",
-                 tNow, current_error, m_convergence_tolerance,
-                 m_steps_below_tolerance);
 
     if (current_error < m_convergence_tolerance) {
       ++m_steps_below_tolerance;
@@ -436,11 +414,6 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
     bool normaliseOverAllSpecies) {
 
   auto imageSize = m_model.getGeometry().getImages().volume();
-
-  SPDLOG_DEBUG(" getConcentrationImage: compartments: {}, species to draw: {}, "
-               "image size: {} x {} x {}",
-               m_compartments.size(), speciesToDraw.size(), imageSize.width(),
-               imageSize.height(), imageSize.depth());
 
   sme::common::ImageStack concentrationImageStack(
       imageSize, QImage::Format_ARGB32_Premultiplied);

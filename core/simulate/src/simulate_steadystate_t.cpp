@@ -142,4 +142,21 @@ TEST_CASE("SimulateSteadyState", "[core/simulate/simulate_steadystate]") {
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
+  SECTION("Reset_restores_state") {
+    simulate::SteadyStateSimulation sim(
+        m, simulate::SimulatorType::Pixel, 1e-4, 10,
+        simulate::SteadystateConvergenceMode::relative, 100000000, 1.0);
+    REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
+    REQUIRE(sim.hasConverged() == false);
+    sim.run(); // run until convergence
+    REQUIRE(sim.hasConverged());
+    sim.reset();
+    REQUIRE(sim.getStepsBelowTolerance() == 0);
+    REQUIRE(sim.getStepsToConvergence() == 10);
+    REQUIRE(sim.hasConverged() == false);
+    REQUIRE(sim.getStopTolerance() == 1e-4);
+    REQUIRE(sim.getDt() == 1.0);
+    REQUIRE(sim.getLatestError().load() == std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep().load() == 0.0);
+  }
 }
