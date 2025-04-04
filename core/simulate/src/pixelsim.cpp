@@ -373,6 +373,12 @@ const common::ImageStack &PixelSim::errorImages() const {
   return currentErrorImages;
 }
 
+bool PixelSim::getStopRequested() const { return stopRequested.load(); }
+
 void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
+
+void PixelSim::setCurrentErrormessage(const std::string &msg) {
+  currentErrorMessage = msg;
+}
 
 } // namespace sme::simulate

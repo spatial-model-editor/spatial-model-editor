@@ -4,6 +4,9 @@
 
 set -e -x
 
+# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # start a virtual display for the Qt GUI tests
 # it can take a while before the display is ready,
 # which is why it is the first thing done here

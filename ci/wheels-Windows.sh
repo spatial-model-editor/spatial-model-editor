@@ -4,6 +4,9 @@
 
 set -e -x
 
+# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # Use native Windows python
 PYDIR=$(ls -d /c/hostedtoolcache/windows/Python/3.12.*)
 export PATH="$PYDIR/x64:$PYDIR/x64/Scripts:$PATH"
