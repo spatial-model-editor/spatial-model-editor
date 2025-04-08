@@ -622,8 +622,7 @@ void MainWindow::action_steadystate_analysis_triggered() {
     return;
   }
   DialogSteadystate dialogSteadystate(model);
-
-  // do nothing upon acceptance
+  dialogSteadystate.exec();
 }
 
 void MainWindow::actionGeometry_grid_triggered(bool checked) {
