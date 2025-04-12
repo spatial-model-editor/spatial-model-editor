@@ -4,6 +4,9 @@
 
 set -e -x
 
+# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 ls /host
 
 mkdir /project/build

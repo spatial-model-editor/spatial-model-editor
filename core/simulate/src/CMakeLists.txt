@@ -13,6 +13,7 @@ target_sources(
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
+          simulate_steadystate.cpp
           simulate.cpp
           simulate_data.cpp
           simulate_options.cpp)
@@ -32,7 +33,8 @@ if(BUILD_TESTING)
            pixelsim_t.cpp
            simulate_data_t.cpp
            simulate_options_t.cpp
-           simulate_t.cpp)
+           simulate_t.cpp
+           simulate_steadystate_t.cpp)
 endif()
 if(SME_BUILD_BENCHMARKS)
   target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)

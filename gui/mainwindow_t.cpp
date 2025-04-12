@@ -246,6 +246,9 @@ TEST_CASE("MainWindow: tools menu", tags) {
   REQUIRE(actionSimTypeDUNE != nullptr);
   auto *actionSimTypePixel{w.findChild<QAction *>("actionSimTypePixel")};
   REQUIRE(actionSimTypePixel != nullptr);
+  auto *actionSteady_state_analysis{
+      w.findChild<QAction *>("actionSteady_state_analysis")};
+  REQUIRE(actionSteady_state_analysis != nullptr);
   w.show();
   waitFor(&w);
   ModalWidgetTimer mwt;

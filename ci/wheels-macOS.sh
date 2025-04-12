@@ -4,6 +4,9 @@
 
 set -e -x
 
+# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 export CCACHE_BASEDIR=/private
 export CMAKE_GENERATOR="Ninja"
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
