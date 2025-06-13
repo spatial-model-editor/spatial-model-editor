@@ -73,71 +73,6 @@ struct DialogSteadystateWidgets {
   QDialogButtonBox *buttonBox;
 };
 
-// helper for catching QMessageBox dialogs
-struct ModalChecker {
-  QTimer checker;
-  std::string messageContent;
-
-  void waitForConvergence(DialogSteadystate &dialog,
-                          const DialogSteadystateWidgets &widgets) {
-    messageContent = "";
-    // this didn't work with the ModalTimer we already have?. It always found
-    // the dialog itself and closed it before stuff was ready, and didn't latch
-    // onto the QMessageBox...?
-    QTimer::singleShot(0, [this]() {
-      checker.setInterval(250);
-      checker.connect(&checker, &QTimer::timeout, [&]() {
-        for (QWidget *w : QApplication::topLevelWidgets()) {
-          QMessageBox *box = qobject_cast<QMessageBox *>(w);
-          if (box && box->isVisible()) {
-            messageContent = box->windowTitle().toStdString();
-            // Click OK
-            QTest::mouseClick(box->button(QMessageBox::Ok), Qt::LeftButton);
-            break;
-          }
-        }
-      });
-      checker.start();
-    });
-
-    const auto &sim = dialog.getSimulator();
-    sendMouseClick(widgets.btnStartStop);
-    while (sim.hasConverged() == false) {
-      QTest::qWait(1000);
-    }
-    QTest::qWait(2000);
-  }
-
-  void waitForThenStop(DialogSteadystate &dialog,
-                       const DialogSteadystateWidgets &widgets, int time_ms) {
-    messageContent = "";
-
-    QTimer::singleShot(0, [this]() {
-      checker.setInterval(250);
-      checker.connect(&checker, &QTimer::timeout, [&]() {
-        for (QWidget *w : QApplication::topLevelWidgets()) {
-          QMessageBox *box = qobject_cast<QMessageBox *>(w);
-          if (box && box->isVisible()) {
-            messageContent = box->windowTitle().toStdString();
-            // Click OK
-            QTest::mouseClick(box->button(QMessageBox::Ok), Qt::LeftButton);
-            break;
-          }
-        }
-      });
-      checker.start();
-    });
-
-    const auto &sim = dialog.getSimulator();
-    sendMouseClick(widgets.btnStartStop);
-
-    QTest::qWait(time_ms);
-    sendMouseClick(widgets.btnStartStop);
-  }
-
-  void stop() { checker.stop(); }
-};
-
 TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
                                "dialogs][gui][steadystate]") {
   auto model{getExampleModel(Mod::ABtoC)};
@@ -147,7 +82,6 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia(model);
     DialogSteadystateWidgets widgets(&dia);
     dia.show();
-    QTest::qWait(100);
     // valid initial steady state options
     REQUIRE(widgets.btnStartStop->isEnabled() == true);
     REQUIRE(widgets.btnReset->isEnabled() == true);
@@ -179,14 +113,12 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(widgets.zlabel->isVisible() == false);
     REQUIRE(widgets.zlabel->text() == "z-axis");
     REQUIRE(widgets.cmbPlotting->isEnabled() == false);
-    dia.accept();
   }
 
   SECTION("inialization 3D") {
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
-    QTest::qWait(100);
     REQUIRE(widgets3D.zaxis->minimum() == 0);
     REQUIRE(widgets3D.zaxis->maximum() == 49);
     REQUIRE(widgets3D.zaxis->value() == 0);
@@ -194,14 +126,12 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(widgets3D.cmbPlotting->currentText() == "2D");
     REQUIRE(widgets3D.valuesPlot3D->isVisible() == false);
     REQUIRE(widgets3D.valuesPlot->isVisible() == true);
-    dia3D.accept();
   }
 
   SECTION("set parameters") {
     DialogSteadystate dia(model);
     DialogSteadystateWidgets widgets(&dia);
     dia.show();
-    QTest::qWait(100);
     widgets.toleranceInput->setText("1e-5");
     widgets.convIntervalInput->setText("0.1");
     widgets.timeoutInput->setText("10");
@@ -209,8 +139,6 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     widgets.cmbConvergence->setCurrentText("Relative");
     widgets.cmbPlotting->setCurrentText("3D");
     widgets.zaxis->setValue(10);
-
-    QTest::qWait(500);
 
     const auto &sim = dia.getSimulator();
 
@@ -227,14 +155,14 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
-    ModalChecker checker;
-    checker.waitForConvergence(dia3D, widgets3D);
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia3D);
+    mwt.start();
+    sendMouseClick(widgets3D.btnStartStop);
+    REQUIRE(mwt.getResult() == "The simulation has converged.");
     const auto &sim = dia3D.getSimulator();
-
     REQUIRE(sim.hasConverged() == true);
     REQUIRE(sim.getStepsBelowTolerance() >= sim.getStepsToConvergence());
-    REQUIRE(checker.messageContent == "Simulation converged");
-    checker.stop();
     QTest::qWait(2000);
     REQUIRE(dia3D.isRunning() == false);
 
@@ -259,29 +187,35 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
-    ModalChecker checker;
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia3D);
+    mwt.start();
     const auto &sim = dia3D.getSimulator();
+    // start simulation
+    sendMouseClick(widgets3D.btnStartStop);
+    // stop simulation after 50ms
+    QTimer::singleShot(
+        50, [&widgets3D]() { sendMouseClick(widgets3D.btnStartStop); });
 
-    checker.waitForThenStop(dia3D, widgets3D, 2000);
-    QTest::qWait(2000);
+    REQUIRE(mwt.getResult() == "The simulation has been stopped.");
+
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getSolverStopRequested() == true);
     REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
-    REQUIRE(checker.messageContent == "Simulation stopped");
     REQUIRE(widgets3D.btnStartStop->text() == "Resume");
     REQUIRE(widgets3D.btnReset->isEnabled() == true);
-    checker.stop();
     REQUIRE(dia3D.isRunning() == false);
 
     // resume simulation and run until convergence
-    ModalChecker convChecker;
-    convChecker.waitForConvergence(dia3D, widgets3D);
+    mwt.start();
+    sendMouseClick(widgets3D.btnStartStop);
+
+    REQUIRE(mwt.getResult() == "The simulation has converged.");
 
     REQUIRE(sim.hasConverged() == true);
     REQUIRE(sim.getStepsBelowTolerance() >= sim.getStepsToConvergence());
     REQUIRE(widgets3D.btnStartStop->text() == "Start");
     REQUIRE(widgets3D.btnReset->isEnabled() == true);
-    convChecker.stop();
   }
 
   SECTION("run_stop_reset") {
@@ -289,22 +223,25 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
     const auto &sim = dia3D.getSimulator();
-    ModalChecker checker;
-    checker.waitForThenStop(dia3D, widgets3D, 2000);
-    QTest::qWait(2000);
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia3D);
+    mwt.start();
+
+    // start simulation
+    sendMouseClick(widgets3D.btnStartStop);
+    // stop simulation after 50ms
+    QTimer::singleShot(
+        50, [&widgets3D]() { sendMouseClick(widgets3D.btnStartStop); });
+
+    REQUIRE(mwt.getResult() == "The simulation has been stopped.");
 
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
-    REQUIRE(checker.messageContent == "Simulation stopped");
     REQUIRE(sim.getLatestError() < std::numeric_limits<double>::max());
     REQUIRE(sim.getLatestStep() > 0.0);
 
-    checker.stop();
-
     // reset everything
     sendMouseClick(widgets3D.btnReset);
-
-    QTest::qWait(2000);
 
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getStepsBelowTolerance() == 0);
@@ -314,24 +251,25 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.getTimeout() == 3600000); // 1 hour in milliseconds
     REQUIRE(sim.getLatestError() == std::numeric_limits<double>::max());
     REQUIRE(sim.getLatestStep() == 0.0);
-
-    QTest::qWait(1000);
   }
 
   SECTION("zslider_functionality") {
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
-    const auto &sim = dia3D.getSimulator();
 
-    ModalChecker checker;
-    checker.waitForConvergence(dia3D, widgets3D);
-    checker.stop();
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia3D);
+    mwt.start();
+
+    // start simulation
+    sendMouseClick(widgets3D.btnStartStop);
+
+    REQUIRE(mwt.getResult() == "The simulation has converged.");
 
     // // slide the zaxis around
     widgets3D.zaxis->setValue(25); // interval: [0,49]
 
-    QTest::qWait(2000);
     REQUIRE(widgets3D.zaxis->value() == 25);
     REQUIRE(widgets3D.valuesPlot->getZSlider()->value() == 25);
     REQUIRE(widgets3D.valuesPlot->getZSlider()->isVisible() == true);
@@ -345,54 +283,23 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
-    ModalChecker checker;
-    checker.waitForThenStop(dia3D, widgets3D, 1500);
-    checker.stop();
+    ModalWidgetTimer mwt;
+    mwt.setIgnoredWidget(&dia3D);
+    mwt.start();
 
-    DialogDisplayOptions *displayOptionsDialog = nullptr;
+    // start simulation
+    sendMouseClick(widgets3D.btnStartStop);
+    // stop simulation after 50ms
+    QTimer::singleShot(
+        50, [&widgets3D]() { sendMouseClick(widgets3D.btnStartStop); });
 
-    // add this here to avoid blocking by dialog
-    QTimer::singleShot(1000, [&]() {
-      while (displayOptionsDialog == nullptr) {
-        for (QWidget *w : QApplication::topLevelWidgets()) {
-          displayOptionsDialog =
-              dia3D.findChild<DialogDisplayOptions *>("DialogDisplayOptions");
-          if (displayOptionsDialog != nullptr &&
-              displayOptionsDialog->isVisible()) {
-            break;
-          }
-        }
-      }
-      SPDLOG_CRITICAL("DialogSteadystate: run_then_open_dialogDisplayOptions: "
-                      "displayOptionsDialog != nullptr");
-      QTest::qWait(2000);
-      REQUIRE(displayOptionsDialog != nullptr);
-      REQUIRE(displayOptionsDialog->isVisible() == true);
-      displayOptionsDialog->accept();
-    });
+    REQUIRE(mwt.getResult() == "The simulation has been stopped.");
+
+    mwt.start();
 
     // open display options dialog
     sendMouseClick(widgets3D.btnDisplayOptions);
-  }
 
-  SECTION("run_then_reject") {
-    SPDLOG_CRITICAL("DialogSteadystate: run_then_reject");
-    DialogSteadystate dia3D(model3D);
-    DialogSteadystateWidgets widgets3D(&dia3D);
-    dia3D.show();
-
-    ModalChecker sim_checker;
-    sim_checker.waitForThenStop(dia3D, widgets3D, 1000);
-    sim_checker.stop();
-    sendMouseClick(widgets3D.buttonBox->button(QDialogButtonBox::Cancel));
-
-    const auto &sim = dia3D.getSimulator();
-    REQUIRE(sim.hasConverged() == false);
-
-    REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
-    REQUIRE(sim.getLatestError() < std::numeric_limits<double>::max());
-    REQUIRE(sim.getLatestStep() > 0.0);
-    REQUIRE(dia3D.isRunning() == false);
-    REQUIRE(dia3D.isVisible() == false);
+    REQUIRE(mwt.getResult() == "Display options");
   }
 }

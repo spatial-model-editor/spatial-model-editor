@@ -183,8 +183,6 @@ void SteadyStateSimulation::runPixel(double time) {
   while (tNow + time * relativeTolerance < time) {
 
     steps++;
-    // lock/unlock by hand because no sensibly small scoep to use lockguard is
-    // available here
     m_simulator->run(m_dt, m_timeout_ms,
                      [this]() { return m_simulator->getStopRequested(); });
     c_new = getConcentrations();

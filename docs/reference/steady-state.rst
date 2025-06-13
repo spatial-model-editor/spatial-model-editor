@@ -9,7 +9,7 @@ Steady state analysis
 
    The steadystate analysis window.
 
-*SME* provides a steady state analysis tool that can be used to find an attractive fixtpoint of the currently loaded model for the current parameters. It does this by using the existing solvers as pseudo-timestepping methods, which will run until the (possibly normalised) time derivative of the
+*SME* provides a steady state analysis tool that can be used to find an attractive fixed point of the currently loaded model for the current parameters. It does this by using the existing solvers as pseudo-timestepping methods, which will run until the (possibly normalised) time derivative of the
 concentrations does not change significantly anymore.
 Because of this, you need to use the normal interfaces provided by the main window to change parameters of the model or any other properties of the solver or system.
 
