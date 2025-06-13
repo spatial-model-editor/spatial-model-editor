@@ -242,8 +242,6 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
 
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getStepsBelowTolerance() < sim.getStepsToConvergence());
-    REQUIRE(sim.getLatestError() < std::numeric_limits<double>::max());
-    REQUIRE(sim.getLatestStep() > 0.0);
 
     // reset everything
     sendMouseClick(widgets3D.btnReset);

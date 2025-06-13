@@ -87,7 +87,6 @@ void SteadyStateSimulation::initSimulator() {
 
 double SteadyStateSimulation::computeStoppingCriterion(
     const std::vector<double> &c_old, const std::vector<double> &c_new) {
-  // can I get dc/dt from the solvers somewhere?
 
   double sum_squared_dcdt = 0.0;
   double dcdt_norm = 0.0;
