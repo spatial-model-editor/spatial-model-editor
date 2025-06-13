@@ -143,9 +143,7 @@ void DialogSteadystate::initConcPlot() {
   }
   m_vizmode = VizMode::_2D;
   ui->valuesPlot3D->hide();
-  // Force visibility changes to be processed
-  QCoreApplication::processEvents();
-  QTimer::singleShot(0, this, &DialogSteadystate::update);
+  updatePlot();
 }
 
 void DialogSteadystate::resetPlots() {
@@ -191,8 +189,7 @@ void DialogSteadystate::runSim() {
       std::launch::async, &sme::simulate::SteadyStateSimulation::run, &m_sim);
 }
 
-void DialogSteadystate::update() {
-
+void DialogSteadystate::updatePlot() {
   // update error plot
   auto error = m_sim.getLatestError();
   auto step = m_sim.getLatestStep();
@@ -329,18 +326,13 @@ void DialogSteadystate::displayOptionsClicked() {
         dialog.getNormaliseOverAllSpecies();
     m_model.setDisplayOptions(m_displayoptions);
     updateSpeciesToPlot();
-
-    // use this to wait for the dialog to finish updating before continuing
-    // interval of 0 in the 'singleshot' calls immediatelly queues the update
-    // function
-    QCoreApplication::processEvents();
-    QTimer::singleShot(0, this, &DialogSteadystate::update);
+    updatePlot();
   }
 }
 
 void DialogSteadystate::plotUpdateTimerTimeout() {
 
-  update();
+  updatePlot();
 
   // check if simulation has converged or stopped early
   if (m_simulationFuture.valid() &&
@@ -407,8 +399,6 @@ void DialogSteadystate::plottingCurrentIndexChanged(
     ui->valuesPlot->setZIndex(ui->zaxis->value());
     m_vizmode = VizMode::_2D;
   }
-  QCoreApplication::processEvents();
-  QTimer::singleShot(0, this, &DialogSteadystate::update);
   SPDLOG_DEBUG(" - m_vizmode: {}", static_cast<int>(m_vizmode));
 }
 
@@ -498,6 +488,5 @@ void DialogSteadystate::btnCancelClicked() {
 void DialogSteadystate::zaxisValueChanged(int value) {
   SPDLOG_DEBUG("zaxis value changed to {}", value);
   ui->valuesPlot->setZIndex(value);
-  QCoreApplication::processEvents();
-  QTimer::singleShot(0, this, &DialogSteadystate::update);
+  updatePlot();
 }

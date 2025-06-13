@@ -52,7 +52,7 @@ private:
   void connectSlots();
   void initErrorPlot();
   void initConcPlot();
-  void update();
+  void updatePlot();
   void finalise();
   void resetPlots();
   void reset();
