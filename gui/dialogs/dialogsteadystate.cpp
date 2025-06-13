@@ -280,10 +280,16 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model,
   m_compartmentSpeciesToPlot = m_sim.getCompartmentSpeciesIdxs();
   m_compartmentNames = m_model.getCompartments().getIds();
   m_speciesNames.resize(m_compartmentNames.size());
+  std::size_t nSpecies = 0;
   for (std::size_t i = 0; i < m_compartmentNames.size(); ++i) {
     m_speciesNames[i] = m_model.getSpecies().getNames(m_compartmentNames[i]);
+    nSpecies += m_speciesNames[i].size();
   }
   m_displayoptions = m_model.getDisplayOptions(); // get default display options
+  if (m_displayoptions.showSpecies.size() != nSpecies) {
+    // if there is a mismatch here just set all species to be visible
+    m_displayoptions.showSpecies.resize(nSpecies, true);
+  }
 
   // initialize ui elements and plotting panes
   initUi();
@@ -300,10 +306,10 @@ DialogSteadystate::~DialogSteadystate() = default;
 // slots
 void DialogSteadystate::displayOptionsClicked() {
   DialogDisplayOptions dialog(m_compartmentNames, m_speciesNames,
-                              m_model.getDisplayOptions(),
+                              m_displayoptions,
                               std::vector<PlotWrapperObservable>{}, this);
 
-  // we don´t care about timetpoints here
+  // we don´t care about timepoints here
   dialog.ui->cmbNormaliseOverAllTimepoints->hide();
 
   // we don´t care about adding observables here either for now.
