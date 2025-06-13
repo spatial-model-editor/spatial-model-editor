@@ -271,7 +271,7 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model,
     : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
       m_sim(sme::simulate::SteadyStateSimulation(
           model, model.getSimulationSettings().simulatorType, 1e-6, 10,
-          sme::simulate::SteadystateConvergenceMode::relative, 3600000, 1)) {
+          sme::simulate::SteadyStateConvergenceMode::relative, 3600000, 1)) {
 
   SPDLOG_DEBUG("construct dialog steadystate with solver: {}",
                static_cast<int>(m_sim.getSimulatorType()));
@@ -371,10 +371,10 @@ void DialogSteadystate::convergenceCurrentIndexChanged(int index) {
 
   if (index == 0) {
     m_sim.setConvergenceMode(
-        sme::simulate::SteadystateConvergenceMode::absolute);
+        sme::simulate::SteadyStateConvergenceMode::absolute);
   } else {
     m_sim.setConvergenceMode(
-        sme::simulate::SteadystateConvergenceMode::relative);
+        sme::simulate::SteadyStateConvergenceMode::relative);
   }
 }
 

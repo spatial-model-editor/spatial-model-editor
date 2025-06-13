@@ -1,4 +1,5 @@
 #include "sme/simulate_steadystate.hpp"
+#include "basesim.hpp"
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/duneconverter.hpp"
@@ -24,7 +25,7 @@ namespace sme::simulate {
 SteadyStateSimulation::SteadyStateSimulation(
     sme::model::Model &model, sme::simulate::SimulatorType type,
     double tolerance, std::size_t steps_to_convergence,
-    SteadystateConvergenceMode convergence_mode, double timeout_ms, double dt)
+    SteadyStateConvergenceMode convergence_mode, double timeout_ms, double dt)
     : m_model(model), m_convergence_tolerance(tolerance),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
       m_stop_mode(convergence_mode), m_dt(dt) {
@@ -32,6 +33,8 @@ SteadyStateSimulation::SteadyStateSimulation(
   initModel();
   selectSimulator();
 }
+
+SteadyStateSimulation::~SteadyStateSimulation() = default;
 
 //////////////////////////////////////////////////////////////////////////////////
 // helper functions for solver setup
@@ -89,7 +92,7 @@ double SteadyStateSimulation::computeStoppingCriterion(
 
   double sum_squared_dcdt = 0.0;
   double dcdt_norm = 0.0;
-  if (m_stop_mode == SteadystateConvergenceMode::relative) {
+  if (m_stop_mode == SteadyStateConvergenceMode::relative) {
     SPDLOG_DEBUG("  - relative convergence mode");
     double sum_squared_c = 0.0;
 
@@ -359,7 +362,7 @@ const std::atomic<bool> &SteadyStateSimulation::getStopRequested() const {
   return m_stop_requested;
 }
 
-SteadystateConvergenceMode SteadyStateSimulation::getConvergenceMode() const {
+SteadyStateConvergenceMode SteadyStateSimulation::getConvergenceMode() const {
   return m_stop_mode;
 }
 
@@ -470,7 +473,7 @@ SteadyStateSimulation::getCompartmentSpeciesIdxs() const {
 // state setters
 
 void SteadyStateSimulation::setConvergenceMode(
-    SteadystateConvergenceMode mode) {
+    SteadyStateConvergenceMode mode) {
   m_stop_mode = mode;
 }
 

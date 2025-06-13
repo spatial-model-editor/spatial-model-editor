@@ -219,7 +219,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.getDt() == 0.1);
     REQUIRE(sim.getTimeout() == 10000); // 10 seconds in milliseconds
     REQUIRE(sim.getConvergenceMode() ==
-            sme::simulate::SteadystateConvergenceMode::relative);
+            sme::simulate::SteadyStateConvergenceMode::relative);
     REQUIRE(sim.getSimulatorType() == sme::simulate::SimulatorType::DUNE);
   }
 

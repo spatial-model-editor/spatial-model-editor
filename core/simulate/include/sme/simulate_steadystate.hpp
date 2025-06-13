@@ -1,11 +1,11 @@
-#include "../../src/basesim.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate_options.hpp"
 #include <cstddef>
 
 namespace sme::simulate {
-enum class SteadystateConvergenceMode { absolute, relative };
+class BaseSim;
+enum class SteadyStateConvergenceMode { absolute, relative };
 
 struct SteadyStateData {
   double step;
@@ -22,7 +22,7 @@ class SteadyStateSimulation final {
   std::size_t m_steps_below_tolerance = 0;
   std::size_t m_steps_to_convergence;
   double m_timeout_ms;
-  SteadystateConvergenceMode m_stop_mode;
+  SteadyStateConvergenceMode m_stop_mode;
   double m_dt; // timestep to check for convergence, not solver timestep
   std::mutex m_concentration_mutex = std::mutex();
 
@@ -75,9 +75,9 @@ public:
    */
   SteadyStateSimulation(sme::model::Model &model, SimulatorType type,
                         double tolerance, std::size_t steps_to_convergence,
-                        SteadystateConvergenceMode convergence_mode,
+                        SteadyStateConvergenceMode convergence_mode,
                         double timeout_ms, double dt);
-  ~SteadyStateSimulation() = default;
+  ~SteadyStateSimulation();
 
   // getters
 
@@ -100,7 +100,7 @@ public:
    *
    * @return SteadystateConvergenceMode
    */
-  [[nodiscard]] SteadystateConvergenceMode getConvergenceMode() const;
+  [[nodiscard]] SteadyStateConvergenceMode getConvergenceMode() const;
 
   /**
    * @brief Get the number of steps below tolerance required to consider the
@@ -213,7 +213,7 @@ public:
    *
    * @param mode SteadystateConvergenceMode: absolute or relative
    */
-  void setConvergenceMode(SteadystateConvergenceMode mode);
+  void setConvergenceMode(SteadyStateConvergenceMode mode);
 
   /**
    * @brief Set the tolerance used to determine convergence
