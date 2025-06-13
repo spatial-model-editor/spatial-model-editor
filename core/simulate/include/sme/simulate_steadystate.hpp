@@ -35,7 +35,7 @@ class SteadyStateSimulation final {
 
   // helper functions for solvers
   void initModel();
-  void selectSimulator();
+  void initSimulator();
 
   // .. and for running them
   void runDune(double time);
@@ -58,7 +58,6 @@ public:
    * @brief Construct a new Steady State Simulation object
    *
    * @param model Model to use
-   * @param type SimulatorType to use: Dune or Pixel
    * @param tolerance tolerance for convergence the stopping criterion must be
    * smaller than this to be considered converged
    * @param steps_to_convergence Number of timesteps the simulation needs to
@@ -70,8 +69,8 @@ public:
    * @param dt Timestep to check for convergence (not solver timestep, this is
    * set independently by the solver itself (!))
    */
-  SteadyStateSimulation(sme::model::Model &model, SimulatorType type,
-                        double tolerance, std::size_t steps_to_convergence,
+  SteadyStateSimulation(sme::model::Model &model, double tolerance,
+                        std::size_t steps_to_convergence,
                         SteadyStateConvergenceMode convergence_mode,
                         double timeout_ms, double dt);
   ~SteadyStateSimulation();

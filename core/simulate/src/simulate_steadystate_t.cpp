@@ -22,9 +22,10 @@ TEST_CASE(
   const double stop_tolerance = 1e-6;
 
   SECTION("construct") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
-        simulate::SteadyStateConvergenceMode::relative, 1000, 1e-2);
+        m, stop_tolerance, 10, simulate::SteadyStateConvergenceMode::relative,
+        1000, 1e-2);
     REQUIRE(sim.getStopTolerance() == stop_tolerance);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.getDt() == 1e-2);
@@ -68,9 +69,10 @@ TEST_CASE(
   }
 
   SECTION("Run_into_timeout_and_query_for_errormessage") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
-        simulate::SteadyStateConvergenceMode::relative, 50, 1e-2);
+        m, stop_tolerance, 10, simulate::SteadyStateConvergenceMode::relative,
+        50, 1e-2);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run for 500 ms then timeout
@@ -81,9 +83,10 @@ TEST_CASE(
   }
 
   SECTION("Run_until_convergence_pixel") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, stop_tolerance, 10,
-        simulate::SteadyStateConvergenceMode::relative, 100000000, 5.0);
+        m, stop_tolerance, 10, simulate::SteadyStateConvergenceMode::relative,
+        100000000, 5.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run until convergence
@@ -96,9 +99,10 @@ TEST_CASE(
   }
 
   SECTION("Run_until_convergence_dune") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::DUNE, 1e-4, 3,
-        simulate::SteadyStateConvergenceMode::relative, 100000000, 1.0);
+        m, 1e-4, 3, simulate::SteadyStateConvergenceMode::relative, 100000000,
+        1.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run until convergence
@@ -111,9 +115,10 @@ TEST_CASE(
   }
 
   SECTION("Run_until_convergence_pixel_absolute_mode") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, 1e-3, 10,
-        simulate::SteadyStateConvergenceMode::absolute, 100000000, 5.0);
+        m, 1e-3, 10, simulate::SteadyStateConvergenceMode::absolute, 100000000,
+        5.0);
 
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.hasConverged() == false);
@@ -130,9 +135,10 @@ TEST_CASE(
 
   SECTION("Run_until_convergence_dune") {
     // use a high stop tolerance to make it run faster too
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::DUNE, 1e-3, 10,
-        simulate::SteadyStateConvergenceMode::relative, 100000000, 5.0);
+        m, 1e-3, 10, simulate::SteadyStateConvergenceMode::relative, 100000000,
+        5.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::DUNE);
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run until convergence
@@ -145,9 +151,10 @@ TEST_CASE(
     REQUIRE(sim.getSolverErrormessage() == "");
   }
   SECTION("Reset_restores_state") {
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
     simulate::SteadyStateSimulation sim(
-        m, simulate::SimulatorType::Pixel, 1e-4, 10,
-        simulate::SteadyStateConvergenceMode::relative, 100000000, 1.0);
+        m, 1e-4, 10, simulate::SteadyStateConvergenceMode::relative, 100000000,
+        1.0);
     REQUIRE(sim.getSimulatorType() == simulate::SimulatorType::Pixel);
     REQUIRE(sim.hasConverged() == false);
     sim.run(); // run until convergence

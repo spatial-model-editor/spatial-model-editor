@@ -23,15 +23,14 @@ namespace sme::simulate {
 //////////////////////////////////////////////////////////////////////////////////
 // lifecycle
 SteadyStateSimulation::SteadyStateSimulation(
-    sme::model::Model &model, sme::simulate::SimulatorType type,
-    double tolerance, std::size_t steps_to_convergence,
+    sme::model::Model &model, double tolerance,
+    std::size_t steps_to_convergence,
     SteadyStateConvergenceMode convergence_mode, double timeout_ms, double dt)
     : m_model(model), m_convergence_tolerance(tolerance),
       m_steps_to_convergence(steps_to_convergence), m_timeout_ms(timeout_ms),
       m_stop_mode(convergence_mode), m_dt(dt) {
-  m_model.getSimulationSettings().simulatorType = type;
   initModel();
-  selectSimulator();
+  initSimulator();
 }
 
 SteadyStateSimulation::~SteadyStateSimulation() = default;
@@ -74,7 +73,7 @@ void SteadyStateSimulation::initModel() {
   }
 }
 
-void SteadyStateSimulation::selectSimulator() {
+void SteadyStateSimulation::initSimulator() {
   if (m_model.getSimulationSettings().simulatorType == SimulatorType::DUNE &&
       m_model.getGeometry().getIsMeshValid()) {
     SPDLOG_DEBUG(" DUNE Simulator selected");
@@ -343,7 +342,7 @@ void SteadyStateSimulation::reset() {
   m_steps_below_tolerance = 0;
   m_has_converged.store(false);
   m_stop_requested.store(false);
-  selectSimulator();
+  initSimulator();
 
   // reset data
   m_error.store(std::numeric_limits<double>::max());
