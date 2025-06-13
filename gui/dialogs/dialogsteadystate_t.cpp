@@ -113,6 +113,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(widgets.zlabel->isVisible() == false);
     REQUIRE(widgets.zlabel->text() == "z-axis");
     REQUIRE(widgets.cmbPlotting->isEnabled() == false);
+    dia.close();
   }
 
   SECTION("inialization 3D") {
@@ -126,6 +127,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(widgets3D.cmbPlotting->currentText() == "2D");
     REQUIRE(widgets3D.valuesPlot3D->isVisible() == false);
     REQUIRE(widgets3D.valuesPlot->isVisible() == true);
+    dia3D.close();
   }
 
   SECTION("set parameters") {
@@ -149,12 +151,14 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     REQUIRE(sim.getConvergenceMode() ==
             sme::simulate::SteadyStateConvergenceMode::relative);
     REQUIRE(sim.getSimulatorType() == sme::simulate::SimulatorType::DUNE);
+    dia.close();
   }
 
   SECTION("run_to_convergence") {
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
+    widgets3D.toleranceInput->setText("1e-1");
     ModalWidgetTimer mwt;
     mwt.setIgnoredWidget(&dia3D);
     mwt.start();
@@ -187,6 +191,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
+    widgets3D.toleranceInput->setText("1e-3");
     ModalWidgetTimer mwt;
     mwt.setIgnoredWidget(&dia3D);
     mwt.start();
@@ -257,6 +262,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
+    widgets3D.toleranceInput->setText("1e-1");
 
     ModalWidgetTimer mwt;
     mwt.setIgnoredWidget(&dia3D);
@@ -283,6 +289,7 @@ TEST_CASE("DialogSteadyState", "[gui/dialogs/steadystate][gui/"
     DialogSteadystate dia3D(model3D);
     DialogSteadystateWidgets widgets3D(&dia3D);
     dia3D.show();
+    widgets3D.toleranceInput->setText("1e-1");
     ModalWidgetTimer mwt;
     mwt.setIgnoredWidget(&dia3D);
     mwt.start();
