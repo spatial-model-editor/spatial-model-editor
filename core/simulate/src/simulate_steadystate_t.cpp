@@ -37,8 +37,8 @@ TEST_CASE(
     REQUIRE(sim.getConcentrations().size() ==
             6298); // number of values for each species in each compartment
                    // concatenated
-    REQUIRE(sim.getLatestError().load() == std::numeric_limits<double>::max());
-    REQUIRE(sim.getLatestStep().load() == 0.0);
+    REQUIRE(sim.getLatestError() == std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep() == 0.0);
     REQUIRE(sim.getSolverErrormessage() == "");
     REQUIRE(sim.getSolverStopRequested() == false);
     REQUIRE(sim.getCompartmentSpeciesIdxs() ==
@@ -89,8 +89,8 @@ TEST_CASE(
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    REQUIRE(sim.getLatestStep().load() > 0.0);
-    REQUIRE(sim.getLatestError().load() < stop_tolerance);
+    REQUIRE(sim.getLatestStep() > 0.0);
+    REQUIRE(sim.getLatestError() < stop_tolerance);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -104,8 +104,8 @@ TEST_CASE(
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     // stop_requested is ignored by DUNE, hence not checked
-    REQUIRE(sim.getLatestStep().load() > 0.0);
-    REQUIRE(sim.getLatestError().load() < 1e-4);
+    REQUIRE(sim.getLatestStep() > 0.0);
+    REQUIRE(sim.getLatestError() < 1e-4);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -122,8 +122,8 @@ TEST_CASE(
     sim.run(); // run until convergence
     REQUIRE(sim.hasConverged());
     REQUIRE(sim.getSolverStopRequested());
-    REQUIRE(sim.getLatestStep().load() > 0.0);
-    REQUIRE(sim.getLatestError().load() < 1e-3);
+    REQUIRE(sim.getLatestStep() > 0.0);
+    REQUIRE(sim.getLatestError() < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -139,8 +139,8 @@ TEST_CASE(
 
     REQUIRE(sim.hasConverged());
     // stop_requested is ignored by DUNE, hence not checked
-    REQUIRE(sim.getLatestStep().load() > 0.0);
-    REQUIRE(sim.getLatestError().load() < 1e-3);
+    REQUIRE(sim.getLatestStep() > 0.0);
+    REQUIRE(sim.getLatestError() < 1e-3);
     REQUIRE(sim.getStepsBelowTolerance() == sim.getStepsToConvergence());
     REQUIRE(sim.getSolverErrormessage() == "");
   }
@@ -158,7 +158,7 @@ TEST_CASE(
     REQUIRE(sim.hasConverged() == false);
     REQUIRE(sim.getStopTolerance() == 1e-4);
     REQUIRE(sim.getDt() == 1.0);
-    REQUIRE(sim.getLatestError().load() == std::numeric_limits<double>::max());
-    REQUIRE(sim.getLatestStep().load() == 0.0);
+    REQUIRE(sim.getLatestError() == std::numeric_limits<double>::max());
+    REQUIRE(sim.getLatestStep() == 0.0);
   }
 }

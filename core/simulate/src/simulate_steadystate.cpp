@@ -354,12 +354,12 @@ void SteadyStateSimulation::reset() {
 
 //////////////////////////////////////////////////////////////////////////////////
 // state getters
-const std::atomic<bool> &SteadyStateSimulation::hasConverged() const {
-  return m_has_converged;
+bool SteadyStateSimulation::hasConverged() const {
+  return m_has_converged.load();
 }
 
-const std::atomic<bool> &SteadyStateSimulation::getStopRequested() const {
-  return m_stop_requested;
+bool SteadyStateSimulation::getStopRequested() const {
+  return m_stop_requested.load();
 }
 
 SteadyStateConvergenceMode SteadyStateSimulation::getConvergenceMode() const {
@@ -388,13 +388,9 @@ const std::vector<double> &SteadyStateSimulation::getConcentrations() {
   return m_concentrations;
 }
 
-const std::atomic<double> &SteadyStateSimulation::getLatestStep() const {
-  return m_step;
-}
+double SteadyStateSimulation::getLatestStep() const { return m_step.load(); }
 
-const std::atomic<double> &SteadyStateSimulation::getLatestError() const {
-  return m_error;
-}
+double SteadyStateSimulation::getLatestError() const { return m_error.load(); }
 
 std::size_t SteadyStateSimulation::getStepsToConvergence() const {
   return m_steps_to_convergence;

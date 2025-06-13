@@ -194,8 +194,8 @@ void DialogSteadystate::runSim() {
 void DialogSteadystate::update() {
 
   // update error plot
-  auto error = m_sim.getLatestError().load();
-  auto step = m_sim.getLatestStep().load();
+  auto error = m_sim.getLatestError();
+  auto step = m_sim.getLatestStep();
 
   // numeric_limits used as an indicator for 'no data' here
   if (error < std::numeric_limits<double>::max()) {

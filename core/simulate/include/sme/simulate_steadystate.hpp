@@ -7,10 +7,6 @@ namespace sme::simulate {
 class BaseSim;
 enum class SteadyStateConvergenceMode { absolute, relative };
 
-struct SteadyStateData {
-  double step;
-  double error;
-};
 class SteadyStateSimulation final {
 
   // data members for simulation
@@ -49,7 +45,8 @@ class SteadyStateSimulation final {
                            const std::vector<double> &c_new);
 
   // helper functions for data
-  std::vector<std::vector<double>> computeConcentrationNormalisation(
+  [[nodiscard]] std::vector<std::vector<double>>
+  computeConcentrationNormalisation(
       const std::vector<std::vector<std::size_t>> &speciesToDraw,
       bool normaliseOverAllSpecies) const;
   void recordData(double timestep, double error);
@@ -68,7 +65,7 @@ public:
    * have a stable solution for to consider it converged
    * @param convergence_mode How to compute the convergence criterion: absolute
    * or relative
-   * @param timeout_ms Number of miliseconds the simulation is allowed to run
+   * @param timeout_ms Number of milliseconds the simulation is allowed to run
    * before stopping
    * @param dt Timestep to check for convergence (not solver timestep, this is
    * set independently by the solver itself (!))
@@ -84,16 +81,16 @@ public:
   /**
    * @brief Check if the simulation has converged
    *
-   * @return const std::atomic<bool>&
+   * @return bool
    */
-  [[nodiscard]] const std::atomic<bool> &hasConverged() const;
+  [[nodiscard]] bool hasConverged() const;
 
   /**
    * @brief Check if the simulation has been requested to stop
    *
-   * @return const std::atomic<bool>&
+   * @return bool
    */
-  [[nodiscard]] const std::atomic<bool> &getStopRequested() const;
+  [[nodiscard]] bool getStopRequested() const;
 
   /**
    * @brief Get the convergence mode
@@ -134,19 +131,16 @@ public:
   /**
    * @brief Get the latest error value of the simulation
    *
-   * @return const std::atomic<double> &
-
-   A pointer to a struct containing the step, error and
-   * concentration image stack of the latest step of the simulation.
+   * @return double
    */
-  [[nodiscard]] const std::atomic<double> &getLatestError() const;
+  [[nodiscard]] double getLatestError() const;
 
   /**
    * @brief Get the latest simulation step
    *
-   * @return const std::atomic<double>&
+   * @return double
    */
-  [[nodiscard]] const std::atomic<double> &getLatestStep() const;
+  [[nodiscard]] double getLatestStep() const;
 
   /**
    * @brief Get the number of steps the simulation needs to have a stable
