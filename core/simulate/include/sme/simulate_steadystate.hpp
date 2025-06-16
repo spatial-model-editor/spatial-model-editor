@@ -42,7 +42,7 @@ class SteadyStateSimulation final {
   void runPixel(double time);
   [[nodiscard]] double
   computeStoppingCriterion(const std::vector<double> &c_old,
-                           const std::vector<double> &c_new);
+                           const std::vector<double> &c_new) const;
 
   // helper functions for data
   [[nodiscard]] std::vector<std::vector<double>>
@@ -179,12 +179,20 @@ public:
   [[nodiscard]] double getTimeout() const;
 
   /**
-   * @brief Get the Compartment Species Ids object
+   * @brief Get the Compartment Species indices
    *
    * @return std::vector<std::vector<std::size_t>>
    */
-  [[nodiscard]] std::vector<std::vector<std::size_t>>
+  [[nodiscard]] const std::vector<std::vector<std::size_t>> &
   getCompartmentSpeciesIdxs() const;
+
+  /**
+   * @brief Get the Compartment Species names
+   *
+   * @return std::vector<std::vector<std::string>>
+   */
+  [[nodiscard]] const std::vector<std::vector<std::string>> &
+  getCompartmentSpeciesIds() const;
 
   /**
    * @brief Get the concentration image stack for a given timepoint

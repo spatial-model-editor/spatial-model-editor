@@ -237,7 +237,7 @@ void DialogSteadystate::updatePlot() {
 
 void DialogSteadystate::updateSpeciesToPlot() {
   m_compartmentSpeciesToPlot.clear();
-  for (auto &&compSpecies : m_speciesNames) {
+  for (const auto &compSpecies : m_speciesNames) {
     std::vector<std::size_t> speciesToPlot;
     for (std::size_t i = 0; i < static_cast<std::size_t>(compSpecies.size());
          ++i) {
@@ -263,9 +263,9 @@ bool DialogSteadystate::isRunning() const { return m_isRunning; }
 
 ////////////////////////////////////////////////////////////////////////////////
 // lifecycle
-DialogSteadystate::DialogSteadystate(sme::model::Model &model,
-                                     const QWidget *parent)
-    : m_model(model), ui(std::make_unique<Ui::DialogSteadystate>()),
+DialogSteadystate::DialogSteadystate(sme::model::Model &model, QWidget *parent)
+    : QDialog(parent), m_model(model),
+      ui(std::make_unique<Ui::DialogSteadystate>()),
       m_sim(sme::simulate::SteadyStateSimulation(
           model, 1e-6, 10, sme::simulate::SteadyStateConvergenceMode::relative,
           3600000, 1)) {
@@ -279,7 +279,8 @@ DialogSteadystate::DialogSteadystate(sme::model::Model &model,
   m_speciesNames.resize(m_compartmentNames.size());
   std::size_t nSpecies = 0;
   for (std::size_t i = 0; i < m_compartmentNames.size(); ++i) {
-    m_speciesNames[i] = m_model.getSpecies().getNames(m_compartmentNames[i]);
+    m_speciesNames[i] =
+        sme::common::toQString(m_sim.getCompartmentSpeciesIds()[i]);
     nSpecies += m_speciesNames[i].size();
   }
   m_displayoptions = m_model.getDisplayOptions(); // get default display options

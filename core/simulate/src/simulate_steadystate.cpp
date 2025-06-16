@@ -86,7 +86,7 @@ void SteadyStateSimulation::initSimulator() {
 }
 
 double SteadyStateSimulation::computeStoppingCriterion(
-    const std::vector<double> &c_old, const std::vector<double> &c_new) {
+    const std::vector<double> &c_old, const std::vector<double> &c_new) const {
 
   double sum_squared_dcdt = 0.0;
   double dcdt_norm = 0.0;
@@ -177,10 +177,8 @@ void SteadyStateSimulation::runPixel(double time) {
   double tNow = 0;
   constexpr double relativeTolerance = 1e-12;
   timer.start();
-  std::size_t steps = 0;
   while (tNow + time * relativeTolerance < time) {
 
-    steps++;
     m_simulator->run(m_dt, m_timeout_ms,
                      [this]() { return m_simulator->getStopRequested(); });
     c_new = getConcentrations();
@@ -377,7 +375,7 @@ double SteadyStateSimulation::getStopTolerance() const {
 const std::vector<double> &SteadyStateSimulation::getConcentrations() {
   m_concentrations.clear();
 
-  for (auto &&idx : m_compartmentIndices) {
+  for (std::size_t idx : m_compartmentIndices) {
     auto c = m_simulator->getConcentrations(idx);
     m_concentrations.insert(m_concentrations.end(), c.begin(), c.end());
   }
@@ -456,9 +454,14 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
   return concentrationImageStack;
 }
 
-[[nodiscard]] std::vector<std::vector<std::size_t>>
+[[nodiscard]] const std::vector<std::vector<std::size_t>> &
 SteadyStateSimulation::getCompartmentSpeciesIdxs() const {
   return m_compartmentSpeciesIdxs;
+}
+
+[[nodiscard]] const std::vector<std::vector<std::string>> &
+SteadyStateSimulation::getCompartmentSpeciesIds() const {
+  return m_compartmentSpeciesIds;
 }
 
 //////////////////////////////////////////////////////////////////////////////////

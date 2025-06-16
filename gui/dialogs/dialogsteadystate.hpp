@@ -83,7 +83,7 @@ public:
    * @param parent Parent widget. Default is nullptr
    */
   explicit DialogSteadystate(sme::model::Model &model,
-                             const QWidget *parent = nullptr);
+                             QWidget *parent = nullptr);
   ~DialogSteadystate() override;
 
   /**
