@@ -32,7 +32,7 @@ jobs:
       run:
         shell: ${{ matrix.platform.shell }}
     env:
-      CIBUILDWHEEL_VERSION: "2.22"
+      CIBUILDWHEEL_VERSION: "3.0"
       CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2025.02.18"
       CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2025.02.18"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
@@ -44,9 +44,9 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2025.02.05
+      - uses: spatial-model-editor/setup-ci@2025.05.09
         with:
-          sme_deps: '2025.02.18'
+          sme_deps: '2025.06.17'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v4
         with:
