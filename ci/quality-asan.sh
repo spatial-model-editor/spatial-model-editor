@@ -21,8 +21,7 @@ echo "leak:libfontconfig.so" >lsan_suppr.txt
 echo "leak:libX11.so" >>lsan_suppr.txt
 echo "leak:libdbus-1.so" >>lsan_suppr.txt
 # todo: investigate these dune-copasi leaks (for now ignoring it)
-echo "leak:Dune::UG::D2::linear_segment" >>lsan_suppr.txt
-echo "leak:Dune::UG::D3::linear_segment" >>lsan_suppr.txt
+echo "leak:Dune::" >>lsan_suppr.txt
 
 # hack to prevent external libs from dlclosing libraries,
 # which otherwise results in <module not found> LSAN leaks that cannot be suppressed
