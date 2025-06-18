@@ -33,7 +33,8 @@ clang -shared dlclose.c -o libdlclose.so
 export LD_PRELOAD=$(pwd)/libdlclose.so
 
 # add some optional ASAN checks
-export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+# and ignore new-delete-type-mismatch coming from dune grid manager
+export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:new_delete_type_mismatch=0"
 
 # do build
 mkdir build
