@@ -171,12 +171,15 @@ void TabEvents::cmbEventVariable_activated(int index) {
   if (isSpecies) {
     ui->stkValue->setCurrentIndex(1);
     ui->btnSetSpeciesConcentration->setEnabled(true);
-    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(
+    auto img =
         DialogAnalytic(model.getEvents().getExpression(currentEventId),
                        model.getSpeciesGeometry(variableIds[index]),
                        model.getParameters(), model.getFunctions(), invertYAxis)
-            .getImage()
-            .mirrored(false, invertYAxis)));
+            .getImage();
+    if (invertYAxis) {
+      img = img.flipped(Qt::Orientation::Vertical);
+    }
+    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(img));
     ui->txtExpression->setEnabled(false);
   } else {
     ui->stkValue->setCurrentIndex(0);
@@ -201,8 +204,11 @@ void TabEvents::btnSetSpeciesConcentration_clicked() {
     const std::string &expr{dialog.getExpression()};
     SPDLOG_DEBUG("  - set expr: {}", expr);
     model.getEvents().setExpression(currentEventId, expr.c_str());
-    ui->lblSpeciesExpression->setPixmap(
-        QPixmap::fromImage(dialog.getImage().mirrored(false, invertYAxis)));
+    auto img = dialog.getImage();
+    if (invertYAxis) {
+      img = img.flipped(Qt::Orientation::Vertical);
+    }
+    ui->lblSpeciesExpression->setPixmap(QPixmap::fromImage(img));
   }
 }
 
