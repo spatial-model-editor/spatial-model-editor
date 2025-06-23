@@ -25,9 +25,9 @@ jobs:
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2025.02.05
+      - uses: spatial-model-editor/setup-ci@2025.05.09
         with:
-          sme_deps: '2025.02.18'
+          sme_deps: '2025.06.17'
           cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v4
         with:

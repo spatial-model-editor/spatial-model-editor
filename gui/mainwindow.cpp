@@ -6,6 +6,7 @@
 #include "dialogoptimize.hpp"
 #include "dialogoptsetup.hpp"
 #include "dialogsimulationoptions.hpp"
+#include "dialogsteadystate.hpp"
 #include "dialogunits.hpp"
 #include "guiutils.hpp"
 #include "ode_import_wizard.hpp"
@@ -31,6 +32,7 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QWhatsThis>
+#include <spdlog/spdlog.h>
 
 static QString getStatusBarMessage(int step) {
   if (step == 1) {
@@ -202,6 +204,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->action_Optimization, &QAction::triggered, this,
           &MainWindow::action_Optimization_triggered);
+
+  connect(ui->actionSteady_state_analysis, &QAction::triggered, this,
+          &MainWindow::action_steadystate_analysis_triggered);
 
   connect(ui->action_What_s_this, &QAction::triggered, this,
           []() { QWhatsThis::enterWhatsThisMode(); });
@@ -609,6 +614,15 @@ void MainWindow::action_Optimization_triggered() {
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(this, "Optimize error", e.what());
   }
+}
+
+void MainWindow::action_steadystate_analysis_triggered() {
+  if (!isValidModelAndGeometryImage()) {
+    SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
+    return;
+  }
+  DialogSteadystate dialogSteadystate(model);
+  dialogSteadystate.exec();
 }
 
 void MainWindow::actionGeometry_grid_triggered(bool checked) {

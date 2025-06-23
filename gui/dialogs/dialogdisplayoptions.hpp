@@ -1,5 +1,6 @@
 #pragma once
 
+#include "dialogsteadystate.hpp"
 #include "sme/model_settings.hpp"
 #include <QDialog>
 #include <memory>
@@ -13,6 +14,7 @@ class QTreeWidgetItem;
 
 class DialogDisplayOptions : public QDialog {
   Q_OBJECT
+  friend class DialogSteadystate;
 
 public:
   explicit DialogDisplayOptions(

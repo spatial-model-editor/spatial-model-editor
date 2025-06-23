@@ -94,12 +94,21 @@ std::size_t DuneSim::getConcentrationPadding() const { return 0; }
 
 const std::string &DuneSim::errorMessage() const { return currentErrorMessage; }
 
+void DuneSim::setCurrentErrormessage(const std::string &msg) {
+  currentErrorMessage = msg;
+}
+
 const common::ImageStack &DuneSim::errorImages() const {
   return currentErrorImages;
 }
 
 void DuneSim::setStopRequested([[maybe_unused]] bool stop) {
   SPDLOG_DEBUG("Not implemented - ignoring request");
+}
+
+bool DuneSim::getStopRequested() const {
+  SPDLOG_DEBUG("Not implemented - ignoring request");
+  return false;
 }
 
 } // namespace sme::simulate

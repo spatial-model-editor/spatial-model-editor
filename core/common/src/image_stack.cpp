@@ -94,7 +94,7 @@ void ImageStack::rescaleXY(QSize size) {
 
 void ImageStack::flipYAxis() {
   for (auto &img : imgs) {
-    img = img.mirrored();
+    img = img.flipped(Qt::Vertical);
   }
 }
 

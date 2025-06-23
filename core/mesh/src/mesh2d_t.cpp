@@ -148,7 +148,7 @@ TEST_CASE("Mesh", "[core/mesh/mesh][core/mesh][core][mesh]") {
     img.setPixel(5, 6, col);
     img.setPixel(6, 6, col);
     // flip y-axis to match (0,0) == bottom-left of meshing output
-    img = img.mirrored(false, true);
+    img = img.flipped(Qt::Orientation::Vertical);
 
     mesh::Mesh2d mesh(img, {}, {999, 999}, {1.0, 1.0, 1.0}, {0, 0, 0},
                       std::vector<QRgb>{bgcol, col});

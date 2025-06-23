@@ -15,25 +15,16 @@ target_sources(
 if(BUILD_TESTING)
   target_sources(
     core_tests
-    PUBLIC boundaries.cpp
-           boundaries_t.cpp
-           boundary.cpp
+    PUBLIC boundaries_t.cpp
            boundary_t.cpp
-           contour_map.cpp
            contour_map_t.cpp
-           interior_point.cpp
            interior_point_t.cpp
-           line_simplifier.cpp
            line_simplifier_t.cpp
            mesh2d_t.cpp
            mesh3d_t.cpp
-           mesh_utils.cpp
            mesh_utils_t.cpp
-           polyline_simplifier.cpp
            polyline_simplifier_t.cpp
-           pixel_corner_iterator.cpp
            pixel_corner_iterator_t.cpp
-           triangulate.cpp
            triangulate_t.cpp)
 endif()
 if(SME_BUILD_BENCHMARKS)

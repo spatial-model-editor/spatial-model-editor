@@ -4,6 +4,9 @@
 
 set -e -x
 
+# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
+export CMAKE_POLICY_VERSION_MINIMUM=3.5
+
 # start a virtual display for the Qt GUI tests
 # it can take a while before the display is ready,
 # which is why it is the first thing done here
@@ -18,8 +21,7 @@ echo "leak:libfontconfig.so" >lsan_suppr.txt
 echo "leak:libX11.so" >>lsan_suppr.txt
 echo "leak:libdbus-1.so" >>lsan_suppr.txt
 # todo: investigate these dune-copasi leaks (for now ignoring it)
-echo "leak:Dune::UG::D2::linear_segment" >>lsan_suppr.txt
-echo "leak:Dune::UG::D3::linear_segment" >>lsan_suppr.txt
+echo "leak:Dune::" >>lsan_suppr.txt
 
 # hack to prevent external libs from dlclosing libraries,
 # which otherwise results in <module not found> LSAN leaks that cannot be suppressed
@@ -30,7 +32,8 @@ clang -shared dlclose.c -o libdlclose.so
 export LD_PRELOAD=$(pwd)/libdlclose.so
 
 # add some optional ASAN checks
-export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+# and ignore new-delete-type-mismatch coming from dune grid manager
+export ASAN_OPTIONS="detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1:new_delete_type_mismatch=0"
 
 # do build
 mkdir build

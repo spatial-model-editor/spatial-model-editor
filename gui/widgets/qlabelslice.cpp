@@ -15,7 +15,7 @@ void QLabelSlice::setImage(const QImage &img, bool invertYAxis) {
                       static_cast<std::size_t>(imgOriginal.height()));
   imgOriginal = img.convertToFormat(QImage::Format_RGB32);
   if (flipYAxis) {
-    imgOriginal = imgOriginal.mirrored();
+    imgOriginal = imgOriginal.flipped(Qt::Orientation::Vertical);
   }
   imgSliced = QImage(imgOriginal.size(), QImage::Format_ARGB32);
   fadeOriginalImage();

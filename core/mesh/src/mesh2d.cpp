@@ -325,7 +325,7 @@ Mesh2d::getMeshImages(const QSize &size, std::size_t compartmentIndex) const {
     } else {
       // outline all other triangles with gray lines
       p.setPen(QPen(Qt::gray, 1));
-      p.setBrush({});
+      p.setBrush(QColor(255, 255, 255, 0));
     }
     pMask.setBrush(QBrush(QColor(0, 0, static_cast<int>(k))));
     for (const auto &t : triangles[k]) {
