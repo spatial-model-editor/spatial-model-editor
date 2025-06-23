@@ -45,17 +45,19 @@ else()
 endif()
 
 # ensure tests tagged with [gui] are not ran in parallel by ctest
-catch_discover_tests(
-  tests
-  TEST_SPEC
-  "[gui]"
-  TEST_PREFIX
-  "[gui]"
-  PROPERTIES
-  ENVIRONMENT
-  ASAN_OPTIONS=halt_on_error=0
-  RESOURCE_LOCK
-  ResourceLockGui)
+if(SME_BUILD_GUI)
+  catch_discover_tests(
+    tests
+    TEST_SPEC
+    "[gui]"
+    TEST_PREFIX
+    "[gui]"
+    PROPERTIES
+    ENVIRONMENT
+    ASAN_OPTIONS=halt_on_error=0
+    RESOURCE_LOCK
+    ResourceLockGui)
+endif()
 # also tag expensive tests so they can be easily excluded
 catch_discover_tests(
   tests
