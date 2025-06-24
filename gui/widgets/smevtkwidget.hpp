@@ -13,6 +13,7 @@ class SmeVtkWidget : public QVTKOpenGLNativeWidget {
 public:
   explicit SmeVtkWidget(QWidget *parent = nullptr);
   void syncCamera(SmeVtkWidget *smeVtkWidget);
+  void vtkRender();
 
 protected:
   vtkNew<vtkRenderer> renderer;

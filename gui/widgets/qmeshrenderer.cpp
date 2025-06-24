@@ -1,4 +1,5 @@
 #include "qmeshrenderer.hpp"
+#include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include <vtkCamera.h>
@@ -37,7 +38,9 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   for (const auto &compartmentTetrahedronIndices :
        mesh.getTetrahedronIndices()) {
     auto &grid = grids.emplace_back();
+    auto &clippedTetrahedron = clippedTetrahedrons.emplace_back();
     auto &edge = edges.emplace_back();
+    auto &clippedEdge = clippedEdges.emplace_back();
     auto &solidActor = solidActors.emplace_back();
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
@@ -50,11 +53,23 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     }
     grid->SetPoints(points);
     edge->SetInputData(grid);
-    solidMapper->SetInputData(grid);
+    if (clippingPlane != nullptr) {
+      clippedTetrahedron->SetClipFunction(clippingPlane);
+      clippedTetrahedron->SetInputData(grid);
+      solidMapper->SetInputConnection(clippedTetrahedron->GetOutputPort());
+    } else {
+      solidMapper->SetInputData(grid);
+    }
     solidActor->SetMapper(solidMapper);
     solidActor->GetProperty()->EdgeVisibilityOn();
     renderer->AddActor(solidActor);
-    wireframeMapper->SetInputConnection(edge->GetOutputPort());
+    if (clippingPlane != nullptr) {
+      clippedEdge->SetClipFunction(clippingPlane);
+      clippedEdge->SetInputConnection(edge->GetOutputPort());
+      wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());
+    } else {
+      wireframeMapper->SetInputConnection(edge->GetOutputPort());
+    }
     wireframeActor->SetMapper(wireframeMapper);
     renderer->AddActor(wireframeActor);
   }
@@ -62,7 +77,9 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
        mesh.getMembraneTriangleIndices()) {
     auto &triangle = triangles.emplace_back();
     auto &membrane = membranes.emplace_back();
+    auto &clippedMembrane = clippedMembranes.emplace_back();
     auto &edge = edges.emplace_back();
+    auto &clippedEdge = clippedEdges.emplace_back();
     auto &solidActor = solidActors.emplace_back();
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
@@ -75,12 +92,24 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     }
     membrane->SetPoints(points);
     membrane->SetPolys(triangle);
-    solidMapper->SetInputData(membrane);
+    if (clippingPlane != nullptr) {
+      clippedMembrane->SetClipFunction(clippingPlane);
+      clippedMembrane->SetInputData(membrane);
+      solidMapper->SetInputConnection(clippedMembrane->GetOutputPort());
+    } else {
+      solidMapper->SetInputData(membrane);
+    }
     solidActor->SetMapper(solidMapper);
     solidActor->GetProperty()->EdgeVisibilityOn();
     renderer->AddActor(solidActor);
     edge->SetInputData(membrane);
-    wireframeMapper->SetInputConnection(edge->GetOutputPort());
+    if (clippingPlane != nullptr) {
+      clippedEdge->SetClipFunction(clippingPlane);
+      clippedEdge->SetInputConnection(edge->GetOutputPort());
+      wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());
+    } else {
+      wireframeMapper->SetInputConnection(edge->GetOutputPort());
+    }
     wireframeActor->SetMapper(wireframeMapper);
     renderer->AddActor(wireframeActor);
   }
@@ -90,6 +119,11 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   }
   currentCompartmentIndex = compartmentIndex;
   setColors(mesh.getColors());
+}
+
+void QMeshRenderer::syncClippingPlane(QVoxelRenderer *qVoxelRenderer) {
+  clippingPlane = qVoxelRenderer->getClippingPlane();
+  qVoxelRenderer->renderOnClippingPaneChange(this);
 }
 
 void QMeshRenderer::setCompartmentIndex(std::size_t compartmentIndex) {
@@ -125,9 +159,12 @@ void QMeshRenderer::clear() {
   renderer->RemoveAllViewProps();
   points->Reset();
   grids.clear();
+  clippedTetrahedrons.clear();
   triangles.clear();
   membranes.clear();
+  clippedMembranes.clear();
   edges.clear();
+  clippedEdges.clear();
   solidMappers.clear();
   wireframeMappers.clear();
   solidActors.clear();
@@ -184,5 +221,5 @@ void QMeshRenderer::updateAndRender() {
           i == currentCompartmentIndex ? 1.0 : 0.05);
     }
   }
-  renderWindow->Render();
+  vtkRender();
 }

@@ -91,6 +91,7 @@ TabGeometry::TabGeometry(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   connect(ui->listMembranes, &QListWidget::itemSelectionChanged, this,
           &TabGeometry::listMembranes_itemSelectionChanged);
   ui->mshCompMesh->syncCamera(voxGeometry);
+  ui->mshCompMesh->syncClippingPlane(voxGeometry);
 }
 
 TabGeometry::~TabGeometry() = default;
