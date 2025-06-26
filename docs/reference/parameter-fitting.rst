@@ -97,12 +97,14 @@ Optimization Target
    * See the :ref:`opt-target-conc` section for more details
 * Difference type
    * How to compare the target :math:`t` with the results :math:`r`
-   * Absolute: :math:`|r - t|`
-   * Relative: :math:`|r - t|/|t + \epsilon|`
+   * Absolute: :math:`(r - t)^2`
+   * Relative: :math:`((r - t)/(t + \epsilon))^2`
+   * The cost function for this target is then the sum of these squared differences over every voxel
 * Weight
    * The relative importance of this target
    * The cost function for this target is multiplied by this weight
    * Only relevant when there are multiple targets
+   * Total cost function is the sum of the cost functions for each target, each multiplied by its weight
 * Epsilon
    * The :math:`\epsilon` parameter in the relative difference measure
    * Avoids infinities caused by dividing by zero
