@@ -69,6 +69,13 @@ struct TestOptimization {
   }
 };
 
+static bool algorithmIsGuaranteedToMonotonicallyDecreaseCost(
+    sme::simulate::OptAlgorithmType optAlgorithmType) {
+  auto nonDecreasingCostAlgos = {sme::simulate::OptAlgorithmType::PRAXIS};
+  return std::ranges::find(nonDecreasingCostAlgos, optAlgorithmType) ==
+         nonDecreasingCostAlgos.end();
+}
+
 TEST_CASE("Invalid population sizes",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
@@ -172,10 +179,12 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
     REQUIRE(optimization.getFitness().size() == 2);
     REQUIRE(optimization.getParams().size() == 2);
     REQUIRE(optimization.getParams()[0].size() == 1);
-    // cost should decrease or stay the same with each iteration
-    REQUIRE(optimization.getFitness()[1] <= optimization.getFitness()[0]);
-    // k1 should increase to minimize concentration of A
-    REQUIRE(optimization.getParams()[1][0] >= optimization.getParams()[0][0]);
+    if (algorithmIsGuaranteedToMonotonicallyDecreaseCost(optAlgorithmType)) {
+      // cost should decrease or stay the same with each iteration
+      REQUIRE(optimization.getFitness()[1] <= optimization.getFitness()[0]);
+      // k1 should increase to minimize concentration of A
+      REQUIRE(optimization.getParams()[1][0] >= optimization.getParams()[0][0]);
+    }
     REQUIRE(optimization.getIsRunning() == false);
   }
 }
@@ -217,14 +226,16 @@ TEST_CASE(
       REQUIRE(optimization.getIterations() == i);
       REQUIRE(optimization.getFitness().size() == i + 1);
       REQUIRE(optimization.getParams().size() == i + 1);
-      // cost should decrease or stay the same with each iteration
-      REQUIRE(is_sorted_descending(optimization.getFitness()));
-      // k1 should increase to minimize concentration of A
-      std::vector<double> k1;
-      for (const auto &param : optimization.getParams()) {
-        k1.push_back(param[0]);
+      if (algorithmIsGuaranteedToMonotonicallyDecreaseCost(optAlgorithmType)) {
+        // cost should decrease or stay the same with each iteration
+        REQUIRE(is_sorted_descending(optimization.getFitness()));
+        // k1 should increase to minimize concentration of A
+        std::vector<double> k1;
+        for (const auto &param : optimization.getParams()) {
+          k1.push_back(param[0]);
+        }
+        REQUIRE(is_sorted_ascending(k1));
       }
-      REQUIRE(is_sorted_ascending(k1));
     }
     REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
             dbl_approx(0.1));
