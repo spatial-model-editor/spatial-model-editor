@@ -100,6 +100,8 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
     : QMainWindow(parent), ui{std::make_unique<Ui::MainWindow>()} {
   ui->setupUi(this);
   ui->lblGeometry->setZSlider(ui->slideGeometryZIndex);
+  ui->voxGeometry->setClippingPlaneNormalCombobox(ui->cmbClippingPlaneNormal);
+  ui->voxGeometry->setClippingPlaneOriginSlider(ui->slideClippingPlaneOrigin);
   Q_INIT_RESOURCE(resources);
 
   statusBarPermanentMessage = makeStatusBarPermanentMessage(this);
@@ -640,12 +642,7 @@ void MainWindow::actionGeometry_scale_triggered(bool checked) {
 }
 
 void MainWindow::action3d_render_triggered(bool checked) {
-  if (checked) {
-    ui->stackGeometry->setCurrentIndex(1);
-    ui->voxGeometry->setImage(model.getGeometry().getImages());
-    return;
-  }
-  ui->stackGeometry->setCurrentIndex(0);
+  ui->stackGeometry->setCurrentIndex(checked ? 1 : 0);
 }
 
 void MainWindow::actionInvert_y_axis_triggered(bool checked) {

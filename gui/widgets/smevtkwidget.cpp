@@ -35,6 +35,8 @@ void SmeVtkWidget::syncCamera(SmeVtkWidget *smeVtkWidget) {
   smeVtkWidget->renderOnInteractorModified(renderWindow->GetInteractor());
 }
 
+void SmeVtkWidget::vtkRender() { renderWindow->Render(); }
+
 void SmeVtkWidget::renderOnInteractorModified(
     vtkRenderWindowInteractor *interactor) {
   interactor->AddObserver(vtkCommand::ModifiedEvent, renderWindow.Get(),

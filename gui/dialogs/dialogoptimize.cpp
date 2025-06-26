@@ -331,9 +331,7 @@ void DialogOptimize::updateResultImage() {
   }
 
   if (vizMode == VizMode::_2D) {
-    auto z = ui->zaxisValues->value();
     ui->lblResult->setImage(m_opt->getCurrentBestResultImage());
-    // ui->lblResult->setZIndex(z);
   } else {
     SPDLOG_DEBUG("Updating result image for 3D visualization  2D visible? {}, "
                  "3d visible? {}",

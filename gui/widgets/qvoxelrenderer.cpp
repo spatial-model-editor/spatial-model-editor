@@ -1,6 +1,8 @@
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
+#include <QComboBox>
 #include <QMouseEvent>
+#include <QSlider>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
 #include <vtkWorldPointPicker.h>
@@ -17,6 +19,10 @@ QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   volume->GetProperty()->SetInterpolationTypeToNearest();
   volume->SetMapper(volumeMapper);
   volumeMapper->SetInputData(imageData);
+  volumeMapper->AddClippingPlane(clippingPlane);
+  // initial clipping plane doesn't clip anything
+  clippingPlane->SetNormal(0.0, 0.0, 1.0);
+  clippingPlane->SetOrigin(0.0, 0.0, 0.0);
   renderer->AddVolume(volume);
 }
 
@@ -68,9 +74,6 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
 }
 
 void QVoxelRenderer::setImage(const sme::common::ImageStack &img) {
-  if (!isVisible()) {
-    return;
-  }
   std::array<int, 3> dims{};
   imageDataArray = imageStackToVtkArray(img, dims);
   imageData->SetDimensions(dims.data());
@@ -84,7 +87,41 @@ void QVoxelRenderer::setImage(const sme::common::ImageStack &img) {
   imageData->GetPointData()->SetScalars(imageDataArray);
   renderer->ResetCameraClippingRange();
   renderer->ResetCamera();
-  renderWindow->Render();
+  if (cmbClippingPlaneNormal != nullptr &&
+      slideClippingPlaneOrigin != nullptr) {
+    cmbClippingPlaneNormal->setCurrentIndex(2);
+    slideClippingPlaneOrigin->setValue(0);
+    cmbClippingPlaneNormal_currentTextChanged(
+        cmbClippingPlaneNormal->currentText());
+  }
+}
+
+void QVoxelRenderer::setClippingPlaneOriginSlider(QSlider *slider) {
+  slideClippingPlaneOrigin = slider;
+  if (slideClippingPlaneOrigin == nullptr) {
+    return;
+  }
+  slideClippingPlaneOrigin->setMinimum(0);
+  slideClippingPlaneOrigin->setMaximum(100);
+  slideClippingPlaneOrigin->setValue(0);
+  connect(slideClippingPlaneOrigin, &QSlider::valueChanged, this,
+          &QVoxelRenderer::slideClippingPlaneOrigin_valueChanged);
+}
+
+void QVoxelRenderer::setClippingPlaneNormalCombobox(QComboBox *combobox) {
+  cmbClippingPlaneNormal = combobox;
+  if (cmbClippingPlaneNormal == nullptr) {
+    return;
+  }
+  cmbClippingPlaneNormal->clear();
+  cmbClippingPlaneNormal->addItems({"x", "y", "z"});
+  cmbClippingPlaneNormal->setCurrentIndex(2); // default to z-normal
+  connect(cmbClippingPlaneNormal, &QComboBox::currentTextChanged, this,
+          &QVoxelRenderer::cmbClippingPlaneNormal_currentTextChanged);
+}
+
+void QVoxelRenderer::renderOnClippingPaneChange(SmeVtkWidget *smeVtkWidget) {
+  smeVtkWidgetToRenderOnClippingPlaneChange = smeVtkWidget;
 }
 
 void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
@@ -115,4 +152,39 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
       emit mouseClicked(col, sme::common::Voxel{x, y, z});
     }
   }
+}
+
+void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
+  double fractionalValue =
+      static_cast<double>(value) / slideClippingPlaneOrigin->maximum();
+  double origin = fractionalValue * maxClippingPlaneOrigin;
+  clippingPlane->SetOrigin(origin, origin, origin);
+  clippingPlane->Modified();
+  vtkRender();
+  if (smeVtkWidgetToRenderOnClippingPlaneChange != nullptr) {
+    smeVtkWidgetToRenderOnClippingPlaneChange->vtkRender();
+  }
+}
+
+void QVoxelRenderer::cmbClippingPlaneNormal_currentTextChanged(
+    const QString &text) {
+  double x = 0.0;
+  double y = 0.0;
+  double z = 0.0;
+  if (text == "x") {
+    x = 1.0;
+  } else if (text == "y") {
+    y = 1.0;
+  } else if (text == "z") {
+    z = 1.0;
+  }
+  clippingPlane->SetNormal(x, y, z);
+  std::array<int, 3> dim{};
+  imageData->GetDimensions(dim.data());
+  double dx;
+  double dy;
+  double dz;
+  imageData->GetSpacing(dx, dy, dz);
+  maxClippingPlaneOrigin = x * dim[0] * dx + y * dim[1] * dy + z * dim[2] * dz;
+  slideClippingPlaneOrigin_valueChanged(slideClippingPlaneOrigin->value());
 }
