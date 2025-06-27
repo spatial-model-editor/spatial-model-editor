@@ -51,7 +51,7 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
     if (optCost.targetValues.empty()) {
       // default target is zero if not specified
       for (auto value : values) {
-        cost += std::abs(value);
+        cost += value * value;
       }
     } else {
       if (values.size() != optCost.targetValues.size()) {
@@ -66,7 +66,7 @@ double calculateCosts(const std::vector<OptCost> &optCosts,
         if (optCost.optCostDiffType == OptCostDiffType::Relative) {
           diff /= (std::abs(optCost.targetValues[i]) + optCost.epsilon);
         }
-        cost += std::abs(diff);
+        cost += diff * diff;
       }
     }
     cost *= optCost.weight;

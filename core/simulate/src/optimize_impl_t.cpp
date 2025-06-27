@@ -9,6 +9,24 @@
 using namespace sme;
 using namespace sme::test;
 
+static double sum_of_squares(const std::vector<double> &values) {
+  double sum{0.0};
+  for (double v : values) {
+    sum += v * v;
+  }
+  return sum;
+}
+
+static double sum_of_square_differences(const std::vector<double> &a,
+                                        const std::vector<double> &b) {
+  double sum{0.0};
+  for (std::size_t i = 0; i < a.size(); ++i) {
+    double diff = a[i] - b[i];
+    sum += diff * diff;
+  }
+  return sum;
+}
+
 TEST_CASE("Optimize applyParameters: parameters",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::VerySimpleModel)};
@@ -84,7 +102,7 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
 
   // sum over initial concentration of A to get costConc vs 0
   auto conc{model.getSpecies().getField("A")->getConcentration()};
-  double cost{common::sum(conc)};
+  double cost = sum_of_squares(conc);
   REQUIRE(simulate::calculateCosts({optCostConc}, {0}, sim, currentTargets) ==
           dbl_approx(cost));
   // repeat with explicit vector of zeros as target
@@ -110,13 +128,12 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
           dbl_approx(c));
   optCostDcdt.targetValues.clear();
 
-  // if concentration A is set to constant, conc cost is just npixels * that
-  // value
+  // concentration A is set to constant
   model.getSimulationData().clear();
   model.getSpecies().setInitialConcentration("A", 0.73);
   model.getSpecies().setInitialConcentration("B", 1.24);
   simulate::Simulation sim2(model);
-  auto c1{static_cast<double>(conc.size()) * 0.73};
+  auto c1 = sum_of_squares(std::vector<double>(conc.size(), 0.73));
   REQUIRE(simulate::calculateCosts({optCostConc}, {0}, sim2, currentTargets) ==
           dbl_approx(c1).epsilon(1e-13));
   // repeat with explicit vector of zeros as target
@@ -126,7 +143,7 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
   optCostConc.targetValues.clear();
   // if concentration B is also constant, then initial dA/dt is approx -A B k1
   sim2.doTimesteps(1e-8);
-  auto c2{static_cast<double>(conc.size()) * 0.73 * 1.24 * 0.1};
+  auto c2 = sum_of_squares(std::vector<double>(conc.size(), 0.73 * 1.24 * 0.1));
   REQUIRE(simulate::calculateCosts({optCostDcdt}, {0}, sim2, currentTargets) ==
           dbl_approx(c2).epsilon(1e-8));
   // repeat with explicit vector of zeros as target
@@ -174,7 +191,8 @@ TEST_CASE("Optimize calculateCosts: target values",
                static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
         targetPixel;
   }
-  double targetSum{static_cast<double>(comp->nVoxels()) * targetPixel};
+  double targetSumOfSquares =
+      sum_of_squares(std::vector<double>(comp->nVoxels(), targetPixel));
   constexpr double epsilon{3.4e-11};
 
   // cost: absolute difference of concentration of species A from zero
@@ -229,32 +247,36 @@ TEST_CASE("Optimize calculateCosts: target values",
 
   // sum over initial concentration of A to get costConc vs 2
   auto conc{model.getSpecies().getField("A")->getConcentration()};
-  double cost{targetSum - common::sum(conc)};
+  double cost{sum_of_square_differences(
+      std::vector<double>(comp->nVoxels(), targetPixel), conc)};
   REQUIRE(simulate::calculateCosts({optCostConcAbs}, {0}, sim,
                                    currentTargets) == dbl_approx(cost));
   // relative difference just a rescaling since target is uniform:
-  // diff/(targetPixel+epsilon)
+  // diff/(targetPixel+epsilon)^2
+  double relativeFactor{1.0 / (targetPixel + epsilon) /
+                        (targetPixel + epsilon)};
   REQUIRE(
       simulate::calculateCosts({optCostConcRel}, {0}, sim, currentTargets) ==
-      dbl_approx(cost / (targetPixel + epsilon)).epsilon(1e-13));
+      dbl_approx(relativeFactor * cost).epsilon(1e-13));
 
-  // initial dcdt without simulating is zero, so cost = |0 - targetSum|
-  REQUIRE(simulate::calculateCosts({optCostDcdtAbs}, {0}, sim,
-                                   currentTargets) == dbl_approx(targetSum));
+  // initial dcdt without simulating is zero, so cost = targetSumOfSquares
+  REQUIRE(
+      simulate::calculateCosts({optCostDcdtAbs}, {0}, sim, currentTargets) ==
+      dbl_approx(targetSumOfSquares));
   REQUIRE(
       simulate::calculateCosts({optCostDcdtRel}, {0}, sim, currentTargets) ==
-      dbl_approx(targetSum / (targetPixel + epsilon)).epsilon(1e-13));
+      dbl_approx(relativeFactor * targetSumOfSquares).epsilon(1e-13));
   sim.doTimesteps(1.0);
   // after simulation dcdt is negative for A, so cost increased
   REQUIRE(simulate::calculateCosts({optCostDcdtAbs}, {0}, sim, currentTargets) >
-          targetSum);
+          targetSumOfSquares);
   // absolute & relative still related by constant factor since relative uses
   // target value in denominator which is the same everywhere
   REQUIRE(
       simulate::calculateCosts({optCostDcdtRel}, {0}, sim, currentTargets) ==
-      dbl_approx(
-          simulate::calculateCosts({optCostDcdtAbs}, {0}, sim, currentTargets) /
-          (targetPixel + epsilon))
+      dbl_approx(relativeFactor * simulate::calculateCosts({optCostDcdtAbs},
+                                                           {0}, sim,
+                                                           currentTargets))
           .epsilon(1e-13));
 
   // if concentration A is set to target, conc cost is zero
@@ -269,32 +291,36 @@ TEST_CASE("Optimize calculateCosts: target values",
                                    currentTargets) == dbl_approx(0));
   // if concentration B is also uniform, then initial dA/dt = - A B k1
   sim2.doTimesteps(1e-8);
-  double dadt{-targetSum * concB * 0.1};
+  double dadt = -targetPixel * concB * 0.1; // k1 = 0.1
+  double cost_dadt =
+      (targetPixel - dadt) * (targetPixel - dadt) * comp->nVoxels();
   REQUIRE(
       simulate::calculateCosts({optCostDcdtAbs}, {0}, sim2, currentTargets) ==
-      dbl_approx(targetSum - dadt).epsilon(1e-8));
+      dbl_approx(cost_dadt).epsilon(1e-8));
   REQUIRE(
       simulate::calculateCosts({optCostDcdtRel}, {0}, sim2, currentTargets) ==
-      dbl_approx((targetSum - dadt) / (targetPixel + epsilon)).epsilon(1e-8));
+      dbl_approx(relativeFactor * cost_dadt).epsilon(1e-8));
 
   // if concentration A is set to zero, conc & dcdt are zero
   model.getSimulationData().clear();
   model.getSpecies().setInitialConcentration("A", 0.0);
   simulate::Simulation sim3(model);
   sim3.doTimesteps(1.0);
-  REQUIRE(simulate::calculateCosts({optCostConcAbs}, {0}, sim3,
-                                   currentTargets) == dbl_approx(targetSum));
+  REQUIRE(
+      simulate::calculateCosts({optCostConcAbs}, {0}, sim3, currentTargets) ==
+      dbl_approx(targetSumOfSquares));
   REQUIRE(sme::common::sum(currentTargets[0]) == dbl_approx(0.0));
-  REQUIRE(simulate::calculateCosts({optCostDcdtAbs}, {0}, sim3,
-                                   currentTargets) == dbl_approx(targetSum));
+  REQUIRE(
+      simulate::calculateCosts({optCostDcdtAbs}, {0}, sim3, currentTargets) ==
+      dbl_approx(targetSumOfSquares));
   REQUIRE(sme::common::sum(currentTargets[0]) == dbl_approx(0.0));
   REQUIRE(
       simulate::calculateCosts({optCostConcRel}, {0}, sim3, currentTargets) ==
-      dbl_approx(targetSum / (targetPixel + epsilon)).epsilon(1e-13));
+      dbl_approx(relativeFactor * targetSumOfSquares).epsilon(1e-13));
   REQUIRE(sme::common::sum(currentTargets[0]) == dbl_approx(0.0));
   REQUIRE(
       simulate::calculateCosts({optCostDcdtRel}, {0}, sim3, currentTargets) ==
-      dbl_approx(targetSum / (targetPixel + epsilon)).epsilon(1e-13));
+      dbl_approx(relativeFactor * targetSumOfSquares).epsilon(1e-13));
   REQUIRE(sme::common::sum(currentTargets[0]) == dbl_approx(0.0));
 }
 
