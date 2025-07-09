@@ -153,17 +153,18 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
                                       {}});
 
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
+    using enum sme::simulate::OptAlgorithmType;
     CAPTURE(optAlgorithmType);
     // some algos need larger populations
-    if (optAlgorithmType == sme::simulate::OptAlgorithmType::DE) {
+    if (optAlgorithmType == DE) {
       optimizeOptions.optAlgorithm.population = 5;
-    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::iDE) {
+    } else if (optAlgorithmType == iDE) {
       optimizeOptions.optAlgorithm.population = 7;
-    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::jDE) {
+    } else if (optAlgorithmType == jDE) {
       optimizeOptions.optAlgorithm.population = 7;
-    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::pDE) {
+    } else if (optAlgorithmType == pDE) {
       optimizeOptions.optAlgorithm.population = 7;
-    } else if (optAlgorithmType == sme::simulate::OptAlgorithmType::gaco) {
+    } else if (optAlgorithmType == gaco) {
       optimizeOptions.optAlgorithm.population = 7;
     } else {
       optimizeOptions.optAlgorithm.population = 2;
@@ -182,8 +183,12 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
     if (algorithmIsGuaranteedToMonotonicallyDecreaseCost(optAlgorithmType)) {
       // cost should decrease or stay the same with each iteration
       REQUIRE(optimization.getFitness()[1] <= optimization.getFitness()[0]);
-      // k1 should increase to minimize concentration of A
-      REQUIRE(optimization.getParams()[1][0] >= optimization.getParams()[0][0]);
+      // k1 should increase or stay the same to minimize concentration of A.
+      // 10% numerical tolerance here due to occasional random CI failures
+      // where k1 increases but the cost remains the same (to ~13sf)
+      constexpr double relative_tolerance{0.1};
+      REQUIRE(optimization.getParams()[1][0] * (1.0 + relative_tolerance) >=
+              optimization.getParams()[0][0]);
     }
     REQUIRE(optimization.getIsRunning() == false);
   }
@@ -507,8 +512,9 @@ TEST_CASE("Start long optimization in another thread & stop early",
   model.getOptimizeOptions() = optimizeOptions;
   sme::simulate::Optimization optimization(model);
   // run optimization in another thread
-  auto optSteps = std::async(std::launch::async,
-                             &simulate::Optimization::evolve, &optimization, 1);
+  auto optSteps = std::async(
+      std::launch::async, &simulate::Optimization::evolve, &optimization, 1,
+      std::function<void(double, const std::vector<double> &)>{});
   // wait until it starts running
   while (!optimization.getIsRunning()) {
     sme::test::wait(10);

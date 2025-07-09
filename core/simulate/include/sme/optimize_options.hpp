@@ -157,6 +157,8 @@ inline constexpr std::array<OptAlgorithmType, 14> optAlgorithmTypes{
     OptAlgorithmType::BOBYQA, OptAlgorithmType::NMS,   OptAlgorithmType::sbplx,
     OptAlgorithmType::AL,     OptAlgorithmType::PRAXIS};
 
+std::string toString(sme::simulate::OptAlgorithmType optAlgorithmType);
+
 /**
  * @brief Optimization algorithm options
  */

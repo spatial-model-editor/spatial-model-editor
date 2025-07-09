@@ -77,7 +77,10 @@ public:
   /**
    * @brief Do n iterations of parameter optimization
    */
-  std::size_t evolve(std::size_t n = 1);
+  std::size_t
+  evolve(std::size_t n = 1,
+         const std::function<void(double, const std::vector<double> &)>
+             &callback = {});
   /**
    * @brief Apply the current best parameter values to the supplied model
    */
@@ -89,7 +92,7 @@ public:
   /**
    * @brief The names of the parameters being optimized
    */
-  [[nodiscard]] std::vector<QString> getParamNames() const;
+  [[nodiscard]] std::vector<std::string> getParamNames() const;
   /**
    * @brief The best fitness from each iteration
    */

@@ -2,7 +2,7 @@ Steady state analysis
 =====================
 
 .. warning::
-    This is in an early stage of implementation and currently has only limited functionality. The interface may change at any time. Performance is not fully optimised yet and meaningful results will, for now, rely on significant knowledge of the system to be solved and the chosen solver parameters. No custom observables are supported at the moment, at only a single steady state in the parameter space will be found at once.
+    This is in an early stage of implementation and currently has only limited functionality. The interface may change at any time. Performance is not fully optimized yet and meaningful results will, for now, rely on significant knowledge of the system to be solved and the chosen solver parameters. No custom observables are supported at the moment, at only a single steady state in the parameter space will be found at once.
 
 .. figure:: img/steadystate.png
    :alt: Steady state analysis
