@@ -209,7 +209,9 @@ Optimization::Optimization(sme::model::Model &model) {
   }
 }
 
-std::size_t Optimization::evolve(std::size_t n) {
+std::size_t Optimization::evolve(
+    std::size_t n,
+    const std::function<void(double, const std::vector<double> &)> &callback) {
   if (isRunning.load()) {
     SPDLOG_WARN("Evolve is currently running: ignoring call to evolve");
     return 0;
@@ -243,6 +245,9 @@ std::size_t Optimization::evolve(std::size_t n) {
       return finalizeEvolve(e.what());
     }
     appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
+    if (callback) {
+      callback(bestFitness.back(), bestParams.back());
+    }
     ++nIterations;
     if (stopRequested) {
       SPDLOG_INFO("Stopping evolve early after {} steps", nIterations.load());
@@ -278,11 +283,11 @@ double Optimization::getMaxValue(std::size_t index) {
   return optConstData->maxTargetValues[index];
 }
 
-std::vector<QString> Optimization::getParamNames() const {
-  std::vector<QString> names;
+std::vector<std::string> Optimization::getParamNames() const {
+  std::vector<std::string> names;
   names.reserve(optConstData->optimizeOptions.optParams.size());
   for (const auto &optParam : optConstData->optimizeOptions.optParams) {
-    names.push_back(optParam.name.c_str());
+    names.push_back(optParam.name);
   }
   return names;
 }

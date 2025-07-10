@@ -10,6 +10,7 @@ target_sources(
           dunesim_impl.cpp
           optimize.cpp
           optimize_impl.cpp
+          optimize_options.cpp
           pde.cpp
           pixelsim.cpp
           pixelsim_impl.cpp
@@ -29,6 +30,7 @@ if(BUILD_TESTING)
            dunesim_t.cpp
            optimize_t.cpp
            optimize_impl_t.cpp
+           optimize_options_t.cpp
            pde_t.cpp
            pixelsim_t.cpp
            simulate_data_t.cpp

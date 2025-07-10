@@ -29,7 +29,7 @@ static void initFitnessPlot(QCustomPlot *plot) {
 }
 
 static void initParamsPlot(QCustomPlot *plot,
-                           const std::vector<QString> &paramNames) {
+                           const std::vector<std::string> &paramNames) {
   if (plot->plotLayout()->rowCount() == 1) {
     plot->plotLayout()->insertRow(0);
     plot->plotLayout()->addElement(0, 0,
@@ -45,7 +45,7 @@ static void initParamsPlot(QCustomPlot *plot,
     graphParams->setPen(sme::common::indexedColors()[i]);
     graphParams->setScatterStyle(
         QCPScatterStyle(QCPScatterStyle::ScatterShape::ssDisc));
-    graphParams->setName(paramNames[i]);
+    graphParams->setName(paramNames[i].c_str());
   }
   plot->rescaleAxes(true);
   plot->replot();
@@ -100,11 +100,12 @@ QString DialogOptimize::getParametersString() const {
   if (m_opt == nullptr || m_opt->getParams().empty()) {
     return s;
   }
-  for (std::size_t i = 0; i < m_opt->getParamNames().size(); ++i) {
-    s.append(m_opt->getParamNames()[i])
+  auto paramNames = m_opt->getParamNames();
+  for (std::size_t i = 0; i < paramNames.size(); ++i) {
+    s.append(paramNames[i])
         .append(": ")
         .append(QString::number(m_opt->getParams().back()[i]));
-    if (i < m_opt->getParamNames().size() - 1) {
+    if (i < paramNames.size() - 1) {
       s.append("\n");
     }
   }
@@ -217,12 +218,13 @@ void DialogOptimize::btnStartStop_clicked() {
   ui->btnStartStop->setText("Stop");
   ui->btnSetup->setEnabled(false);
   ui->buttonBox->setEnabled(false);
+  ui->splitter->setEnabled(false);
   this->setCursor(Qt::WaitCursor);
   // start optimization in a new thread
   constexpr std::size_t nIterations{1024};
-  m_optIterations =
-      std::async(std::launch::async, &sme::simulate::Optimization::evolve,
-                 m_opt.get(), nIterations);
+  m_optIterations = std::async(
+      std::launch::async, &sme::simulate::Optimization::evolve, m_opt.get(),
+      nIterations, std::function<void(double, const std::vector<double> &)>{});
   // start timer to periodically update simulation results
   m_plotRefreshTimer.start();
 }
@@ -287,6 +289,7 @@ void DialogOptimize::finalizePlots() {
   ui->btnStartStop->setEnabled(true);
   ui->btnSetup->setEnabled(true);
   ui->buttonBox->setEnabled(true);
+  ui->splitter->setEnabled(true);
   updatePlots();
   this->setCursor(Qt::ArrowCursor);
   if (m_opt != nullptr && !m_opt->getErrorMessage().empty()) {

@@ -2,6 +2,7 @@
 #include "dialogoptcost.hpp"
 #include "dialogoptparam.hpp"
 #include "sme/logger.hpp"
+#include "sme/optimize_options.hpp"
 #include "sme/utils.hpp"
 #include "ui_dialogoptsetup.h"
 #include <QMessageBox>
@@ -25,41 +26,6 @@ static QString toQStr(sme::simulate::OptCostDiffType optCostDiffType) {
     return "absolute";
   case sme::simulate::OptCostDiffType::Relative:
     return "relative";
-  default:
-    return "";
-  }
-}
-
-static QString toQStr(sme::simulate::OptAlgorithmType optAlgorithmType) {
-  switch (optAlgorithmType) {
-  case sme::simulate::OptAlgorithmType::PSO:
-    return "Particle Swarm Optimization";
-  case sme::simulate::OptAlgorithmType::GPSO:
-    return "Generational Particle Swarm Optimization";
-  case sme::simulate::OptAlgorithmType::DE:
-    return "Differential Evolution";
-  case sme::simulate::OptAlgorithmType::iDE:
-    return "Self-adaptive Differential Evolution (iDE)";
-  case sme::simulate::OptAlgorithmType::jDE:
-    return "Self-adaptive Differential Evolution (jDE)";
-  case sme::simulate::OptAlgorithmType::pDE:
-    return "Self-adaptive Differential Evolution (pDE)";
-  case sme::simulate::OptAlgorithmType::ABC:
-    return "Artificial Bee Colony";
-  case sme::simulate::OptAlgorithmType::gaco:
-    return "Extended Ant Colony Optimization";
-  case sme::simulate::OptAlgorithmType::COBYLA:
-    return "Constrained Optimization BY Linear Approximations";
-  case sme::simulate::OptAlgorithmType::BOBYQA:
-    return "Bound Optimization BY Quadratic Approximations";
-  case sme::simulate::OptAlgorithmType::NMS:
-    return "Nelder-Mead Simplex algorithm";
-  case sme::simulate::OptAlgorithmType::sbplx:
-    return "Rowan's SUPLEX algorithm";
-  case sme::simulate::OptAlgorithmType::AL:
-    return "Augmented Lagrangian method";
-  case sme::simulate::OptAlgorithmType::PRAXIS:
-    return "Brent's principle axis method";
   default:
     return "";
   }
@@ -169,21 +135,11 @@ getDefaultOptCosts(const sme::model::Model &model) {
 static void
 setValidMinPopulation(sme::simulate::OptAlgorithmType optAlgorithmType,
                       QSpinBox *spinPopulation) {
+  using enum sme::simulate::OptAlgorithmType;
   static std::unordered_map<sme::simulate::OptAlgorithmType, int> minPopulation{
-      {sme::simulate::OptAlgorithmType::PSO, 2},
-      {sme::simulate::OptAlgorithmType::GPSO, 2},
-      {sme::simulate::OptAlgorithmType::DE, 5},
-      {sme::simulate::OptAlgorithmType::iDE, 7},
-      {sme::simulate::OptAlgorithmType::jDE, 7},
-      {sme::simulate::OptAlgorithmType::pDE, 7},
-      {sme::simulate::OptAlgorithmType::ABC, 2},
-      {sme::simulate::OptAlgorithmType::gaco, 7},
-      {sme::simulate::OptAlgorithmType::COBYLA, 1},
-      {sme::simulate::OptAlgorithmType::BOBYQA, 1},
-      {sme::simulate::OptAlgorithmType::NMS, 1},
-      {sme::simulate::OptAlgorithmType::sbplx, 1},
-      {sme::simulate::OptAlgorithmType::AL, 1},
-      {sme::simulate::OptAlgorithmType::PRAXIS, 1}};
+      {PSO, 2}, {GPSO, 2},  {DE, 5},   {iDE, 7},    {jDE, 7},
+      {pDE, 7}, {ABC, 2},   {gaco, 7}, {COBYLA, 1}, {BOBYQA, 1},
+      {NMS, 1}, {sbplx, 1}, {AL, 1},   {PRAXIS, 1}};
   if (auto iter{minPopulation.find(optAlgorithmType)};
       iter != minPopulation.end()) {
     spinPopulation->setMinimum(iter->second);
@@ -198,7 +154,7 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
       ui{std::make_unique<Ui::DialogOptSetup>()} {
   ui->setupUi(this);
   for (auto optAlgorithmType : sme::simulate::optAlgorithmTypes) {
-    ui->cmbAlgorithm->addItem(toQStr(optAlgorithmType));
+    ui->cmbAlgorithm->addItem(toString(optAlgorithmType).c_str());
   }
   if (model.getSimulationSettings().simulatorType ==
       sme::simulate::SimulatorType::DUNE) {

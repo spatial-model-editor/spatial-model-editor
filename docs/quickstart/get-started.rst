@@ -21,7 +21,7 @@ Installation
 No installation required, just download and run the executable for your operating system:
 
 * |icon-linux|_ `linux <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor>`_
-* |icon-osx|_ `macOS arm64 <https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg>`_
+* |icon-osx-arm64|_ `macOS arm64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.dmg>`_
 * |icon-osx|_ `macOS intel <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg>`_
 * |icon-windows|_ `windows <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe>`_
 
@@ -39,6 +39,9 @@ No installation required, just download and run the executable for your operatin
 
 .. |icon-linux| image:: ../img/icon-linux.png
 .. _icon-linux: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor
+
+.. |icon-osx-arm64| image:: ../img/icon-osx.png
+.. _icon-osx-arm64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.dmg
 
 .. |icon-osx| image:: ../img/icon-osx.png
 .. _icon-osx: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg
