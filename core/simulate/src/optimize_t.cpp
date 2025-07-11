@@ -184,11 +184,11 @@ TEST_CASE("Optimize ABtoC with all algorithms for zero concentration of A",
       // cost should decrease or stay the same with each iteration
       REQUIRE(optimization.getFitness()[1] <= optimization.getFitness()[0]);
       // k1 should increase or stay the same to minimize concentration of A.
-      // 10% numerical tolerance here due to occasional random CI failures
-      // where k1 increases but the cost remains the same (to ~13sf)
-      constexpr double relative_tolerance{0.1};
-      REQUIRE(optimization.getParams()[1][0] * (1.0 + relative_tolerance) >=
-              optimization.getParams()[0][0]);
+      // But we only require that k1_new >= 0.9*k1_new since
+      // numerically the cost can remain the same (to ~13sf) while k1
+      // decreases by a few percent.
+      REQUIRE(optimization.getParams()[1][0] >=
+              0.9 * optimization.getParams()[0][0]);
     }
     REQUIRE(optimization.getIsRunning() == false);
   }
