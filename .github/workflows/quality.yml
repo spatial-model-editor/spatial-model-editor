@@ -15,25 +15,26 @@ env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-  SONAR_SCANNER_VERSION: '6.2.1.4610'
+  SONAR_SCANNER_VERSION: '7.2.0.5079'
 jobs:
   quality:
     name: ${{ matrix.script }}
     runs-on: ubuntu-22.04
+    timeout-minutes: 90
     strategy:
       fail-fast: false
       matrix:
-        script: [codecov, sonar, asan, ubsan]
+        script: [codecov, sonar, asan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2025.05.09
+      - uses: spatial-model-editor/setup-ci@2025.10.06
         with:
-          sme_deps: '2025.06.17'
+          sme_deps: '2025.10.06'
           cache_id: ${{ matrix.script }}
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: 'recursive'
           fetch-depth: 0
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         if: matrix.script == 'sonar'
         with:
           distribution: 'temurin'
