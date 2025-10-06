@@ -337,11 +337,12 @@ TEST_CASE("MainWindow: geometry", tags) {
     w.show();
     waitFor(&w);
     ModalWidgetTimer mwt;
-    mwt.addUserAction(
-        {"t", "m", "p", "m", "a", "i", "n", "w", "1", ".", "x", "m", "l"});
+    createBinaryFile("models/brusselator-model_v3.xml", "x.xml");
+    mwt.addUserAction({"x", ".", "x", "m", "l"});
     mwt.start();
     sendKeyEvents(&w, {"Ctrl+G"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+    QFile::remove("x.xml");
   }
   SECTION("built-in SBML model, change geometry image zoom") {
     MainWindow w;

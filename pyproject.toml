@@ -24,6 +24,7 @@ classifiers=[
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: Microsoft :: Windows",
@@ -57,4 +58,4 @@ SME_LOG_LEVEL = "OFF"
 build-verbosity = 3
 test-extras = "test"
 test-command = "python -m pytest {project}/sme/test -v"
-skip = '*-manylinux_i686 *-musllinux* *-win32'
+skip = '*-manylinux_i686 *-musllinux* *-win32 cp3??t-win*'

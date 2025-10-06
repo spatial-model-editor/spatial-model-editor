@@ -10,6 +10,11 @@ for benchmark in benchmarks:
     classes.add(name.split("_")[0])
     datasets.add(name.split("<")[1].split(">")[0])
 
+
+def repl(m):
+    return m.group("one")
+
+
 df = pd.DataFrame(benchmarks)
 for class_name in classes:
     d = pd.DataFrame()
@@ -19,7 +24,6 @@ for class_name in classes:
             df["name"].str.contains(f"{class_name}_.*<{dataset_name}.*", regex=True)
         ][["name", "cpu_time"]]
         # format function names
-        repl = lambda m: m.group("one")
         s["name"] = s["name"].str.replace(
             f"{class_name}_(?P<one>.*)<{dataset_name}.*", repl, regex=True
         )

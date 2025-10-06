@@ -12,6 +12,9 @@ retry() {
 }
 
 # do build
+# NOTE: vtk prioritises pkconfig over CMAKE_PREFIX_PATH in their custom find modules which means they pick up the system libraries
+# instead of the ones they were built against, so we have to explicitly set the variables that the find modules set
+# to point to our static libs
 mkdir build
 cd build
 cmake .. \
@@ -21,6 +24,8 @@ cmake .. \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
     -DCMAKE_CXX_FLAGS="-DNDEBUG -fpic -fvisibility=hidden" \
     -DSME_LOG_LEVEL=OFF \
+    -DEXPAT_INCLUDE_DIR=/opt/smelibs/include \
+    -DEXPAT_LIBRARY=/opt/smelibs/lib/libexpat.a \
     -DFREETYPE_LIBRARY_RELEASE=/opt/smelibs/lib/libQt6BundledFreetype.a \
     -DFREETYPE_INCLUDE_DIR_freetype2=/opt/smelibs/include/QtFreetype \
     -DFREETYPE_INCLUDE_DIR_ft2build=/opt/smelibs/include/QtFreetype \
