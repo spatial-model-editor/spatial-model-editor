@@ -219,6 +219,9 @@ void ModalWidgetTimer::executeUserAction(QWidget *widget) {
     sendKeyEvents(widget->windowHandle(), action.keySeqStrings);
   }
   if (action.callAccept) {
+    if (auto *p = qobject_cast<QFileDialog *>(widget); p != nullptr) {
+      qDebug() << this << ":: selected files:" << p->selectedFiles();
+    }
     if (auto *p = qobject_cast<QDialog *>(widget); p != nullptr) {
       qDebug() << this << ":: calling accept on widget" << widget;
       p->accept();
