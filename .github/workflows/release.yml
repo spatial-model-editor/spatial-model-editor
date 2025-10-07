@@ -1,12 +1,5 @@
 name: Release Builds
-on:
-  push:
-    branches:
-      - main
-    tags:
-      - "*.*.*"
-  pull_request:
-  workflow_dispatch:
+on: push
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: true
@@ -17,18 +10,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        target: ["gui-cli", "wheels"]
+        target: ["gui-cli"]
         platform:
-          - os: "ubuntu-22.04"
-            shell: "bash"
+          #          - os: "ubuntu-22.04"
+          #            shell: "bash"
           - os: "ubuntu-22.04-arm"
             shell: "bash"
-          - os: "macos-13"
-            shell: "bash"
-          - os: "macos-14"
-            shell: "bash"
-          - os: "windows-2022"
-            shell: "msys2 {0}"
+            #          - os: "macos-13"
+            #            shell: "bash"
+            #          - os: "macos-14"
+            #            shell: "bash"
+            #          - os: "windows-2022"
+            #            shell: "msys2 {0}"
     defaults:
       run:
         shell: ${{ matrix.platform.shell }}
