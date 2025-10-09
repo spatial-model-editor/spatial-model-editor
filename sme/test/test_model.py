@@ -270,13 +270,13 @@ def test_import_geometry_from_image():
     m.import_geometry_from_image(imgfile_modified)
     comp_img_1 = m.compartment_image
     nucl_mask_1 = m.compartments["Nucleus"].geometry_mask
-    assert np.array_equal(nucl_mask_0, nucl_mask_1) == False
-    assert np.array_equal(comp_img_0, comp_img_1) == False
+    assert not np.array_equal(nucl_mask_0, nucl_mask_1)
+    assert not np.array_equal(comp_img_0, comp_img_1)
     m.import_geometry_from_image(imgfile_original)
     comp_img_2 = m.compartment_image
     nucl_mask_2 = m.compartments["Nucleus"].geometry_mask
-    assert np.array_equal(comp_img_0, comp_img_2) == True
-    assert np.array_equal(nucl_mask_0, nucl_mask_2) == True
+    assert np.array_equal(comp_img_0, comp_img_2)
+    assert np.array_equal(nucl_mask_0, nucl_mask_2)
 
 
 def test_import_combine_archive():

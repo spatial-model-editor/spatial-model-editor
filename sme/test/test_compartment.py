@@ -30,6 +30,6 @@ def test_compartment() -> None:
     img = c.geometry_mask
     assert img.dtype == bool
     assert img.shape == (1, 100, 100)
-    assert img[0, 0, 0] == False
-    assert img[0, 30, 30] == True
-    assert img[0, 50, 50] == False
+    assert not img[0, 0, 0]
+    assert img[0, 30, 30]
+    assert not img[0, 50, 50]

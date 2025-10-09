@@ -68,7 +68,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
             dbl_approx(0.123));
     // export t=0 simulation concs to model
     widgets.cmbTimepoint->setCurrentIndex(0);
-    sendMouseClick(widgets.radModel);
+    widgets.radModel->setChecked(true);
+    REQUIRE(widgets.radModel->isChecked());
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(model.getSpecies().getSampledFieldConcentration("A_c2")[i] ==
             dbl_approx(conc0));
@@ -78,7 +79,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"Esc"});
     mwt.start();
-    sendMouseClick(widgets.radSingleImage);
+    widgets.radSingleImage->setChecked(true);
+    REQUIRE(widgets.radSingleImage->isChecked());
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
   }
@@ -87,8 +89,10 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
-    sendMouseClick(widgets.radSingleImage);
+    widgets.radSingleImage->setChecked(true);
+    REQUIRE(widgets.radSingleImage->isChecked());
     sendKeyEvents(&dia, {"Enter"});
+    wait(1000);
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
     REQUIRE(img.size().width() == imgs[0].volume().width());
@@ -101,7 +105,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
     widgets.cmbTimepoint->setCurrentIndex(4);
-    sendMouseClick(widgets.radSingleImage);
+    widgets.radSingleImage->setChecked(true);
+    REQUIRE(widgets.radSingleImage->isChecked());
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QImage img("tmpdiaex.png");
@@ -114,7 +119,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"Enter"});
     mwt.start();
-    sendMouseClick(widgets.radAllImages);
+    widgets.radAllImages->setChecked(true);
+    REQUIRE(widgets.radAllImages->isChecked());
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
     QImage img0("img0.png");
@@ -143,7 +149,8 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     mwt.setIgnoredWidget(&dia);
     mwt.addUserAction({"t", "m", "p", "d", "i", "a", "e", "x"});
     mwt.start();
-    sendMouseClick(widgets.radCSV);
+    widgets.radCSV->setChecked(true);
+    REQUIRE(widgets.radCSV->isChecked());
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QFile f2("tmpdiaex.txt");
