@@ -374,11 +374,21 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     f2.name = "func2";
     f2.args = {"x", "y"};
     f2.body = "2*x*y";
+    common::SymbolicFunction f3;
+    f3.id = "f3";
+    f3.name = "func3";
+    f3.args = {"x", "y"};
+    f3.body = "x-y";
     common::SymbolicFunction g2;
     g2.id = "g2";
     g2.name = "g2";
     g2.args = {"a", "b"};
     g2.body = "1/a/b";
+    common::SymbolicFunction nested;
+    nested.id = "nested";
+    nested.name = "nested";
+    nested.args = {"a", "b", "c", "d", "w"};
+    nested.body = "(3/2)*(a/b)*c*d*f2(f1(f1(w)),g2(f0(),f2(c,d)))";
     SECTION("0-arg func") {
       std::string expr{"z*f0()"};
       common::Symbolic sym(expr, {"z"}, {}, {f0});
@@ -447,11 +457,26 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     SECTION("2-arg func called with args in same order") {
       // ensure we don't have the same bug with functions as libsbml:
       // https://github.com/spatial-model-editor/spatial-model-editor/issues/856#issuecomment-1451919941
-      std::string expr = "f2(y,x)";
-      common::Symbolic sym(expr, {"x", "y"}, {}, {f2});
+      std::string expr = "f3(y,x)";
+      common::Symbolic sym(expr, {"x", "y"}, {}, {f3});
       CAPTURE(sym.getErrorMessage());
       REQUIRE(sym.getErrorMessage().empty());
-      REQUIRE(symEq(sym.inlinedExpr(), "2*x*y"));
+      REQUIRE(symEq(sym.inlinedExpr(), "y-x"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
+    SECTION("1-arg func called multiple times with different and same args") {
+      std::string expr = "-f1(f1(0.6)) + f1(1.2) - f1(x) * f1(y*z) / "
+                         "sqrt(f1(1.20)+f1(1.2)+f1(x))";
+      common::Symbolic sym(expr, {"x", "z"},
+                           {{"x", 0.1234235}, {"y", 0.71241234}}, {f1});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "-0.156559423399418*z"));
       REQUIRE(sym.isValid() == true);
       REQUIRE(sym.isCompiled() == false);
       sym.compile();
@@ -486,6 +511,60 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
       REQUIRE(sym.isCompiled() == true);
       CAPTURE(expr);
     }
+    SECTION("nested 2-arg functions") {
+      std::string expr = "f1(g2(f2(a,b),4))";
+      common::Symbolic sym(expr, {"a", "b"}, {}, {f1, f2, g2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "1/(4*a*b)"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
+    SECTION("nested with unused function") {
+      std::string expr = "f1(f0()+f1(f2(3,f1(w))))";
+      common::Symbolic sym(expr, {"w"}, {}, {f0, f1, f2, g2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "12+48*w"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
+    SECTION("nested with many variables, one unused") {
+      std::string expr = "(3/2)*(a/b)*c*d*f2(f1(f1(w)),g2(f0(),f2(c,d)))";
+      common::Symbolic sym(expr, {"a", "b", "c", "d", "w"}, {},
+                           {f0, f1, f2, g2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "a*w/b"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
+    SECTION("function that calls other functions with one unused argument") {
+      std::string expr = "nested(a,b,c,d,w)";
+      common::Symbolic sym(expr, {"a", "b", "c", "d", "w"}, {},
+                           {nested, f0, f1, f2, g2});
+      CAPTURE(sym.getErrorMessage());
+      REQUIRE(sym.getErrorMessage().empty());
+      REQUIRE(symEq(sym.inlinedExpr(), "a*w/b"));
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == false);
+      sym.compile();
+      REQUIRE(sym.isValid() == true);
+      REQUIRE(sym.isCompiled() == true);
+      CAPTURE(expr);
+    }
   }
   SECTION("single recursive function call") {
     common::SymbolicFunction f1;
@@ -498,9 +577,35 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     CAPTURE(sym.getErrorMessage());
     REQUIRE(sym.isValid() == false);
     REQUIRE(sym.isCompiled() == false);
-    REQUIRE_THAT(
-        sym.getErrorMessage(),
-        ContainsSubstring("Recursive function calls are not supported"));
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("recursive function"));
+    REQUIRE_THAT(sym.getErrorMessage(), ContainsSubstring("f1"));
+    CAPTURE(expr);
+  }
+  SECTION("indirect recursive chain of function calls") {
+    common::SymbolicFunction r1;
+    r1.id = "r1";
+    r1.name = "r1";
+    r1.args = {"x"};
+    r1.body = "1+r2(2*x)";
+    common::SymbolicFunction r2;
+    r2.id = "r2";
+    r2.name = "r2";
+    r2.args = {"y"};
+    r2.body = "2+r3(3*y)";
+    common::SymbolicFunction r3;
+    r3.id = "r3";
+    r3.name = "r3";
+    r3.args = {"x"};
+    r3.body = "2*r1(x/12)";
+    std::string expr{"6 - r1(2*a) + sqrt(a)*1.34534"};
+    common::Symbolic sym(expr, {"a"}, {}, {r1, r2, r3});
+    CAPTURE(sym.getErrorMessage());
+    REQUIRE(sym.isValid() == false);
+    REQUIRE(sym.isCompiled() == false);
+    REQUIRE_THAT(sym.getErrorMessage(),
+                 ContainsSubstring("recursive function"));
+    REQUIRE_THAT(sym.getErrorMessage(), ContainsSubstring("r1"));
     CAPTURE(expr);
   }
   SECTION("expressions with relative difference < 1e-13 test equal") {

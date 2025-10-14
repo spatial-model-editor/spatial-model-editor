@@ -2,6 +2,7 @@
 #include "sme/logger.hpp"
 #include <map>
 #include <ranges>
+#include <stack>
 
 namespace sme::common {
 
@@ -19,6 +20,97 @@ struct SymEngineFunc {
     body = parser.parse(symbolicFunction.body);
   }
 };
+
+static SymEngine::RCP<const SymEngine::Basic> substituteFunctions(
+    const SymEngine::RCP<const SymEngine::Basic> &expr,
+    const std::map<std::string, SymEngineFunc, std::less<>> &funcs,
+    SymEngine::map_basic_basic &defs) {
+  std::stack<SymEngine::RCP<const SymEngine::Basic>> exprStack;
+  SymEngine::set_basic visited;
+  SymEngine::map_basic_basic substitutedExprs;
+  exprStack.push(expr);
+
+  while (!exprStack.empty()) {
+    const auto &subExpr = exprStack.top();
+    SPDLOG_TRACE("Processing {}", sbml(*subExpr));
+    const auto funcSymbols = function_symbols(*subExpr);
+    // push any unvisited children (args or function bodies) onto the stack
+    bool expressionCanBeSubstituted = true;
+    if (!visited.contains(subExpr)) {
+      visited.insert(subExpr);
+      for (const auto &funcSymbol : funcSymbols) {
+        auto name =
+            rcp_dynamic_cast<const SymEngine::FunctionSymbol>(funcSymbol)
+                ->get_name();
+        if (auto iter{funcs.find(name)}; iter != funcs.cend()) {
+          SPDLOG_TRACE("  - expanding function '{}'", name);
+          const auto &f = iter->second;
+          if (funcSymbol->get_args().size() != f.args.size()) {
+            throw SymEngine::SymEngineException(fmt::format(
+                "Function '{}' requires {} argument(s), found {}", f.name,
+                f.args.size(), funcSymbol->get_args().size()));
+          }
+          if (!visited.contains(f.body)) {
+            exprStack.push(f.body);
+            SPDLOG_TRACE("    - push body to stack: {}", sbml(*f.body));
+            expressionCanBeSubstituted = false;
+          }
+          for (const auto &arg : funcSymbol->get_args()) {
+            if (!visited.contains(arg)) {
+              exprStack.push(arg);
+              SPDLOG_TRACE("    - push arg to stack: {}", sbml(*arg));
+              expressionCanBeSubstituted = false;
+            }
+          }
+        }
+      }
+    }
+    if (expressionCanBeSubstituted) {
+      // all children of this expression have been visited
+      // (i.e. all function args and bodies have been substituted)
+      // so we can now substitute this expression using substitutedExprs
+      SymEngine::map_basic_basic funcMap;
+      for (const auto &funcSymbol : funcSymbols) {
+        auto name =
+            rcp_dynamic_cast<const SymEngine::FunctionSymbol>(funcSymbol)
+                ->get_name();
+        if (auto iter{funcs.find(name)}; iter != funcs.cend()) {
+          SPDLOG_TRACE("  - substituting function {}", name);
+          const auto &f = iter->second;
+          auto iterBody = substitutedExprs.find(f.body);
+          if (iterBody == substitutedExprs.end()) {
+            throw SymEngine::SymEngineException(
+                fmt::format("Function '{}' calls itself - recursive function "
+                            "calls are not supported",
+                            name));
+          }
+          const auto &substitutedBody = iterBody->second;
+          SPDLOG_TRACE("    - body: {} -> {}", sbml(*f.body),
+                       sbml(*substitutedBody));
+          // map function arguments (the arguments in the function definition)
+          // to substituted arguments (what was passed to the function in the
+          // expression)
+          SymEngine::map_basic_basic argMap;
+          std::size_t i = 0;
+          for (const auto &funcSymbolArg : funcSymbol->get_args()) {
+            argMap[f.args[i]] = substitutedExprs.at(funcSymbolArg);
+            SPDLOG_TRACE("    - arg: {} -> {}", sbml(*f.args[i]),
+                         sbml(*argMap[f.args[i]]));
+            ++i;
+          }
+          funcMap[funcSymbol] = substitutedBody->xreplace(argMap);
+          SPDLOG_TRACE("    -> {}", sbml(*funcMap[funcSymbol]));
+        }
+      }
+      substitutedExprs[subExpr] = subExpr->xreplace(funcMap);
+      SPDLOG_TRACE("  -> {}", sbml(*substitutedExprs[subExpr]));
+      SPDLOG_TRACE("  - removed from stack");
+      exprStack.pop();
+    }
+  }
+  // substitute any supplied numeric constants in the final expression
+  return substitutedExprs.at(expr)->xreplace(defs);
+}
 
 Symbolic::Symbolic() = default;
 
@@ -66,56 +158,11 @@ bool Symbolic::parse(
     SymEngine::map_basic_basic fns;
     SPDLOG_DEBUG("expr {}", expression);
     // parse expression & substitute all supplied functions & numeric constants
-    // todo: clean this up - see
-    // https://github.com/symengine/symengine/issues/1689
     try {
-      int remainingAllowedReplaceLoops{1024};
-      auto e{parser.parse(expression)};
-      SymEngine::RCP<const SymEngine::Basic> ePrevious{SymEngine::zero};
-      exprOriginal.push_back(e);
-      auto remainingSymbols{function_symbols(*e)};
-      while (!remainingSymbols.empty() && !eq(*e, *ePrevious) &&
-             --remainingAllowedReplaceLoops > 0) {
-        ePrevious = e;
-        for (const auto &funcSymbol : remainingSymbols) {
-          auto name =
-              rcp_dynamic_cast<const SymEngine::FunctionSymbol>(funcSymbol)
-                  ->get_name();
-          if (auto iter{symEngineFuncs.find(name)};
-              iter != symEngineFuncs.cend()) {
-            const auto &f = iter->second;
-            const auto &args = funcSymbol->get_args();
-            if (args.size() != f.args.size()) {
-              errorMessage =
-                  fmt::format("Error parsing expression '{}': Function '{}' "
-                              "requires {} argument(s), found {}",
-                              expression, f.name, f.args.size(), args.size());
-              SPDLOG_WARN("{}", errorMessage);
-              return false;
-            }
-            SymEngine::map_basic_basic arg_map;
-            for (std::size_t i = 0; i < args.size(); ++i) {
-              arg_map[f.args[i]] = args[i];
-            }
-            fns[funcSymbol] = f.body->xreplace(arg_map);
-          }
-        }
-        auto eReplaced = e->xreplace(fns);
-        while (!eq(*e, *eReplaced) && --remainingAllowedReplaceLoops > 0) {
-          e = eReplaced;
-          eReplaced = e->xreplace(fns);
-        }
-        e = eReplaced;
-        remainingSymbols = function_symbols(*e);
-      }
-      if (remainingAllowedReplaceLoops <= 0) {
-        errorMessage = fmt::format("Error parsing expression '{}': Recursive "
-                                   "function calls are not supported",
-                                   expression);
-        SPDLOG_WARN("{}", errorMessage);
-        return false;
-      }
-      exprInlined.push_back(e->subs(d));
+      auto symengineExpr{parser.parse(expression)};
+      exprOriginal.push_back(symengineExpr);
+      exprInlined.push_back(
+          substituteFunctions(symengineExpr, symEngineFuncs, d));
     } catch (const SymEngine::SymEngineException &e) {
       // if SymEngine failed to parse, capture error message
       SPDLOG_WARN("{}", e.what());
@@ -140,8 +187,7 @@ bool Symbolic::parse(
         return false;
       }
     }
-    auto fn{function_symbols(*exprInlined.back())};
-    if (!fn.empty()) {
+    if (auto fn{function_symbols(*exprInlined.back())}; !fn.empty()) {
       errorMessage =
           fmt::format("Error parsing expression '{}': Unknown function '{}'",
                       expression, sbml(*(*fn.begin())));

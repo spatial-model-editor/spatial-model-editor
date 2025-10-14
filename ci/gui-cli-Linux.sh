@@ -41,9 +41,6 @@ ccache --show-stats
 # when (hopefully) the Xvfb display will be ready
 jwm &
 
-#temp: run tests with output to see where they hang
-./test/tests -as
-
 # run cpp tests
 time ./test/tests -as >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
