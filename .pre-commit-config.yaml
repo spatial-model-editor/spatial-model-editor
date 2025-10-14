@@ -8,7 +8,7 @@ repos:
       - id: mixed-line-ending
       - id: requirements-txt-fixer
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.0
     hooks:
       - id: ruff-check
         types_or: [python, pyi, jupyter]
@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: shell-fmt-go
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.34.0
+    rev: 0.34.1
     hooks:
       - id: check-github-workflows
       - id: check-readthedocs
