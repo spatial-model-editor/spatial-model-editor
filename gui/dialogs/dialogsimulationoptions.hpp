@@ -7,14 +7,14 @@ namespace Ui {
 class DialogSimulationOptions;
 }
 
-class DialogSimulationOptions : public QDialog {
+class DialogSimulationOptions final : public QDialog {
   Q_OBJECT
 
 public:
   explicit DialogSimulationOptions(const sme::simulate::Options &options,
                                    QWidget *parent = nullptr);
-  ~DialogSimulationOptions();
-  const sme::simulate::Options &getOptions() const;
+  ~DialogSimulationOptions() override;
+  [[nodiscard]] const sme::simulate::Options &getOptions() const;
 
 private:
   void setupConnections();
@@ -37,6 +37,7 @@ private:
   void txtPixelDt_editingFinished();
   void chkPixelMultithread_stateChanged();
   void spnPixelThreads_valueChanged(int value);
+  void spnDuneThreads_valueChanged(int value);
   void chkPixelCSE_stateChanged();
   void spnPixelOptLevel_valueChanged(int value);
   void resetPixelToDefaults();

@@ -34,6 +34,7 @@ struct DuneOptions {
   double newtonRelErr{1e-8};
   double newtonAbsErr{0.0};
   std::string linearSolver{"RestartedGMRes"};
+  std::size_t maxThreads{0};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -48,6 +49,12 @@ struct DuneOptions {
          CEREAL_NVP(decrease), CEREAL_NVP(writeVTKfiles),
          CEREAL_NVP(newtonRelErr), CEREAL_NVP(newtonAbsErr),
          CEREAL_NVP(linearSolver));
+    } else if (version == 2) {
+      ar(CEREAL_NVP(discretization), CEREAL_NVP(integrator), CEREAL_NVP(dt),
+         CEREAL_NVP(minDt), CEREAL_NVP(maxDt), CEREAL_NVP(increase),
+         CEREAL_NVP(decrease), CEREAL_NVP(writeVTKfiles),
+         CEREAL_NVP(newtonRelErr), CEREAL_NVP(newtonAbsErr),
+         CEREAL_NVP(linearSolver), CEREAL_NVP(maxThreads));
     }
   }
 };
@@ -114,7 +121,7 @@ struct AvgMinMax {
 } // namespace sme::simulate
 
 CEREAL_CLASS_VERSION(sme::simulate::Options, 0);
-CEREAL_CLASS_VERSION(sme::simulate::DuneOptions, 1);
+CEREAL_CLASS_VERSION(sme::simulate::DuneOptions, 2);
 CEREAL_CLASS_VERSION(sme::simulate::PixelIntegratorError, 0);
 CEREAL_CLASS_VERSION(sme::simulate::PixelOptions, 0);
 CEREAL_CLASS_VERSION(sme::simulate::AvgMinMax, 0);

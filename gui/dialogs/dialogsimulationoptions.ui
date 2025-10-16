@@ -38,13 +38,6 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <layout class="QGridLayout" name="gridLayout_2">
-         <item row="4" column="1">
-          <widget class="QLineEdit" name="txtDuneMaxDt">
-           <property name="toolTip">
-            <string>The maximum allowed timestep</string>
-           </property>
-          </widget>
-         </item>
          <item row="7" column="0">
           <widget class="QLabel" name="lblOutputFiles">
            <property name="text">
@@ -55,47 +48,17 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="0">
-          <widget class="QLabel" name="lblDuneDiscretization">
-           <property name="text">
-            <string>Discretization</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="lblDuneMaxDt">
-           <property name="text">
-            <string>Max timestep</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QLineEdit" name="txtDuneMinDt">
+         <item row="5" column="1">
+          <widget class="QLineEdit" name="txtDuneIncrease">
            <property name="toolTip">
-            <string>The minimum allowed timestep</string>
+            <string>The factor by which the timestep is increased after a successful integration step</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="0">
-          <widget class="QLabel" name="lblDuneDecrease">
+         <item row="8" column="0">
+          <widget class="QLabel" name="lblDuneNewtonRel">
            <property name="text">
-            <string>Decrease factor</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="lblDuneDt">
-           <property name="text">
-            <string>Initial timestep</string>
+            <string>Newton relative error</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -112,32 +75,6 @@
            </property>
           </widget>
          </item>
-         <item row="5" column="0">
-          <widget class="QLabel" name="lblDuneIncrease">
-           <property name="text">
-            <string>Increase factor</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QLineEdit" name="txtDuneDecrease">
-           <property name="toolTip">
-            <string>The factor by which the timestep is decreased after an unsuccessful integration step</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="cmbDuneDiscretization">
-           <item>
-            <property name="text">
-             <string>1st order FEM</string>
-            </property>
-           </item>
-          </widget>
-         </item>
          <item row="1" column="0">
           <widget class="QLabel" name="lblDuneIntegrator">
            <property name="text">
@@ -148,24 +85,30 @@
            </property>
           </widget>
          </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="lblDuneDt">
+           <property name="text">
+            <string>Initial timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="lblDuneDiscretization">
+           <property name="text">
+            <string>Discretization</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
          <item row="2" column="1">
           <widget class="QLineEdit" name="txtDuneDt">
            <property name="toolTip">
             <string>The initial timestep to use at the start of the simulation</string>
-           </property>
-          </widget>
-         </item>
-         <item row="13" column="0" colspan="2">
-          <widget class="QPushButton" name="btnDuneReset">
-           <property name="text">
-            <string>Reset to default values</string>
-           </property>
-          </widget>
-         </item>
-         <item row="5" column="1">
-          <widget class="QLineEdit" name="txtDuneIncrease">
-           <property name="toolTip">
-            <string>The factor by which the timestep is increased after a successful integration step</string>
            </property>
           </widget>
          </item>
@@ -216,43 +159,6 @@
            </item>
           </widget>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="lblDuneMinDt">
-           <property name="text">
-            <string>Min timestep</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="lblDuneNewtonRel">
-           <property name="text">
-            <string>Newton relative error</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="1">
-          <widget class="QLineEdit" name="txtDuneNewtonRel">
-           <property name="toolTip">
-            <string>The relative (to initial) size of defect at which the Newton iteration is considered to have converged</string>
-           </property>
-          </widget>
-         </item>
-         <item row="9" column="0">
-          <widget class="QLabel" name="lblDuneNewtonAbs">
-           <property name="text">
-            <string>Newton absolute error</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
          <item row="9" column="1">
           <widget class="QLineEdit" name="txtDuneNewtonAbs">
            <property name="toolTip">
@@ -260,10 +166,10 @@
            </property>
           </widget>
          </item>
-         <item row="10" column="0">
-          <widget class="QLabel" name="lblDuneLinearSolver">
+         <item row="4" column="0">
+          <widget class="QLabel" name="lblDuneMaxDt">
            <property name="text">
-            <string>Linear solver</string>
+            <string>Max timestep</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -302,7 +208,53 @@
            </item>
           </widget>
          </item>
-         <item row="11" column="0" rowspan="2" colspan="2">
+         <item row="5" column="0">
+          <widget class="QLabel" name="lblDuneIncrease">
+           <property name="text">
+            <string>Increase factor</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QLineEdit" name="txtDuneNewtonRel">
+           <property name="toolTip">
+            <string>The relative (to initial) size of defect at which the Newton iteration is considered to have converged</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="cmbDuneDiscretization">
+           <item>
+            <property name="text">
+             <string>1st order FEM</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="lblDuneMinDt">
+           <property name="text">
+            <string>Min timestep</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="lblDuneDecrease">
+           <property name="text">
+            <string>Decrease factor</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="12" column="0" rowspan="2" colspan="2">
           <spacer name="verticalSpacer_2">
            <property name="orientation">
             <enum>Qt::Vertical</enum>
@@ -314,6 +266,77 @@
             </size>
            </property>
           </spacer>
+         </item>
+         <item row="14" column="0" colspan="2">
+          <widget class="QPushButton" name="btnDuneReset">
+           <property name="text">
+            <string>Reset to default values</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="lblDuneNewtonAbs">
+           <property name="text">
+            <string>Newton absolute error</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="lblDuneLinearSolver">
+           <property name="text">
+            <string>Linear solver</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="txtDuneMinDt">
+           <property name="toolTip">
+            <string>The minimum allowed timestep</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="txtDuneMaxDt">
+           <property name="toolTip">
+            <string>The maximum allowed timestep</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QLineEdit" name="txtDuneDecrease">
+           <property name="toolTip">
+            <string>The factor by which the timestep is decreased after an unsuccessful integration step</string>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="0">
+          <widget class="QLabel" name="lblDuneThreads">
+           <property name="text">
+            <string>Max CPU Threads</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="1">
+          <widget class="QSpinBox" name="spnDuneThreads">
+           <property name="toolTip">
+            <string>Limit the maximum number of CPU threads used</string>
+           </property>
+           <property name="specialValueText">
+            <string>unlimited</string>
+           </property>
+           <property name="maximum">
+            <number>128</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>

@@ -142,7 +142,7 @@ TEST_CASE("Boundaries", "[core/mesh/boundaries][core/mesh][core][boundaries]") {
 }
 
 TEST_CASE("Boundaries using images from Medha Bhattacharya",
-          "[core/mesh/boundaries][core/mesh][core][boundaries][expensive]") {
+          "[core/mesh/boundaries][core/mesh][core][boundaries]") {
   // images provided by Medha Bhattacharya
   // https://summerofcode.withgoogle.com/archive/2020/projects/4913136240427008/
   // https://drive.google.com/drive/folders/1z83_pUTlI7eYKL9J9iV-EV6lLAEqC7pG

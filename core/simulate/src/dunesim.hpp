@@ -39,6 +39,7 @@ private:
   std::unique_ptr<DuneImpl<3>> pDuneImpl3d;
   std::string currentErrorMessage{};
   common::ImageStack currentErrorImages{};
+  std::size_t numMaxThreads{0};
 
 public:
   explicit DuneSim(

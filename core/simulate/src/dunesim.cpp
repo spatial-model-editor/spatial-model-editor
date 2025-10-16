@@ -11,6 +11,8 @@
 #include <QPainter>
 #include <algorithm>
 #include <numeric>
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/info.h>
 
 namespace sme::simulate {
 
@@ -18,8 +20,12 @@ DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::map<std::string, double, std::less<>> &substitutions) {
   try {
-    simulate::DuneConverter dc(sbmlDoc, substitutions, false);
+    DuneConverter dc(sbmlDoc, substitutions, false);
     const auto &options{sbmlDoc.getSimulationSettings().options.dune};
+    numMaxThreads =
+        options.maxThreads == 0
+            ? static_cast<std::size_t>(oneapi::tbb::info::default_concurrency())
+            : options.maxThreads;
     if (options.discretization != DuneDiscretizationType::FEM1) {
       // for now we only support 1st order FEM
       // in future could add:
@@ -56,6 +62,8 @@ std::size_t DuneSim::run(double time, double timeout_ms,
   if (pDuneImpl2d == nullptr && pDuneImpl3d == nullptr) {
     return 0;
   }
+  oneapi::tbb::global_control control(
+      oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
   QElapsedTimer timer;
   timer.start();
   try {

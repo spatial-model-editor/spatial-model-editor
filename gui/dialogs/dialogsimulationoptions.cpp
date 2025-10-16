@@ -84,6 +84,8 @@ void DialogSimulationOptions::setupConnections() {
   connect(ui->cmbDuneLinearSolver,
           qOverload<int>(&QComboBox::currentIndexChanged), this,
           &DialogSimulationOptions::cmbDuneLinearSolver_currentIndexChanged);
+  connect(ui->spnDuneThreads, qOverload<int>(&QSpinBox::valueChanged), this,
+          &DialogSimulationOptions::spnDuneThreads_valueChanged);
   connect(ui->btnDuneReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetDuneToDefaults);
   // Pixel tab
@@ -122,6 +124,11 @@ void DialogSimulationOptions::loadDuneOpts() {
   selectMatchingOrFirstItem(ui->cmbDuneLinearSolver,
                             opt.dune.linearSolver.c_str());
   opt.dune.linearSolver = ui->cmbDuneLinearSolver->currentText().toStdString();
+  ui->spnDuneThreads->setMaximum(oneapi::tbb::info::default_concurrency());
+  if (opt.dune.maxThreads > ui->spnDuneThreads->maximum()) {
+    opt.dune.maxThreads = 0;
+  }
+  ui->spnDuneThreads->setValue(opt.dune.maxThreads);
 }
 
 void DialogSimulationOptions::cmbDuneIntegrator_currentIndexChanged(
@@ -173,6 +180,11 @@ void DialogSimulationOptions::cmbDuneLinearSolver_currentIndexChanged(
   opt.dune.linearSolver = ui->cmbDuneLinearSolver->currentText().toStdString();
 }
 
+void DialogSimulationOptions::spnDuneThreads_valueChanged(int value) {
+  opt.dune.maxThreads = static_cast<std::size_t>(value);
+  loadDuneOpts();
+}
+
 void DialogSimulationOptions::resetDuneToDefaults() {
   opt.dune = sme::simulate::DuneOptions{};
   loadDuneOpts();
@@ -187,11 +199,10 @@ void DialogSimulationOptions::loadPixelOpts() {
   ui->spnPixelThreads->setMaximum(oneapi::tbb::info::default_concurrency());
   if (opt.pixel.enableMultiThreading) {
     ui->spnPixelThreads->setEnabled(true);
-    int threads = static_cast<int>(opt.pixel.maxThreads);
-    if (threads > ui->spnPixelThreads->maximum()) {
-      threads = 0;
+    if (opt.pixel.maxThreads > ui->spnPixelThreads->maximum()) {
+      opt.pixel.maxThreads = 0;
     }
-    ui->spnPixelThreads->setValue(threads);
+    ui->spnPixelThreads->setValue(opt.pixel.maxThreads);
   } else {
     ui->spnPixelThreads->setEnabled(false);
   }
