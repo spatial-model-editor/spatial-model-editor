@@ -42,6 +42,7 @@ bool runCommand(const Params &params) {
   s.getSimulationSettings().simulatorType = params.simType;
   auto &options{s.getSimulationSettings().options};
   options.pixel.enableMultiThreading = true;
+  options.dune.maxThreads = params.maxThreads;
   options.pixel.maxThreads = params.maxThreads;
   if (params.maxThreads == 1) {
     options.pixel.enableMultiThreading = false;

@@ -314,9 +314,10 @@ TEST_CASE("Serialization",
     REQUIRE(s4.getColors()[1] == common::indexedColors()[1].rgb());
   }
   SECTION("settings xml roundtrip") {
-    sme::model::Settings s{};
+    model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
+    s.simulationSettings.options.dune.maxThreads = 7;
     auto xml{common::toXml(s)};
     auto s2{common::fromXml(xml)};
     REQUIRE(s2.simulationSettings.simulatorType ==
@@ -324,6 +325,7 @@ TEST_CASE("Serialization",
     REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
     REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
             dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
+    REQUIRE(s2.simulationSettings.options.dune.maxThreads == 7);
   }
   SECTION("check DE locale doesn't break settings xml roundtrip") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/535

@@ -789,7 +789,7 @@ static double analytic_2d(const QPoint &p, double t, double D, double t0) {
 
 TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
           "[core/simulate/simulate][core/"
-          "simulate][core][simulate][dune][pixel][expensive]") {
+          "simulate][core][simulate][dune][pixel]") {
   // see docs/tests/diffusion.rst for analytic expressions used here
   // NB central point of initial distribution: (48,99-48) <-> ix=1577
 
@@ -1643,7 +1643,7 @@ TEST_CASE("Reactions depend on x, y, t",
 
 TEST_CASE("circle membrane reaction",
           "[core/simulate/simulate][core/"
-          "simulate][core][simulate][dune][pixel][expensive]") {
+          "simulate][core][simulate][dune][pixel]") {
   auto mDune{getTestModel("membrane-reaction-circle")};
   auto mPixel{getTestModel("membrane-reaction-circle")};
   mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
@@ -2022,9 +2022,8 @@ TEST_CASE("Events: continuing existing simulation",
   }
 }
 
-TEST_CASE(
-    "simulate w/options & save, load, re-simulate",
-    "[core/simulate/simulate][core/simulate][core][simulate][expensive]") {
+TEST_CASE("simulate w/options & save, load, re-simulate",
+          "[core/simulate/simulate][core/simulate][core][simulate]") {
   for (auto simulatorType :
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     CAPTURE(simulatorType);

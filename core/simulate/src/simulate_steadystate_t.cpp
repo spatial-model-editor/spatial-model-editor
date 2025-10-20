@@ -12,9 +12,8 @@
 using namespace sme;
 using namespace sme::test;
 
-TEST_CASE(
-    "SimulateSteadyState",
-    "[core][core/simulate][steadystate][core/simulate/simulate_steadystate]") {
+TEST_CASE("SimulateSteadyState", "[core][core/simulate][steadystate][core/"
+                                 "simulate/simulate_steadystate][expensive]") {
 
   auto m{getExampleModel(Mod::GrayScott)};
   const std::vector<std::string> comps{"compartment"};

@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "sme/logger.hpp"
 #include <QApplication>
-#include <QSurfaceFormat>
 #include <catch2/catch_session.hpp>
+#include <oneapi/tbb/global_control.h>
 
 int main(int argc, char *argv[]) {
   Catch::StringMaker<double>::precision = 25;

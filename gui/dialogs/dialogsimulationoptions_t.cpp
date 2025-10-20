@@ -27,6 +27,7 @@ struct DialogSimulationOptionsWidgets {
     GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonRel);
     GET_DIALOG_WIDGET(QLineEdit, txtDuneNewtonAbs);
     GET_DIALOG_WIDGET(QComboBox, cmbDuneLinearSolver);
+    GET_DIALOG_WIDGET(QSpinBox, spnDuneThreads);
     GET_DIALOG_WIDGET(QPushButton, btnDuneReset);
     // Pixel tab
     GET_DIALOG_WIDGET(QComboBox, cmbPixelIntegrator);
@@ -52,6 +53,7 @@ struct DialogSimulationOptionsWidgets {
   QLineEdit *txtDuneNewtonRel;
   QLineEdit *txtDuneNewtonAbs;
   QPushButton *btnDuneReset;
+  QSpinBox *spnDuneThreads;
   QComboBox *cmbDuneLinearSolver;
   // Pixel tab
   QComboBox *cmbPixelIntegrator;
@@ -78,11 +80,13 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
   options.dune.newtonRelErr = 4e-4;
   options.dune.newtonAbsErr = 9e-9;
   options.dune.linearSolver = "IDontExist";
+  // higher than available physical CPU threads
+  options.dune.maxThreads = 4096;
   options.pixel.integrator = sme::simulate::PixelIntegratorType::RK435;
   options.pixel.maxErr = {0.01, 4e-4};
   options.pixel.maxTimestep = 0.2;
   options.pixel.enableMultiThreading = false;
-  options.pixel.maxThreads = 0;
+  options.pixel.maxThreads = 1;
   options.pixel.doCSE = true;
   options.pixel.optLevel = 3;
   DialogSimulationOptions dia(options);
@@ -101,14 +105,16 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.writeVTKfiles == true);
     REQUIRE(opt.dune.newtonRelErr == dbl_approx(4e-4));
     REQUIRE(opt.dune.newtonAbsErr == dbl_approx(9e-9));
-    REQUIRE(opt.dune.linearSolver ==
-            "BiCGSTAB"); // invalid choice -> first valid option
+    // invalid choice -> first valid option:
+    REQUIRE(opt.dune.linearSolver == "BiCGSTAB");
+    // higher than available -> automatically set to 0 (unlimited):
+    REQUIRE(opt.dune.maxThreads == 0);
     REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
     REQUIRE(opt.pixel.maxTimestep == dbl_approx(0.2));
     REQUIRE(opt.pixel.enableMultiThreading == false);
-    REQUIRE(opt.pixel.maxThreads == 0);
+    REQUIRE(opt.pixel.maxThreads == 1);
     REQUIRE(opt.pixel.doCSE == true);
     REQUIRE(opt.pixel.optLevel == 3);
   }
@@ -131,6 +137,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     widgets.txtDuneNewtonAbs->clear();
     sendKeyEvents(widgets.txtDuneNewtonAbs, {"0", "Enter"});
     widgets.cmbDuneLinearSolver->setCurrentIndex(2);
+    widgets.spnDuneThreads->setValue(1);
     auto opt = dia.getOptions();
     REQUIRE(opt.dune.integrator == "Heun");
     REQUIRE(opt.dune.dt == dbl_approx(0.4));
@@ -142,6 +149,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.newtonRelErr == dbl_approx(1e-7));
     REQUIRE(opt.dune.newtonAbsErr == dbl_approx(0));
     REQUIRE(opt.dune.linearSolver == "RestartedGMRes");
+    REQUIRE(opt.dune.maxThreads == 1);
     sendMouseClick(widgets.btnDuneReset);
     sme::simulate::DuneOptions defaultOpts{};
     opt = dia.getOptions();
@@ -153,6 +161,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.decrease == defaultOpts.decrease);
     REQUIRE(opt.dune.writeVTKfiles == defaultOpts.writeVTKfiles);
     REQUIRE(opt.dune.linearSolver == defaultOpts.linearSolver);
+    REQUIRE(opt.dune.maxThreads == defaultOpts.maxThreads);
   }
   SECTION("user changes Pixel values, then resets to defaults") {
     widgets.tabSimulator->setCurrentIndex(0);
