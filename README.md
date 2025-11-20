@@ -14,6 +14,8 @@
 A GUI editor to create and edit spatial SBML models of bio-chemical reactions and simulate them using the
 [dune-copasi](https://dune-copasi.netlify.app/) solver for reaction-diffusion systems.
 
+## Getting started
+
 To get started, download and run the GUI for your operating system
 
 | [Linux](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [MacOS Arm64](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [MacOS Intel](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [Windows](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
@@ -21,6 +23,8 @@ To get started, download and run the GUI for your operating system
 | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![macOS arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [![macOS intel](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.dmg) | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 
 Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
+
+## Pre-release binaries
 
 Pre-release preview binaries are also available which are built from the main branch and can be used for testing new features before the next release:
 

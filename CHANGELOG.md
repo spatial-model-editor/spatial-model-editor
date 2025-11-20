@@ -1,11 +1,14 @@
 # Changelog
 
-## [latest]
+## [1.10.0] - 2025-11-20
 ### Added
 - option to set the maximum number of CPU threads the DuneCopasi simulator can use [#1082](https://github.com/spatial-model-editor/spatial-model-editor/issues/1082)
 - parameter fitting to CLI [#1073](https://github.com/spatial-model-editor/spatial-model-editor/issues/1073)
 - clipping planes to 3d rendering of compartment geometry and concentrations in the GUI [#972](https://github.com/spatial-model-editor/spatial-model-editor/issues/972)
 - steady state solver in the GUI [#1061](https://github.com/spatial-model-editor/spatial-model-editor/issues/1061)
+
+### Fixed
+- file dialogs not opening on macOS 15.4+ [#1085](https://github.com/spatial-model-editor/spatial-model-editor/issues/1085)
 
 ## [1.9.0] - 2025-03-31
 ### Added
