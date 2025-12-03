@@ -368,6 +368,19 @@ TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
   // crashing
   auto s{getExampleModel(Mod::VerySimpleModel)};
   s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  SECTION("Inner species removed") {
+    s.getSpecies().remove("A_c3");
+    s.getSpecies().remove("B_c3");
+    REQUIRE(s.getSpecies().getIds("c3").empty());
+    simulate::Simulation sim(s);
+    CAPTURE(sim.errorMessage());
+    REQUIRE(sim.errorMessage().empty());
+    sim.doTimesteps(0.1, 1);
+    CAPTURE(sim.errorMessage());
+    REQUIRE(sim.errorMessage().empty());
+    auto img = sim.getConcImage(0);
+    REQUIRE(img.volume() == common::Volume(100, 100, 1));
+  }
   SECTION("Outer species removed") {
     s.getSpecies().remove("A_c1");
     s.getSpecies().remove("B_c1");
@@ -378,6 +391,13 @@ TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
     sim.doTimesteps(0.1, 1);
     CAPTURE(sim.errorMessage());
     REQUIRE(sim.errorMessage().empty());
+    // this reproduces a bug where getConcImage crashed for a dune sim if
+    // - the model had an empty compartment
+    // - there was a non-empty compartment after it in the list of compartments
+    // see
+    // https://github.com/spatial-model-editor/spatial-model-editor/issues/1089
+    auto img = sim.getConcImage(0);
+    REQUIRE(img.volume() == common::Volume(100, 100, 1));
   }
   SECTION("Inner and Outer species removed") {
     s.getSpecies().remove("A_c1");
@@ -391,6 +411,8 @@ TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",
     REQUIRE(sim.errorMessage().empty());
     sim.doTimesteps(0.1, 1);
     REQUIRE(sim.errorMessage().empty());
+    auto img = sim.getConcImage(0);
+    REQUIRE(img.volume() == common::Volume(100, 100, 1));
   }
 }
 

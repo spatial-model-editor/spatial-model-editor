@@ -271,16 +271,18 @@ private:
       SPDLOG_INFO("  - {} species", nSpecies);
       SPDLOG_INFO("    - of which {} non-constant species",
                   nNonConstantSpecies);
-      duneCompartments.push_back(
-          {comp->getId(),
-           compIndex,
-           nNonConstantSpecies,
-           compartmentSpeciesNames,
-           geometry::VoxelIndexer(imgVolume, comp->getVoxels()),
-           comp.get(),
-           {},
-           {},
-           std::vector<double>(nPixels * nNonConstantSpecies, 0.0)});
+      if (nNonConstantSpecies > 0) {
+        duneCompartments.push_back(
+            {comp->getId(),
+             compIndex,
+             nNonConstantSpecies,
+             compartmentSpeciesNames,
+             geometry::VoxelIndexer(imgVolume, comp->getVoxels()),
+             comp.get(),
+             {},
+             {},
+             std::vector<double>(nPixels * nNonConstantSpecies, 0.0)});
+      }
       ++compIndex;
     }
   }
