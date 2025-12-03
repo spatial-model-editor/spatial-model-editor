@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.10.1] - 2025-12-03
+### Fixed
+- crash for some models with empty compartments when using DuneCopasi simulator [#1089](https://github.com/spatial-model-editor/spatial-model-editor/issues/1089)
+
 ## [1.10.0] - 2025-11-20
 ### Added
 - option to set the maximum number of CPU threads the DuneCopasi simulator can use [#1082](https://github.com/spatial-model-editor/spatial-model-editor/issues/1082)
