@@ -1,5 +1,10 @@
 # Changelog
 
+## [latest]
+### Removed
+- macOS x86_64 (Intel) architecture binaries [#1096](https://github.com/spatial-model-editor/spatial-model-editor/issues/1096)
+
+
 ## [1.10.1] - 2025-12-03
 ### Fixed
 - crash for some models with empty compartments when using DuneCopasi simulator [#1089](https://github.com/spatial-model-editor/spatial-model-editor/issues/1089)
