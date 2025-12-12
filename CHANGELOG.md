@@ -1,9 +1,11 @@
 # Changelog
 
 ## [latest]
+### Added
+- species diffusion constants to the parameters that can be fitted in parameter optimization [#1092](https://github.com/spatial-model-editor/spatial-model-editor/issues/1092)
+
 ### Removed
 - macOS x86_64 (Intel) architecture binaries [#1096](https://github.com/spatial-model-editor/spatial-model-editor/issues/1096)
-
 
 ## [1.10.1] - 2025-12-03
 ### Fixed

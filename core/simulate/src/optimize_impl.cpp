@@ -21,6 +21,11 @@ void applyParameters(const pagmo::vector_double &values,
       model->getReactions().setParameterValue(param.parentId.c_str(),
                                               param.id.c_str(), value);
       break;
+    case OptParamType::DiffusionConstant:
+      SPDLOG_INFO("Setting diffusion constant of species '{}' to {}", param.id,
+                  value);
+      model->getSpecies().setDiffusionConstant(param.id.c_str(), value);
+      break;
     default:
       throw std::invalid_argument("Optimization: Invalid OptParamType");
     }

@@ -250,8 +250,9 @@ TEST_CASE(
   }
 }
 
-TEST_CASE("Optimize ABtoC model for zero concentration of C",
-          "[core/simulate/optimize][core/simulate][core][optimize]") {
+TEST_CASE(
+    "Optimize ABtoC model via k1 reaction param for zero concentration of C",
+    "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};
   model.getSimulationSettings().simulatorType =
       sme::simulate::SimulatorType::Pixel;
@@ -292,6 +293,52 @@ TEST_CASE("Optimize ABtoC model for zero concentration of C",
           dbl_approx(0.1));
   optimization.applyParametersToModel(&model);
   REQUIRE(model.getReactions().getParameterValue("r1", "k1") ==
+          dbl_approx(optimization.getParams().back()[0]));
+}
+
+TEST_CASE(
+    "Optimize ABtoC model via C diffusion constant for zero concentration of C",
+    "[core/simulate/optimize][core/simulate][core][optimize]") {
+  auto model{getExampleModel(Mod::ABtoC)};
+  model.getSimulationSettings().simulatorType =
+      sme::simulate::SimulatorType::Pixel;
+  sme::simulate::OptimizeOptions optimizeOptions;
+  optimizeOptions.optAlgorithm.islands = 1;
+  optimizeOptions.optAlgorithm.population = 3;
+  // optimization parameter: k1 parameter of reaction r1
+  optimizeOptions.optParams.push_back(
+      {sme::simulate::OptParamType::DiffusionConstant, "name", "C", "", 0.01,
+       1.00});
+  // optimization cost: absolute difference of concentration of species C from
+  // zero, after simulating for time 1
+  optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
+                                      simulate::OptCostDiffType::Absolute,
+                                      "name",
+                                      "C",
+                                      1.0,
+                                      0.23,
+                                      0,
+                                      2,
+                                      {}});
+  model.getOptimizeOptions() = optimizeOptions;
+  sme::simulate::Optimization optimization(model);
+  for (std::size_t i = 1; i < 3; ++i) {
+    optimization.evolve();
+    REQUIRE(optimization.getErrorMessage().empty());
+    REQUIRE(optimization.getIterations() == i);
+    // cost should decrease or stay the same with each iteration
+    REQUIRE(is_sorted_descending(optimization.getFitness()));
+    // diffConst should increase to minimize concentration of C
+    std::vector<double> diffConst;
+    for (const auto &param : optimization.getParams()) {
+      diffConst.push_back(param[0]);
+      CAPTURE(param[0]);
+    }
+    REQUIRE(is_sorted_ascending(diffConst));
+  }
+  REQUIRE(model.getSpecies().getDiffusionConstant("C") == dbl_approx(25.0));
+  optimization.applyParametersToModel(&model);
+  REQUIRE(model.getSpecies().getDiffusionConstant("C") ==
           dbl_approx(optimization.getParams().back()[0]));
 }
 
@@ -441,6 +488,10 @@ TEST_CASE("Save and load model with optimization settings",
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::ReactionParameter, "optParamName", "k1",
        "r1", 0.02, 0.88});
+  // optimization parameter: diffusion constant of species A
+  optimizeOptions.optParams.push_back(
+      {sme::simulate::OptParamType::DiffusionConstant, "optParamDiff", "A", "",
+       0.1, 0.2});
   // optimization cost: absolute difference of concentration of species C from
   // zero, after simulating for time 1
   optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
@@ -476,7 +527,7 @@ TEST_CASE("Save and load model with optimization settings",
   REQUIRE(options.optCosts[0].compartmentIndex == 0);
   REQUIRE(options.optCosts[0].speciesIndex == 2);
   REQUIRE(options.optCosts[0].targetValues.empty());
-  REQUIRE(options.optParams.size() == 1);
+  REQUIRE(options.optParams.size() == 2);
   REQUIRE(options.optParams[0].optParamType ==
           sme::simulate::OptParamType::ReactionParameter);
   REQUIRE(options.optParams[0].name == "optParamName");
@@ -484,6 +535,13 @@ TEST_CASE("Save and load model with optimization settings",
   REQUIRE(options.optParams[0].parentId == "r1");
   REQUIRE(options.optParams[0].lowerBound == dbl_approx(0.02));
   REQUIRE(options.optParams[0].upperBound == dbl_approx(0.88));
+  REQUIRE(options.optParams[1].optParamType ==
+          sme::simulate::OptParamType::DiffusionConstant);
+  REQUIRE(options.optParams[1].name == "optParamDiff");
+  REQUIRE(options.optParams[1].id == "A");
+  REQUIRE(options.optParams[1].parentId == "");
+  REQUIRE(options.optParams[1].lowerBound == dbl_approx(0.10));
+  REQUIRE(options.optParams[1].upperBound == dbl_approx(0.20));
 }
 
 TEST_CASE("Start long optimization in another thread & stop early",

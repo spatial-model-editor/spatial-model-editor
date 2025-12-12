@@ -10,7 +10,11 @@ namespace sme::simulate {
 /**
  * @brief Types of model parameters that can be used in optimization
  */
-enum class OptParamType { ModelParameter, ReactionParameter };
+enum class OptParamType {
+  ModelParameter,
+  ReactionParameter,
+  DiffusionConstant
+};
 
 /**
  * @brief Defines a parameter to be used in optimization

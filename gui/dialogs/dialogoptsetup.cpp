@@ -87,6 +87,16 @@ getDefaultOptParams(const sme::model::Model &model) {
       }
     }
   }
+  for (const auto &compartmentId : model.getCompartments().getIds()) {
+    for (const auto &speciesId : model.getSpecies().getIds(compartmentId)) {
+      auto speciesName{model.getSpecies().getName(speciesId)};
+      double value{model.getSpecies().getDiffusionConstant(speciesId)};
+      auto name{QString("Diffusion constant of '%1'").arg(speciesName)};
+      optParams.push_back({sme::simulate::OptParamType::DiffusionConstant,
+                           name.toStdString(), speciesId.toStdString(), "",
+                           value, value});
+    }
+  }
   return optParams;
 }
 
