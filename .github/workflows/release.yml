@@ -23,8 +23,6 @@ jobs:
             shell: "bash"
           - os: "ubuntu-22.04-arm"
             shell: "bash"
-          - os: "macos-13"
-            shell: "bash"
           - os: "macos-14"
             shell: "bash"
           - os: "windows-2022"
