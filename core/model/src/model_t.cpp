@@ -173,6 +173,16 @@ TEST_CASE("SBML: import SBML doc without geometry",
       s.getSpecies().setDiffusionConstant("spec1c0", 0.1);
       s.getSpecies().setDiffusionConstant("spec1c0", 0.999999);
       s.getSpecies().setDiffusionConstant("spec0c1", 23.1 + 1e-12);
+      s.getSpecies().setAnalyticDiffusionConstant("spec1c0", "x+1");
+      const auto spec1c0DiffusionBeforeInvalidExpr =
+          s.getSpecies().getField("spec1c0")->getDiffusionConstant();
+      s.getSpecies().setAnalyticDiffusionConstant("spec1c0", "x+(");
+      REQUIRE(symEq(s.getSpecies().getAnalyticDiffusionConstant("spec1c0"),
+                    "x + 1"));
+      REQUIRE(s.getSpecies().getField("spec1c0")->getDiffusionConstant() ==
+              spec1c0DiffusionBeforeInvalidExpr);
+      s.getSpecies().setSampledFieldDiffusionConstant("spec0c1",
+                                                      {0.0, 1.0, 2.0});
       CAPTURE(s.getSpecies().getDiffusionConstant("spec0c0"));
       CAPTURE(s.getSpecies().getDiffusionConstant("spec1c0"));
       CAPTURE(s.getSpecies().getDiffusionConstant("spec0c1"));
@@ -182,6 +192,14 @@ TEST_CASE("SBML: import SBML doc without geometry",
               dbl_approx(0.999999));
       REQUIRE(s.getSpecies().getDiffusionConstant("spec0c1") ==
               dbl_approx(23.1 + 1e-12));
+      REQUIRE(s.getSpecies().getDiffusionConstantType("spec0c0") ==
+              model::SpatialDataType::Uniform);
+      REQUIRE(s.getSpecies().getDiffusionConstantType("spec1c0") ==
+              model::SpatialDataType::Analytic);
+      REQUIRE(s.getSpecies().getDiffusionConstantType("spec0c1") ==
+              model::SpatialDataType::Image);
+      auto spec0c1DiffArray =
+          s.getSpecies().getSampledFieldDiffusionConstant("spec0c1");
 
       // export model
       s.exportSBMLFile("tmplvl2model2.xml");
@@ -218,6 +236,41 @@ TEST_CASE("SBML: import SBML doc without geometry",
               dbl_approx(0.999999));
       REQUIRE(s2.getSpecies().getDiffusionConstant("spec0c1") ==
               dbl_approx(23.1 + 1e-12));
+      REQUIRE(s2.getSpecies().getDiffusionConstantType("spec0c0") ==
+              model::SpatialDataType::Uniform);
+      REQUIRE(s2.getSpecies().getDiffusionConstantType("spec1c0") ==
+              model::SpatialDataType::Analytic);
+      REQUIRE(s2.getSpecies().getDiffusionConstantType("spec0c1") ==
+              model::SpatialDataType::Image);
+      REQUIRE(symEq(s2.getSpecies().getAnalyticDiffusionConstant("spec1c0"),
+                    "x + 1"));
+      REQUIRE(s2.getSpecies().getSampledFieldDiffusionConstant("spec0c1") ==
+              spec0c1DiffArray);
+    }
+    SECTION("diffusion field updated on compartment change") {
+      QImage img(4, 1, QImage::Format_RGB32);
+      img.setPixel(0, 0, 0xffaaaaaa);
+      img.setPixel(1, 0, 0xffaaaaaa);
+      img.setPixel(2, 0, 0xff525252);
+      img.setPixel(3, 0, 0xffffffff);
+      s.getGeometry().importGeometryFromImages(common::ImageStack{{img}},
+                                               false);
+      s.getCompartments().setColor("compartment0", 0xffaaaaaa);
+      s.getCompartments().setColor("compartment1", 0xff525252);
+      s.getSpecies().setIsSpatial("spec0c0", true);
+      s.getSpecies().setSampledFieldDiffusionConstant("spec0c0",
+                                                      {0.0, 1.0, 2.0, 3.0});
+      const auto *comp0 = s.getCompartments().getCompartment("compartment0");
+      const auto *comp1 = s.getCompartments().getCompartment("compartment1");
+      const auto *fieldBefore = s.getSpecies().getField("spec0c0");
+      REQUIRE(comp0 != nullptr);
+      REQUIRE(comp1 != nullptr);
+      REQUIRE(fieldBefore != nullptr);
+      REQUIRE(fieldBefore->getDiffusionConstant().size() == comp0->nVoxels());
+      s.getSpecies().setCompartment("spec0c0", "compartment1");
+      const auto *fieldAfter = s.getSpecies().getField("spec0c0");
+      REQUIRE(fieldAfter != nullptr);
+      REQUIRE(fieldAfter->getDiffusionConstant().size() == comp1->nVoxels());
     }
   }
 }

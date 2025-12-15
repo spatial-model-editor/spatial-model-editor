@@ -99,11 +99,16 @@ class Field {
 private:
   std::string id{};
   const Compartment *comp{};
-  double diffusionConstant{};
   QRgb color{};
   std::vector<double> conc{};
+  std::vector<double> diff{};
   bool isUniformConcentration{true};
   bool isSpatial{true};
+  bool isUniformDiffusionConstant{true};
+  std::vector<double> importSbmlArray(const std::vector<double> &sbmlArray);
+  [[nodiscard]] std::vector<double>
+  getImageArray(const std::vector<double> &values,
+                bool maskAndInvertY = false) const;
 
 public:
   Field() = default;
@@ -116,17 +121,24 @@ public:
   void setIsSpatial(bool spatial);
   [[nodiscard]] bool getIsUniformConcentration() const;
   void setIsUniformConcentration(bool uniform);
-  [[nodiscard]] double getDiffusionConstant() const;
-  void setDiffusionConstant(double diffConst);
+  [[nodiscard]] bool getIsUniformDiffusionConstant() const;
+  void setIsUniformDiffusionConstant(bool uniform);
+  [[nodiscard]] const std::vector<double> &getDiffusionConstant() const;
+  void setDiffusionConstant(std::size_t index, double diffusionConstant);
+  void setUniformDiffusionConstant(double diffConst);
+  void setDiffusionConstant(const std::vector<double> &diffusionConstantArray);
+  void importDiffusionConstant(const std::vector<double> &sbmlArray);
+  [[nodiscard]] std::vector<double>
+  getDiffusionConstantImageArray(bool maskAndInvertY = false) const;
   [[nodiscard]] const Compartment *getCompartment() const;
   [[nodiscard]] const std::vector<double> &getConcentration() const;
   void setConcentration(std::size_t index, double concentration);
   void setUniformConcentration(double concentration);
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
   void setConcentration(const std::vector<double> &concentration);
-  [[nodiscard]] sme::common::ImageStack getConcentrationImages() const;
-  [[nodiscard]] std::vector<double> getConcentrationImageArray(
-      bool maskAndInvertY = false) const; // todo: -> vector of vectors?
+  [[nodiscard]] common::ImageStack getConcentrationImages() const;
+  [[nodiscard]] std::vector<double>
+  getConcentrationImageArray(bool maskAndInvertY = false) const;
   void setCompartment(const Compartment *comp);
 };
 

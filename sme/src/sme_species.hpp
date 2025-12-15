@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sme/model_species_types.hpp"
+#include "sme/model_types.hpp"
 #include "sme_common.hpp"
 #include <nanobind/nanobind.h>
 #include <string>
@@ -26,7 +26,16 @@ public:
   void setName(const std::string &name);
   [[nodiscard]] double getDiffusionConstant() const;
   void setDiffusionConstant(double diffusionConstant);
-  [[nodiscard]] ::sme::model::ConcentrationType
+  [[nodiscard]] ::sme::model::SpatialDataType getDiffusionConstantType() const;
+  [[nodiscard]] double getUniformDiffusionConstant() const;
+  void setUniformDiffusionConstant(double value);
+  [[nodiscard]] std::string getAnalyticDiffusionConstant() const;
+  void setAnalyticDiffusionConstant(const std::string &expression);
+  [[nodiscard]] nanobind::ndarray<nanobind::numpy, double>
+  getImageDiffusionConstant() const;
+  void
+  setImageDiffusionConstant(nanobind::ndarray<nanobind::numpy, double> array);
+  [[nodiscard]] ::sme::model::SpatialDataType
   getInitialConcentrationType() const;
   [[nodiscard]] double getUniformInitialConcentration() const;
   void setUniformInitialConcentration(double value);

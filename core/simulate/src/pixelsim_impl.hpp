@@ -48,9 +48,8 @@ private:
   std::vector<double> dcdt;
   std::vector<double> s2;
   std::vector<double> s3;
-  // dimensionless diffusion constants in x,y,z directions for each species
-  // i.e. [{D/dx^2, D/dy^2, D/dz^2}, {}, .. ]
-  std::vector<std::array<double, 3>> diffConstants;
+  // diffusion constants (D) per voxel for each species
+  std::vector<std::vector<double>> diffConstants;
   const geometry::Compartment *comp;
   std::size_t nPixels;
   std::size_t nSpecies;
@@ -59,6 +58,9 @@ private:
   std::vector<std::string> speciesNames;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
   double maxStableTimestep = std::numeric_limits<double>::max();
+  double dx2{1.0};
+  double dy2{1.0};
+  double dz2{1.0};
 
 public:
   explicit SimCompartment(

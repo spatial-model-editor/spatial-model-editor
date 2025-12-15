@@ -8,18 +8,20 @@ The system of PDEs that we simulate in each compartment is the three-dimensional
 
 .. math::
 
-   \frac{\partial c_s}{\partial t} = D_s \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} \right) c_s + R_s
+   \frac{\partial c_s}{\partial t} = \nabla \cdot \left( D_s \nabla c_s \right) + R_s
 
 where
 
 * :math:`c_s` is the concentration of species :math:`s` at position :math:`(x, y, z)` and time :math:`t`
-* :math:`D_s` is the diffusion constant for species :math:`s`
+* :math:`D_s` is the (possibly spatially varying) scalar diffusion constant for species :math:`s`
 * :math:`R_s` is the reaction term for species :math:`s`
 
 and we assume that
 
-* the diffusion constant :math:`D_s` is a scalar that does not vary with position or time
+* the diffusion constant :math:`D_s` is isotropic (a scalar, not a tensor)
 * the reaction term :math:`R_s` is a function that can depend on the concentrations of other species in the model, but only locally, i.e. the concentrations at the same spatial coordinate.
+
+If :math:`D_s` is constant in space, this reduces to :math:`D_s \nabla^2 c_s + R_s`.
 
 Compartment Reactions
 ---------------------

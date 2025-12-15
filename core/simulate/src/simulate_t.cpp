@@ -837,7 +837,7 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
 
   // check initial distribution matches analytic one
   for (const auto &f : {slow, fast}) {
-    double D = f->getDiffusionConstant();
+    double D = f->getDiffusionConstant()[0];
     double t0 = sigma2 / 4.0 / D;
     double maxRelErr = 0;
     for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
@@ -846,7 +846,7 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
       double relErr = std::abs(f->getConcentration()[i] - c) / c;
       maxRelErr = std::max(maxRelErr, relErr);
     }
-    CAPTURE(f->getDiffusionConstant());
+    CAPTURE(f->getDiffusionConstant()[0]);
     REQUIRE(maxRelErr < epsilon);
   }
 
@@ -892,8 +892,8 @@ TEST_CASE("Simulate: single-compartment-diffusion, circular geometry",
     }
 
     // check new distribution matches analytic one
-    std::vector<double> D{slow->getDiffusionConstant(),
-                          fast->getDiffusionConstant()};
+    std::vector<double> D{slow->getDiffusionConstant()[0],
+                          fast->getDiffusionConstant()[0]};
     std::size_t timeIndex = sim.getTimePoints().size() - 1;
     t = sim.getTimePoints().back();
     for (auto speciesIndex : {std::size_t{0}, std::size_t{1}}) {
@@ -976,7 +976,7 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
 
   // check initial distribution matches analytic one
   for (const auto &f : {slow, fast}) {
-    double D = f->getDiffusionConstant();
+    double D = f->getDiffusionConstant()[0];
     double t0 = sigma2 / 4.0 / D;
     double maxRelErr = 0;
     for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
@@ -986,7 +986,7 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
       double relErr = std::abs(f->getConcentration()[i] - c) / c;
       maxRelErr = std::max(maxRelErr, relErr);
     }
-    CAPTURE(f->getDiffusionConstant());
+    CAPTURE(f->getDiffusionConstant()[0]);
     REQUIRE(maxRelErr < epsilon);
   }
 
@@ -1034,8 +1034,8 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
     }
 
     // check new distribution matches analytic_3d one
-    std::vector<double> D{slow->getDiffusionConstant(),
-                          fast->getDiffusionConstant()};
+    std::vector<double> D{slow->getDiffusionConstant()[0],
+                          fast->getDiffusionConstant()[0]};
     std::size_t timeIndex = sim.getTimePoints().size() - 1;
     t = sim.getTimePoints().back();
     for (auto speciesIndex : {0u, 1u}) {
@@ -1113,6 +1113,253 @@ TEST_CASE(
         REQUIRE(std::abs((conc.max - conc.avg) / conc.avg) < epsilon);
       }
     }
+  }
+}
+
+TEST_CASE(
+    "Simulate: spatially varying diffusion steady state",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  SECTION("many steps: both species end up equally & uniformly distributed") {
+    double epsilon = 1e-3;
+    auto s{getTestModel("small-single-compartment-diffusion")};
+    const auto &vol = s.getGeometry().getImages().volume();
+    const std::size_t w = static_cast<std::size_t>(vol.width());
+    const std::size_t h = static_cast<std::size_t>(vol.height());
+    const std::size_t d = vol.depth();
+    std::vector<double> diffArray(static_cast<std::size_t>(vol.nVoxels()), 0.0);
+    for (std::size_t z = 0; z < d; ++z) {
+      for (std::size_t y = 0; y < h; ++y) {
+        for (std::size_t x = 0; x < w; ++x) {
+          auto arrayIndex = x + w * (h - 1 - y) + w * h * z;
+          diffArray[arrayIndex] =
+              1.0 + static_cast<double>(x) / static_cast<double>(w);
+        }
+      }
+    }
+    s.getSpecies().setSampledFieldDiffusionConstant("slow", diffArray);
+    s.getSpecies().setSampledFieldDiffusionConstant("fast", diffArray);
+
+    auto &options{s.getSimulationSettings().options};
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
+    options.pixel.maxThreads = 2;
+    options.dune.dt = 0.5;
+    for (auto simulator :
+         {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+      s.getSimulationData().clear();
+      s.getSimulationSettings().simulatorType = simulator;
+
+      auto sim = simulate::Simulation(s);
+      auto timeIndex0 = std::size_t{0};
+      auto simSteps =
+          std::async(std::launch::async, &simulate::Simulation::doTimesteps,
+                     &sim, 50.0, 1, -1.0);
+      REQUIRE(simSteps.get() >= 1);
+      auto timeIndex = sim.getTimePoints().size() - 1;
+      std::size_t speciesIndex = 0;
+      for (const auto &species : {"slow", "fast"}) {
+        auto mass0 = common::sum(sim.getConcArray(timeIndex0, 0, speciesIndex));
+        auto mass1 = common::sum(sim.getConcArray(timeIndex, 0, speciesIndex));
+        auto conc = sim.getAvgMinMax(timeIndex, 0, speciesIndex++);
+        CAPTURE(simulator);
+        CAPTURE(species);
+        CAPTURE(conc.min);
+        CAPTURE(conc.avg);
+        CAPTURE(conc.max);
+        REQUIRE(std::abs((conc.min - conc.avg) / conc.avg) < epsilon);
+        REQUIRE(std::abs((conc.max - conc.avg) / conc.avg) < epsilon);
+        double massRelTol =
+            (simulator == simulate::SimulatorType::Pixel) ? 1e-8 : 7e-2;
+        double massAbsTol =
+            (simulator == simulate::SimulatorType::Pixel) ? 1e-12 : 1e-3;
+        if (mass0 > 0.0) {
+          REQUIRE(std::abs((mass1 - mass0) / mass0) < massRelTol);
+        } else {
+          REQUIRE(std::abs(mass1 - mass0) < massAbsTol);
+        }
+      }
+    }
+  }
+}
+
+TEST_CASE(
+    "Simulate: spatial diffusion with zero-D region",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  auto s{getTestModel("small-single-compartment-diffusion")};
+  const auto &vol = s.getGeometry().getImages().volume();
+  const std::size_t w = static_cast<std::size_t>(vol.width());
+  const std::size_t h = static_cast<std::size_t>(vol.height());
+  const std::size_t d = vol.depth();
+  const std::size_t mid = w / 2;
+  auto *comp = s.getCompartments().getCompartment("circle");
+
+  std::vector<double> initConc(static_cast<std::size_t>(vol.nVoxels()), 0.0);
+  std::vector<double> diffArray(static_cast<std::size_t>(vol.nVoxels()), 0.0);
+  const double pi = 3.14159265358979323846;
+  for (const auto &voxel : comp->getVoxels()) {
+    auto arrayIndex = static_cast<std::size_t>(
+        voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+    if (static_cast<std::size_t>(voxel.p.x()) < mid) {
+      // smooth spatial variation in left half
+      double x = static_cast<double>(voxel.p.x());
+      initConc[arrayIndex] =
+          1.0 + 0.2 * std::sin(4.0 * pi * x / static_cast<double>(w));
+      diffArray[arrayIndex] = 0.0;
+    } else {
+      initConc[arrayIndex] = 0.0;
+      diffArray[arrayIndex] = 1.0;
+    }
+  }
+  s.getSpecies().setSampledFieldConcentration("slow", initConc);
+  s.getSpecies().setSampledFieldDiffusionConstant("slow", diffArray);
+  s.getSpecies().setIsSpatial("slow", true);
+  s.getSpecies().setIsConstant("fast", true);
+
+  auto &options{s.getSimulationSettings().options};
+  options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
+  options.pixel.maxThreads = 2;
+  options.dune.dt = 0.5;
+
+  for (auto simulator :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    s.getSimulationData().clear();
+    s.getSimulationSettings().simulatorType = simulator;
+    auto sim = simulate::Simulation(s);
+    CAPTURE(simulator);
+    auto simSteps =
+        std::async(std::launch::async, &simulate::Simulation::doTimesteps, &sim,
+                   50.0, 1, -1.0);
+    REQUIRE(simSteps.get() >= 1);
+    auto timeIndex = sim.getTimePoints().size() - 1;
+    const auto &speciesIds = sim.getSpeciesIds(0);
+    auto it = std::find(speciesIds.begin(), speciesIds.end(), "slow");
+    REQUIRE(it != speciesIds.end());
+    const std::size_t slowIndex =
+        static_cast<std::size_t>(std::distance(speciesIds.begin(), it));
+    auto conc = sim.getConcArray(timeIndex, 0, slowIndex);
+
+    // left interior should remain close to initial pattern (no diffusion)
+    double maxLeftDelta = 0.0;
+    std::size_t leftBuffer =
+        (simulator == simulate::SimulatorType::Pixel) ? 2 : 8;
+    for (const auto &voxel : comp->getVoxels()) {
+      auto x = static_cast<std::size_t>(voxel.p.x());
+      if (x + leftBuffer >= mid) {
+        continue;
+      }
+      auto arrayIndex = static_cast<std::size_t>(
+          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      maxLeftDelta = std::max(
+          maxLeftDelta, std::abs(conc[arrayIndex] - initConc[arrayIndex]));
+    }
+    double maxLeftTolerance =
+        (simulator == simulate::SimulatorType::Pixel) ? 1e-8 : 3e-1;
+    REQUIRE(maxLeftDelta < maxLeftTolerance);
+
+    // right interior should become approximately uniform
+    double sum = 0.0;
+    double sumSq = 0.0;
+    std::size_t count = 0;
+    for (const auto &voxel : comp->getVoxels()) {
+      auto x = static_cast<std::size_t>(voxel.p.x());
+      if (x < mid + 2) {
+        continue;
+      }
+      auto arrayIndex = static_cast<std::size_t>(
+          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      double v = conc[arrayIndex];
+      sum += v;
+      sumSq += v * v;
+      ++count;
+    }
+    REQUIRE(count > 0);
+    double mean = sum / static_cast<double>(count);
+    double var = sumSq / static_cast<double>(count) - mean * mean;
+    double stddev = std::sqrt(std::max(0.0, var));
+    REQUIRE((mean == 0.0 || std::abs(stddev / mean) < 1e-2));
+  }
+}
+
+TEST_CASE(
+    "Simulate: smooth spatially varying diffusion, dune vs pixel",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  auto configureModel = [](model::Model &m) {
+    m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, 3);
+    const auto &vol = m.getGeometry().getImages().volume();
+    const std::size_t w = static_cast<std::size_t>(vol.width());
+    const std::size_t h = static_cast<std::size_t>(vol.height());
+    const std::size_t d = vol.depth();
+    std::vector<double> diffArray(static_cast<std::size_t>(vol.nVoxels()), 0.0);
+    for (std::size_t z = 0; z < d; ++z) {
+      for (std::size_t y = 0; y < h; ++y) {
+        for (std::size_t x = 0; x < w; ++x) {
+          // smoothstep in x: 0 at left edge, 10 at right edge
+          const double t =
+              (w > 1) ? static_cast<double>(x) / static_cast<double>(w - 1)
+                      : 0.0;
+          const double dSmooth = 10 * t * t * (3.0 - 2.0 * t);
+          const auto arrayIndex = x + w * (h - 1 - y) + w * h * z;
+          diffArray[arrayIndex] = dSmooth;
+        }
+      }
+    }
+    m.getSpecies().setSampledFieldDiffusionConstant("slow", diffArray);
+    m.getSpecies().remove("fast");
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
+    options.pixel.maxThreads = 2;
+    options.dune.dt = 0.25;
+  };
+
+  auto mDune{getExampleModel(Mod::SingleCompartmentDiffusion)};
+  auto mPixel{getExampleModel(Mod::SingleCompartmentDiffusion)};
+  configureModel(mDune);
+  configureModel(mPixel);
+
+  mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation simDune(mDune);
+  simulate::Simulation simPixel(mPixel);
+
+  REQUIRE(simDune.doTimesteps(10, 4) >= 1);
+  REQUIRE(simPixel.doTimesteps(10, 4) >= 1);
+
+  const auto &vol = mPixel.getGeometry().getImages().volume();
+  const std::size_t w = static_cast<std::size_t>(vol.width());
+  const std::size_t h = static_cast<std::size_t>(vol.height());
+  auto *comp = mPixel.getCompartments().getCompartment("circle");
+  REQUIRE(comp != nullptr);
+  constexpr double eps{1e-12};
+  // Simulations should agree within 1.5% relative L2 difference:
+  constexpr double maxAllowedL2RelDiff{0.015};
+  constexpr double maxAllowedMaxAbsDiff{0.005};
+
+  for (auto timeIndex : {1, 2, 3, 4}) {
+    REQUIRE(simDune.getConcImage(timeIndex)[0].save(
+        QString("test-smooth-spatially-varying-diffusion-%1-dune.png")
+            .arg(timeIndex)));
+    REQUIRE(simPixel.getConcImage(timeIndex)[0].save(
+        QString("test-smooth-spatially-varying-diffusion-%1-pixel.png")
+            .arg(timeIndex)));
+    auto p = simPixel.getConcArray(timeIndex, 0, 0);
+    auto d = simDune.getConcArray(timeIndex, 0, 0);
+    REQUIRE(p.size() == d.size());
+    double sumSqDiff = 0.0;
+    double sumSqRef = 0.0;
+    double maxAbsDiff = 0.0;
+    for (const auto &voxel : comp->getVoxels()) {
+      auto arrayIndex = static_cast<std::size_t>(
+          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      const double diff = p[arrayIndex] - d[arrayIndex];
+      sumSqDiff += diff * diff;
+      sumSqRef += d[arrayIndex] * d[arrayIndex];
+      maxAbsDiff = std::max(maxAbsDiff, std::abs(diff));
+    }
+    const double l2RelDiff = std::sqrt(sumSqDiff / (sumSqRef + eps));
+    CAPTURE(timeIndex);
+    CAPTURE(l2RelDiff);
+    CAPTURE(maxAbsDiff);
+    REQUIRE(l2RelDiff < maxAllowedL2RelDiff);
+    REQUIRE(maxAbsDiff < maxAllowedMaxAbsDiff);
   }
 }
 

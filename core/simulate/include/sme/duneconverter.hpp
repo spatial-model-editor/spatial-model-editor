@@ -39,6 +39,8 @@ public:
   [[nodiscard]] const mesh::Mesh3d *getMesh3d() const;
   [[nodiscard]] const std::unordered_map<std::string, std::vector<double>> &
   getConcentrations() const;
+  [[nodiscard]] const std::unordered_map<std::string, std::vector<double>> &
+  getDiffusionConstantArrays() const;
   [[nodiscard]] const std::unordered_map<std::string,
                                          std::vector<std::string>> &
   getSpeciesNames() const;
@@ -52,6 +54,7 @@ private:
   const mesh::Mesh2d *mesh;
   const mesh::Mesh3d *mesh3d;
   std::unordered_map<std::string, std::vector<double>> concentrations;
+  std::unordered_map<std::string, std::vector<double>> diffusionConstantArrays;
   std::unordered_map<std::string, std::vector<std::string>> speciesNames;
   std::vector<std::string> compartmentNames;
   common::VoxelF origin;

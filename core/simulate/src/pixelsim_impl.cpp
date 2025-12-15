@@ -108,21 +108,29 @@ SimCompartment::SimCompartment(
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
   const auto voxelSize{doc.getGeometry().getVoxelSize()};
+  dx2 = voxelSize.width() * voxelSize.width();
+  dy2 = voxelSize.height() * voxelSize.height();
+  dz2 = voxelSize.depth() * voxelSize.depth();
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
-    double d{field->getDiffusionConstant()};
-    diffConstants.push_back({d / (voxelSize.width() * voxelSize.width()),
-                             d / (voxelSize.height() * voxelSize.height()),
-                             d / (voxelSize.depth() * voxelSize.depth())});
-    // forwards euler stability bound
+    // store diffusion constant per voxel
+    diffConstants.push_back(field->getDiffusionConstant());
+    if (diffConstants.back().empty()) {
+      diffConstants.back().assign(nPixels, 0.0);
+    }
+    // forwards euler stability bound (use max D for species)
+    double maxD{diffConstants.back().empty()
+                    ? 0.0
+                    : *std::ranges::max_element(diffConstants.back())};
     maxStableTimestep = std::min(
-        maxStableTimestep, calculateMaxStableTimestep(diffConstants.back()));
+        maxStableTimestep,
+        calculateMaxStableTimestep({maxD / dx2, maxD / dy2, maxD / dz2}));
     fields.push_back(field);
     speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
     if (!field->getIsSpatial()) {
       nonSpatialSpeciesIndices.push_back(fields.size() - 1);
     }
-    SPDLOG_DEBUG("  - adding species: {}, diff constant {}", s, d);
+    SPDLOG_DEBUG("  - adding species: {}, diff constant (max) {}", s, maxD);
   }
   // get reactions in compartment
   std::vector<std::string> reactionIDs;
@@ -139,20 +147,20 @@ SimCompartment::SimCompartment(
   }
   if (timeDependent) {
     speciesIds.push_back("time");
-    diffConstants.push_back({0.0, 0.0, 0.0});
+    diffConstants.emplace_back(nPixels, 0.0);
     ++nSpecies;
   }
   if (spaceDependent) {
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().x.id);
-    diffConstants.push_back({0.0, 0.0, 0.0});
+    diffConstants.emplace_back(nPixels, 0.0);
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().y.id);
-    diffConstants.push_back({0.0, 0.0, 0.0});
+    diffConstants.emplace_back(nPixels, 0.0);
     // todo: make sure we can still import previous sim results without z
     // OR note in release that existing simulation results with spatially
     // dependent reaction terms will not be imported - as most likely this
     // affects no-one.
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().z.id);
-    diffConstants.push_back({0.0, 0.0, 0.0});
+    diffConstants.emplace_back(nPixels, 0.0);
     nSpecies += 3;
   }
   // setup concentrations vector with initial values
@@ -198,13 +206,26 @@ void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
     const std::size_t ix_upz{comp->up_z(i) * nSpecies};
     const std::size_t ix_dnz{comp->dn_z(i) * nSpecies};
     for (std::size_t is = 0; is < nSpecies; ++is) {
-      dcdt[ix + is] +=
-          diffConstants[is][0] *
-              (conc[ix_upx + is] + conc[ix_dnx + is] - 2.0 * conc[ix + is]) +
-          diffConstants[is][1] *
-              (conc[ix_upy + is] + conc[ix_dny + is] - 2.0 * conc[ix + is]) +
-          diffConstants[is][2] *
-              (conc[ix_upz + is] + conc[ix_dnz + is] - 2.0 * conc[ix + is]);
+      const auto &d = diffConstants[is];
+      double d_i = d[i];
+      double d_upx = d[comp->up_x(i)];
+      double d_dnx = d[comp->dn_x(i)];
+      double d_upy = d[comp->up_y(i)];
+      double d_dny = d[comp->dn_y(i)];
+      double d_upz = d[comp->up_z(i)];
+      double d_dnz = d[comp->dn_z(i)];
+      double dxp = 0.5 * (d_i + d_upx) / dx2;
+      double dxm = 0.5 * (d_i + d_dnx) / dx2;
+      double dyp = 0.5 * (d_i + d_upy) / dy2;
+      double dym = 0.5 * (d_i + d_dny) / dy2;
+      double dzp = 0.5 * (d_i + d_upz) / dz2;
+      double dzm = 0.5 * (d_i + d_dnz) / dz2;
+      dcdt[ix + is] += dxp * (conc[ix_upx + is] - conc[ix + is]) -
+                       dxm * (conc[ix + is] - conc[ix_dnx + is]) +
+                       dyp * (conc[ix_upy + is] - conc[ix + is]) -
+                       dym * (conc[ix + is] - conc[ix_dny + is]) +
+                       dzp * (conc[ix_upz + is] - conc[ix + is]) -
+                       dzm * (conc[ix + is] - conc[ix_dnz + is]);
     }
   }
 }

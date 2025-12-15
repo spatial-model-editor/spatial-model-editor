@@ -59,20 +59,145 @@ The concentration is defined as a 3d array of values :math:`c_{i,j,k}`,
 where the value with index :math:`(i,j,k)` corresponds to the concentration
 at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
 
-The Laplacian is approximated on this grid using a central difference scheme
+For diffusion constants that vary in space, the diffusion term is written in conservative form
+
+.. math::
+
+   \frac{\partial c}{\partial t} = \nabla \cdot \left( D(\mathbf{x}) \nabla c \right) + R
+
+and discretized using face fluxes with arithmetic averaging of :math:`D` at neighbouring voxels.
+For one species in voxel :math:`(i,j,k)`:
 
 .. math::
 
    \begin{eqnarray}
-   \left( \frac{\partial^2}{\partial x^2} + \frac{\partial^2}{\partial y^2} + \frac{\partial^2}{\partial z^2} \right) c_{i,j,k} & = & +\left[ c_{i+1,j,k} + c_{i-1,j,k}\right]/(\delta x^2) \\
-   & & + \left[ c_{i,j+1,k} + c_{i,j-1,k}\right]/(\delta y^2) \\
-   & & + \left[ c_{i,j,k+1} + c_{i,j,k-1}\right]/(\delta z^2) \\
-   & & - \left[\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right] 2 c_{i,j,k} \\
+   \left[\nabla \cdot \left( D \nabla c \right)\right]_{i,j,k}
+   & = & \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \\
+   & & + \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
+   & & + \frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2} \\
    & & + \mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)
    \end{eqnarray}
 
-which has :math:`\mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)` discretisation errors.
+with face diffusion constants
+
+.. math::
+
+   D^x_{i+1/2,j,k} = \frac{D_{i,j,k} + D_{i+1,j,k}}{2}
+
+and similarly in :math:`y,z` (and for the minus faces).
+
+This has :math:`\mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)` discretisation errors.
 Inserting this approximation into the reaction-diffusion equation converts the PDE into a system of coupled ODEs.
+
+If :math:`D` is spatially constant, this reduces to the usual central-difference Laplacian form.
+
+Step-by-step derivation
+^^^^^^^^^^^^^^^^^^^^^^^
+
+For one species, start from
+
+.. math::
+
+   \frac{\partial c}{\partial t} = \nabla \cdot (D \nabla c) + R
+
+1. Integrate over one voxel :math:`V_{i,j,k}`
+
+Assumptions:
+
+* :math:`D(\mathbf{x})` is isotropic (scalar), but may vary in space
+* :math:`R` is local in space (depends on the state at the same point)
+
+.. math::
+
+   \int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
+   =
+   \int_{V_{i,j,k}}\nabla\cdot(D\nabla c)\,dV
+   +
+   \int_{V_{i,j,k}}R\,dV
+
+2. Apply the divergence theorem to the diffusion term
+
+.. math::
+
+   \int_{V_{i,j,k}}\nabla\cdot(D\nabla c)\,dV
+   =
+   \int_{\partial V_{i,j,k}} (D\nabla c)\cdot \mathbf{n}\,dS
+
+This is the sum of six face flux integrals (:math:`x^\pm, y^\pm, z^\pm`).
+
+3. Replace volume/face integrals by midpoint (cell-centered) approximations
+
+Assumption: uniform Cartesian grid with voxel spacings :math:`\delta x,\delta y,\delta z`.
+
+Define cell-center values :math:`c_{i,j,k}\approx c(\mathbf{x}_{i,j,k})` and
+:math:`D_{i,j,k}\approx D(\mathbf{x}_{i,j,k})`.
+Then
+
+.. math::
+
+   \int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
+   \approx
+   \delta x\,\delta y\,\delta z\;\frac{d c_{i,j,k}}{dt}
+
+.. math::
+
+   \int_{x^+}(D\nabla c)\cdot\mathbf{n}\,dS
+   \approx
+   \delta y\,\delta z\;F^x_{i+1/2,j,k}
+
+and similarly for the other faces.
+
+4. Discretize face-normal gradients by central differences
+
+.. math::
+
+   F^x_{i+1/2,j,k}
+   \approx
+   D^x_{i+1/2,j,k}\frac{c_{i+1,j,k}-c_{i,j,k}}{\delta x},
+   \qquad
+   F^x_{i-1/2,j,k}
+   \approx
+   D^x_{i-1/2,j,k}\frac{c_{i,j,k}-c_{i-1,j,k}}{\delta x}
+
+and similarly for the minus face and for :math:`y,z`.
+
+5. Approximate face diffusion constants from neighbouring cell values
+
+Assumption: face diffusion is approximated by arithmetic interpolation of neighbouring voxel values:
+
+.. math::
+
+   D^x_{i+1/2,j,k} = \frac{D_{i,j,k}+D_{i+1,j,k}}{2}
+
+(and similarly for :math:`y,z`).
+
+6. Assemble the semi-discrete ODE (method of lines)
+
+Substituting the face fluxes into the surface-balance form and dividing by
+:math:`\delta x\,\delta y\,\delta z` gives
+
+.. math::
+
+   \begin{aligned}
+   \frac{d c_{i,j,k}}{dt} =\;&
+   \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \\
+   &+ \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
+   &+ \frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2}
+   + R_{i,j,k}
+   \end{aligned}
+
+where :math:`R_{i,j,k}` is the cell-centered reaction term.
+
+7. Local truncation error
+
+Assumption: :math:`c` and :math:`D` are sufficiently smooth.
+Each directional term is second-order accurate on the uniform grid, so the spatial error is
+:math:`\mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)`.
+
+8. Boundary handling
+
+Assumption: zero-flux Neumann boundaries.
+Implementation-wise, an out-of-domain neighbour index is replaced by the boundary voxel itself, which makes the corresponding face gradient (and therefore face flux) zero.
 
 .. _time-integration:
 
@@ -160,7 +285,9 @@ above which the system becomes unstable:
 
 .. math::
 
-   \delta t \leq  \frac{1}{2 D \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
+   \delta t \leq  \frac{1}{2 D_{\max} \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
+
+where :math:`D_{\max}` is the largest diffusion constant value over all voxels for the species.
 
 So if the user selects a timestep larger than this,
 the simulator automatically reduces it to the above value to avoid the system becoming unstable.

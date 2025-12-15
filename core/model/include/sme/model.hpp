@@ -17,6 +17,7 @@
 #include "sme/model_reactions.hpp"
 #include "sme/model_settings.hpp"
 #include "sme/model_species.hpp"
+#include "sme/model_types.hpp"
 #include "sme/model_units.hpp"
 #include "sme/optimize_options.hpp"
 #include "sme/serialization.hpp"

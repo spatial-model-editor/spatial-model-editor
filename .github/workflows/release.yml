@@ -31,7 +31,7 @@ jobs:
       run:
         shell: ${{ matrix.platform.shell }}
     env:
-      CIBUILDWHEEL_VERSION: "3.2"
+      CIBUILDWHEEL_VERSION: "3.3"
       CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2025.10.06"
       CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2025.10.06"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}

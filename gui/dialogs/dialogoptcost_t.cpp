@@ -210,7 +210,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
     REQUIRE(dia.getOptCost().targetValues.size() == 10000);
-    REQUIRE(mwt.getResult() == "Set target Concentration");
+    REQUIRE(mwt.getResult() == "Concentration image data");
     // all pixels within compartment are set to 1
     REQUIRE(sme::common::max(dia.getOptCost().targetValues) == dbl_approx(1.0));
     // pixels outside of compartment are zero
@@ -237,7 +237,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::ConcentrationDcdt);
-    REQUIRE(mwt.getResult() == "Set target Rate of change of concentration");
+    REQUIRE(mwt.getResult() == "Concentration rate of change image data");
     // all pixels within compartment are set to 1.2
     REQUIRE(sme::common::max(dia.getOptCost().targetValues) == dbl_approx(1.2));
     // pixels outside of compartment are zero

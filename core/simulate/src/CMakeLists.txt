@@ -4,6 +4,7 @@ target_sources(
           duneconverter.cpp
           duneconverter_impl.cpp
           dunefunction.cpp
+          dunefunctorfactory.cpp
           dunegrid.cpp
           duneini.cpp
           dunesim.cpp
@@ -25,6 +26,7 @@ if(BUILD_TESTING)
     PUBLIC duneconverter_t.cpp
            duneconverter_impl_t.cpp
            dunefunction_t.cpp
+           dunefunctorfactory_t.cpp
            dunegrid_t.cpp
            duneini_t.cpp
            dunesim_t.cpp

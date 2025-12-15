@@ -23,9 +23,15 @@ Two more properties of a species are of primary importance.
 
    .. math::
 
-         D \nabla^{2} c_{i}
+         \nabla \cdot \left( D \nabla c_{i} \right)
 
-   is always assumed by default (see the `documentation on the mathematical formulation <../reference/maths.html>`_ for more details). The diffusion constant `D` is assumed to be isotropic and homogeneous. If you don't want diffusion to be present, set this constant to zero.
+   is assumed by default (see the `documentation on the mathematical formulation <../reference/maths.html>`_ for more details). The diffusion constant can be set in three ways:
+
+   * Uniform: a single scalar value everywhere in the compartment.
+   * Analytic: an expression in the spatial coordinates (`x`, `y`, and `z` for 3D models).
+   * Image: a sampled field loaded from image data, giving a per-voxel value.
+
+   In all cases, `D` is isotropic (scalar, not tensor). If you don't want diffusion to be present, set `D = 0`.
 
 With the definition of these two elements, the species is fully defined and can be used in the next steps of the model definition.
 

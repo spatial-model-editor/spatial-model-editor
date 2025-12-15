@@ -4,8 +4,8 @@ target_sources(
           dialogabout.ui
           dialoganalytic.cpp
           dialoganalytic.ui
-          dialogconcentrationimage.cpp
-          dialogconcentrationimage.ui
+          dialogimagedata.cpp
+          dialogimagedata.ui
           dialogcoordinates.cpp
           dialogcoordinates.ui
           dialogdisplayoptions.cpp
@@ -43,7 +43,7 @@ if(BUILD_TESTING)
     gui_tests
     PUBLIC dialogabout_t.cpp
            dialoganalytic_t.cpp
-           dialogconcentrationimage_t.cpp
+           dialogimagedata_t.cpp
            dialogcoordinates_t.cpp
            dialogdisplayoptions_t.cpp
            dialogeditunit_t.cpp
