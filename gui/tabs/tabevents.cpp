@@ -173,6 +173,7 @@ void TabEvents::cmbEventVariable_activated(int index) {
     ui->btnSetSpeciesConcentration->setEnabled(true);
     auto img =
         DialogAnalytic(model.getEvents().getExpression(currentEventId),
+                       DialogAnalyticDataType::Concentration,
                        model.getSpeciesGeometry(variableIds[index]),
                        model.getParameters(), model.getFunctions(), invertYAxis)
             .getImage();
@@ -198,6 +199,7 @@ void TabEvents::btnSetSpeciesConcentration_clicked() {
   QString sId{variableIds[iSpecies]};
   bool invertYAxis{model.getDisplayOptions().invertYAxis};
   DialogAnalytic dialog(model.getEvents().getExpression(currentEventId),
+                        DialogAnalyticDataType::Concentration,
                         model.getSpeciesGeometry(sId), model.getParameters(),
                         model.getFunctions(), invertYAxis);
   if (dialog.exec() == QDialog::Accepted) {

@@ -8,24 +8,31 @@
 #include <memory>
 
 namespace Ui {
-class DialogConcentrationImage;
+class DialogImageData;
 }
 
-class DialogConcentrationImage : public QDialog {
+enum class DialogImageDataDataType {
+  Concentration,
+  ConcentrationRateOfChange,
+  DiffusionConstant
+};
+
+class DialogImageData : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogConcentrationImage(
-      const std::vector<double> &concentrationArray,
+  explicit DialogImageData(
+      const std::vector<double> &dataArray,
       const sme::model::SpeciesGeometry &speciesGeometry,
       bool invertYAxis = false,
-      const QString &windowTitle = "Set Initial Concentration Image",
-      bool isRateOfChange = false, QWidget *parent = nullptr);
-  ~DialogConcentrationImage() override;
-  [[nodiscard]] std::vector<double> getConcentrationArray() const;
+      DialogImageDataDataType dataType = DialogImageDataDataType::Concentration,
+      QWidget *parent = nullptr);
+  ~DialogImageData() override;
+  const std::vector<double> &getData() const;
+  [[nodiscard]] std::vector<double> getImageArray() const;
 
 private:
-  std::unique_ptr<Ui::DialogConcentrationImage> ui;
+  std::unique_ptr<Ui::DialogImageData> ui;
 
   // user supplied data
   const sme::common::VolumeF voxelSize;
@@ -39,18 +46,16 @@ private:
   QImage colorMinConc;
   sme::common::ImageStack imgs;
   sme::geometry::VoxelIndexer qpi;
-  std::vector<double> concentration;
+  std::vector<double> data;
 
   sme::common::VoxelF physicalPoint(const sme::common::Voxel &voxel) const;
-  std::size_t
-  pointToConcentrationArrayIndex(const sme::common::Voxel &voxel) const;
-  void importConcentrationArray(const std::vector<double> &concentrationArray);
-  void
-  importConcentrationImage(const sme::common::ImageStack &concentrationImage);
-  void updateImageFromConcentration();
-  void rescaleConcentration(double newMin, double newMax);
+  std::size_t pointToArrayIndex(const sme::common::Voxel &voxel) const;
+  void importArray(const std::vector<double> &concentrationArray);
+  void importImage(const sme::common::ImageStack &concentrationImage);
+  void updateImageFromData();
+  void rescaleData(double newMin, double newMax);
   void gaussianFilter(const sme::common::Voxel &direction, double sigma);
-  void smoothConcentration();
+  void smoothData();
   void lblImage_mouseOver(const sme::common::Voxel &voxel);
   void chkGrid_stateChanged(int state);
   void chkScale_stateChanged(int state);

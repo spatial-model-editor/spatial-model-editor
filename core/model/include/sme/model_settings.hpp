@@ -74,6 +74,8 @@ struct Settings {
   std::map<std::string, QRgb> speciesColors{};
   sme::simulate::OptimizeOptions optimizeOptions{};
   std::vector<QRgb> sampledFieldColors{};
+  std::map<std::string, std::vector<double>> speciesDiffusionConstantArrays{};
+  std::map<std::string, std::string> speciesAnalyticDiffusionConstants{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -96,6 +98,12 @@ struct Settings {
       ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
          CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColors),
          CEREAL_NVP(optimizeOptions), CEREAL_NVP(sampledFieldColors));
+    } else if (version == 4) {
+      ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
+         CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColors),
+         CEREAL_NVP(optimizeOptions), CEREAL_NVP(sampledFieldColors),
+         CEREAL_NVP(speciesDiffusionConstantArrays),
+         CEREAL_NVP(speciesAnalyticDiffusionConstants));
     }
   }
 };
@@ -105,4 +113,4 @@ struct Settings {
 CEREAL_CLASS_VERSION(sme::model::MeshParameters, 1);
 CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
-CEREAL_CLASS_VERSION(sme::model::Settings, 3);
+CEREAL_CLASS_VERSION(sme::model::Settings, 4);

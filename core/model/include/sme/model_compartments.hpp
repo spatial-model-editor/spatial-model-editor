@@ -3,6 +3,7 @@
 #pragma once
 
 #include "sme/geometry.hpp"
+#include "sme/model_types.hpp"
 #include <QPointF>
 #include <QRgb>
 #include <QStringList>

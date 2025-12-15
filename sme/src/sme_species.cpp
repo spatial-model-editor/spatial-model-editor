@@ -11,10 +11,10 @@ namespace pysme {
 
 void bindSpecies(nanobind::module_ &m) {
   bindList<Species>(m, "Species");
-  nanobind::enum_<::sme::model::ConcentrationType>(m, "ConcentrationType")
-      .value("Uniform", ::sme::model::ConcentrationType::Uniform)
-      .value("Analytic", ::sme::model::ConcentrationType::Analytic)
-      .value("Image", ::sme::model::ConcentrationType::Image);
+  nanobind::enum_<::sme::model::SpatialDataType>(m, "ConcentrationType")
+      .value("Uniform", ::sme::model::SpatialDataType::Uniform)
+      .value("Analytic", ::sme::model::SpatialDataType::Analytic)
+      .value("Image", ::sme::model::SpatialDataType::Image);
   nanobind::class_<Species>(m, "Species",
                             R"(
                             a species that lives in a compartment
@@ -77,7 +77,7 @@ double Species::getDiffusionConstant() const {
   return s->getSpecies().getDiffusionConstant(id.c_str());
 }
 
-[[nodiscard]] ::sme::model::ConcentrationType
+[[nodiscard]] ::sme::model::SpatialDataType
 Species::getInitialConcentrationType() const {
   return s->getSpecies().getInitialConcentrationType(id.c_str());
 }

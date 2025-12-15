@@ -18,13 +18,13 @@ TEST_CASE("SBML species",
     // initial species concentration
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
-            model::ConcentrationType::Uniform);
+            model::SpatialDataType::Uniform);
     REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
     // set analytic expression
     s.setAnalyticConcentration("A_c1", "exp(-2*x*x)");
     REQUIRE(s.getHasUnsavedChanges() == true);
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
-            model::ConcentrationType::Analytic);
+            model::SpatialDataType::Analytic);
     REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
     REQUIRE(s.getAnalyticConcentration("A_c1") == "exp(-2 * x * x)");
   }
@@ -68,7 +68,7 @@ TEST_CASE("SBML species",
     REQUIRE(s.getIds("c1").size() == 2);
     REQUIRE(s.getIds("c1")[0] == "A_c1");
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
-            model::ConcentrationType::Uniform);
+            model::SpatialDataType::Uniform);
     REQUIRE(s.getField("A_c1")->getId() == "A_c1");
     REQUIRE(s.getIds("c1")[1] == "B_c1");
     REQUIRE(s.getField("B_c1")->getId() == "B_c1");
@@ -431,7 +431,7 @@ TEST_CASE("SBML species",
     // set analytic expression that depends on a parameter
     s.setAnalyticConcentration("A_c1", "param");
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
-            model::ConcentrationType::Analytic);
+            model::SpatialDataType::Analytic);
     REQUIRE(s.getAnalyticConcentration("A_c1") == "param");
     REQUIRE(common::average(s.getField("A_c1")->getConcentration()) ==
             dbl_approx(1.0));
@@ -444,7 +444,7 @@ TEST_CASE("SBML species",
     auto &s{m.getSpecies()};
     s.setAnalyticConcentration("A_c1", "piecewise(1,x<33,2,x>66,0)");
     REQUIRE(s.getInitialConcentrationType("A_c1") ==
-            model::ConcentrationType::Analytic);
+            model::SpatialDataType::Analytic);
     REQUIRE(s.getAnalyticConcentration("A_c1") ==
             "piecewise(1, x < 33, 2, x > 66, 0)");
     const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};

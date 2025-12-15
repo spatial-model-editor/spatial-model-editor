@@ -47,6 +47,9 @@ private:
   void txtInitialConcentration_editingFinished();
   void btnEditAnalyticConcentration_clicked();
   void btnEditImageConcentration_clicked();
+  void radDiffusionConstant_toggled();
   void txtDiffusionConstant_editingFinished();
+  void btnEditAnalyticDiffusionConstant_clicked();
+  void btnEditImageDiffusionConstant_clicked();
   void btnChangeSpeciesColor_clicked();
 };

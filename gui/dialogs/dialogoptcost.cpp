@@ -1,5 +1,5 @@
 #include "dialogoptcost.hpp"
-#include "dialogconcentrationimage.hpp"
+#include "dialogimagedata.hpp"
 #include "ui_dialogoptcost.h"
 
 static QString toQStr(double x) { return QString::number(x, 'g', 14); }
@@ -146,13 +146,15 @@ void DialogOptCost::txtSimulationTime_editingFinished() {
 
 void DialogOptCost::btnEditTargetValues_clicked() {
   QString costType{ui->cmbCostType->currentText()};
-  DialogConcentrationImage dialog(
-      m_optCost.targetValues, m_model.getSpeciesGeometry(m_optCost.id.c_str()),
-      m_model.getDisplayOptions().invertYAxis,
-      QString("Set target %1").arg(costType),
-      m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt);
+  DialogImageDataDataType dataType{DialogImageDataDataType::Concentration};
+  if (m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt) {
+    dataType = DialogImageDataDataType::ConcentrationRateOfChange;
+  }
+  DialogImageData dialog(m_optCost.targetValues,
+                         m_model.getSpeciesGeometry(m_optCost.id.c_str()),
+                         m_model.getDisplayOptions().invertYAxis, dataType);
   if (dialog.exec() == QDialog::Accepted) {
-    m_optCost.targetValues = dialog.getConcentrationArray();
+    m_optCost.targetValues = dialog.getImageArray();
     updateImage();
   }
 }

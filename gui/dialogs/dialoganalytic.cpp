@@ -10,7 +10,7 @@
 #include <QPushButton>
 
 DialogAnalytic::DialogAnalytic(
-    const QString &analyticExpression,
+    const QString &analyticExpression, DialogAnalyticDataType dataType,
     const sme::model::SpeciesGeometry &speciesGeometry,
     const sme::model::ModelParameters &modelParameters,
     const sme::model::ModelFunctions &modelFunctions, bool invertYAxis,
@@ -27,11 +27,18 @@ DialogAnalytic::DialogAnalytic(
 
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
-  concentrationUnit =
-      QString("%1/%2").arg(units.getAmount().name).arg(units.getVolume().name);
+  if (dataType == DialogAnalyticDataType::Concentration) {
+    setWindowTitle("Concentration");
+    valueLabel = "concentration";
+    valueUnit = units.getConcentration();
+  } else if (dataType == DialogAnalyticDataType::DiffusionConstant) {
+    setWindowTitle("Diffusion constant");
+    valueLabel = "diffusion constant";
+    valueUnit = units.getDiffusion();
+  }
   imgs.setVoxelSize(speciesGeometry.voxelSize);
   imgs.fill(0);
-  concentration.resize(voxels.size(), 0.0);
+  values.resize(voxels.size(), 0.0);
   // add x,y,z variables
   const auto &spatialCoordinates{modelParameters.getSpatialCoordinates()};
   ui->txtExpression->addVariable(spatialCoordinates.x.id,
@@ -131,23 +138,25 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     vars[0] = physical.p.x();
     vars[1] = physical.p.y();
     vars[2] = physical.z;
-    concentration[i] = ui->txtExpression->evaluateMath(vars);
+    values[i] = ui->txtExpression->evaluateMath(vars);
   }
-  if (std::find_if(concentration.cbegin(), concentration.cend(), [](auto c) {
+  if (std::ranges::find_if(std::as_const(values), [](auto c) {
         return std::isnan(c) || std::isinf(c);
-      }) != concentration.cend()) {
+      }) != values.cend()) {
     // if concentration contains NaN or inf, show error message
     ui->lblExpressionStatus->setText(
-        "concentration contains inf (infinity) or NaN (Not a Number)");
+        QString("%1 contains inf (infinity) or NaN (Not a Number)")
+            .arg(valueLabel));
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
     imgs.fill(0);
     ui->lblImage->setImage(imgs);
     return;
   }
-  if (*std::min_element(concentration.cbegin(), concentration.cend()) < 0) {
+  if (*std::ranges::min_element(std::as_const(values)) < 0) {
     // if concentration contains negative values, show error message
-    ui->lblExpressionStatus->setText("concentration cannot be negative");
+    ui->lblExpressionStatus->setText(
+        QString("%1 cannot be negative").arg(valueLabel));
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
     ui->btnExportImage->setEnabled(false);
     imgs.fill(0);
@@ -161,9 +170,9 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   displayExpression = math.toStdString();
   variableExpression = ui->txtExpression->getVariableMath();
   // normalise displayed pixel intensity to max concentration
-  double maxConc{sme::common::max(concentration)};
+  double maxConc{sme::common::max(values)};
   for (std::size_t i = 0; i < voxels.size(); ++i) {
-    int intensity = static_cast<int>(255 * concentration[i] / maxConc);
+    int intensity = static_cast<int>(255 * values[i] / maxConc);
     imgs[voxels[i].z].setPixel(voxels[i].p,
                                qRgb(intensity, intensity, intensity));
   }
@@ -181,25 +190,26 @@ void DialogAnalytic::lblImage_mouseOver(const sme::common::Voxel &voxel) {
   }
   auto physical = physicalPoint(voxel);
   ui->lblConcentration->setText(
-      QString("x: %1 %4, y: %2 %4, z: %3 %4, concentration: %5 %6")
+      QString("x: %1 %4, y: %2 %4, z: %3 %4, %5: %6 %7")
           .arg(physical.p.x())
           .arg(physical.p.y())
           .arg(physical.z)
           .arg(lengthUnit)
-          .arg(concentration[*index])
-          .arg(concentrationUnit));
+          .arg(valueLabel)
+          .arg(values[*index])
+          .arg(valueUnit));
 }
 
 void DialogAnalytic::btnExportImage_clicked() {
   QString filename = QFileDialog::getSaveFileName(
-      this, "Export species concentration as image", "conc.png", "PNG (*.png)");
+      this, QString("Export %1 slice as image").arg(valueLabel),
+      QString("%1.png").arg(valueLabel), "PNG (*.png)");
   if (filename.isEmpty()) {
     return;
   }
   if (filename.right(4) != ".png") {
     filename.append(".png");
   }
-  SPDLOG_DEBUG("exporting concentration image to file {}",
-               filename.toStdString());
+  SPDLOG_DEBUG("exporting image slice to file {}", filename.toStdString());
   imgs[0].save(filename);
 }

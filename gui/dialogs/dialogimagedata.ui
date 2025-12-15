@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>DialogConcentrationImage</class>
- <widget class="QDialog" name="DialogConcentrationImage">
+ <class>DialogImageData</class>
+ <widget class="QDialog" name="DialogImageData">
   <property name="geometry">
    <rect>
     <x>0</x>

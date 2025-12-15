@@ -4,6 +4,7 @@
 
 #include "dune_headers.hpp"
 #include "dunefunction.hpp"
+#include "dunefunctorfactory.hpp"
 #include "dunegrid.hpp"
 #include "sme/duneconverter.hpp"
 #include "sme/geometry.hpp"
@@ -118,9 +119,8 @@ public:
         config.sub("parser_context"));
     auto parser_type = Dune::Copasi::string2parser.at(
         config.get("model.parser_type", Dune::Copasi::default_parser_str));
-    auto functor_factory =
-        std::make_shared<Dune::Copasi::FunctorFactoryParser<DuneDimensions>>(
-            parser_type, std::move(parser_context));
+    auto functor_factory = std::make_shared<SmeFunctorFactory<DuneDimensions>>(
+        dc, parser_type, std::move(parser_context));
     SPDLOG_INFO("model");
     model = Dune::Copasi::DiffusionReaction::make_model<Model>(
         config.sub("model"), functor_factory);
