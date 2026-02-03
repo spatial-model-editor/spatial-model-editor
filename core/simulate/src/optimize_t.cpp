@@ -71,7 +71,12 @@ struct TestOptimization {
 
 static bool algorithmIsGuaranteedToMonotonicallyDecreaseCost(
     sme::simulate::OptAlgorithmType optAlgorithmType) {
-  auto nonDecreasingCostAlgos = {sme::simulate::OptAlgorithmType::PRAXIS};
+  auto nonDecreasingCostAlgos = {sme::simulate::OptAlgorithmType::COBYLA,
+                                 sme::simulate::OptAlgorithmType::BOBYQA,
+                                 sme::simulate::OptAlgorithmType::NMS,
+                                 sme::simulate::OptAlgorithmType::sbplx,
+                                 sme::simulate::OptAlgorithmType::AL,
+                                 sme::simulate::OptAlgorithmType::PRAXIS};
   return std::ranges::find(nonDecreasingCostAlgos, optAlgorithmType) ==
          nonDecreasingCostAlgos.end();
 }

@@ -1,6 +1,7 @@
 #include "qlabelmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QPainter>
+#include <cmath>
 
 QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
   setMouseTracking(true);
@@ -153,11 +154,17 @@ bool QLabelMouseTracker::setCurrentPixel(const QPoint &pos) {
   return true;
 }
 
-static std::pair<double, double>
-getGridWidth(const sme::common::VolumeF &physicalSize, const QSize &imageSize) {
+struct GridSpacing {
+  double physicalWidth{0.0};
+  int pixelStep{1};
+};
+
+static GridSpacing getGridWidth(const sme::common::VolumeF &physicalSize,
+                                const QSize &pixmapSize,
+                                const QSize &imagePixelSize) {
   constexpr double minWidthPixels{20};
   // start with grid of width 1 physical unit
-  double gridPixelWidth{static_cast<double>(imageSize.width())};
+  double gridPixelWidth{static_cast<double>(pixmapSize.width())};
   double gridPhysicalWidth{physicalSize.width()};
   // rescale with in pixels to: ~ [1, 2] * minWidthPixels
   // hopefully with reasonably nice looking numerical intervals
@@ -176,7 +183,22 @@ getGridWidth(const sme::common::VolumeF &physicalSize, const QSize &imageSize) {
     gridPhysicalWidth /= 2.0;
     gridPixelWidth /= 2.0;
   }
-  return {gridPhysicalWidth, gridPixelWidth};
+  int pixelStep{1};
+  if (imagePixelSize.width() > 0 && pixmapSize.width() > 0) {
+    double pixelDisplayWidth{static_cast<double>(pixmapSize.width()) /
+                             static_cast<double>(imagePixelSize.width())};
+    if (pixelDisplayWidth > 0.0) {
+      double pixelPhysicalWidth{physicalSize.width() /
+                                static_cast<double>(imagePixelSize.width())};
+      double multiple{std::round(gridPixelWidth / pixelDisplayWidth)};
+      if (multiple < 1.0) {
+        multiple = 1.0;
+      }
+      pixelStep = static_cast<int>(multiple);
+      gridPhysicalWidth = multiple * pixelPhysicalWidth;
+    }
+  }
+  return {gridPhysicalWidth, pixelStep};
 }
 
 static QString getGridPointLabel(int i, double gridPhysicalWidth,
@@ -228,24 +250,45 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
   availableSize.rheight() -= offset.y();
   pixmapImageSize = getPixmapSize(availableSize,
                                   physicalSize.width() / physicalSize.height());
-  auto scaledImage{image[currentVoxel.z].scaled(
-      pixmapImageSize, aspectRatioMode, transformationMode)};
-  p.drawImage(QPoint(offset.x(), 0), scaledImage);
+  const auto &srcImage{image[currentVoxel.z]};
+  double sx{static_cast<double>(pixmapImageSize.width()) /
+            static_cast<double>(srcImage.width())};
+  double sy{static_cast<double>(pixmapImageSize.height()) /
+            static_cast<double>(srcImage.height())};
+  p.setRenderHint(QPainter::SmoothPixmapTransform,
+                  transformationMode == Qt::SmoothTransformation);
+  p.save();
+  p.translate(offset.x(), 0);
+  p.scale(sx, sy);
+  p.drawImage(QPoint(0, 0), srcImage);
+  p.restore();
   SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}, image -> {}x{}", size.width(),
                size.height(), pixmap.width(), pixmap.height(),
                pixmapImageSize.width(), pixmapImageSize.height());
   if (drawGrid || (drawScale && haveSpaceForScale)) {
-    p.setPen(QColor(127, 127, 127));
-    auto [gridPhysicalWidth, gridPixelWidth] =
-        getGridWidth(physicalSize, pixmapImageSize);
+    QPen gridPen(QColor(127, 127, 127));
+    gridPen.setCosmetic(true);
+    p.setPen(gridPen);
+    auto gridSpacing =
+        getGridWidth(physicalSize, pixmapImageSize, srcImage.size());
     int prevTextEnd{-1000};
-    for (int i = 0; i < (pixmapImageSize.width() - 1) / gridPixelWidth; ++i) {
-      int x{static_cast<int>(gridPixelWidth * static_cast<double>(i))};
-      if (drawGrid) {
-        p.drawLine(x + offset.x(), 0, x + offset.x(), pixmapImageSize.height());
+    int maxXIndex{(srcImage.width() - 1) / gridSpacing.pixelStep};
+    if (drawGrid) {
+      p.save();
+      p.translate(offset.x(), 0);
+      p.scale(sx, sy);
+      for (int i = 0; i <= maxXIndex; ++i) {
+        int srcX{i * gridSpacing.pixelStep};
+        p.drawLine(QPointF(srcX, 0), QPointF(srcX, srcImage.height()));
       }
+      p.restore();
+    }
+    for (int i = 0; i <= maxXIndex; ++i) {
+      int srcX{i * gridSpacing.pixelStep};
+      int x{static_cast<int>(std::lround(srcX * sx))};
       if (drawScale && haveSpaceForScale) {
-        auto label{getGridPointLabel(i, gridPhysicalWidth, lengthUnits)};
+        auto label{
+            getGridPointLabel(i, gridSpacing.physicalWidth, lengthUnits)};
         // paint text label & extend tick mark if there is enough space
         if (int labelWidth{p.fontMetrics().horizontalAdvance(label)};
             prevTextEnd + (labelWidth + 1) / 2 + 4 < x &&
@@ -260,17 +303,29 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
         }
       }
     }
-    for (int i = 0;
-         i < pixmapImageSize.height() / static_cast<int>(gridPixelWidth); ++i) {
-      auto y{static_cast<int>(gridPixelWidth * static_cast<double>(i))};
+    int maxYIndex{(srcImage.height() - 1) / gridSpacing.pixelStep};
+    if (drawGrid) {
+      p.save();
+      p.translate(offset.x(), 0);
+      p.scale(sx, sy);
+      for (int i = 0; i <= maxYIndex; ++i) {
+        int srcY{i * gridSpacing.pixelStep};
+        if (!flipYAxis) {
+          srcY = srcImage.height() - 1 - srcY;
+        }
+        p.drawLine(QPointF(0, srcY), QPointF(srcImage.width(), srcY));
+      }
+      p.restore();
+    }
+    for (int i = 0; i <= maxYIndex; ++i) {
+      int srcY{i * gridSpacing.pixelStep};
+      auto y{static_cast<int>(std::lround(srcY * sy))};
       if (!flipYAxis) {
         y = pixmapImageSize.height() - 1 - y;
       }
-      if (drawGrid) {
-        p.drawLine(offset.x(), y, pixmapImageSize.width() + offset.x(), y);
-      }
       if (drawScale && haveSpaceForScale) {
-        auto label{getGridPointLabel(i, gridPhysicalWidth, lengthUnits)};
+        auto label{
+            getGridPointLabel(i, gridSpacing.physicalWidth, lengthUnits)};
         p.drawText(
             QRect(0, y - offset.y() / 2, offset.x() - tickLength, offset.y()),
             Qt::AlignVCenter | Qt::AlignRight, label);
