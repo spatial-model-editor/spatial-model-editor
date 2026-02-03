@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include <cmath>
 
 using namespace sme::test;
 
@@ -266,4 +267,56 @@ TEST_CASE("QLabelMouseTracker: image and mask", tags) {
   REQUIRE(clicks.back() == QColor(144, 97, 193).rgb());
   REQUIRE(mouseTracker.getColor() == QColor(144, 97, 193).rgb());
   REQUIRE(mouseTracker.getMaskIndex() == 12944736);
+}
+
+TEST_CASE("QLabelMouseTracker: grid spacing aligns to pixel size", tags) {
+  QLabelMouseTracker mouseTracker;
+  QImage img(5, 5, QImage::Format_RGB32);
+  img.fill(QColor(0, 0, 0).rgba());
+  auto imageStack = sme::common::ImageStack{{img}};
+  mouseTracker.show();
+  mouseTracker.resize(200, 200);
+  wait();
+  mouseTracker.setImage(imageStack);
+  mouseTracker.displayGrid(true);
+  wait();
+
+  auto pixmap = mouseTracker.QLabel::pixmap();
+  REQUIRE(!pixmap.isNull());
+  auto rendered{pixmap.toImage()};
+  int midY{rendered.height() / 2};
+  std::vector<int> gridColumns;
+  auto isGridColor = [](const QColor &c) {
+    return c.red() == 127 && c.green() == 127 && c.blue() == 127;
+  };
+  bool inColumn{false};
+  for (int x = 0; x < rendered.width(); ++x) {
+    bool isGrid{isGridColor(rendered.pixelColor(x, midY))};
+    if (isGrid && !inColumn) {
+      gridColumns.push_back(x);
+      inColumn = true;
+    } else if (!isGrid && inColumn) {
+      inColumn = false;
+    }
+  }
+
+  std::vector<int> gridSourceColumns;
+  for (int x : gridColumns) {
+    int srcX{
+        static_cast<int>(std::lround(static_cast<double>(x * img.width()) /
+                                     static_cast<double>(rendered.width())))};
+    int expectedX{static_cast<int>(
+        std::lround(static_cast<double>(srcX * rendered.width()) /
+                    static_cast<double>(img.width())))};
+    REQUIRE(x == expectedX);
+    if (gridSourceColumns.empty() || srcX != gridSourceColumns.back()) {
+      gridSourceColumns.push_back(srcX);
+    }
+  }
+  REQUIRE(gridSourceColumns.size() == 5);
+  int step{gridSourceColumns[1] - gridSourceColumns[0]};
+  REQUIRE(step >= 1);
+  for (std::size_t i = 2; i < gridSourceColumns.size(); ++i) {
+    REQUIRE(gridSourceColumns[i] - gridSourceColumns[i - 1] == step);
+  }
 }
