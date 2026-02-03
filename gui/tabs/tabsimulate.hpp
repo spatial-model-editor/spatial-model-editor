@@ -5,8 +5,10 @@
 #include "plotwrapper.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/simulate.hpp"
+#include <QFuture>
+#include <QFutureWatcher>
 #include <QWidget>
-#include <future>
+#include <atomic>
 #include <memory>
 
 namespace Ui {
@@ -53,14 +55,17 @@ private:
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
   std::vector<PlotWrapperObservable> observables;
-  std::future<std::size_t> simSteps;
+  QFuture<std::size_t> simSteps;
+  QFutureWatcher<std::size_t> simWatcher;
   QTimer plotRefreshTimer;
   QProgressDialog *progressDialog;
   bool importTimesAndIntervals{false};
   bool flipYAxis{false};
+  std::atomic<bool> simFinishedHandled{true};
 
   std::optional<std::vector<std::pair<std::size_t, double>>>
   parseSimulationTimes();
+  void onSimulationFinished();
   void btnSimulate_clicked();
   void btnSliceImage_clicked();
   void btnExport_clicked();

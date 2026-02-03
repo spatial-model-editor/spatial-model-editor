@@ -248,10 +248,11 @@ static std::vector<SimulationResult>
 constructSimulationResults(const ::sme::simulate::Simulation *sim,
                            bool getDcdt) {
   std::vector<SimulationResult> results;
-  results.reserve(sim->getTimePoints().size());
-  for (std::size_t i = 0; i < sim->getTimePoints().size(); ++i) {
+  const auto timePoints{sim->getTimePoints()};
+  results.reserve(timePoints.size());
+  for (std::size_t i = 0; i < timePoints.size(); ++i) {
     auto &result = results.emplace_back();
-    result.timePoint = sim->getTimePoints()[i];
+    result.timePoint = timePoints[i];
     auto img = sim->getConcImage(i, {}, true);
     auto shape = img.volume();
     result.concentration_image = toPyImageRgb(img);
@@ -263,7 +264,7 @@ constructSimulationResults(const ::sme::simulate::Simulation *sim,
                                                    names[si].size())] =
             as_ndarray(std::move(concs[si]), shape);
       }
-      if (getDcdt && i + 1 == sim->getTimePoints().size()) {
+      if (getDcdt && i + 1 == timePoints.size()) {
         if (auto dcdts{sim->getPyDcdts(ci)}; !dcdts.empty()) {
           for (std::size_t si = 0; si < names.size(); ++si) {
             result.species_dcdt[nanobind::str(names[si].data(),

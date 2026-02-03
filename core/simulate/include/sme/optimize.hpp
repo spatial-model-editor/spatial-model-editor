@@ -60,6 +60,7 @@ private:
   std::atomic<std::size_t> nIterations{0};
   std::vector<double> bestFitness;
   std::vector<std::vector<double>> bestParams;
+  mutable std::mutex resultsMutex;
   mutable std::mutex bestResultsMutex;
   BestResults bestResults{};
   std::unique_ptr<ThreadsafeModelQueue> modelQueue{nullptr};
@@ -88,7 +89,7 @@ public:
   /**
    * @brief The best set of parameters from each iteration
    */
-  [[nodiscard]] const std::vector<std::vector<double>> &getParams() const;
+  [[nodiscard]] std::vector<std::vector<double>> getParams() const;
   /**
    * @brief The names of the parameters being optimized
    */
@@ -96,7 +97,7 @@ public:
   /**
    * @brief The best fitness from each iteration
    */
-  [[nodiscard]] const std::vector<double> &getFitness() const;
+  [[nodiscard]] std::vector<double> getFitness() const;
   /**
    * @brief Try to set a new set of best results for each target
    *

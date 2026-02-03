@@ -130,6 +130,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
     double absoluteMax = 0;
 
     // README: is this what 'simulate' does as well?
+    std::scoped_lock lock{m_concentration_mutex};
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       maxConcs.emplace_back(speciesToDraw[i].size(), absoluteMin);
       const auto c = m_simulator->getConcentrations(i);
@@ -142,6 +143,7 @@ SteadyStateSimulation::computeConcentrationNormalisation(
     }
   } else {
     // get max for each species at this timepoint
+    std::scoped_lock lock{m_concentration_mutex};
     for (std::size_t i = 0; i < m_compartments.size(); ++i) {
       double speciesMax = 0;
       const auto c = m_simulator->getConcentrations(i);
@@ -179,8 +181,11 @@ void SteadyStateSimulation::runPixel(double time) {
   timer.start();
   while (tNow + time * relativeTolerance < time) {
 
-    m_simulator->run(m_dt, m_timeout_ms,
-                     [this]() { return m_simulator->getStopRequested(); });
+    {
+      std::scoped_lock lock{m_concentration_mutex};
+      m_simulator->run(m_dt, m_timeout_ms,
+                       [this]() { return m_simulator->getStopRequested(); });
+    }
     c_new = getConcentrations();
 
     auto current_error = computeStoppingCriterion(c_old, c_new);
@@ -245,8 +250,11 @@ void SteadyStateSimulation::runDune(double time) {
   // use dt here to avoid too long intervals for checking the stopping criterion
   while (tNow + time * relativeTolerance < time) {
     try {
-      m_simulator->run(m_dt, m_timeout_ms,
-                       [this]() { return m_simulator->getStopRequested(); });
+      {
+        std::scoped_lock lock{m_concentration_mutex};
+        m_simulator->run(m_dt, m_timeout_ms,
+                         [this]() { return m_simulator->getStopRequested(); });
+      }
 
     } catch (const Dune::Exception &e) {
       m_simulator->setCurrentErrormessage(e.what());
@@ -376,6 +384,7 @@ const std::vector<double> &SteadyStateSimulation::getConcentrations() {
   m_concentrations.clear();
 
   for (std::size_t idx : m_compartmentIndices) {
+    std::scoped_lock lock{m_concentration_mutex};
     auto c = m_simulator->getConcentrations(idx);
     m_concentrations.insert(m_concentrations.end(), c.begin(), c.end());
   }
@@ -425,6 +434,7 @@ sme::common::ImageStack SteadyStateSimulation::getConcentrationImage(
     const auto &voxels = m_compartments[i]->getVoxels();
     std::size_t nSpecies = m_compartmentSpeciesIds[i].size();
 
+    std::scoped_lock lock{m_concentration_mutex};
     const auto concentrations = m_simulator->getConcentrations(i);
     const auto concentrationPadding = m_simulator->getConcentrationPadding();
 

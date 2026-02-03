@@ -20,7 +20,7 @@ class SteadyStateSimulation final {
   double m_timeout_ms;
   SteadyStateConvergenceMode m_stop_mode;
   double m_dt; // timestep to check for convergence, not solver timestep
-  std::mutex m_concentration_mutex = std::mutex();
+  mutable std::mutex m_concentration_mutex = std::mutex();
 
   // data members for plotting
   std::atomic<double> m_error = std::numeric_limits<double>::max();
