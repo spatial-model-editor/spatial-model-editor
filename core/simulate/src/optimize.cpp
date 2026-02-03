@@ -231,7 +231,10 @@ std::size_t Optimization::evolve(
     } catch (const std::invalid_argument &e) {
       return finalizeEvolve(e.what());
     }
-    appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
+    {
+      std::scoped_lock lock{resultsMutex};
+      appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
+    }
   }
   SPDLOG_INFO("Starting {} {} evolve steps", n, algo->get_name());
   // ensure output vectors won't re-allocate during evolution
@@ -244,9 +247,19 @@ std::size_t Optimization::evolve(
     } catch (const std::invalid_argument &e) {
       return finalizeEvolve(e.what());
     }
-    appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
+    {
+      std::scoped_lock lock{resultsMutex};
+      appendBestFitnesssAndParams(*archi, bestFitness, bestParams);
+    }
     if (callback) {
-      callback(bestFitness.back(), bestParams.back());
+      double fitness{};
+      std::vector<double> params;
+      {
+        std::scoped_lock lock{resultsMutex};
+        fitness = bestFitness.back();
+        params = bestParams.back();
+      }
+      callback(fitness, params);
     }
     ++nIterations;
     if (stopRequested) {
@@ -259,6 +272,7 @@ std::size_t Optimization::evolve(
 }
 
 bool Optimization::applyParametersToModel(sme::model::Model *model) const {
+  std::scoped_lock lock{resultsMutex};
   if (bestParams.empty()) {
     return false;
   }
@@ -266,7 +280,8 @@ bool Optimization::applyParametersToModel(sme::model::Model *model) const {
   return true;
 }
 
-const std::vector<std::vector<double>> &Optimization::getParams() const {
+std::vector<std::vector<double>> Optimization::getParams() const {
+  std::scoped_lock lock{resultsMutex};
   return bestParams;
 }
 
@@ -292,7 +307,8 @@ std::vector<std::string> Optimization::getParamNames() const {
   return names;
 }
 
-const std::vector<double> &Optimization::getFitness() const {
+std::vector<double> Optimization::getFitness() const {
+  std::scoped_lock lock{resultsMutex};
   return bestFitness;
 }
 

@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <queue>
+#include <shared_mutex>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,7 @@ private:
   model::SimulationSettings *settings;
   SimulationData *data;
   common::Volume imageSize;
+  mutable std::shared_mutex dataMutex;
   std::atomic<bool> isRunning{false};
   std::atomic<bool> stopRequested{false};
   std::atomic<std::size_t> nCompletedTimesteps{0};
@@ -79,10 +81,10 @@ public:
   getSpeciesIds(std::size_t compartmentIndex) const;
   [[nodiscard]] const std::vector<QRgb> &
   getSpeciesColors(std::size_t compartmentIndex) const;
-  [[nodiscard]] const std::vector<double> &getTimePoints() const;
-  [[nodiscard]] const AvgMinMax &getAvgMinMax(std::size_t timeIndex,
-                                              std::size_t compartmentIndex,
-                                              std::size_t speciesIndex) const;
+  [[nodiscard]] std::vector<double> getTimePoints() const;
+  [[nodiscard]] AvgMinMax getAvgMinMax(std::size_t timeIndex,
+                                       std::size_t compartmentIndex,
+                                       std::size_t speciesIndex) const;
   [[nodiscard]] std::vector<double> getConc(std::size_t timeIndex,
                                             std::size_t compartmentIndex,
                                             std::size_t speciesIndex) const;

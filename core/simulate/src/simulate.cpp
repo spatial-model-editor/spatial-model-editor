@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <limits>
 #include <numeric>
+#include <shared_mutex>
 #include <utility>
 
 namespace sme::simulate {
@@ -165,6 +166,7 @@ calculateAvgMinMax(const std::vector<double> &concs, std::size_t nSpecies,
 
 void Simulation::updateConcentrations(double t) {
   SPDLOG_DEBUG("updating Concentrations at time {}", t);
+  std::unique_lock lock{dataMutex};
   data->timePoints.push_back(t);
   data->concPadding.push_back(simulator->getConcentrationPadding());
   auto &c = data->concentration.emplace_back();
@@ -237,14 +239,21 @@ std::size_t Simulation::doMultipleTimesteps(
     double timeout_ms, const std::function<bool()> &stopRunningCallback) {
   isRunning.store(true);
   stopRequested.store(false);
-  if (data->timePoints.empty()) {
-    updateConcentrations(0);
-    ++nCompletedTimesteps;
+  {
+    std::shared_lock lock{dataMutex};
+    if (data->timePoints.empty()) {
+      lock.unlock();
+      updateConcentrations(0);
+      ++nCompletedTimesteps;
+    }
   }
-  if (data->timePoints.size() == 1) {
-    SPDLOG_DEBUG("No existing simulation data: removing any existing times "
-                 "from model simulation settings");
-    settings->times.clear();
+  {
+    std::shared_lock lock{dataMutex};
+    if (data->timePoints.size() == 1) {
+      SPDLOG_DEBUG("No existing simulation data: removing any existing times "
+                   "from model simulation settings");
+      settings->times.clear();
+    }
   }
   for (const auto &timestep : timesteps) {
     settings->times.push_back(timestep);
@@ -259,7 +268,10 @@ std::size_t Simulation::doMultipleTimesteps(
   // ensure there is enough space that push_back won't cause a reallocation
   // todo: there should be a mutex/lock here in case reserve() reallocates
   // to avoid a user getting garbage data while the vector contents are moving
-  data->reserve(data->size() + nStepsTotal);
+  {
+    std::unique_lock lock{dataMutex};
+    data->reserve(data->size() + nStepsTotal);
+  }
   std::size_t steps{0};
   double remaining_timeout_ms{-1.0};
   for (const auto &timestep : timesteps) {
@@ -277,7 +289,11 @@ std::size_t Simulation::doMultipleTimesteps(
       // if an event would occur within this fraction of a timestep then apply
       // it now, rather than doing a minuscule extra simulation step
       constexpr double fractionTimestepEpsilon{1e-12};
-      double currentTime{data->timePoints.back()};
+      double currentTime{};
+      {
+        std::shared_lock lock{dataMutex};
+        currentTime = data->timePoints.back();
+      }
       while (std::abs(currentTime - nextEventTime) / time <
              fractionTimestepEpsilon) {
         SPDLOG_INFO("t={}, applying event at {}", currentTime, nextEventTime);
@@ -299,7 +315,10 @@ std::size_t Simulation::doMultipleTimesteps(
         applyNextEvent();
         nextEventTime = simEvents.front().time;
         // remove intermediate concentrations
-        data->pop_back();
+        {
+          std::unique_lock lock{dataMutex};
+          data->pop_back();
+        }
         currentTime += subTimeStep;
         currentTimeStep -= subTimeStep;
         SPDLOG_INFO("Remaining time step: {}", currentTimeStep);
@@ -312,7 +331,12 @@ std::size_t Simulation::doMultipleTimesteps(
         simulator->setStopRequested(false);
         return steps;
       }
-      updateConcentrations(data->timePoints.back() + time);
+      double nextTime{};
+      {
+        std::shared_lock lock{dataMutex};
+        nextTime = data->timePoints.back() + time;
+      }
+      updateConcentrations(nextTime);
       ++nCompletedTimesteps;
     }
   }
@@ -344,13 +368,15 @@ Simulation::getSpeciesColors(std::size_t compartmentIndex) const {
   return compartmentSpeciesColors[compartmentIndex];
 }
 
-const std::vector<double> &Simulation::getTimePoints() const {
+std::vector<double> Simulation::getTimePoints() const {
+  std::shared_lock lock{dataMutex};
   return data->timePoints;
 }
 
-const AvgMinMax &Simulation::getAvgMinMax(std::size_t timeIndex,
-                                          std::size_t compartmentIndex,
-                                          std::size_t speciesIndex) const {
+AvgMinMax Simulation::getAvgMinMax(std::size_t timeIndex,
+                                   std::size_t compartmentIndex,
+                                   std::size_t speciesIndex) const {
+  std::shared_lock lock{dataMutex};
   return data->avgMinMax[timeIndex][compartmentIndex][speciesIndex];
 }
 
@@ -358,6 +384,7 @@ std::vector<double> Simulation::getConc(std::size_t timeIndex,
                                         std::size_t compartmentIndex,
                                         std::size_t speciesIndex) const {
   std::vector<double> c;
+  std::shared_lock lock{dataMutex};
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
   std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
@@ -373,6 +400,7 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
                                              std::size_t compartmentIndex,
                                              std::size_t speciesIndex) const {
   std::vector<double> c(static_cast<std::size_t>(imageSize.nVoxels()), 0.0);
+  std::shared_lock lock{dataMutex};
   const auto &compConc = data->concentration[timeIndex][compartmentIndex];
   const auto &comp = compartments[compartmentIndex];
   std::size_t nPixels = comp->nVoxels();
@@ -407,6 +435,7 @@ std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
   std::vector<double> c;
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
       s != nullptr) {
+    std::shared_lock lock{dataMutex};
     const auto &compDcdt = s->getDcdt(compartmentIndex);
     std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
     std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
@@ -425,6 +454,7 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
       static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
       s != nullptr) {
+    std::shared_lock lock{dataMutex};
     const auto &compDcdt = s->getDcdt(compartmentIndex);
     const auto &comp = compartments[compartmentIndex];
     std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
@@ -459,6 +489,7 @@ common::ImageStack Simulation::getConcImage(
   if (compartments.empty()) {
     return common::ImageStack{};
   }
+  std::shared_lock lock{dataMutex};
   constexpr double minimumNonzeroConc{100.0 *
                                       std::numeric_limits<double>::min()};
   const auto *speciesIndices = &speciesToDraw;
@@ -547,6 +578,7 @@ Simulation::getPyConcs(std::size_t timeIndex,
   std::vector<std::vector<double>> pyConcs(
       compartmentSpeciesIds[compartmentIndex].size(),
       std::vector<double>(imageSize.nVoxels(), 0.0));
+  std::shared_lock lock{dataMutex};
   const auto &voxels{compartments[compartmentIndex]->getVoxels()};
   const auto &conc{data->concentration[timeIndex][compartmentIndex]};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
@@ -564,7 +596,11 @@ Simulation::getPyConcs(std::size_t timeIndex,
 Simulation::getPyDcdts(std::size_t compartmentIndex) const {
   // dcdt is only available from pixel sim, and only for the last timestep
   const PixelSim *pixelSim{dynamic_cast<const PixelSim *>(simulator.get())};
-  if (pixelSim == nullptr || data->concPadding.empty()) {
+  if (pixelSim == nullptr) {
+    return {};
+  }
+  std::shared_lock lock{dataMutex};
+  if (data->concPadding.empty()) {
     return {};
   }
   std::vector<std::vector<double>> pyDcdts(

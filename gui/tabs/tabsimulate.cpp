@@ -15,8 +15,8 @@
 #include "ui_tabsimulate.h"
 #include <QMessageBox>
 #include <QProgressDialog>
+#include <QtConcurrent/QtConcurrent>
 #include <algorithm>
-#include <future>
 
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QVoxelRenderer *voxelRenderer, QWidget *parent)
@@ -53,11 +53,11 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   connect(&plotRefreshTimer, &QTimer::timeout, this, [this]() {
     updatePlotAndImages();
     if (!sim->getIsRunning()) {
-      // simulation finished - repeat above first in case new data was added
-      updatePlotAndImages();
-      finalizePlotAndImages();
+      onSimulationFinished();
     }
   });
+  connect(&simWatcher, &QFutureWatcherBase::finished, this,
+          &TabSimulate::onSimulationFinished);
   useDune(true);
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
@@ -98,7 +98,9 @@ void TabSimulate::loadModelData() {
   if (sim != nullptr && sim->getIsRunning()) {
     // wait for any existing running simulation to stop
     sim->requestStop();
-    simSteps.wait();
+    if (simSteps.isRunning()) {
+      simSteps.waitForFinished();
+    }
   }
   if (model.getSimulationSettings().simulatorType ==
       sme::simulate::SimulatorType::DUNE) {
@@ -235,7 +237,9 @@ void TabSimulate::reset() {
   if (sim != nullptr && sim->getIsRunning()) {
     // stop any existing running simulation
     sim->requestStop();
-    simSteps.wait();
+    if (simSteps.isRunning()) {
+      simSteps.waitForFinished();
+    }
   }
   model.getSimulationData().clear();
   importModelTimesAndIntervals(ui.get(), model.getSimulationSettings().times);
@@ -250,6 +254,15 @@ void TabSimulate::setOptions(const sme::simulate::Options &options) {
 }
 
 void TabSimulate::invertYAxis(bool enable) { flipYAxis = enable; }
+
+void TabSimulate::onSimulationFinished() {
+  if (sim == nullptr || simFinishedHandled.exchange(true)) {
+    return;
+  }
+  // simulation finished - repeat above first in case new data was added
+  updatePlotAndImages();
+  finalizePlotAndImages();
+}
 
 void TabSimulate::btnSimulate_clicked() {
   auto simulationTimes{sme::simulate::parseSimulationTimes(
@@ -281,10 +294,12 @@ void TabSimulate::btnSimulate_clicked() {
   progressDialog->setMaximum(progressMax);
 
   this->setCursor(Qt::WaitCursor);
+  simFinishedHandled.store(false);
   // start simulation in a new thread
-  simSteps = std::async(
-      std::launch::async, &sme::simulate::Simulation::doMultipleTimesteps,
-      sim.get(), simulationTimes.value(), -1.0, std::function<bool()>{});
+  simSteps = QtConcurrent::run(&sme::simulate::Simulation::doMultipleTimesteps,
+                               sim.get(), simulationTimes.value(), -1.0,
+                               std::function<bool()>{});
+  simWatcher.setFuture(simSteps);
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
 }
@@ -326,6 +341,7 @@ void TabSimulate::updatePlotAndImages() {
   }
   std::size_t n0{static_cast<std::size_t>(time.size())};
   std::size_t n{sim->getNCompletedTimesteps()};
+  const auto timePoints{sim->getTimePoints()};
   if (!sim->getIsStopping()) {
     progressDialog->setValue(static_cast<int>(n0));
   }
@@ -333,7 +349,7 @@ void TabSimulate::updatePlotAndImages() {
     SPDLOG_DEBUG("adding timepoint {}", i);
     // process new results
     images.push_back(sim->getConcImage(i, compartmentSpeciesToDraw));
-    time.push_back(sim->getTimePoints()[i]);
+    time.push_back(timePoints[i]);
     int speciesIndex = 0;
     for (std::size_t ic = 0; ic < sim->getCompartmentIds().size(); ++ic) {
       for (std::size_t is = 0; is < sim->getSpeciesIds(ic).size(); ++is) {
