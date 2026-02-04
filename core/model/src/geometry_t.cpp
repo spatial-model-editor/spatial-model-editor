@@ -100,9 +100,19 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(a.size() == 1);
     REQUIRE(a[0] == dbl_approx(0));
 
-    // conc array size must match image volume
-    REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
-    REQUIRE_THROWS(field.importConcentration({}));
+    // invalid concentration array size is ignored
+    field.importConcentration({1.0});
+    auto concBefore = field.getConcentration();
+    REQUIRE_NOTHROW(field.importConcentration({1.0, 2.0}));
+    REQUIRE_NOTHROW(field.importConcentration({}));
+    REQUIRE(field.getConcentration() == concBefore);
+
+    // invalid diffusion array size is ignored
+    field.importDiffusionConstant({3.1});
+    auto diffBefore = field.getDiffusionConstant();
+    REQUIRE_NOTHROW(field.importDiffusionConstant({1.0, 2.0}));
+    REQUIRE_NOTHROW(field.importDiffusionConstant({}));
+    REQUIRE(field.getDiffusionConstant() == diffBefore);
   }
   SECTION("two pixel compartment, 6x7 image") {
     common::ImageStack img{{QImage(6, 7, QImage::Format_RGB32)}};
@@ -166,9 +176,18 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(a2[26] == dbl_approx(0.0));
     REQUIRE(a2.back() == dbl_approx(0.0));
 
-    // conc array size must match image volume
-    REQUIRE_THROWS(field.importConcentration({1.0, 2.0}));
-    REQUIRE_THROWS(field.importConcentration({}));
+    // invalid concentration array size is ignored
+    auto concBefore = field.getConcentration();
+    REQUIRE_NOTHROW(field.importConcentration({1.0, 2.0}));
+    REQUIRE_NOTHROW(field.importConcentration({}));
+    REQUIRE(field.getConcentration() == concBefore);
+
+    // invalid diffusion array size is ignored
+    field.importDiffusionConstant(arr);
+    auto diffBefore = field.getDiffusionConstant();
+    REQUIRE_NOTHROW(field.importDiffusionConstant({1.0, 2.0}));
+    REQUIRE_NOTHROW(field.importDiffusionConstant({}));
+    REQUIRE(field.getDiffusionConstant() == diffBefore);
   }
   SECTION("compartment of field is changed") {
     common::ImageStack img{{QImage(6, 7, QImage::Format_RGB32)}};
@@ -194,8 +213,11 @@ TEST_CASE("Geometry: Compartments and Fields",
     field.setCompartment(&comp2);
     REQUIRE(field.getCompartment() == &comp2);
     REQUIRE(field.getConcentration().size() == comp2.nVoxels());
+    REQUIRE(field.getDiffusionConstant().size() == comp2.nVoxels());
     REQUIRE(field.getConcentration()[0] == dbl_approx(0.0));
     REQUIRE(field.getConcentration()[1] == dbl_approx(0.0));
+    REQUIRE(field.getDiffusionConstant()[0] == dbl_approx(0.0));
+    REQUIRE(field.getDiffusionConstant()[1] == dbl_approx(0.0));
   }
   SECTION("getConcentrationImageArray") {
     common::ImageStack img{
