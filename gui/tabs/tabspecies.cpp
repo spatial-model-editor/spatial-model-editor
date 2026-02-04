@@ -333,19 +333,23 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
 void TabSpecies::btnEditImageConcentration_clicked() {
   SPDLOG_DEBUG("editing initial concentration image for species {}...",
                currentSpeciesId.toStdString());
-  DialogImageData dialog(
-      model.getSpecies().getSampledFieldConcentration(currentSpeciesId),
-      model.getSpeciesGeometry(currentSpeciesId),
-      model.getDisplayOptions().invertYAxis,
-      DialogImageDataDataType::Concentration);
-  if (dialog.exec() == QDialog::Accepted) {
-    SPDLOG_DEBUG("  - setting new sampled field concentration array");
-    model.getSpecies().setSampledFieldConcentration(currentSpeciesId,
-                                                    dialog.getImageArray());
-    const auto img =
-        model.getSpecies().getConcentrationImages(currentSpeciesId);
-    lblGeometry->setImage(img);
-    voxGeometry->setImage(img);
+  try {
+    DialogImageData dialog(
+        model.getSpecies().getSampledFieldConcentration(currentSpeciesId),
+        model.getSpeciesGeometry(currentSpeciesId),
+        model.getDisplayOptions().invertYAxis,
+        DialogImageDataDataType::Concentration);
+    if (dialog.exec() == QDialog::Accepted) {
+      SPDLOG_DEBUG("  - setting new sampled field concentration array");
+      model.getSpecies().setSampledFieldConcentration(currentSpeciesId,
+                                                      dialog.getImageArray());
+      const auto img =
+          model.getSpecies().getConcentrationImages(currentSpeciesId);
+      lblGeometry->setImage(img);
+      voxGeometry->setImage(img);
+    }
+  } catch (const std::invalid_argument &e) {
+    QMessageBox::warning(this, "Error editing concentration image", e.what());
   }
 }
 
@@ -394,15 +398,19 @@ void TabSpecies::btnEditAnalyticDiffusionConstant_clicked() {
 void TabSpecies::btnEditImageDiffusionConstant_clicked() {
   SPDLOG_DEBUG("editing diffusion constant image for species {}...",
                currentSpeciesId.toStdString());
-  DialogImageData dialog(
-      model.getSpecies().getSampledFieldDiffusionConstant(currentSpeciesId),
-      model.getSpeciesGeometry(currentSpeciesId),
-      model.getDisplayOptions().invertYAxis,
-      DialogImageDataDataType::DiffusionConstant);
-  if (dialog.exec() == QDialog::Accepted) {
-    SPDLOG_DEBUG("  - setting new sampled field diffusion constant array");
-    model.getSpecies().setSampledFieldDiffusionConstant(currentSpeciesId,
-                                                        dialog.getImageArray());
+  try {
+    DialogImageData dialog(
+        model.getSpecies().getSampledFieldDiffusionConstant(currentSpeciesId),
+        model.getSpeciesGeometry(currentSpeciesId),
+        model.getDisplayOptions().invertYAxis,
+        DialogImageDataDataType::DiffusionConstant);
+    if (dialog.exec() == QDialog::Accepted) {
+      SPDLOG_DEBUG("  - setting new sampled field diffusion constant array");
+      model.getSpecies().setSampledFieldDiffusionConstant(
+          currentSpeciesId, dialog.getImageArray());
+    }
+  } catch (const std::invalid_argument &e) {
+    QMessageBox::warning(this, "Error editing diffusion image", e.what());
   }
 }
 

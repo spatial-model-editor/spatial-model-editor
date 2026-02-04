@@ -221,8 +221,13 @@ void Field::setDiffusionConstant(
 }
 
 void Field::importDiffusionConstant(const std::vector<double> &sbmlArray) {
-  diff = importSbmlArray(sbmlArray);
-  isUniformDiffusionConstant = false;
+  try {
+    diff = importSbmlArray(sbmlArray);
+    isUniformDiffusionConstant = false;
+  } catch (const std::invalid_argument &e) {
+    SPDLOG_WARN("Ignoring failed diffusion array import for species {}: {}", id,
+                e.what());
+  }
 }
 
 std::vector<double>
@@ -240,8 +245,13 @@ void Field::setConcentration(std::size_t index, double concentration) {
 
 void Field::importConcentration(
     const std::vector<double> &sbmlConcentrationArray) {
-  conc = importSbmlArray(sbmlConcentrationArray);
-  isUniformConcentration = false;
+  try {
+    conc = importSbmlArray(sbmlConcentrationArray);
+    isUniformConcentration = false;
+  } catch (const std::invalid_argument &e) {
+    SPDLOG_WARN("Ignoring failed concentration array import for species {}: {}",
+                id, e.what());
+  }
 }
 
 std::vector<double>
@@ -338,6 +348,7 @@ void Field::setCompartment(const Compartment *compartment) {
   SPDLOG_DEBUG("Changing compartment to {}", compartment->getId());
   comp = compartment;
   conc.assign(compartment->nVoxels(), 0.0);
+  diff.assign(compartment->nVoxels(), 0.0);
 }
 
 } // namespace sme::geometry

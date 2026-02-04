@@ -272,6 +272,17 @@ TEST_CASE("SBML: import SBML doc without geometry",
       REQUIRE(fieldAfter != nullptr);
       REQUIRE(fieldAfter->getDiffusionConstant().size() == comp1->nVoxels());
     }
+    SECTION("sampled diffusion field and imported geometry size mismatch") {
+      s.getSpecies().setIsSpatial("spec0c0", true);
+      s.getSpecies().setSampledFieldDiffusionConstant("spec0c0",
+                                                      {0.0, 1.0, 2.0});
+      QImage img(4, 1, QImage::Format_RGB32);
+      img.fill(0xffaaaaaa);
+      s.getGeometry().importGeometryFromImages(common::ImageStack{{img}},
+                                               false);
+      REQUIRE_NOTHROW(
+          s.getGeometry().setVoxelSize(s.getGeometry().getVoxelSize()));
+    }
   }
 }
 
