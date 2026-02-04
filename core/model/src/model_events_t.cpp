@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
 #include "sbml_math.hpp"
 #include "sme/model.hpp"
@@ -92,7 +93,7 @@ TEST_CASE("SBML events",
     REQUIRE(events.isParameter("n") == false);
     events.setExpression("n", "x + y");
     events.applyEvent("n");
-    REQUIRE(species.getAnalyticConcentration("ATP") == "x + y");
+    REQUIRE(symEq(species.getAnalyticConcentration("ATP"), "x + y"));
     // change to non-existent variable: no-op
     events.setHasUnsavedChanges(false);
     events.setVariable("n", "idontexist");

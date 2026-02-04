@@ -58,9 +58,25 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   auto *btnEditImageConcentration{
       tab.findChild<QPushButton *>("btnEditImageConcentration")};
   REQUIRE(btnEditImageConcentration != nullptr);
+  auto *radDiffusionConstantUniform{
+      tab.findChild<QRadioButton *>("radDiffusionConstantUniform")};
+  REQUIRE(radDiffusionConstantUniform != nullptr);
   auto *txtDiffusionConstant{
       tab.findChild<QLineEdit *>("txtDiffusionConstant")};
   REQUIRE(txtDiffusionConstant != nullptr);
+  auto *radDiffusionConstantAnalytic{
+      tab.findChild<QRadioButton *>("radDiffusionConstantAnalytic")};
+  REQUIRE(radDiffusionConstantAnalytic != nullptr);
+  auto *btnEditAnalyticDiffusionConstant{
+      tab.findChild<QPushButton *>("btnEditAnalyticDiffusionConstant")};
+  REQUIRE(btnEditAnalyticDiffusionConstant != nullptr);
+  auto *radDiffusionConstantImage{
+      tab.findChild<QRadioButton *>("radDiffusionConstantImage")};
+  REQUIRE(radDiffusionConstantImage != nullptr);
+  auto *btnEditImageDiffusionConstant{
+      tab.findChild<QPushButton *>("btnEditImageDiffusionConstant")};
+  REQUIRE(btnEditImageDiffusionConstant != nullptr);
+
   auto *btnChangeSpeciesColor{
       tab.findChild<QPushButton *>("btnChangeSpeciesColor")};
   REQUIRE(btnChangeSpeciesColor != nullptr);
@@ -78,6 +94,9 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == false);
     REQUIRE(radInitialConcentrationImage->isEnabled() == false);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == false);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == false);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == false);
     REQUIRE(txtDiffusionConstant->isEnabled() == false);
     // edit name
     txtSpeciesName->setFocus();
@@ -92,6 +111,9 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == true);
     REQUIRE(radInitialConcentrationImage->isEnabled() == true);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == true);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == true);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == true);
     REQUIRE(txtDiffusionConstant->isEnabled() == true);
     sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
@@ -99,6 +121,9 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == false);
     REQUIRE(radInitialConcentrationImage->isEnabled() == false);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == false);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == false);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == false);
     REQUIRE(txtDiffusionConstant->isEnabled() == false);
     // toggle is constant checkbox
     sendMouseClick(chkSpeciesIsConstant);
@@ -115,6 +140,9 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     REQUIRE(chkSpeciesIsConstant->isChecked() == false);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == true);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == true);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == true);
     // edit initial concentration
     REQUIRE(radInitialConcentrationUniform->isChecked());
     txtInitialConcentration->setFocus();
@@ -132,7 +160,7 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     sendMouseClick(btnEditAnalyticConcentration);
     // enable and edit image initial concentration
     REQUIRE(btnEditImageConcentration->isEnabled() == false);
-    sendMouseClick(radInitialConcentrationImage);
+    radInitialConcentrationImage->setChecked(true);
     REQUIRE(btnEditImageConcentration->isEnabled() == true);
     mwt.addUserAction({"Esc"});
     mwt.start();

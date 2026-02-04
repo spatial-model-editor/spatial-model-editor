@@ -69,7 +69,8 @@ Optimization Parameter
    Adding or modifying a parameter to be optimized.
 
 * Parameter
-   * This can be a model parameter or a reaction parameter
+   * This can be a model parameter, a reaction parameter, or a species diffusion constant
+   * Diffusion constants are only available here when they are uniform scalar values
 * Lower bound
    * The minimum allowed value this parameter can take
 * Upper bound

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "sme/geometry.hpp"
-#include "sme/model_species_types.hpp"
+#include "sme/model_types.hpp"
 #include <QColor>
 #include <QStringList>
 #include <map>
@@ -28,6 +28,7 @@ struct Settings;
 
 class ModelSpecies {
 private:
+  enum class AnalyticValueType { Concentration, DiffusionConstant };
   QStringList ids;
   QStringList names;
   QStringList compartmentIds;
@@ -42,8 +43,15 @@ private:
   Settings *sbmlAnnotation = nullptr;
   void removeInitialAssignment(const QString &id);
   [[nodiscard]] std::vector<double>
-  getSampledFieldConcentrationFromSBML(const QString &id) const;
+  getSampledFieldFromSBML(const QString &id) const;
   bool hasUnsavedChanges{false};
+  void setFieldAnalyticValues(
+      geometry::Field &field, const std::string &expr,
+      AnalyticValueType valueType,
+      const std::map<std::string, double, std::less<>> &substitutions);
+  void setFieldDiffAnalytic(
+      geometry::Field &field, const std::string &expr,
+      const std::map<std::string, double, std::less<>> &substitutions = {});
 
 public:
   ModelSpecies();
@@ -67,7 +75,9 @@ public:
   [[nodiscard]] bool getIsSpatial(const QString &id) const;
   void setDiffusionConstant(const QString &id, double diffusionConstant);
   [[nodiscard]] double getDiffusionConstant(const QString &id) const;
-  [[nodiscard]] ConcentrationType
+  [[nodiscard]] SpatialDataType
+  getDiffusionConstantType(const QString &id) const;
+  [[nodiscard]] SpatialDataType
   getInitialConcentrationType(const QString &id) const;
   void setInitialConcentration(const QString &id, double concentration);
   [[nodiscard]] double getInitialConcentration(const QString &id) const;
@@ -84,6 +94,16 @@ public:
   [[nodiscard]] std::vector<double>
   getSampledFieldConcentration(const QString &id,
                                bool maskAndInvertY = false) const;
+  void setSampledFieldDiffusionConstant(
+      const QString &id, const std::vector<double> &diffusionConstantArray);
+  [[nodiscard]] std::vector<double>
+  getSampledFieldDiffusionConstant(const QString &id,
+                                   bool maskAndInvertY = false) const;
+  [[nodiscard]] bool
+  isValidAnalyticDiffusionExpression(const QString &analyticExpression) const;
+  void setAnalyticDiffusionConstant(const QString &id,
+                                    const QString &analyticExpression);
+  [[nodiscard]] QString getAnalyticDiffusionConstant(const QString &id) const;
   [[nodiscard]] common::ImageStack
   getConcentrationImages(const QString &id) const;
   void setColor(const QString &id, QRgb color);

@@ -7,7 +7,7 @@ A model in spatial-model-editor (SME) consists of five basic parts which all mus
 
 #. A definition of the spatial domain the model should run on. This can be 2D or 3D and can be divided into an arbitrary number of compartments which have interfaces with each other. In the cellular context that is relevant here, these interfaces can represent membranes between cell compartments or cells.
 
-#. A set of chemical species whose concentration is defined in different compartments. These concentrations are assumed to undergo diffusion by default. These chemical species need to have an initial distribution of concentration in the compartments they are defined in and an isotropic, homogeneous diffusion constant.
+#. A set of chemical species whose concentration is defined in different compartments. These concentrations are assumed to undergo diffusion by default. These chemical species need to have an initial distribution of concentration in the compartments they are defined in and an isotropic diffusion constant, which can be uniform, analytic, or image-based.
 
 #. The chemical reactions that can occur between the different species. These can be divided into reactions in the volume of the compartments and fluxes and reactions that only happen on the interfaces between compartments.
 

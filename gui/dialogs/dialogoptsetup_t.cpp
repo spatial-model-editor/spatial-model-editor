@@ -1194,3 +1194,53 @@ TEST_CASE("DialogOptSetup", "[gui/dialogs/optsetup][gui/"
     REQUIRE(dia.getOptimizeOptions().optAlgorithm.islands == 1);
   }
 }
+
+TEST_CASE("DialogOptSetup: only scalar diffusion constants are optimizable",
+          "[gui/dialogs/optsetup][gui/dialogs][gui][optimize]") {
+  auto model{getExampleModel(Mod::VerySimpleModel)};
+  model.getSimulationSettings().simulatorType =
+      sme::simulate::SimulatorType::Pixel;
+  QString modifiedSpeciesId;
+  for (const auto &compartmentId : model.getCompartments().getIds()) {
+    const auto speciesIds = model.getSpecies().getIds(compartmentId);
+    if (!speciesIds.isEmpty()) {
+      modifiedSpeciesId = speciesIds.front();
+      break;
+    }
+  }
+  REQUIRE(modifiedSpeciesId.isEmpty() == false);
+  const auto modifiedSpeciesName =
+      model.getSpecies().getName(modifiedSpeciesId);
+  model.getSpecies().setAnalyticDiffusionConstant(modifiedSpeciesId, "x + 1");
+
+  DialogOptSetup dia(model);
+  DialogOptSetupWidgets widgets(&dia);
+  dia.show();
+
+  bool excludedSpeciesShownAsDiffusionParam{false};
+  bool anyDiffusionParamShown{false};
+  ModalWidgetTimer mwt;
+  mwt.addUserAction(
+      [&](QWidget *dialog) {
+        auto *cmbParameter = dialog->findChild<QComboBox *>("cmbParameter");
+        if (cmbParameter != nullptr) {
+          for (int i = 0; i < cmbParameter->count(); ++i) {
+            const auto itemText = cmbParameter->itemText(i);
+            if (itemText.startsWith("Diffusion constant of '")) {
+              anyDiffusionParamShown = true;
+            }
+            if (itemText == QString("Diffusion constant of '%1'")
+                                .arg(modifiedSpeciesName)) {
+              excludedSpeciesShownAsDiffusionParam = true;
+            }
+          }
+        }
+        sendKeyEvents(dialog, {"Escape"});
+      },
+      false);
+  mwt.start();
+  sendMouseClick(widgets.btnAddParameter);
+
+  REQUIRE(anyDiffusionParamShown);
+  REQUIRE(excludedSpeciesShownAsDiffusionParam == false);
+}

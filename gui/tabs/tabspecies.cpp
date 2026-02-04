@@ -1,12 +1,13 @@
 #include "tabspecies.hpp"
 #include "dialoganalytic.hpp"
-#include "dialogconcentrationimage.hpp"
+#include "dialogimagedata.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "ui_tabspecies.h"
+#include <QButtonGroup>
 #include <QColorDialog>
 #include <QInputDialog>
 #include <QMessageBox>
@@ -16,6 +17,15 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
     : QWidget(parent), ui{std::make_unique<Ui::TabSpecies>()}, model(m),
       lblGeometry(mouseTracker), voxGeometry(voxelRenderer) {
   ui->setupUi(this);
+  // set up radio button groups
+  auto *initialConcGroup = new QButtonGroup(this);
+  initialConcGroup->addButton(ui->radInitialConcentrationUniform);
+  initialConcGroup->addButton(ui->radInitialConcentrationAnalytic);
+  initialConcGroup->addButton(ui->radInitialConcentrationImage);
+  auto *diffusionGroup = new QButtonGroup(this);
+  diffusionGroup->addButton(ui->radDiffusionConstantUniform);
+  diffusionGroup->addButton(ui->radDiffusionConstantAnalytic);
+  diffusionGroup->addButton(ui->radDiffusionConstantImage);
   connect(ui->listSpecies, &QTreeWidget::currentItemChanged, this,
           &TabSpecies::listSpecies_currentItemChanged);
   connect(ui->btnAddSpecies, &QPushButton::clicked, this,
@@ -42,8 +52,18 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabSpecies::btnEditAnalyticConcentration_clicked);
   connect(ui->btnEditImageConcentration, &QPushButton::clicked, this,
           &TabSpecies::btnEditImageConcentration_clicked);
+  connect(ui->radDiffusionConstantUniform, &QRadioButton::toggled, this,
+          &TabSpecies::radDiffusionConstant_toggled);
   connect(ui->txtDiffusionConstant, &QLineEdit::editingFinished, this,
           &TabSpecies::txtDiffusionConstant_editingFinished);
+  connect(ui->radDiffusionConstantAnalytic, &QRadioButton::toggled, this,
+          &TabSpecies::radDiffusionConstant_toggled);
+  connect(ui->radDiffusionConstantImage, &QRadioButton::toggled, this,
+          &TabSpecies::radDiffusionConstant_toggled);
+  connect(ui->btnEditAnalyticDiffusionConstant, &QPushButton::clicked, this,
+          &TabSpecies::btnEditAnalyticDiffusionConstant_clicked);
+  connect(ui->btnEditImageDiffusionConstant, &QPushButton::clicked, this,
+          &TabSpecies::btnEditImageDiffusionConstant_clicked);
   connect(ui->btnChangeSpeciesColor, &QPushButton::clicked, this,
           &TabSpecies::btnChangeSpeciesColor_clicked);
 }
@@ -84,7 +104,12 @@ void TabSpecies::enableWidgets(bool enable) {
   ui->btnEditAnalyticConcentration->setEnabled(enable);
   ui->radInitialConcentrationImage->setEnabled(enable);
   ui->btnEditImageConcentration->setEnabled(enable);
+  ui->radDiffusionConstantUniform->setEnabled(enable);
   ui->txtDiffusionConstant->setEnabled(enable);
+  ui->radDiffusionConstantAnalytic->setEnabled(enable);
+  ui->btnEditAnalyticDiffusionConstant->setEnabled(enable);
+  ui->radDiffusionConstantImage->setEnabled(enable);
+  ui->btnEditImageDiffusionConstant->setEnabled(enable);
   ui->btnChangeSpeciesColor->setEnabled(enable);
 }
 
@@ -116,15 +141,21 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   // spatial
   bool isSpatial = field->getIsSpatial();
   ui->chkSpeciesIsSpatial->setChecked(isSpatial);
-  ui->txtDiffusionConstant->setEnabled(isSpatial);
   ui->radInitialConcentrationAnalytic->setEnabled(isSpatial);
   ui->btnEditAnalyticConcentration->setEnabled(isSpatial);
   ui->radInitialConcentrationImage->setEnabled(isSpatial);
   ui->btnEditImageConcentration->setEnabled(isSpatial);
+  ui->radDiffusionConstantUniform->setEnabled(isSpatial);
+  ui->radDiffusionConstantAnalytic->setEnabled(isSpatial);
+  ui->btnEditAnalyticDiffusionConstant->setEnabled(isSpatial);
+  ui->radDiffusionConstantImage->setEnabled(isSpatial);
+  ui->btnEditImageDiffusionConstant->setEnabled(isSpatial);
+  ui->txtDiffusionConstant->setEnabled(isSpatial);
   // constant
   bool isConstant = model.getSpecies().getIsConstant(currentSpeciesId);
   ui->chkSpeciesIsConstant->setChecked(isConstant);
   if (isConstant) {
+    ui->radDiffusionConstantUniform->setEnabled(false);
     ui->txtDiffusionConstant->setEnabled(false);
     ui->lblDiffusionConstantUnits->setText("");
   }
@@ -137,26 +168,37 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
       model.getSpecies().getConcentrationImages(currentSpeciesId));
   auto concentrationType{
       model.getSpecies().getInitialConcentrationType(currentSpeciesId)};
-  if (concentrationType == sme::model::ConcentrationType::Uniform) {
+  if (concentrationType == sme::model::SpatialDataType::Uniform) {
     // scalar
     ui->txtInitialConcentration->setText(QString::number(
         model.getSpecies().getInitialConcentration(currentSpeciesId)));
     ui->lblInitialConcentrationUnits->setText(
         model.getUnits().getConcentration());
     ui->radInitialConcentrationUniform->setChecked(true);
-  } else if (concentrationType == sme::model::ConcentrationType::Image) {
+  } else if (concentrationType == sme::model::SpatialDataType::Image) {
     ui->radInitialConcentrationImage->setChecked(true);
   } else {
     // analytic
     ui->radInitialConcentrationAnalytic->setChecked(true);
   }
   radInitialConcentration_toggled();
+
   // diffusion constant
-  if (ui->txtDiffusionConstant->isEnabled()) {
+  auto diffusionConstantType{
+      model.getSpecies().getDiffusionConstantType(currentSpeciesId)};
+  if (diffusionConstantType == sme::model::SpatialDataType::Uniform) {
+    // scalar
     ui->txtDiffusionConstant->setText(QString::number(
         model.getSpecies().getDiffusionConstant(currentSpeciesId)));
     ui->lblDiffusionConstantUnits->setText(model.getUnits().getDiffusion());
+    ui->radDiffusionConstantUniform->setChecked(true);
+  } else if (diffusionConstantType == sme::model::SpatialDataType::Image) {
+    ui->radDiffusionConstantImage->setChecked(true);
+  } else {
+    // analytic
+    ui->radDiffusionConstantAnalytic->setChecked(true);
   }
+  radDiffusionConstant_toggled();
   // color
   lblSpeciesColorPixmap.fill(model.getSpecies().getColor(currentSpeciesId));
   ui->lblSpeciesColor->setPixmap(lblSpeciesColorPixmap);
@@ -274,6 +316,7 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
                currentSpeciesId.toStdString());
   DialogAnalytic dialog(
       model.getSpecies().getAnalyticConcentration(currentSpeciesId),
+      DialogAnalyticDataType::Concentration,
       model.getSpeciesGeometry(currentSpeciesId), model.getParameters(),
       model.getFunctions(), model.getDisplayOptions().invertYAxis);
   if (dialog.exec() == QDialog::Accepted) {
@@ -290,18 +333,38 @@ void TabSpecies::btnEditAnalyticConcentration_clicked() {
 void TabSpecies::btnEditImageConcentration_clicked() {
   SPDLOG_DEBUG("editing initial concentration image for species {}...",
                currentSpeciesId.toStdString());
-  DialogConcentrationImage dialog(
+  DialogImageData dialog(
       model.getSpecies().getSampledFieldConcentration(currentSpeciesId),
       model.getSpeciesGeometry(currentSpeciesId),
-      model.getDisplayOptions().invertYAxis);
+      model.getDisplayOptions().invertYAxis,
+      DialogImageDataDataType::Concentration);
   if (dialog.exec() == QDialog::Accepted) {
     SPDLOG_DEBUG("  - setting new sampled field concentration array");
-    model.getSpecies().setSampledFieldConcentration(
-        currentSpeciesId, dialog.getConcentrationArray());
-    lblGeometry->setImage(
-        model.getSpecies().getConcentrationImages(currentSpeciesId));
-    voxGeometry->setImage(
-        model.getSpecies().getConcentrationImages(currentSpeciesId));
+    model.getSpecies().setSampledFieldConcentration(currentSpeciesId,
+                                                    dialog.getImageArray());
+    const auto img =
+        model.getSpecies().getConcentrationImages(currentSpeciesId);
+    lblGeometry->setImage(img);
+    voxGeometry->setImage(img);
+  }
+}
+
+void TabSpecies::radDiffusionConstant_toggled() {
+  if (ui->radDiffusionConstantUniform->isEnabled() &&
+      ui->radDiffusionConstantUniform->isChecked()) {
+    ui->txtDiffusionConstant->setEnabled(true);
+    ui->btnEditAnalyticDiffusionConstant->setEnabled(false);
+    ui->btnEditImageDiffusionConstant->setEnabled(false);
+  } else if (ui->radDiffusionConstantAnalytic->isEnabled() &&
+             ui->radDiffusionConstantAnalytic->isChecked()) {
+    ui->txtDiffusionConstant->setEnabled(false);
+    ui->btnEditAnalyticDiffusionConstant->setEnabled(true);
+    ui->btnEditImageDiffusionConstant->setEnabled(false);
+  } else if (ui->radDiffusionConstantImage->isEnabled() &&
+             ui->radDiffusionConstantImage->isChecked()) {
+    ui->txtDiffusionConstant->setEnabled(false);
+    ui->btnEditAnalyticDiffusionConstant->setEnabled(false);
+    ui->btnEditImageDiffusionConstant->setEnabled(true);
   }
 }
 
@@ -310,6 +373,37 @@ void TabSpecies::txtDiffusionConstant_editingFinished() {
   SPDLOG_INFO("setting Diffusion Constant of Species {} to {}",
               currentSpeciesId.toStdString(), diffConst);
   model.getSpecies().setDiffusionConstant(currentSpeciesId, diffConst);
+}
+
+void TabSpecies::btnEditAnalyticDiffusionConstant_clicked() {
+  SPDLOG_DEBUG("editing analytic diffusion constant of species {}...",
+               currentSpeciesId.toStdString());
+  DialogAnalytic dialog(
+      model.getSpecies().getAnalyticDiffusionConstant(currentSpeciesId),
+      DialogAnalyticDataType::DiffusionConstant,
+      model.getSpeciesGeometry(currentSpeciesId), model.getParameters(),
+      model.getFunctions(), model.getDisplayOptions().invertYAxis);
+  if (dialog.exec() == QDialog::Accepted) {
+    const std::string &expr = dialog.getExpression();
+    SPDLOG_DEBUG("  - set expr: {}", expr);
+    model.getSpecies().setAnalyticDiffusionConstant(currentSpeciesId,
+                                                    expr.c_str());
+  }
+}
+
+void TabSpecies::btnEditImageDiffusionConstant_clicked() {
+  SPDLOG_DEBUG("editing diffusion constant image for species {}...",
+               currentSpeciesId.toStdString());
+  DialogImageData dialog(
+      model.getSpecies().getSampledFieldDiffusionConstant(currentSpeciesId),
+      model.getSpeciesGeometry(currentSpeciesId),
+      model.getDisplayOptions().invertYAxis,
+      DialogImageDataDataType::DiffusionConstant);
+  if (dialog.exec() == QDialog::Accepted) {
+    SPDLOG_DEBUG("  - setting new sampled field diffusion constant array");
+    model.getSpecies().setSampledFieldDiffusionConstant(currentSpeciesId,
+                                                        dialog.getImageArray());
+  }
 }
 
 void TabSpecies::btnChangeSpeciesColor_clicked() {

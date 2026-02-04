@@ -31,7 +31,7 @@ TEST_CASE("DialogAnalytic",
     auto model{getExampleModel(Mod::ABtoC)};
     auto compartmentVoxels = std::vector<sme::common::Voxel>{
         {5, 5, 0}, {5, 6, 0}, {5, 7, 0}, {6, 6, 0}, {6, 7, 0}};
-    DialogAnalytic dia("x",
+    DialogAnalytic dia("x", DialogAnalyticDataType::Concentration,
                        {{10, 10, 1},
                         compartmentVoxels,
                         {0.0, 0.0, 0.0},
@@ -114,8 +114,9 @@ TEST_CASE("DialogAnalytic",
   }
   SECTION("100x100 image") {
     auto model{getExampleModel(Mod::ABtoC)};
-    DialogAnalytic dia("x", model.getSpeciesGeometry("B"),
-                       model.getParameters(), model.getFunctions(), false);
+    DialogAnalytic dia("x", DialogAnalyticDataType::Concentration,
+                       model.getSpeciesGeometry("B"), model.getParameters(),
+                       model.getFunctions(), false);
     dia.show();
     DialogAnalyticWidgets widgets(&dia);
     REQUIRE(dia.getExpression() == "x");

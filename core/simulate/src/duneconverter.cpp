@@ -66,6 +66,8 @@ static void addCompartment(
     const std::map<std::string, double, std::less<>> &substitutions,
     int doublePrecision, bool forExternalUse, const QString &iniFileDir,
     std::unordered_map<std::string, std::vector<double>> &concentrations,
+    std::unordered_map<std::string, std::vector<double>>
+        &diffusionConstantArrays,
     std::unordered_map<std::string, std::vector<std::string>> &speciesNames,
     const QString &compartmentId, std::size_t &simDataCompartmentIndex) {
   const auto &lengthUnit = model.getUnits().getLength();
@@ -209,11 +211,20 @@ static void addCompartment(
       ini.addValue(lhs, rhs);
     }
 
-    // diffusion coefficient
+    // diffusion constant
     QString sId{nonConstantSpecies[i].c_str()};
-    double diffConst{model.getSpecies().getDiffusionConstant(sId)};
-    ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
-                 diffConst, doublePrecision);
+    if (model.getSpecies().getDiffusionConstantType(sId) !=
+        model::SpatialDataType::Uniform) {
+      diffusionConstantArrays[duneName.toStdString()] =
+          f->getDiffusionConstantImageArray();
+      ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
+                   duneName);
+      ini.addValue(QString("cross_diffusion.%1.parser_type").arg(duneName),
+                   "sme");
+    } else {
+      ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
+                   f->getDiffusionConstant()[0], doublePrecision);
+    }
 
     // membrane flux terms
     // todo: should collect membranes outside of this loop over species!
@@ -335,8 +346,9 @@ DuneConverter::DuneConverter(
   // for each compartment
   for (const auto &compId : model.getCompartments().getIds()) {
     addCompartment(iniCommon, model, substitutions, doublePrecision,
-                   forExternalUse, iniFileDir, concentrations, speciesNames,
-                   compId, simDataCompartmentIndex);
+                   forExternalUse, iniFileDir, concentrations,
+                   diffusionConstantArrays, speciesNames, compId,
+                   simDataCompartmentIndex);
     compartmentNames.push_back(compId.toStdString());
   }
 
@@ -377,6 +389,11 @@ const mesh::Mesh3d *DuneConverter::getMesh3d() const { return mesh3d; }
 const std::unordered_map<std::string, std::vector<double>> &
 DuneConverter::getConcentrations() const {
   return concentrations;
+}
+
+const std::unordered_map<std::string, std::vector<double>> &
+DuneConverter::getDiffusionConstantArrays() const {
+  return diffusionConstantArrays;
 }
 
 [[nodiscard]] const std::unordered_map<std::string, std::vector<std::string>> &

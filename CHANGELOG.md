@@ -1,11 +1,18 @@
 # Changelog
 
-## [latest]
+## [1.11.0] - 2026-02-04
 ### Added
 - species diffusion constants to the parameters that can be fitted in parameter optimization [#1092](https://github.com/spatial-model-editor/spatial-model-editor/issues/1092)
+- support for spatially varying diffusion constants [#1093](https://github.com/spatial-model-editor/spatial-model-editor/issues/1093)
+- gridlines now align with pixels when zoomed in to geometry image [#847](https://github.com/spatial-model-editor/spatial-model-editor/issues/847)
+
+### Fixed
+- crash for some models with empty compartments when using DuneCopasi simulator [#1089](https://github.com/spatial-model-editor/spatial-model-editor/issues/1089)
+- delay in UI responsiveness after simulation completion [#1101](https://github.com/spatial-model-editor/spatial-model-editor/issues/1101)
 
 ### Removed
 - macOS x86_64 (Intel) architecture binaries [#1096](https://github.com/spatial-model-editor/spatial-model-editor/issues/1096)
+- Python 3.8 wheels [#1093](https://github.com/spatial-model-editor/spatial-model-editor/issues/1093)
 
 ## [1.10.1] - 2025-12-03
 ### Fixed

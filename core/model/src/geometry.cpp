@@ -169,8 +169,9 @@ const common::ImageStack &Membrane::getImages() const { return images; }
 
 Field::Field(const Compartment *compartment, std::string specID,
              double diffConst, QRgb col)
-    : id(std::move(specID)), comp(compartment), diffusionConstant(diffConst),
-      color(col), conc(compartment->nVoxels(), 0.0) {
+    : id(std::move(specID)), comp(compartment), color(col),
+      conc(compartment->nVoxels(), 0.0),
+      diff(compartment->nVoxels(), diffConst) {
   SPDLOG_INFO("speciesID: {}", id);
   SPDLOG_INFO("compartmentID: {}", comp->getId());
 }
@@ -191,10 +192,42 @@ void Field::setIsUniformConcentration(bool uniform) {
   isUniformConcentration = uniform;
 }
 
-double Field::getDiffusionConstant() const { return diffusionConstant; }
+[[nodiscard]] bool Field::getIsUniformDiffusionConstant() const {
+  return isUniformDiffusionConstant;
+}
 
-void Field::setDiffusionConstant(double diffConst) {
-  diffusionConstant = diffConst;
+void Field::setIsUniformDiffusionConstant(bool uniform) {
+  isUniformDiffusionConstant = uniform;
+}
+
+const std::vector<double> &Field::getDiffusionConstant() const { return diff; }
+
+void Field::setDiffusionConstant(std::size_t index, double diffusionConstant) {
+  if (diff.size() != conc.size()) {
+    diff.resize(conc.size(), 0.0);
+  }
+  diff[index] = diffusionConstant;
+}
+
+void Field::setUniformDiffusionConstant(double diffConst) {
+  std::ranges::fill(diff, diffConst);
+  isUniformDiffusionConstant = true;
+}
+
+void Field::setDiffusionConstant(
+    const std::vector<double> &diffusionConstantArray) {
+  diff = diffusionConstantArray;
+  isUniformDiffusionConstant = false;
+}
+
+void Field::importDiffusionConstant(const std::vector<double> &sbmlArray) {
+  diff = importSbmlArray(sbmlArray);
+  isUniformDiffusionConstant = false;
+}
+
+std::vector<double>
+Field::getDiffusionConstantImageArray(bool maskAndInvertY) const {
+  return getImageArray(diff, maskAndInvertY);
 }
 
 const Compartment *Field::getCompartment() const { return comp; }
@@ -207,19 +240,24 @@ void Field::setConcentration(std::size_t index, double concentration) {
 
 void Field::importConcentration(
     const std::vector<double> &sbmlConcentrationArray) {
+  conc = importSbmlArray(sbmlConcentrationArray);
+  isUniformConcentration = false;
+}
+
+std::vector<double>
+Field::importSbmlArray(const std::vector<double> &sbmlArray) {
+  std::vector<double> output(conc.size(), 0.0);
   SPDLOG_INFO("species {}, compartment {}", id, comp->getId());
   SPDLOG_INFO("  - field has size {}", conc.size());
-  SPDLOG_INFO("  - importing from sbml array of volume {}",
-              sbmlConcentrationArray.size());
+  SPDLOG_INFO("  - importing from sbml array of volume {}", sbmlArray.size());
   const auto &imageSize{comp->getImageSize()};
   int nx{imageSize.width()};
   int ny{imageSize.height()};
   int nz{static_cast<int>(imageSize.depth())};
-  if (sbmlConcentrationArray.size() != imageSize.nVoxels()) {
+  if (sbmlArray.size() != imageSize.nVoxels()) {
     SPDLOG_ERROR("  - mismatch between array size [{}]"
                  " and compartment image size [{}x{}x{} = {}]",
-                 sbmlConcentrationArray.size(), nx, ny, nz,
-                 imageSize.nVoxels());
+                 sbmlArray.size(), nx, ny, nz, imageSize.nVoxels());
     throw std::invalid_argument("invalid array size");
   }
   // NOTE: order of concentration array is
@@ -227,11 +265,11 @@ void Field::importConcentration(
   // NOTE: y=0 is at the bottom, QImage has y=0 at the top, so flip y-coord
   for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
     const auto &v{comp->getVoxel(i)};
-    int arrayIndex{v.p.x() + nx * (ny - 1 - v.p.y()) +
-                   nx * ny * static_cast<int>(v.z)};
-    conc[i] = sbmlConcentrationArray[static_cast<std::size_t>(arrayIndex)];
+    const int arrayIndex{v.p.x() + nx * (ny - 1 - v.p.y()) +
+                         nx * ny * static_cast<int>(v.z)};
+    output[i] = sbmlArray[static_cast<std::size_t>(arrayIndex)];
   }
-  isUniformConcentration = false;
+  return output;
 }
 
 void Field::setConcentration(const std::vector<double> &concentration) {
@@ -267,8 +305,8 @@ common::ImageStack Field::getConcentrationImages() const {
   return images;
 }
 
-std::vector<double>
-Field::getConcentrationImageArray(bool maskAndInvertY) const {
+std::vector<double> Field::getImageArray(const std::vector<double> &values,
+                                         bool maskAndInvertY) const {
   std::vector<double> a;
   const auto &imageSize{comp->getImageSize()};
   int nx{imageSize.width()};
@@ -279,16 +317,21 @@ Field::getConcentrationImageArray(bool maskAndInvertY) const {
     for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
       auto v{comp->getVoxel(i)};
       a[static_cast<std::size_t>(v.p.x() + nx * v.p.y()) +
-        (static_cast<std::size_t>(nx * ny) * v.z)] = conc[i];
+        (static_cast<std::size_t>(nx * ny) * v.z)] = values[i];
     }
   } else {
     // y=0 at bottom, set voxels outside of compartment to nearest valid voxel
     a.reserve(imageSize.nVoxels());
     for (std::size_t i : comp->getArrayPoints()) {
-      a.push_back(conc[i]);
+      a.push_back(values[i]);
     }
   }
   return a;
+}
+
+std::vector<double>
+Field::getConcentrationImageArray(bool maskAndInvertY) const {
+  return getImageArray(conc, maskAndInvertY);
 }
 
 void Field::setCompartment(const Compartment *compartment) {

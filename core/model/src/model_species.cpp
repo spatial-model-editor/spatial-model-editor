@@ -121,7 +121,7 @@ void ModelSpecies::removeInitialAssignment(const QString &id) {
 }
 
 std::vector<double>
-ModelSpecies::getSampledFieldConcentrationFromSBML(const QString &id) const {
+ModelSpecies::getSampledFieldFromSBML(const QString &id) const {
   std::vector<double> array;
   std::string sampledFieldID =
       getSampledFieldInitialAssignment(id).toStdString();
@@ -263,7 +263,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
         spec->getInitialConcentration());
     // if sampled field or analytic are present, they override the above
     if (auto sf = getSampledFieldInitialAssignment(id); !sf.isEmpty()) {
-      auto arr = getSampledFieldConcentrationFromSBML(id);
+      auto arr = getSampledFieldFromSBML(id);
       fields[static_cast<std::size_t>(i)].importConcentration(arr);
     } else if (auto expr = getAnalyticConcentration(id); !expr.isEmpty()) {
       setFieldConcAnalytic(fields[static_cast<std::size_t>(i)],
@@ -273,7 +273,28 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
         spec->getPlugin("spatial"));
     field.setIsSpatial(ssp->getIsSpatial());
     const auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);
-    field.setDiffusionConstant(param->getValue());
+    if (param->isSetValue()) {
+      // set uniform diffusion constant from parameter value if provided
+      field.setUniformDiffusionConstant(param->getValue());
+    }
+    if (auto iter = sbmlAnnotation->speciesAnalyticDiffusionConstants.find(
+            id.toStdString());
+        iter != sbmlAnnotation->speciesAnalyticDiffusionConstants.cend()) {
+      // analytic diffusion constant takes precedence over uniform value if
+      // present
+      SPDLOG_DEBUG("Found analytic diffusion constant for species '{}'",
+                   id.toStdString());
+      setFieldDiffAnalytic(field, iter->second);
+    }
+    if (auto iter = sbmlAnnotation->speciesDiffusionConstantArrays.find(
+            id.toStdString());
+        iter != sbmlAnnotation->speciesDiffusionConstantArrays.cend()) {
+      // diffusion constant array takes precedence over uniform and analytic
+      // values if present
+      SPDLOG_DEBUG("Found diffusion constant array for species '{}'",
+                   id.toStdString());
+      field.importDiffusionConstant(iter->second);
+    }
   }
 }
 
@@ -349,6 +370,8 @@ void ModelSpecies::remove(const QString &id) {
   ids.removeAt(i);
   names.removeAt(i);
   sbmlAnnotation->speciesColors.erase(sId);
+  sbmlAnnotation->speciesDiffusionConstantArrays.erase(sId);
+  sbmlAnnotation->speciesAnalyticDiffusionConstants.erase(sId);
   compartmentIds.removeAt(i);
   removeInitialAssignment(sId.c_str());
   fields.erase(fields.begin() +
@@ -416,17 +439,33 @@ void ModelSpecies::setCompartment(const QString &id,
   hasUnsavedChanges = true;
   spec->setCompartment(compSId);
   auto i = ids.indexOf(id);
-  fields[static_cast<std::size_t>(i)].setCompartment(
-      modelCompartments->getCompartment(compartmentId));
+  auto &field = fields[static_cast<std::size_t>(i)];
+  const double uniformDiffusionConstant = getDiffusionConstant(id);
+  field.setCompartment(modelCompartments->getCompartment(compartmentId));
   compartmentIds[i] = compartmentId;
   setInitialConcentration(id, spec->getInitialConcentration());
   // if sampled field or analytic are present, they override the above
   if (auto sf = getSampledFieldInitialAssignment(id); !sf.isEmpty()) {
-    auto arr = getSampledFieldConcentrationFromSBML(id);
-    fields[static_cast<std::size_t>(i)].importConcentration(arr);
+    auto arr = getSampledFieldFromSBML(id);
+    field.importConcentration(arr);
   } else if (auto expr = getAnalyticConcentration(id); !expr.isEmpty()) {
-    setFieldConcAnalytic(fields[static_cast<std::size_t>(i)],
-                         expr.toStdString());
+    setFieldConcAnalytic(field, expr.toStdString());
+  }
+  if (auto iter =
+          sbmlAnnotation->speciesDiffusionConstantArrays.find(id.toStdString());
+      iter != sbmlAnnotation->speciesDiffusionConstantArrays.cend()) {
+    field.importDiffusionConstant(iter->second);
+  } else if (auto iter = sbmlAnnotation->speciesAnalyticDiffusionConstants.find(
+                 id.toStdString());
+             iter != sbmlAnnotation->speciesAnalyticDiffusionConstants.cend()) {
+    setFieldDiffAnalytic(field, iter->second);
+  } else {
+    if (!field.getConcentration().empty() &&
+        field.getDiffusionConstant().size() !=
+            field.getConcentration().size()) {
+      field.setDiffusionConstant(0, uniformDiffusionConstant);
+    }
+    field.setUniformDiffusionConstant(uniformDiffusionConstant);
   }
 }
 
@@ -494,25 +533,44 @@ void ModelSpecies::setDiffusionConstant(const QString &id,
   hasUnsavedChanges = true;
   auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);
   param->setValue(diffusionConstant);
+  sbmlAnnotation->speciesDiffusionConstantArrays.erase(id.toStdString());
+  sbmlAnnotation->speciesAnalyticDiffusionConstants.erase(id.toStdString());
   auto i = ids.indexOf(id);
-  fields[static_cast<std::size_t>(i)].setDiffusionConstant(diffusionConstant);
+  fields[static_cast<std::size_t>(i)].setUniformDiffusionConstant(
+      diffusionConstant);
 }
 
 double ModelSpecies::getDiffusionConstant(const QString &id) const {
-  auto i = ids.indexOf(id);
-  return fields[static_cast<std::size_t>(i)].getDiffusionConstant();
+  if (const auto *param = getDiffusionConstantParameter(sbmlModel, id);
+      param != nullptr) {
+    return param->getValue();
+  }
+  return 0.0;
 }
 
-ConcentrationType
+SpatialDataType
+ModelSpecies::getDiffusionConstantType(const QString &id) const {
+  if (sbmlAnnotation->speciesDiffusionConstantArrays.contains(
+          id.toStdString())) {
+    return SpatialDataType::Image;
+  }
+  if (sbmlAnnotation->speciesAnalyticDiffusionConstants.contains(
+          id.toStdString())) {
+    return SpatialDataType::Analytic;
+  }
+  return SpatialDataType::Uniform;
+}
+
+SpatialDataType
 ModelSpecies::getInitialConcentrationType(const QString &id) const {
   if (const auto *field{getField(id)};
       field != nullptr && field->getIsUniformConcentration()) {
-    return ConcentrationType::Uniform;
+    return SpatialDataType::Uniform;
   }
   if (!getSampledFieldInitialAssignment(id).isEmpty()) {
-    return ConcentrationType::Image;
+    return SpatialDataType::Image;
   }
-  return ConcentrationType::Analytic;
+  return SpatialDataType::Analytic;
 }
 
 void ModelSpecies::setInitialConcentration(const QString &id,
@@ -552,8 +610,9 @@ void ModelSpecies::setAnalyticConcentration(const QString &id,
                        analyticExpression.toStdString());
 }
 
-void ModelSpecies::setFieldConcAnalytic(
+void ModelSpecies::setFieldAnalyticValues(
     geometry::Field &field, const std::string &expr,
+    AnalyticValueType valueType,
     const std::map<std::string, double, std::less<>> &substitutions) {
   SPDLOG_INFO("expr: {}", expr);
   auto inlinedExpr = inlineFunctions(expr, *modelFunctions);
@@ -592,10 +651,34 @@ void ModelSpecies::setFieldConcAnalytic(
     xCoord = physicalPoint.p.x();
     yCoord = physicalPoint.p.y();
     zCoord = physicalPoint.z;
-    double conc = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
-    field.setConcentration(i, conc);
+    double value = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
+    if (valueType == AnalyticValueType::Concentration) {
+      field.setConcentration(i, value);
+    } else if (valueType == AnalyticValueType::DiffusionConstant) {
+      field.setDiffusionConstant(i, value);
+    }
   }
+  if (valueType == AnalyticValueType::Concentration) {
+    field.setIsUniformConcentration(false);
+  } else if (valueType == AnalyticValueType::DiffusionConstant) {
+    field.setIsUniformDiffusionConstant(false);
+  }
+}
+
+void ModelSpecies::setFieldConcAnalytic(
+    geometry::Field &field, const std::string &expr,
+    const std::map<std::string, double, std::less<>> &substitutions) {
+  setFieldAnalyticValues(field, expr, AnalyticValueType::Concentration,
+                         substitutions);
   field.setIsUniformConcentration(false);
+}
+
+void ModelSpecies::setFieldDiffAnalytic(
+    geometry::Field &field, const std::string &expr,
+    const std::map<std::string, double, std::less<>> &substitutions) {
+  setFieldAnalyticValues(field, expr, AnalyticValueType::DiffusionConstant,
+                         substitutions);
+  field.setIsUniformDiffusionConstant(false);
 }
 
 void ModelSpecies::updateAllAnalyticConcentrations() {
@@ -683,6 +766,65 @@ ModelSpecies::getSampledFieldConcentration(const QString &id,
   auto i = ids.indexOf(id);
   return fields[static_cast<std::size_t>(i)].getConcentrationImageArray(
       maskAndInvertY);
+}
+
+void ModelSpecies::setSampledFieldDiffusionConstant(
+    const QString &id, const std::vector<double> &diffusionConstantArray) {
+  hasUnsavedChanges = true;
+  sbmlAnnotation->speciesDiffusionConstantArrays[id.toStdString()] =
+      diffusionConstantArray;
+  sbmlAnnotation->speciesAnalyticDiffusionConstants.erase(id.toStdString());
+  auto i = ids.indexOf(id);
+  fields[static_cast<std::size_t>(i)].importDiffusionConstant(
+      diffusionConstantArray);
+}
+
+std::vector<double>
+ModelSpecies::getSampledFieldDiffusionConstant(const QString &id,
+                                               bool maskAndInvertY) const {
+  auto i = ids.indexOf(id);
+  return fields[static_cast<std::size_t>(i)].getDiffusionConstantImageArray(
+      maskAndInvertY);
+}
+
+bool ModelSpecies::isValidAnalyticDiffusionExpression(
+    const QString &analyticExpression) const {
+  const auto expression{analyticExpression.toStdString()};
+  // Guard Symbolic inlining from malformed expressions.
+  if (mathStringToAST(expression, sbmlModel) == nullptr) {
+    return false;
+  }
+  auto inlinedExpr = inlineFunctions(expression, *modelFunctions);
+  inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
+  return mathStringToAST(inlinedExpr, sbmlModel) != nullptr;
+}
+
+void ModelSpecies::setAnalyticDiffusionConstant(
+    const QString &id, const QString &analyticExpression) {
+  if (!isValidAnalyticDiffusionExpression(analyticExpression)) {
+    SPDLOG_ERROR("Failed to parse expression '{}'",
+                 analyticExpression.toStdString());
+    return;
+  }
+
+  const auto expression{analyticExpression.toStdString()};
+  hasUnsavedChanges = true;
+  sbmlAnnotation->speciesAnalyticDiffusionConstants[id.toStdString()] =
+      expression;
+  sbmlAnnotation->speciesDiffusionConstantArrays.erase(id.toStdString());
+  auto &field = fields[static_cast<std::size_t>(ids.indexOf(id))];
+  setFieldDiffAnalytic(field, expression, {});
+  field.setIsUniformDiffusionConstant(false);
+}
+
+[[nodiscard]] QString
+ModelSpecies::getAnalyticDiffusionConstant(const QString &id) const {
+  if (auto it = sbmlAnnotation->speciesAnalyticDiffusionConstants.find(
+          id.toStdString());
+      it != sbmlAnnotation->speciesAnalyticDiffusionConstants.cend()) {
+    return it->second.c_str();
+  }
+  return {};
 }
 
 common::ImageStack

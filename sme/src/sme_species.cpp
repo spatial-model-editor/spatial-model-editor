@@ -3,6 +3,7 @@
 #include <nanobind/nanobind.h>
 
 #include "sme/model.hpp"
+#include "sme/model_types.hpp"
 #include "sme_common.hpp"
 #include "sme_species.hpp"
 #include <nanobind/stl/string.h>
@@ -11,10 +12,12 @@ namespace pysme {
 
 void bindSpecies(nanobind::module_ &m) {
   bindList<Species>(m, "Species");
-  nanobind::enum_<::sme::model::ConcentrationType>(m, "ConcentrationType")
-      .value("Uniform", ::sme::model::ConcentrationType::Uniform)
-      .value("Analytic", ::sme::model::ConcentrationType::Analytic)
-      .value("Image", ::sme::model::ConcentrationType::Image);
+  nanobind::enum_<::sme::model::SpatialDataType>(m, "SpatialDataType")
+      .value("Uniform", ::sme::model::SpatialDataType::Uniform)
+      .value("Analytic", ::sme::model::SpatialDataType::Analytic)
+      .value("Image", ::sme::model::SpatialDataType::Image);
+  // Backward-compatible alias
+  m.attr("ConcentrationType") = m.attr("SpatialDataType");
   nanobind::class_<Species>(m, "Species",
                             R"(
                             a species that lives in a compartment
@@ -28,9 +31,29 @@ void bindSpecies(nanobind::module_ &m) {
                    R"(
                     float: the diffusion constant of this species
                     )")
+      .def_prop_ro("diffusion_type", &Species::getDiffusionConstantType,
+                   R"(
+                    Species.SpatialDataType: the type of diffusion constant of this species (Uniform, Analytic or Image)
+                    )")
+      .def_prop_rw("uniform_diffusion", &Species::getUniformDiffusionConstant,
+                   &Species::setUniformDiffusionConstant,
+                   R"(
+                    float: the uniform diffusion constant of this species
+                    )")
+      .def_prop_rw("analytic_diffusion", &Species::getAnalyticDiffusionConstant,
+                   &Species::setAnalyticDiffusionConstant,
+                   R"(
+                    str: the diffusion constant of this species as an analytic expression
+                    )")
+      .def_prop_rw("diffusion_image", &Species::getImageDiffusionConstant,
+                   &Species::setImageDiffusionConstant,
+                   nanobind::rv_policy::take_ownership,
+                   R"(
+                    np.ndarray(float): the diffusion constant of this species as a 3d array of floats, one for each voxel in the geometry image
+                    )")
       .def_prop_ro("concentration_type", &Species::getInitialConcentrationType,
                    R"(
-                    Species.ConcentrationType: the type of initial concentration of this species (Uniform, Analytic or Image)
+                    Species.SpatialDataType: the type of initial concentration of this species (Uniform, Analytic or Image)
                     )")
       .def_prop_rw("uniform_concentration",
                    &Species::getUniformInitialConcentration,
@@ -77,7 +100,77 @@ double Species::getDiffusionConstant() const {
   return s->getSpecies().getDiffusionConstant(id.c_str());
 }
 
-[[nodiscard]] ::sme::model::ConcentrationType
+[[nodiscard]] ::sme::model::SpatialDataType
+Species::getDiffusionConstantType() const {
+  return s->getSpecies().getDiffusionConstantType(id.c_str());
+}
+
+[[nodiscard]] double Species::getUniformDiffusionConstant() const {
+  return s->getSpecies().getDiffusionConstant(id.c_str());
+}
+
+void Species::setUniformDiffusionConstant(double value) {
+  s->getSpecies().setDiffusionConstant(id.c_str(), value);
+}
+
+[[nodiscard]] std::string Species::getAnalyticDiffusionConstant() const {
+  return s->getSpecies().getAnalyticDiffusionConstant(id.c_str()).toStdString();
+}
+
+void Species::setAnalyticDiffusionConstant(const std::string &expression) {
+  if (!s->getSpecies().isValidAnalyticDiffusionExpression(expression.c_str())) {
+    throw std::invalid_argument(
+        fmt::format("Invalid analytic diffusion expression: '{}'", expression));
+  }
+  s->getSpecies().setAnalyticDiffusionConstant(id.c_str(), expression.c_str());
+}
+
+[[nodiscard]] nanobind::ndarray<nanobind::numpy, double>
+Species::getImageDiffusionConstant() const {
+  auto shape{s->getGeometry().getImages().volume()};
+  return as_ndarray(
+      s->getSpecies().getSampledFieldDiffusionConstant(id.c_str(), true),
+      shape);
+}
+
+void Species::setImageDiffusionConstant(
+    nanobind::ndarray<nanobind::numpy, double> array) {
+  const auto size{s->getGeometry().getImages().volume()};
+  auto h = static_cast<std::size_t>(size.height());
+  auto w = static_cast<std::size_t>(size.width());
+  auto d = size.depth();
+  std::string err{"Invalid diffusion image array"};
+  if (array.ndim() != 3) {
+    throw std::invalid_argument(fmt::format(
+        "{}: is {}-dimensional, should be 3-dimensional", err, array.ndim()));
+  }
+  auto v = array.view<const double, nanobind::ndim<3>>();
+  if (v.shape(0) != d) {
+    throw std::invalid_argument(
+        fmt::format("{}: depth is {}, should be {}", err, v.shape(0), d));
+  }
+  if (v.shape(1) != h) {
+    throw std::invalid_argument(
+        fmt::format("{}: height is {}, should be {}", err, v.shape(1), h));
+  }
+  if (v.shape(2) != w) {
+    throw std::invalid_argument(
+        fmt::format("{}: width is {}, should be {}", err, v.shape(2), w));
+  }
+  std::vector<double> sampledFieldDiffusion(h * w * d, 0.0);
+  for (std::size_t z = 0; z < v.shape(0); z++) {
+    for (std::size_t y = 0; y < v.shape(1); y++) {
+      for (std::size_t x = 0; x < v.shape(2); x++) {
+        auto sampledFieldIndex = x + w * (h - 1 - y) + w * h * z;
+        sampledFieldDiffusion[sampledFieldIndex] = v(z, y, x);
+      }
+    }
+  }
+  s->getSpecies().setSampledFieldDiffusionConstant(id.c_str(),
+                                                   sampledFieldDiffusion);
+}
+
+[[nodiscard]] ::sme::model::SpatialDataType
 Species::getInitialConcentrationType() const {
   return s->getSpecies().getInitialConcentrationType(id.c_str());
 }

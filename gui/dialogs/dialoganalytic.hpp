@@ -19,11 +19,14 @@ class ModelParameters;
 class ModelFunctions;
 } // namespace sme::model
 
+enum class DialogAnalyticDataType { Concentration, DiffusionConstant };
+
 class DialogAnalytic : public QDialog {
   Q_OBJECT
 
 public:
   explicit DialogAnalytic(const QString &analyticExpression,
+                          DialogAnalyticDataType dataType,
                           const sme::model::SpeciesGeometry &speciesGeometry,
                           const sme::model::ModelParameters &modelParameters,
                           const sme::model::ModelFunctions &modelFunctions,
@@ -40,11 +43,12 @@ private:
   const std::vector<sme::common::Voxel> &voxels;
   const sme::common::VoxelF physicalOrigin;
   QString lengthUnit;
-  QString concentrationUnit;
+  QString valueUnit;
+  QString valueLabel;
 
   sme::common::ImageStack imgs;
   sme::geometry::VoxelIndexer qpi;
-  std::vector<double> concentration;
+  std::vector<double> values;
   std::string displayExpression;
   std::string variableExpression;
   bool expressionIsValid = false;
