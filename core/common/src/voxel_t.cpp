@@ -17,4 +17,27 @@ TEST_CASE("Voxel", "[core/common/voxel][core/common][core][voxel]") {
     REQUIRE(v3.p.y() == 0);
     REQUIRE(v3.z == 0);
   }
+  SECTION("toVoxelIndex") {
+    REQUIRE(sme::common::toVoxelIndex(0.49, 0.0, 1.0, 5) == 0);
+    REQUIRE(sme::common::toVoxelIndex(2.01, 0.0, 1.0, 5) == 2);
+    REQUIRE(sme::common::toVoxelIndex(-100.0, 0.0, 1.0, 5) == 0);
+    REQUIRE(sme::common::toVoxelIndex(100.0, 0.0, 1.0, 5) == 4);
+    REQUIRE(sme::common::toVoxelIndex(100.0, 0.0, 1.0, 1) == 0);
+    REQUIRE(sme::common::toVoxelIndex(100.0, 0.0, 1.0, 0) == 0);
+    REQUIRE(sme::common::toVoxelIndex(100.0, 0.0, 0.0, 5) == 0);
+  }
+  SECTION("yIndex") {
+    REQUIRE(sme::common::yIndex(1, 6, false) == 1);
+    REQUIRE(sme::common::yIndex(1, 6, true) == 4);
+  }
+  SECTION("voxelArrayIndex") {
+    const sme::common::Volume vol{4, 5, 3};
+    const sme::common::Voxel voxel{2, 1, 2};
+    REQUIRE(sme::common::voxelArrayIndex(vol, voxel, false) ==
+            static_cast<std::size_t>(2 + 4 * 1 + 4 * 5 * 2));
+    REQUIRE(sme::common::voxelArrayIndex(vol, voxel, true) ==
+            static_cast<std::size_t>(2 + 4 * (5 - 1 - 1) + 4 * 5 * 2));
+    REQUIRE(sme::common::voxelArrayIndex(vol, 2, 1, 2, true) ==
+            sme::common::voxelArrayIndex(vol, voxel, true));
+  }
 }

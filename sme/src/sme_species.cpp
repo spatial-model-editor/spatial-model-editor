@@ -4,6 +4,7 @@
 
 #include "sme/model.hpp"
 #include "sme/model_types.hpp"
+#include "sme/voxel.hpp"
 #include "sme_common.hpp"
 #include "sme_species.hpp"
 #include <nanobind/stl/string.h>
@@ -161,7 +162,8 @@ void Species::setImageDiffusionConstant(
   for (std::size_t z = 0; z < v.shape(0); z++) {
     for (std::size_t y = 0; y < v.shape(1); y++) {
       for (std::size_t x = 0; x < v.shape(2); x++) {
-        auto sampledFieldIndex = x + w * (h - 1 - y) + w * h * z;
+        auto sampledFieldIndex = ::sme::common::voxelArrayIndex(
+            size, static_cast<int>(x), static_cast<int>(y), z, true);
         sampledFieldDiffusion[sampledFieldIndex] = v(z, y, x);
       }
     }
@@ -226,7 +228,8 @@ void Species::setImageInitialConcentration(
   for (std::size_t z = 0; z < v.shape(0); z++) {
     for (std::size_t y = 0; y < v.shape(1); y++) {
       for (std::size_t x = 0; x < v.shape(2); x++) {
-        auto sampledFieldIndex = x + w * (h - 1 - y) + w * h * z;
+        auto sampledFieldIndex = ::sme::common::voxelArrayIndex(
+            size, static_cast<int>(x), static_cast<int>(y), z, true);
         sampledFieldConcentration[sampledFieldIndex] = v(z, y, x);
       }
     }

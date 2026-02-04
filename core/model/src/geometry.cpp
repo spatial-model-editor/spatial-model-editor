@@ -41,8 +41,8 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
           image.setPixel(x, y, 1);
           // NOTE: y=0 in ix is at bottom of image,
           // but we want it at the top in arrayPoints, so y index is inverted
-          arrayPoints[static_cast<std::size_t>(x + nx * (ny - 1 - y)) +
-                      (static_cast<std::size_t>(nx * ny) * z)] = ixIndex++;
+          arrayPoints[common::voxelArrayIndex(images.volume(), x, y, z, true)] =
+              ixIndex++;
         }
       }
     }
@@ -275,9 +275,7 @@ Field::importSbmlArray(const std::vector<double> &sbmlArray) {
   // NOTE: y=0 is at the bottom, QImage has y=0 at the top, so flip y-coord
   for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
     const auto &v{comp->getVoxel(i)};
-    const int arrayIndex{v.p.x() + nx * (ny - 1 - v.p.y()) +
-                         nx * ny * static_cast<int>(v.z)};
-    output[i] = sbmlArray[static_cast<std::size_t>(arrayIndex)];
+    output[i] = sbmlArray[common::voxelArrayIndex(imageSize, v, true)];
   }
   return output;
 }

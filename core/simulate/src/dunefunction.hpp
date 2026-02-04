@@ -42,20 +42,17 @@ public:
       return 0;
     }
     // get nearest voxel to physical point
-    auto ix = std::clamp(
-        static_cast<int>((globalPos[0] - origin.p.x()) / voxel.width()), 0,
-        vol.width() - 1);
-    auto iy = std::clamp(
-        static_cast<int>((globalPos[1] - origin.p.y()) / voxel.height()), 0,
-        vol.height() - 1);
+    auto ix = common::toVoxelIndex(globalPos[0], origin.p.x(), voxel.width(),
+                                   vol.width());
+    auto iy = common::toVoxelIndex(globalPos[1], origin.p.y(), voxel.height(),
+                                   vol.height());
     int iz = 0;
     if constexpr (Domain::size() == 3) {
-      iz = std::clamp(
-          static_cast<int>((globalPos[2] - origin.z) / voxel.depth()), 0,
-          static_cast<int>(vol.depth()) - 1);
+      iz = common::toVoxelIndex(globalPos[2], origin.z, voxel.depth(),
+                                static_cast<int>(vol.depth()));
     }
-    auto ci = static_cast<std::size_t>(ix + vol.width() * iy +
-                                       vol.width() * vol.height() * iz);
+    auto ci =
+        common::voxelArrayIndex(vol, ix, iy, static_cast<std::size_t>(iz));
     SPDLOG_TRACE("  -> voxel ({},{},{})", ix, iy, iz);
     SPDLOG_TRACE("  -> conc[{}] = {}", ci, c[ci]);
     return c[ci];

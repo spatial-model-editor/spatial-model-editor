@@ -1130,7 +1130,8 @@ TEST_CASE(
     for (std::size_t z = 0; z < d; ++z) {
       for (std::size_t y = 0; y < h; ++y) {
         for (std::size_t x = 0; x < w; ++x) {
-          auto arrayIndex = x + w * (h - 1 - y) + w * h * z;
+          auto arrayIndex = common::voxelArrayIndex(
+              vol, static_cast<int>(x), static_cast<int>(y), z, true);
           diffArray[arrayIndex] =
               1.0 + static_cast<double>(x) / static_cast<double>(w);
         }
@@ -1196,8 +1197,7 @@ TEST_CASE(
   std::vector<double> diffArray(static_cast<std::size_t>(vol.nVoxels()), 0.0);
   const double pi = 3.14159265358979323846;
   for (const auto &voxel : comp->getVoxels()) {
-    auto arrayIndex = static_cast<std::size_t>(
-        voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+    auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
     if (static_cast<std::size_t>(voxel.p.x()) < mid) {
       // smooth spatial variation in left half
       double x = static_cast<double>(voxel.p.x());
@@ -1246,8 +1246,7 @@ TEST_CASE(
       if (x + leftBuffer >= mid) {
         continue;
       }
-      auto arrayIndex = static_cast<std::size_t>(
-          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
       maxLeftDelta = std::max(
           maxLeftDelta, std::abs(conc[arrayIndex] - initConc[arrayIndex]));
     }
@@ -1264,8 +1263,7 @@ TEST_CASE(
       if (x < mid + 2) {
         continue;
       }
-      auto arrayIndex = static_cast<std::size_t>(
-          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
       double v = conc[arrayIndex];
       sum += v;
       sumSq += v * v;
@@ -1297,7 +1295,8 @@ TEST_CASE(
               (w > 1) ? static_cast<double>(x) / static_cast<double>(w - 1)
                       : 0.0;
           const double dSmooth = 10 * t * t * (3.0 - 2.0 * t);
-          const auto arrayIndex = x + w * (h - 1 - y) + w * h * z;
+          const auto arrayIndex = common::voxelArrayIndex(
+              vol, static_cast<int>(x), static_cast<int>(y), z, true);
           diffArray[arrayIndex] = dSmooth;
         }
       }
@@ -1347,8 +1346,7 @@ TEST_CASE(
     double sumSqRef = 0.0;
     double maxAbsDiff = 0.0;
     for (const auto &voxel : comp->getVoxels()) {
-      auto arrayIndex = static_cast<std::size_t>(
-          voxel.p.x() + w * (h - 1 - voxel.p.y()) + w * h * voxel.z);
+      auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
       const double diff = p[arrayIndex] - d[arrayIndex];
       sumSqDiff += diff * diff;
       sumSqRef += d[arrayIndex] * d[arrayIndex];

@@ -71,20 +71,17 @@ public:
         auto *pos = &local_domain.position;
         return [array, pos, origin, voxel, vol]() noexcept {
           // get nearest voxel to physical point
-          auto ix = std::clamp(
-              static_cast<int>(((*pos)[0] - origin.p.x()) / voxel.width()), 0,
-              vol.width() - 1);
-          auto iy = std::clamp(
-              static_cast<int>(((*pos)[1] - origin.p.y()) / voxel.height()), 0,
-              vol.height() - 1);
+          auto ix = common::toVoxelIndex((*pos)[0], origin.p.x(), voxel.width(),
+                                         vol.width());
+          auto iy = common::toVoxelIndex((*pos)[1], origin.p.y(),
+                                         voxel.height(), vol.height());
           int iz = 0;
           if constexpr (dim == 3) {
-            iz = std::clamp(
-                static_cast<int>(((*pos)[2] - origin.z) / voxel.depth()), 0,
-                static_cast<int>(vol.depth()) - 1);
+            iz = common::toVoxelIndex((*pos)[2], origin.z, voxel.depth(),
+                                      static_cast<int>(vol.depth()));
           }
-          auto ci = static_cast<std::size_t>(ix + vol.width() * iy +
-                                             vol.width() * vol.height() * iz);
+          auto ci = common::voxelArrayIndex(vol, ix, iy,
+                                            static_cast<std::size_t>(iz));
           SPDLOG_TRACE("  -> voxel ({},{},{})", ix, iy, iz);
           SPDLOG_TRACE("  -> diffusionConstant[{}] = {}", ci, array[ci]);
           return Dune::FieldVector<double, 1>{array[ci]};
