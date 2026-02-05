@@ -1,7 +1,11 @@
 #include "sme/duneconverter.hpp"
+#include "dune_cell_data.hpp"
+#include "dune_headers.hpp"
 #include "duneconverter_impl.hpp"
+#include "dunegrid.hpp"
 #include "duneini.hpp"
 #include "sme/geometry.hpp"
+#include "sme/geometry_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
@@ -14,12 +18,41 @@
 #include <QFile>
 #include <algorithm>
 #include <cstddef>
+#include <fstream>
 #include <memory>
 #include <numeric>
 #include <string>
 #include <utility>
 
 namespace sme::simulate {
+
+namespace {
+
+template <typename GridView>
+void addCellDataFilesForGrid(IniFile &ini, const QString &iniFileDir,
+                             const QString &baseIniFile,
+                             const DuneConverter &dc,
+                             const GridView &gridView) {
+  const auto valuesByName = makeDiffusionCellValuesForGridView(dc, gridView);
+  if (valuesByName.empty()) {
+    return;
+  }
+  for (const auto &[name, values] : valuesByName) {
+    const QString fileName =
+        QString("%1_%2.txt").arg(baseIniFile, name.c_str());
+    const QString filePath = QDir(iniFileDir).filePath(fileName);
+    std::ofstream out(filePath.toStdString());
+    out << values.size() << "\n";
+    for (std::size_t i = 0; i < values.size(); ++i) {
+      out << i << " " << values[i] << "\n";
+    }
+    ini.addSection("grid", "cell_data", name.c_str());
+    ini.addValue("type", "scalar");
+    ini.addValue("path", fileName);
+  }
+}
+
+} // namespace
 
 static void addGrid(IniFile &ini, int dimension, const QString &filenameGrid) {
   ini.addSection("grid");
@@ -84,6 +117,7 @@ static void addCompartment(
 
   auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
   auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+
   speciesNames[compartmentId.toStdString()] = [&model, &compartmentId,
                                                &duneSpeciesNames]() {
     std::vector<std::string> duneSpeciesNamesSmeIndices;
@@ -215,12 +249,12 @@ static void addCompartment(
     QString sId{nonConstantSpecies[i].c_str()};
     if (model.getSpecies().getDiffusionConstantType(sId) !=
         model::SpatialDataType::Uniform) {
-      diffusionConstantArrays[duneName.toStdString()] =
+      std::string diffusionName =
+          "__diffusion_constant_cell_data_" + duneSpeciesNames[i];
+      diffusionConstantArrays[diffusionName] =
           f->getDiffusionConstantImageArray();
       ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
-                   duneName);
-      ini.addValue(QString("cross_diffusion.%1.parser_type").arg(duneName),
-                   "sme");
+                   diffusionName.c_str());
     } else {
       ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
                    f->getDiffusionConstant()[0], doublePrecision);
@@ -350,6 +384,22 @@ DuneConverter::DuneConverter(
                    diffusionConstantArrays, speciesNames, compId,
                    simDataCompartmentIndex);
     compartmentNames.push_back(compId.toStdString());
+  }
+
+  if (forExternalUse && !diffusionConstantArrays.empty()) {
+    if (mesh3d != nullptr) {
+      using HostGrid = Dune::UGGrid<3>;
+      using MDGTraits = Dune::mdgrid::FewSubDomainsTraits<3, 64>;
+      auto [grid, hostGrid] = makeDuneGrid<HostGrid, MDGTraits>(*mesh3d);
+      addCellDataFilesForGrid(iniCommon, iniFileDir, baseIniFile, *this,
+                              grid->leafGridView());
+    } else {
+      using HostGrid = Dune::UGGrid<2>;
+      using MDGTraits = Dune::mdgrid::FewSubDomainsTraits<2, 64>;
+      auto [grid, hostGrid] = makeDuneGrid<HostGrid, MDGTraits>(*mesh);
+      addCellDataFilesForGrid(iniCommon, iniFileDir, baseIniFile, *this,
+                              grid->leafGridView());
+    }
   }
 
   iniFile = iniCommon.getText();

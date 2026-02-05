@@ -1,10 +1,10 @@
 target_sources(
   core
   PRIVATE basesim.cpp
+          dune_cell_data.cpp
           duneconverter.cpp
           duneconverter_impl.cpp
           dunefunction.cpp
-          dunefunctorfactory.cpp
           dunegrid.cpp
           duneini.cpp
           dunesim.cpp
@@ -25,8 +25,8 @@ if(BUILD_TESTING)
     core_tests
     PUBLIC duneconverter_t.cpp
            duneconverter_impl_t.cpp
+           dune_cell_data_t.cpp
            dunefunction_t.cpp
-           dunefunctorfactory_t.cpp
            dunegrid_t.cpp
            duneini_t.cpp
            dunesim_t.cpp
