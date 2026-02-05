@@ -1319,6 +1319,7 @@ TEST_CASE(
   simulate::Simulation simDune(mDune);
   simulate::Simulation simPixel(mPixel);
 
+  CAPTURE(simDune.errorMessage());
   REQUIRE(simDune.doTimesteps(10, 4) >= 1);
   REQUIRE(simPixel.doTimesteps(10, 4) >= 1);
 
@@ -2365,6 +2366,7 @@ TEST_CASE("stop, then continue pixel simulation",
   REQUIRE(sim.getIsStopping() == false);
   // check we can do more timesteps
   sim.doMultipleTimesteps({{3, 0.01}});
+  REQUIRE(sim.errorMessage() == "");
   REQUIRE(m.getSimulationData().timePoints.size() == 4);
 }
 

@@ -239,6 +239,7 @@ std::size_t Simulation::doMultipleTimesteps(
     double timeout_ms, const std::function<bool()> &stopRunningCallback) {
   isRunning.store(true);
   stopRequested.store(false);
+  simulator->setCurrentErrormessage("");
   {
     std::shared_lock lock{dataMutex};
     if (data->timePoints.empty()) {
