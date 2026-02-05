@@ -226,6 +226,22 @@ PixelSim::PixelSim(
     if (spaceDependent) {
       nExtraVars += 2;
     }
+    const bool allUniformDiffusion = [this, &compartmentSpeciesIds]() {
+      for (const auto &speciesIds : compartmentSpeciesIds) {
+        for (const auto &speciesId : speciesIds) {
+          const auto *field = doc.getSpecies().getField(speciesId.c_str());
+          if (field == nullptr || !field->getIsUniformDiffusionConstant()) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }();
+    if (allUniformDiffusion) {
+      SPDLOG_INFO(
+          "Pixel solver: using uniform diffusion operator (all species have "
+          "uniform diffusion constants)");
+    }
     // add compartments
     for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
          ++compIndex) {
@@ -236,7 +252,7 @@ PixelSim::PixelSim(
           doc, compartment, speciesIds,
           sbmlDoc.getSimulationSettings().options.pixel.doCSE,
           sbmlDoc.getSimulationSettings().options.pixel.optLevel, timeDependent,
-          spaceDependent, substitutions));
+          spaceDependent, allUniformDiffusion, substitutions));
       maxStableTimestep = std::min(
           maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
     }

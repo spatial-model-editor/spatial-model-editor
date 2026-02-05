@@ -10,6 +10,7 @@
 #include "sme/symbolic.hpp"
 #include <QImage>
 #include <QPoint>
+#include <array>
 #include <cstddef>
 #include <limits>
 #include <string>
@@ -50,6 +51,8 @@ private:
   std::vector<double> s3;
   // diffusion constants (D) per voxel for each species
   std::vector<std::vector<double>> diffConstants;
+  // diffusion constants (D/dx^2, D/dy^2, D/dz^2) per species
+  std::vector<std::array<double, 3>> diffConstantsUniform;
   const geometry::Compartment *comp;
   std::size_t nPixels;
   std::size_t nSpecies;
@@ -61,12 +64,14 @@ private:
   double dx2{1.0};
   double dy2{1.0};
   double dz2{1.0};
+  bool useUniformDiffusionOperator{false};
 
 public:
   explicit SimCompartment(
       const model::Model &doc, const geometry::Compartment *compartment,
       std::vector<std::string> sIds, bool doCSE = true, unsigned optLevel = 3,
       bool timeDependent = false, bool spaceDependent = false,
+      bool useUniformDiffusionOperator = false,
       const std::map<std::string, double, std::less<>> &substitutions = {});
 
   // dcdt = result of applying diffusion operator to conc
