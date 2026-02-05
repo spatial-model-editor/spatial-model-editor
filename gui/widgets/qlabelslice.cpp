@@ -11,9 +11,9 @@ QLabelSlice::QLabelSlice(QWidget *parent) : QLabel(parent) {
 void QLabelSlice::setImage(const QImage &img, bool invertYAxis) {
   flipYAxis = invertYAxis;
   slicePixels.clear();
+  imgOriginal = img.convertToFormat(QImage::Format_RGB32);
   slicePixels.reserve(static_cast<std::size_t>(imgOriginal.width()) +
                       static_cast<std::size_t>(imgOriginal.height()));
-  imgOriginal = img.convertToFormat(QImage::Format_RGB32);
   if (flipYAxis) {
     imgOriginal = imgOriginal.flipped(Qt::Orientation::Vertical);
   }
@@ -24,6 +24,7 @@ void QLabelSlice::setImage(const QImage &img, bool invertYAxis) {
   if (this->width() < minImageWidth) {
     this->resize(minImageWidth, minImageWidth);
   }
+  resizeImage(this->size());
 }
 
 const QImage &QLabelSlice::getImage() const { return imgSliced; }
