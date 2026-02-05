@@ -408,10 +408,7 @@ std::vector<double> Simulation::getConcArray(std::size_t timeIndex,
   std::size_t stride{nSpecies + data->concPadding[timeIndex]};
   for (std::size_t ix = 0; ix < nPixels; ++ix) {
     const auto &point = comp->getVoxel(ix);
-    auto arrayIndex{static_cast<std::size_t>(
-        point.p.x() +
-        imageSize.width() * (imageSize.height() - 1 - point.p.y()) +
-        imageSize.width() * imageSize.height() * point.z)};
+    auto arrayIndex{common::voxelArrayIndex(imageSize, point, true)};
     c[arrayIndex] = compConc[ix * stride + speciesIndex];
   }
   return c;
@@ -462,9 +459,8 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
     std::size_t stride{nSpecies + data->concPadding.back()};
     for (std::size_t ix = 0; ix < nPixels; ++ix) {
       const auto &point = comp->getVoxel(ix);
-      auto arrayIndex{static_cast<std::size_t>(
-          point.p.x() +
-          imageSize.width() * (imageSize.height() - 1 - point.p.y()))};
+      auto arrayIndex{common::voxelArrayIndex(imageSize, point.p.x(),
+                                              point.p.y(), 0, true)};
       c[arrayIndex] = compDcdt[ix * stride + speciesIndex];
     }
   }
@@ -564,11 +560,7 @@ Simulation::getPyNames(std::size_t compartmentIndex) const {
 
 static std::size_t voxelToPyIndex(const common::Voxel &v,
                                   const common::Volume imageSize) {
-  auto x{static_cast<std::size_t>(v.p.x())};
-  auto y{static_cast<std::size_t>(v.p.y())};
-  auto w{static_cast<std::size_t>(imageSize.width())};
-  auto d{imageSize.depth()};
-  return x + w * y + w * d * v.z;
+  return common::voxelArrayIndex(imageSize, v, false);
 }
 
 std::vector<std::vector<double>>

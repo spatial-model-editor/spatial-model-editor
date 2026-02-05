@@ -3,6 +3,7 @@
 #include "sme/logger.hpp"
 #include <QPoint>
 #include <QSize>
+#include <algorithm>
 
 namespace sme::common {
 
@@ -85,5 +86,32 @@ public:
             a.depth() / static_cast<double>(b.depth())};
   }
 };
+
+[[nodiscard]] inline int toVoxelIndex(double coordinate, double origin,
+                                      double voxelSize, int nVoxels) noexcept {
+  if (nVoxels <= 1 || voxelSize <= 0.0) {
+    return 0;
+  }
+  return std::clamp(static_cast<int>((coordinate - origin) / voxelSize), 0,
+                    nVoxels - 1);
+}
+
+[[nodiscard]] inline int yIndex(int y, int height, bool invertY) noexcept {
+  return invertY ? (height - 1 - y) : y;
+}
+
+[[nodiscard]] inline std::size_t
+voxelArrayIndex(const Volume &volume, int x, int y, std::size_t z,
+                bool invertY = false) noexcept {
+  return static_cast<std::size_t>(x + volume.width() *
+                                          yIndex(y, volume.height(), invertY)) +
+         static_cast<std::size_t>(volume.width() * volume.height()) * z;
+}
+
+[[nodiscard]] inline std::size_t
+voxelArrayIndex(const Volume &volume, const Voxel &voxel,
+                bool invertY = false) noexcept {
+  return voxelArrayIndex(volume, voxel.p.x(), voxel.p.y(), voxel.z, invertY);
+}
 
 } // namespace sme::common

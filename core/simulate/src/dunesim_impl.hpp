@@ -331,7 +331,8 @@ private:
               // as local coordinate for this element
               auto localPoint = e.geometry().local(duneCoord);
               // note: qpi/QImage has (0,0) in top-left corner:
-              common::Voxel vox{x, geometryImageSize.height() - 1 - y, z};
+              common::Voxel vox{
+                  x, common::yIndex(y, geometryImageSize.height(), true), z};
               if (auto ix{qpi.getIndex(vox)};
                   ix.has_value() && ref.checkInside(localPoint)) {
                 voxelsInElement.push_back({*ix, localPoint});

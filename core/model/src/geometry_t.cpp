@@ -44,10 +44,11 @@ testGetConcentrationImageArray(const geometry::Field &f) {
   // NOTE: QImage has (0,0) point at top-left, so flip y-coord here
   constexpr double invalidPixelValue{-1.0};
   std::vector<double> arr(static_cast<std::size_t>(size), invalidPixelValue);
+  const common::Volume imageVolume{img.size(), 1};
   for (std::size_t i = 0; i < f.getCompartment()->nVoxels(); ++i) {
     const auto &voxel{f.getCompartment()->getVoxel(i)};
     int arrayIndex =
-        voxel.p.x() + img.width() * (img.height() - 1 - voxel.p.y());
+        static_cast<int>(common::voxelArrayIndex(imageVolume, voxel, true));
     arr[static_cast<std::size_t>(arrayIndex)] = f.getConcentration()[i];
   }
   testFillMissingByDilation(arr, img.width(), img.height());

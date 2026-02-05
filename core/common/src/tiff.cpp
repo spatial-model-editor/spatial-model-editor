@@ -29,6 +29,7 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
   SPDLOG_TRACE("  - max value: {}", TiffDataTypeMaxValue);
   const auto width{static_cast<std::size_t>(imageSize.width())};
   const auto height{static_cast<std::size_t>(imageSize.height())};
+  const auto volume{common::Volume{imageSize, 1}};
   SPDLOG_TRACE("  - image size {}x{}", width, height);
   auto tifValues = std::vector<std::vector<TiffDataType>>(
       height, std::vector<TiffDataType>(width, 0));
@@ -37,8 +38,10 @@ double writeTIFF(const std::string &filename, const QSize &imageSize,
   SPDLOG_TRACE("{}", scaleFactor);
   for (std::size_t y = 0; y < height; ++y) {
     for (std::size_t x = 0; x < width; ++x) {
-      auto val = static_cast<TiffDataType>(scaleFactor *
-                                           conc[x + width * (height - 1 - y)]);
+      auto val = static_cast<TiffDataType>(
+          scaleFactor *
+          conc[common::voxelArrayIndex(volume, static_cast<int>(x),
+                                       static_cast<int>(y), 0, true)]);
       tifValues[y][x] = val;
     }
   }
