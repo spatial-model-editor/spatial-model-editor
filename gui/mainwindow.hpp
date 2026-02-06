@@ -65,6 +65,7 @@ private:
   // Import menu actions
   void actionGeometry_from_model_triggered();
   void actionGeometry_from_image_triggered();
+  void actionGeometry_from_gmsh_triggered();
   void menuExample_geometry_image_triggered(const QAction *action);
 
   // Tools menu actions

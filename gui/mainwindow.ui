@@ -366,6 +366,7 @@
      <addaction name="action_four_compartments_150x100"/>
     </widget>
     <addaction name="actionGeometry_from_model"/>
+    <addaction name="actionGeometry_from_gmsh"/>
     <addaction name="actionGeometry_from_image"/>
     <addaction name="menuExample_geometry_image"/>
    </widget>
@@ -590,6 +591,14 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+G</string>
+   </property>
+  </action>
+  <action name="actionGeometry_from_gmsh">
+   <property name="text">
+    <string>Geometry from g&amp;msh...</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+G</string>
    </property>
   </action>
   <action name="actionSet_spatial_coordinates">

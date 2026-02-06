@@ -9,6 +9,20 @@
 
 using namespace sme;
 
+namespace {
+
+class ScopedTestLocale {
+public:
+  explicit ScopedTestLocale(std::locale newLocale)
+      : previousLocale(std::locale::global(std::move(newLocale))) {}
+  ~ScopedTestLocale() { std::locale::global(previousLocale); }
+
+private:
+  std::locale previousLocale;
+};
+
+} // namespace
+
 TEST_CASE("Serialization",
           "[core/common/serialization][core/common][core][serialization]") {
   SECTION("Import nonexistent file") {
@@ -329,12 +343,13 @@ TEST_CASE("Serialization",
   }
   SECTION("check DE locale doesn't break settings xml roundtrip") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/535
-    std::locale userLocale{};
+    std::locale localeToUse = std::locale::classic();
     try {
-      userLocale = std::locale::global(std::locale("de_DE.UTF-8"));
-    } catch (const std::runtime_error &e) {
-      userLocale = std::locale::classic();
+      localeToUse = std::locale("de_DE.UTF-8");
+    } catch (const std::runtime_error &) {
+      localeToUse = std::locale::classic();
     }
+    ScopedTestLocale localeGuard(localeToUse);
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
@@ -345,6 +360,5 @@ TEST_CASE("Serialization",
             s.simulationSettings.simulatorType);
     REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
             dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
-    std::locale::global(userLocale);
   }
 }

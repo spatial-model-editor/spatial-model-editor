@@ -3,6 +3,7 @@
 #include "dialogcoordinates.hpp"
 #include "dialoggeometryimage.hpp"
 #include "dialogimportanalyticgeometry.hpp"
+#include "dialogimportgeometrygmsh.hpp"
 #include "dialogmeshingoptions.hpp"
 #include "dialogoptimize.hpp"
 #include "dialogoptsetup.hpp"
@@ -33,6 +34,7 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QWhatsThis>
+#include <algorithm>
 #include <optional>
 #include <spdlog/spdlog.h>
 
@@ -187,6 +189,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionGeometry_from_image, &QAction::triggered, this,
           &MainWindow::actionGeometry_from_image_triggered);
+
+  connect(ui->actionGeometry_from_gmsh, &QAction::triggered, this,
+          &MainWindow::actionGeometry_from_gmsh_triggered);
 
   connect(ui->menuExample_geometry_image, &QMenu::triggered, this,
           &MainWindow::menuExample_geometry_image_triggered);
@@ -512,6 +517,23 @@ void MainWindow::actionGeometry_from_image_triggered() {
   if (auto img{getImageFromUser(this, "Import geometry from image")};
       !img.empty()) {
     importGeometryImage(img);
+  }
+}
+
+void MainWindow::actionGeometry_from_gmsh_triggered() {
+  if (!isValidModel()) {
+    return;
+  }
+  int maxVoxelsPerDimension{50};
+  const auto &images = model.getGeometry().getImages();
+  if (!images.empty()) {
+    const auto volume = images.volume();
+    maxVoxelsPerDimension = std::max(
+        {volume.width(), volume.height(), static_cast<int>(volume.depth())});
+  }
+  DialogImportGeometryGmsh dialog(maxVoxelsPerDimension, this);
+  if (dialog.exec() == QDialog::Accepted && !dialog.getImage().empty()) {
+    importGeometryImage(dialog.getImage());
   }
 }
 
