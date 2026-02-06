@@ -337,12 +337,25 @@ TEST_CASE("MainWindow: geometry", tags) {
     w.show();
     waitFor(&w);
     ModalWidgetTimer mwt;
-    createBinaryFile("models/brusselator-model_v3.xml", "x.xml");
-    mwt.addUserAction({"x", ".", "x", "m", "l"});
-    mwt.start();
-    sendKeyEvents(&w, {"Ctrl+G"});
-    REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
-    QFile::remove("x.xml");
+    SECTION("sampled field model") {
+      createBinaryFile("models/brusselator-model_v3.xml", "x.xml");
+      mwt.addUserAction({"x", ".", "x", "m", "l"});
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+G"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+      QFile::remove("x.xml");
+    }
+    SECTION("analytic model") {
+      createBinaryFile("models/analytic_2d.xml", "x.xml");
+      ModalWidgetTimer analyticImportDialog;
+      analyticImportDialog.addUserAction({"Enter"});
+      mwt.addUserAction({"x", ".", "x", "m", "l"}, true, &analyticImportDialog);
+      mwt.start();
+      sendKeyEvents(&w, {"Ctrl+G"});
+      REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+      REQUIRE(analyticImportDialog.getResult() == "Import Analytic Geometry");
+      QFile::remove("x.xml");
+    }
   }
   SECTION("built-in SBML model, change geometry image zoom") {
     MainWindow w;
@@ -376,6 +389,25 @@ TEST_CASE("MainWindow: geometry", tags) {
     sendMouseWheel(lblGeometry, +1);
     REQUIRE(spinGeometryZoom->value() == 2);
   }
+}
+
+TEST_CASE("MainWindow: import analytic geometry from model", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  auto *actionGeometryFromModel{
+      w.findChild<QAction *>("actionGeometry_from_model")};
+  REQUIRE(actionGeometryFromModel != nullptr);
+  ModalWidgetTimer mwt;
+  ModalWidgetTimer analyticImportDialog;
+  createBinaryFile("models/analytic_2d.xml", "x.xml");
+  analyticImportDialog.addUserAction({"Enter"});
+  mwt.addUserAction({"x", ".", "x", "m", "l"}, true, &analyticImportDialog);
+  mwt.start();
+  actionGeometryFromModel->trigger();
+  REQUIRE(mwt.getResult() == "QFileDialog::AcceptOpen");
+  REQUIRE(analyticImportDialog.getResult() == "Import Analytic Geometry");
+  QFile::remove("x.xml");
 }
 
 TEST_CASE("MainWindow: units", tags) {

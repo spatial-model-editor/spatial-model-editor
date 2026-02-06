@@ -29,6 +29,28 @@ getAnalyticGeometry(const libsbml::Geometry *geom) {
   return nullptr;
 }
 
+bool hasAnalyticGeometry(const libsbml::Model *model) {
+  return getAnalyticGeometry(getGeometry(model)) != nullptr;
+}
+
+common::Volume
+getDefaultAnalyticGeometryImageSize(const common::VolumeF &physicalSize,
+                                    int maxDimension) {
+  int nMax{std::max(maxDimension, 1)};
+  double norm{common::max(std::array<double, 3>{
+      physicalSize.width(), physicalSize.height(), physicalSize.depth()})};
+  if (norm <= 0.0) {
+    return {1, 1, 1};
+  }
+  int nx{std::clamp(static_cast<int>(nMax * physicalSize.width() / norm), 1,
+                    nMax)};
+  int ny{std::clamp(static_cast<int>(nMax * physicalSize.height() / norm), 1,
+                    nMax)};
+  int nz{std::clamp(static_cast<int>(nMax * physicalSize.depth() / norm), 1,
+                    nMax)};
+  return {nx, ny, static_cast<std::size_t>(nz)};
+}
+
 static std::vector<
     std::pair<const libsbml::Compartment *, const libsbml::AnalyticVolume *>>
 getCompartmentsAndAnalyticVolumes(
@@ -87,16 +109,17 @@ GeometrySampledField
 importGeometryFromAnalyticGeometry(const libsbml::Model *model,
                                    const common::VoxelF &physicalOrigin,
                                    const common::VolumeF &physicalSize) {
-  int nMax{50};
-  double norm{common::max(std::array<double, 3>{
-      physicalSize.width(), physicalSize.height(), physicalSize.depth()})};
-  int nx{std::clamp(static_cast<int>(nMax * physicalSize.width() / norm), 1,
-                    nMax)};
-  int ny{std::clamp(static_cast<int>(nMax * physicalSize.height() / norm), 1,
-                    nMax)};
-  auto nz{static_cast<std::size_t>(std::clamp(
-      static_cast<int>(nMax * physicalSize.depth() / norm), 1, nMax))};
-  common::Volume imageSize{nx, ny, nz};
+  return importGeometryFromAnalyticGeometry(
+      model, physicalOrigin, physicalSize,
+      getDefaultAnalyticGeometryImageSize(physicalSize));
+}
+
+GeometrySampledField importGeometryFromAnalyticGeometry(
+    const libsbml::Model *model, const common::VoxelF &physicalOrigin,
+    const common::VolumeF &physicalSize, const common::Volume &imageSize) {
+  const int nx{imageSize.width()};
+  const int ny{imageSize.height()};
+  const auto nz{imageSize.depth()};
   SPDLOG_INFO("Using {}x{}x{} ImageStack", nx, ny, nz);
   GeometrySampledField gsf;
   QRgb nullColor{qRgb(0, 0, 0)};

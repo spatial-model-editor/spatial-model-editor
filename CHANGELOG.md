@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Added
+- dialog for importing analytic geometry where users can set voxel resolution and preview the converted sampled image before import
+
 ## [1.11.0] - 2026-02-04
 ### Added
 - species diffusion constants to the parameters that can be fitted in parameter optimization [#1092](https://github.com/spatial-model-editor/spatial-model-editor/issues/1092)

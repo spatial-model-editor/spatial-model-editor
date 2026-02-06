@@ -98,18 +98,32 @@ static void createZCoordinateComponent(libsbml::Model *model) {
   SPDLOG_INFO("  - z in range [{},{}]", minZ->getValue(), maxZ->getValue());
 }
 
-void ModelGeometry::convertSBMLGeometryTo3d() {
-  SPDLOG_INFO("Converting 2d SBML model geometry to 3d");
-  createZCoordinateComponent(sbmlModel);
-  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
-    auto *comp{sbmlModel->getCompartment(i)};
+static void convert2dGeometryTo3d(libsbml::Model *model) {
+  if (model == nullptr) {
+    return;
+  }
+  auto *geom{getGeometry(model)};
+  if (geom == nullptr || geom->getNumCoordinateComponents() != 2) {
+    return;
+  }
+  createZCoordinateComponent(model);
+  for (unsigned i = 0; i < model->getNumCompartments(); ++i) {
+    auto *comp{model->getCompartment(i)};
     if (comp == nullptr) {
       return;
     }
-    auto nDim{comp->getSpatialDimensions() + 1};
-    SPDLOG_INFO("Setting compartment '{}' dimensions to {}", comp->getId(),
-                nDim);
-    comp->setSpatialDimensions(nDim);
+    comp->setSpatialDimensions(comp->getSpatialDimensions() + 1);
+  }
+}
+
+void ModelGeometry::convertSBMLGeometryTo3d() {
+  SPDLOG_INFO("Converting 2d SBML model geometry to 3d");
+  convert2dGeometryTo3d(sbmlModel);
+  for (unsigned i = 0; i < sbmlModel->getNumCompartments(); ++i) {
+    if (auto *comp{sbmlModel->getCompartment(i)}; comp != nullptr) {
+      SPDLOG_INFO("Setting compartment '{}' dimensions to {}", comp->getId(),
+                  comp->getSpatialDimensions());
+    }
   }
 }
 
@@ -225,15 +239,90 @@ static common::VolumeF calculateVoxelSize(const common::Volume &imageSize,
   return {x, y, z};
 }
 
-void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
+std::optional<int>
+ModelGeometry::getAnalyticGeometryNumDimensions(const QString &filename) {
+  std::unique_ptr<libsbml::SBMLDocument> doc{
+      libsbml::readSBMLFromFile(filename.toStdString().c_str())};
+  if (doc == nullptr || doc->getModel() == nullptr ||
+      !hasAnalyticGeometry(doc->getModel())) {
+    return std::nullopt;
+  }
+  if (const auto *geometry{getGeometry(doc->getModel())}; geometry != nullptr) {
+    return static_cast<int>(geometry->getNumCoordinateComponents());
+  }
+  return std::nullopt;
+}
+
+std::optional<common::Volume>
+ModelGeometry::getDefaultAnalyticGeometryImageSize(const QString &filename) {
+  std::unique_ptr<libsbml::SBMLDocument> doc{
+      libsbml::readSBMLFromFile(filename.toStdString().c_str())};
+  if (doc == nullptr || doc->getModel() == nullptr) {
+    return std::nullopt;
+  }
+  const auto *model{doc->getModel()};
+  if (!importGeometryFromSampledField(getGeometry(model), {}).images.empty()) {
+    return std::nullopt;
+  }
+  if (!hasAnalyticGeometry(model)) {
+    return std::nullopt;
+  }
+  ModelGeometry geometry;
+  if (geometry.importDimensions(model) == 0) {
+    return std::nullopt;
+  }
+  return sme::model::getDefaultAnalyticGeometryImageSize(geometry.physicalSize);
+}
+
+common::ImageStack
+ModelGeometry::getAnalyticGeometryPreview(const QString &filename,
+                                          const common::Volume &imageSize) {
+  std::unique_ptr<libsbml::SBMLDocument> doc{
+      libsbml::readSBMLFromFile(filename.toStdString().c_str())};
+  if (doc == nullptr || doc->getModel() == nullptr) {
+    return {};
+  }
+  if (importGeometryFromSampledField(getGeometry(doc->getModel()), {})
+          .images.empty() &&
+      hasAnalyticGeometry(doc->getModel())) {
+    convert2dGeometryTo3d(doc->getModel());
+  }
+  ModelGeometry geometry;
+  if (geometry.importDimensions(doc->getModel()) == 0 ||
+      !hasAnalyticGeometry(doc->getModel())) {
+    return {};
+  }
+  auto gsf = importGeometryFromAnalyticGeometry(
+      doc->getModel(), geometry.physicalOrigin, geometry.physicalSize,
+      imageSize);
+  common::ImageStack imgs(std::move(gsf.images));
+  if (imgs.empty()) {
+    return {};
+  }
+  imgs.convertToIndexed();
+  imgs.setVoxelSize(calculateVoxelSize(imgs.volume(), geometry.physicalSize));
+  return imgs;
+}
+
+void ModelGeometry::importSampledFieldGeometry(
+    const libsbml::Model *model,
+    const std::optional<common::Volume> &analyticImageSize) {
+  if (model == nullptr) {
+    return;
+  }
   importDimensions(model);
   auto gsf = importGeometryFromSampledField(getGeometry(model),
                                             sbmlAnnotation->sampledFieldColors);
   if (gsf.images.empty()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
-    gsf =
-        importGeometryFromAnalyticGeometry(model, physicalOrigin, physicalSize);
+    if (analyticImageSize) {
+      gsf = importGeometryFromAnalyticGeometry(
+          model, physicalOrigin, physicalSize, *analyticImageSize);
+    } else {
+      gsf = importGeometryFromAnalyticGeometry(model, physicalOrigin,
+                                               physicalSize);
+    }
     if (gsf.images.empty()) {
       SPDLOG_INFO("No Analytic Geometry found");
       return;
@@ -257,10 +346,20 @@ void ModelGeometry::importSampledFieldGeometry(const libsbml::Model *model) {
   exportSampledFieldGeometry(geom, images);
 }
 
-void ModelGeometry::importSampledFieldGeometry(const QString &filename) {
+void ModelGeometry::importSampledFieldGeometry(
+    const QString &filename,
+    const std::optional<common::Volume> &analyticImageSize) {
   std::unique_ptr<libsbml::SBMLDocument> doc{
       libsbml::readSBMLFromFile(filename.toStdString().c_str())};
-  importSampledFieldGeometry(doc->getModel());
+  if (doc == nullptr || doc->getModel() == nullptr) {
+    return;
+  }
+  if (importGeometryFromSampledField(getGeometry(doc->getModel()), {})
+          .images.empty() &&
+      hasAnalyticGeometry(doc->getModel())) {
+    convert2dGeometryTo3d(doc->getModel());
+  }
+  importSampledFieldGeometry(doc->getModel(), analyticImageSize);
 }
 
 void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
