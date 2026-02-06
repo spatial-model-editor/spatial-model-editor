@@ -357,6 +357,17 @@ TEST_CASE("MainWindow: geometry", tags) {
       QFile::remove("x.xml");
     }
   }
+  SECTION("import geometry from gmsh") {
+    MainWindow w;
+    w.show();
+    waitFor(&w);
+    openBuiltInModel(w);
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Esc"});
+    mwt.start();
+    sendKeyEvents(&w, {"Ctrl+Shift+G"});
+    REQUIRE(mwt.getResult() == "Import geometry from Gmsh");
+  }
   SECTION("built-in SBML model, change geometry image zoom") {
     MainWindow w;
     w.show();
