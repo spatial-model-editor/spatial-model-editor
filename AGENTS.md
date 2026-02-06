@@ -35,6 +35,8 @@ You can assume the script ci/local-linux-dev-setup.sh has been run, i.e.
     - `ninja` to build
     - `ninja test` to run all non-gui tests in parallel
     - `./test/tests` with suitable tags to run a subset of the catch2 test suite.
+    - `xvfb-run -a ./test/tests "[gui]"` to run GUI tests headlessly on Linux (or replace `"[gui]"` with a specific test name)
+    - if running in a strict sandbox, ask for permission to run commands starting with `xvfb-run -a ./test/tests` outside the sandbox
   - in build-sme-release/sme you can do
     - `python -m pytest ../../sme/test` to run the python tests
   - if a test segfaults, in build-sme-asan/ you can do

@@ -16,6 +16,8 @@ target_sources(
           dialogexport.ui
           dialoggeometryimage.cpp
           dialoggeometryimage.ui
+          dialogimportanalyticgeometry.cpp
+          dialogimportanalyticgeometry.ui
           dialogimage.cpp
           dialogimage.ui
           dialogimageslice.cpp
@@ -49,6 +51,7 @@ if(BUILD_TESTING)
            dialogeditunit_t.cpp
            dialogexport_t.cpp
            dialoggeometryimage_t.cpp
+           dialogimportanalyticgeometry_t.cpp
            dialogimage_t.cpp
            dialogimageslice_t.cpp
            dialogmeshingoptions_t.cpp

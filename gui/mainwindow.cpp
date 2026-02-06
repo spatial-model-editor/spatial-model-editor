@@ -2,6 +2,7 @@
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialoggeometryimage.hpp"
+#include "dialogimportanalyticgeometry.hpp"
 #include "dialogmeshingoptions.hpp"
 #include "dialogoptimize.hpp"
 #include "dialogoptsetup.hpp"
@@ -32,6 +33,7 @@
 #include <QMimeData>
 #include <QProcess>
 #include <QWhatsThis>
+#include <optional>
 #include <spdlog/spdlog.h>
 
 static QString getStatusBarMessage(int step) {
@@ -480,12 +482,23 @@ void MainWindow::actionGeometry_from_model_triggered() {
   if (filename.isEmpty()) {
     return;
   }
+  std::optional<sme::common::Volume> analyticImageSize;
+  if (auto defaultImageSize{
+          sme::model::ModelGeometry::getDefaultAnalyticGeometryImageSize(
+              filename)};
+      defaultImageSize) {
+    DialogImportAnalyticGeometry dialog(filename, *defaultImageSize, this);
+    if (dialog.exec() != QDialog::Accepted) {
+      return;
+    }
+    analyticImageSize = dialog.getImageSize();
+  }
   tabSimulate->reset();
   for (const auto &id : model.getCompartments().getIds()) {
     model.getCompartments().setColor(id, 0);
   }
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-  model.getGeometry().importSampledFieldGeometry(filename);
+  model.getGeometry().importSampledFieldGeometry(filename, analyticImageSize);
   QGuiApplication::restoreOverrideCursor();
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);

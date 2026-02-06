@@ -8,6 +8,7 @@
 #include <QImage>
 #include <QRgb>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -53,12 +54,23 @@ private:
   void updateCompartmentAndMembraneSizes();
 
 public:
+  [[nodiscard]] static std::optional<int>
+  getAnalyticGeometryNumDimensions(const QString &filename);
+  [[nodiscard]] static std::optional<common::Volume>
+  getDefaultAnalyticGeometryImageSize(const QString &filename);
+  [[nodiscard]] static common::ImageStack
+  getAnalyticGeometryPreview(const QString &filename,
+                             const common::Volume &imageSize);
   ModelGeometry();
   explicit ModelGeometry(libsbml::Model *model, ModelCompartments *compartments,
                          ModelMembranes *membranes, const ModelUnits *units,
                          Settings *annotation);
-  void importSampledFieldGeometry(const libsbml::Model *model);
-  void importSampledFieldGeometry(const QString &filename);
+  void importSampledFieldGeometry(
+      const libsbml::Model *model,
+      const std::optional<common::Volume> &analyticImageSize = std::nullopt);
+  void importSampledFieldGeometry(
+      const QString &filename,
+      const std::optional<common::Volume> &analyticImageSize = std::nullopt);
   void importGeometryFromImages(const common::ImageStack &imgs,
                                 bool keepColorAssignments);
   void updateMesh();
