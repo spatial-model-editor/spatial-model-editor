@@ -69,9 +69,8 @@ TEST_CASE("DUNE grid",
 
       // generate dune grid with Dune::Copasi::make_multi_domain_grid
       // note: requires C locale
-      std::locale userLocale = std::locale::global(std::locale::classic());
+      common::ScopedCLocale scopedCLocale;
       auto gmshGrid{Dune::Copasi::make_multi_domain_grid<Grid2d>(config)};
-      std::locale::global(userLocale);
 
       // compare grids
       auto nCompartments = grid->maxSubDomainIndex();
@@ -191,9 +190,8 @@ TEST_CASE("DUNE grid",
 
       // generate dune grid with Dune::Copasi::make_multi_domain_grid
       // note: requires C locale
-      std::locale userLocale = std::locale::global(std::locale::classic());
+      common::ScopedCLocale scopedCLocale;
       auto gmshGrid{Dune::Copasi::make_multi_domain_grid<Grid3d>(config)};
-      std::locale::global(userLocale);
 
       // compare grids
       auto nCompartments{grid->maxSubDomainIndex()};

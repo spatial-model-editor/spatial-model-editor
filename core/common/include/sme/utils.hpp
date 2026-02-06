@@ -291,6 +291,21 @@ struct free_deleter {
 };
 template <typename T> using unique_C_ptr = std::unique_ptr<T, free_deleter>;
 
+/**
+ * @brief Temporarily set the global locale to C and restore it on scope exit
+ */
+class ScopedCLocale {
+public:
+  ScopedCLocale()
+      : previousLocale(std::locale::global(std::locale::classic())) {}
+  ~ScopedCLocale() { std::locale::global(previousLocale); }
+  ScopedCLocale(const ScopedCLocale &) = delete;
+  ScopedCLocale &operator=(const ScopedCLocale &) = delete;
+
+private:
+  std::locale previousLocale;
+};
+
 // C-locale versions of isalpha, isdigit, etc.
 inline bool isalpha(char c) { return std::isalpha(c, std::locale::classic()); }
 
