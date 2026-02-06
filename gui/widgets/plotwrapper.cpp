@@ -159,6 +159,9 @@ void PlotWrapper::clear() {
 }
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
+  if (plot->graphCount() == 0) {
+    return 0.0;
+  }
   const auto &pos{event->position()};
   double key;
   double val;

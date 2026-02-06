@@ -192,7 +192,15 @@ void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
 
 void QPlainTextMathEdit::setConstants(
     const std::vector<sme::model::IdNameValue> &constants) {
+  auto oldConsts = consts;
   consts.clear();
+  for (const auto &c : oldConsts) {
+    if (auto iter = mapVarsToDisplayNames.find(c.first);
+        iter != mapVarsToDisplayNames.end()) {
+      mapDisplayNamesToVars.erase(iter->second);
+      mapVarsToDisplayNames.erase(iter);
+    }
+  }
   consts.reserve(constants.size());
   for (const auto &c : constants) {
     consts.emplace_back(c.id, c.value);
@@ -342,7 +350,7 @@ std::pair<std::string, QString>
 QPlainTextMathEdit::displayNamesToVariables(const std::string &expr) const {
   const auto &varMap = mapDisplayNamesToVars;
   const auto &funcMap = mapDisplayNamesToFuncs;
-  if (varMap.empty()) {
+  if (varMap.empty() && funcMap.empty()) {
     return {expr, ""};
   }
   return substitute(expr, varMap, funcMap);

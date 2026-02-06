@@ -193,7 +193,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     sendKeyEvents(&mathEdit, {"X", "+", "y", "_", "v", "a", "r"});
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE_THAT(mathEdit.getErrorMessage().toStdString(),
-                 ContainsSubstring("Unknown symbol 'X'"));
+                 ContainsSubstring("Variable 'X' not found"));
     REQUIRE(mathEdit.compileMath() == false);
     mathEdit.addVariable("x", "X");
     REQUIRE(mathEdit.mathIsValid() == false);
@@ -221,7 +221,7 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(mathEdit.getVariableMath().empty() == true);
     REQUIRE(mathEdit.mathIsValid() == false);
     REQUIRE_THAT(mathEdit.getErrorMessage().toStdString(),
-                 ContainsSubstring("Unknown symbol 'X'"));
+                 ContainsSubstring("Variable 'X' not found"));
     REQUIRE(mathEdit.compileMath() == false);
   }
   SECTION("expression with quoted display names") {
@@ -271,6 +271,33 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE(mathEdit.getErrorMessage() == "");
     REQUIRE(mathEdit.mathIsValid() == true);
     REQUIRE(mathEdit.compileMath() == true);
+  }
+  SECTION("functions with display names and no variables") {
+    mathEdit.show();
+    mathEdit.clearVariables();
+    sme::common::SymbolicFunction f;
+    f.id = "f_id";
+    f.name = "f name";
+    f.args = {"x"};
+    f.body = "x";
+    mathEdit.addFunction(f);
+    mathEdit.setPlainText("\"f name\"(1)");
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(mathEdit.getErrorMessage() == "");
+    REQUIRE(mathEdit.getVariableMath() == "f_id(1)");
+  }
+  SECTION("constants map updates") {
+    mathEdit.show();
+    mathEdit.clearVariables();
+    mathEdit.setConstants({{"k_id", "K", 2.0}});
+    mathEdit.setPlainText("K");
+    REQUIRE(mathEdit.mathIsValid() == true);
+    REQUIRE(mathEdit.getErrorMessage() == "");
+    mathEdit.setConstants({});
+    mathEdit.setPlainText("K");
+    REQUIRE(mathEdit.mathIsValid() == false);
+    REQUIRE_THAT(mathEdit.getErrorMessage().toStdString(),
+                 ContainsSubstring("Variable 'K' not found"));
   }
   SECTION("expression that parses but doesn't compile") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/805

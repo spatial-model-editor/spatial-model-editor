@@ -80,6 +80,10 @@ QRgb QLabelMouseTracker::getColor() const { return color; }
 int QLabelMouseTracker::getMaskIndex() const { return maskIndex; }
 
 QPointF QLabelMouseTracker::getRelativePosition() const {
+  if (image.empty() || pixmap.isNull() || pixmap.width() == 0 ||
+      pixmap.height() == 0) {
+    return {};
+  }
   auto xRelPos{static_cast<double>(currentVoxel.p.x()) /
                static_cast<double>(image[currentVoxel.z].width())};
   auto yRelPos{static_cast<double>(currentVoxel.p.y()) /

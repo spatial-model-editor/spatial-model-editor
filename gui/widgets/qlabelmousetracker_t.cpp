@@ -269,6 +269,49 @@ TEST_CASE("QLabelMouseTracker: image and mask", tags) {
   REQUIRE(mouseTracker.getMaskIndex() == 12944736);
 }
 
+TEST_CASE("QLabelMouseTracker: invertYAxis flips mask with image", tags) {
+  QLabelMouseTracker mouseTracker;
+  QImage img(2, 3, QImage::Format_RGB32);
+  QImage mask(2, 3, QImage::Format_RGB32);
+  img.setPixel(0, 0, qRgb(10, 0, 0));
+  img.setPixel(1, 0, qRgb(20, 0, 0));
+  img.setPixel(0, 1, qRgb(30, 0, 0));
+  img.setPixel(1, 1, qRgb(40, 0, 0));
+  img.setPixel(0, 2, qRgb(50, 0, 0));
+  img.setPixel(1, 2, qRgb(60, 0, 0));
+  mask.setPixel(0, 0, qRgb(0, 0, 1));
+  mask.setPixel(1, 0, qRgb(0, 0, 2));
+  mask.setPixel(0, 1, qRgb(0, 0, 3));
+  mask.setPixel(1, 1, qRgb(0, 0, 4));
+  mask.setPixel(0, 2, qRgb(0, 0, 5));
+  mask.setPixel(1, 2, qRgb(0, 0, 6));
+  sme::common::ImageStack imageStack{{img}};
+  sme::common::ImageStack maskStack{{mask}};
+  imageStack.setVoxelSize({3.0, 2.0, 1.0});
+  maskStack.setVoxelSize({3.0, 2.0, 1.0});
+  mouseTracker.setImages({imageStack, maskStack});
+  mouseTracker.show();
+  mouseTracker.resize(100, 100);
+  wait();
+
+  auto clickAndCheck = [&](const QPoint &pos, QRgb expectedColor,
+                           int expectedMaskIndex) {
+    sendMouseClick(&mouseTracker, pos);
+    REQUIRE(mouseTracker.getColor() == expectedColor);
+    REQUIRE(mouseTracker.getMaskIndex() == expectedMaskIndex);
+  };
+
+  clickAndCheck({10, 10}, qRgb(10, 0, 0), 1);
+  clickAndCheck({90, 10}, qRgb(20, 0, 0), 2);
+  clickAndCheck({10, 90}, qRgb(50, 0, 0), 5);
+
+  mouseTracker.invertYAxis(true);
+  wait();
+  clickAndCheck({10, 10}, qRgb(50, 0, 0), 5);
+  clickAndCheck({90, 10}, qRgb(60, 0, 0), 6);
+  clickAndCheck({10, 90}, qRgb(10, 0, 0), 1);
+}
+
 TEST_CASE("QLabelMouseTracker: grid spacing aligns to pixel size", tags) {
   QLabelMouseTracker mouseTracker;
   QImage img(5, 5, QImage::Format_RGB32);

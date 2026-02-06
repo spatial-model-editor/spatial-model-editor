@@ -129,7 +129,10 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
     return;
   }
   auto *interactor = renderWindow->GetInteractor();
-  auto *picker = interactor->GetPicker();
+  auto *picker = interactor != nullptr ? interactor->GetPicker() : nullptr;
+  if (picker == nullptr) {
+    return;
+  }
   const auto *pos = interactor->GetEventPosition();
   if (picker->Pick(pos[0], pos[1], 0, renderer)) {
     std::array<double, 3> picked{};
@@ -143,7 +146,7 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
         x < dim[0]) {
       static constexpr vtkIdType stride = 4;
       auto idx =
-          stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[1] + x);
+          stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[0] + x);
       SPDLOG_DEBUG("Index in imageDataArray: {}", idx);
       auto col =
           qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
@@ -186,5 +189,7 @@ void QVoxelRenderer::cmbClippingPlaneNormal_currentTextChanged(
   double dz;
   imageData->GetSpacing(dx, dy, dz);
   maxClippingPlaneOrigin = x * dim[0] * dx + y * dim[1] * dy + z * dim[2] * dz;
-  slideClippingPlaneOrigin_valueChanged(slideClippingPlaneOrigin->value());
+  if (slideClippingPlaneOrigin != nullptr) {
+    slideClippingPlaneOrigin_valueChanged(slideClippingPlaneOrigin->value());
+  }
 }
