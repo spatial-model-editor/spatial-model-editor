@@ -470,12 +470,23 @@ TEST_CASE("SBML species",
     REQUIRE(s.getStorage("A_c1") == dbl_approx(1.0));
     s.setStorage("A_c1", 2.5);
     REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
-    // ignore invalid values
+    // S=0 is now valid
     s.setStorage("A_c1", 0.0);
+    REQUIRE(s.getStorage("A_c1") == dbl_approx(0.0));
+    // restore to positive for remaining tests
+    s.setStorage("A_c1", 2.5);
     REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
+    // ignore negative values
     s.setStorage("A_c1", -4.0);
     REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
-    // persists via SBML annotations
+    // S=0 persists via SBML annotations
+    s.setStorage("A_c1", 0.0);
+    auto xml0{m.getXml().toStdString()};
+    model::Model m0;
+    m0.importSBMLString(xml0);
+    REQUIRE(m0.getSpecies().getStorage("A_c1") == dbl_approx(0.0));
+    // positive value persists via SBML annotations
+    s.setStorage("A_c1", 2.5);
     auto xml{m.getXml().toStdString()};
     model::Model m2;
     m2.importSBMLString(xml);

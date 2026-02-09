@@ -40,7 +40,7 @@ Two more properties of a species are of primary importance.
 With the definition of these two elements, the species is fully defined and can be used in the next steps of the model definition.
 
 :Storage coefficient (Advanced):
-   In the species `Advanced` section, you can set a positive, dimensionless storage coefficient :math:`S`.
+   In the species `Advanced` section, you can set a non-negative, dimensionless storage coefficient :math:`S`.
    This scales the species time derivative in the PDE:
 
    .. math::
@@ -49,6 +49,10 @@ With the definition of these two elements, the species is fully defined and can 
 
    The default is :math:`S=1`, which gives the standard reaction-diffusion form.
    Larger :math:`S` values make concentration changes slower in time, while values between 0 and 1 make them faster.
+
+   Setting :math:`S=0` converts the equation into an algebraic constraint :math:`0 = \nabla \cdot (D \nabla c) + R`,
+   meaning the species concentration is determined by satisfying this constraint at each timestep
+   rather than being integrated in time.
 
 
 .. note::

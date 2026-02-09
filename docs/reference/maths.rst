@@ -15,14 +15,23 @@ where
 * :math:`c_s` is the concentration of species :math:`s` at position :math:`(x, y, z)` and time :math:`t`
 * :math:`D_s` is the (possibly spatially varying) scalar diffusion constant for species :math:`s`
 * :math:`R_s` is the reaction term for species :math:`s`
-* :math:`S_s` is the species storage coefficient (dimensionless, positive, default :math:`1`)
+* :math:`S_s` is the species storage coefficient (dimensionless, non-negative, default :math:`1`)
 
 and we assume that
 
 * the diffusion constant :math:`D_s` is isotropic (a scalar, not a tensor)
 * the reaction term :math:`R_s` is a function that can depend on the concentrations of other species in the model, but only locally, i.e. the concentrations at the same spatial coordinate.
 
-Equivalently,
+When :math:`S_s = 0`, the equation becomes an algebraic constraint rather than a time-evolution equation:
+
+.. math::
+
+   0 = \nabla \cdot \left( D_s \nabla c_s \right) + R_s
+
+The concentration of such a species is not integrated in time, but is instead determined at each timestep
+by satisfying this constraint. See the :doc:`pixel` documentation for details on how the Pixel solver handles this case.
+
+For :math:`S_s > 0`, the equation can equivalently be written as
 
 .. math::
 

@@ -18,6 +18,75 @@
 
 namespace sme::simulate {
 
+void PixelSim::solveZeroStorageConstraints() {
+  if (!hasAnyZeroStorageSpecies) {
+    return;
+  }
+  constexpr std::size_t maxIterations{100};
+  double nextRelaxDt = maxRelaxStableTimestep;
+  auto computeResidual = [this]() {
+    for (auto &sim : simCompartments) {
+      if (useTBB) {
+        sim->evaluateReactionsAndDiffusion_tbb();
+      } else {
+        sim->evaluateReactionsAndDiffusion();
+      }
+    }
+    for (auto &sim : simMembranes) {
+      sim->evaluateReactions();
+    }
+    for (auto &sim : simCompartments) {
+      sim->spatiallyAverageDcdt();
+    }
+  };
+  for (std::size_t iter = 0; iter < maxIterations; ++iter) {
+    // stage 1: evaluate residual
+    computeResidual();
+    // check convergence (both absolute and relative residual)
+    PixelIntegratorError residual{0.0, 0.0};
+    for (const auto &sim : simCompartments) {
+      auto compRes = sim->getZeroStorageResidual(epsilon);
+      residual.abs = std::max(residual.abs, compRes.abs);
+      residual.rel = std::max(residual.rel, compRes.rel);
+    }
+    if (residual.abs < errMax.abs && residual.rel < errMax.rel) {
+      return;
+    }
+    // adaptive RK212 step
+    double dt = nextRelaxDt;
+    // substep 1: save old, c += dt * dcdt for zero-storage species
+    for (auto &sim : simCompartments) {
+      sim->doRelaxSubstep1(dt);
+    }
+    // stage 2: evaluate residual at updated state
+    computeResidual();
+    // substep 2: c = 0.5*old + 0.5*c + 0.5*dt*dcdt (second-order)
+    for (auto &sim : simCompartments) {
+      sim->doRelaxSubstep2(dt);
+    }
+    // error estimate and adaptive timestep
+    PixelIntegratorError err{0.0, 0.0};
+    for (const auto &sim : simCompartments) {
+      auto compErr = sim->calculateRelaxError(epsilon);
+      err.rel = std::max(err.rel, compErr.rel);
+      err.abs = std::max(err.abs, compErr.abs);
+    }
+    double errFactor = std::min(errMax.abs / (err.abs + 1e-300),
+                                errMax.rel / (err.rel + 1e-300));
+    errFactor = std::sqrt(errFactor); // RK2 order
+    nextRelaxDt = std::min(0.95 * dt * errFactor, maxRelaxStableTimestep);
+    if (err.abs > errMax.abs || err.rel > errMax.rel) {
+      // error too large: undo step and retry with smaller dt
+      for (auto &sim : simCompartments) {
+        sim->undoRelaxStep();
+      }
+    }
+  }
+  SPDLOG_WARN("Zero-storage constraint solver did not converge after {} "
+              "iterations",
+              maxIterations);
+}
+
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
   for (auto &sim : simCompartments) {
@@ -43,6 +112,7 @@ void PixelSim::calculateDcdt() {
 
 void PixelSim::doRK101(double dt) {
   // RK1(0)1: Forwards Euler, no error estimate
+  solveZeroStorageConstraints();
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
@@ -57,6 +127,7 @@ void PixelSim::doRK212(double dt) {
   // RK2(1)2: Heun / Modified Euler, with embedded forwards Euler error
   // estimate Shu-Osher form used here taken from eq(2.15) of
   // https://doi.org/10.1016/0021-9991(88)90177-5
+  solveZeroStorageConstraints();
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
@@ -65,6 +136,7 @@ void PixelSim::doRK212(double dt) {
       sim->doRK212Substep1(dt);
     }
   }
+  solveZeroStorageConstraints();
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
@@ -129,6 +201,7 @@ void PixelSim::doRK435(double dt) {
 
 void PixelSim::doRKSubstep(double dt, double g1, double g2, double g3,
                            double beta, double delta) {
+  solveZeroStorageConstraints();
   calculateDcdt();
   for (auto &sim : simCompartments) {
     if (useTBB) {
@@ -260,6 +333,17 @@ PixelSim::PixelSim(
           spaceDependent, allUniformDiffusion, substitutions));
       maxStableTimestep = std::min(
           maxStableTimestep, simCompartments.back()->getMaxStableTimestep());
+      if (simCompartments.back()->getHasZeroStorageSpecies()) {
+        hasAnyZeroStorageSpecies = true;
+        maxRelaxStableTimestep =
+            std::min(maxRelaxStableTimestep,
+                     simCompartments.back()->getMaxRelaxStableTimestep());
+      }
+    }
+    if (hasAnyZeroStorageSpecies &&
+        maxRelaxStableTimestep == std::numeric_limits<double>::max()) {
+      // all zero-storage species have D=0: use fallback dt
+      maxRelaxStableTimestep = 1.0;
     }
     // add membranes
     for (const auto &membrane : doc.getMembranes().getMembranes()) {

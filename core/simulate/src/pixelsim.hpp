@@ -31,6 +31,7 @@ private:
   const model::Model &doc;
   double maxStableTimestep{std::numeric_limits<double>::max()};
   void calculateDcdt();
+  void solveZeroStorageConstraints();
   void doRK101(double dt);
   void doRK212(double dt);
   void doRK323(double dt);
@@ -40,6 +41,8 @@ private:
   double doRKAdaptive(double dtMax);
   std::size_t discardedSteps{0};
   PixelIntegratorType integrator;
+  bool hasAnyZeroStorageSpecies{false};
+  double maxRelaxStableTimestep{std::numeric_limits<double>::max()};
   PixelIntegratorError errMax;
   double maxTimestep{std::numeric_limits<double>::max()};
   double nextTimestep{1e-7};

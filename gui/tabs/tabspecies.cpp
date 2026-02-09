@@ -430,7 +430,7 @@ void TabSpecies::btnEditImageDiffusionConstant_clicked() {
 void TabSpecies::txtStorage_editingFinished() {
   bool ok{false};
   double storage = ui->txtStorage->text().toDouble(&ok);
-  if (!ok || storage <= 0.0) {
+  if (!ok || storage < 0.0) {
     ui->txtStorage->setText(
         QString::number(model.getSpecies().getStorage(currentSpeciesId)));
     return;
