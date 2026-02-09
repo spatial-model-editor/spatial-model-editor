@@ -59,11 +59,12 @@ The concentration is defined as a 3d array of values :math:`c_{i,j,k}`,
 where the value with index :math:`(i,j,k)` corresponds to the concentration
 at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
 
-For diffusion constants that vary in space, the diffusion term is written in conservative form
+For diffusion constants that vary in space, the diffusion term is written in conservative form.
+With species storage coefficient :math:`S>0`, the PDE is
 
 .. math::
 
-   \frac{\partial c}{\partial t} = \nabla \cdot \left( D(\mathbf{x}) \nabla c \right) + R
+   S\frac{\partial c}{\partial t} = \nabla \cdot \left( D(\mathbf{x}) \nabla c \right) + R
 
 and discretized using face fluxes with arithmetic averaging of :math:`D` at neighbouring voxels.
 For one species in voxel :math:`(i,j,k)`:
@@ -71,11 +72,12 @@ For one species in voxel :math:`(i,j,k)`:
 .. math::
 
    \begin{eqnarray}
-   \left[\nabla \cdot \left( D \nabla c \right)\right]_{i,j,k}
-   & = & \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \\
+   \frac{dc_{i,j,k}}{dt}
+   & = & \frac{1}{S}\left(
+   \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \right.\\
    & & + \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
-   & & + \frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2} \\
-   & & + \mathcal{O}(\delta x^2)+\mathcal{O}(\delta y^2)+\mathcal{O}(\delta z^2)
+   & & + \left.\frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2}
+   + R_{i,j,k}\right)
    \end{eqnarray}
 
 with face diffusion constants
@@ -98,7 +100,7 @@ For one species, start from
 
 .. math::
 
-   \frac{\partial c}{\partial t} = \nabla \cdot (D \nabla c) + R
+   S\frac{\partial c}{\partial t} = \nabla \cdot (D \nabla c) + R
 
 1. Integrate over one voxel :math:`V_{i,j,k}`
 
@@ -109,7 +111,7 @@ Assumptions:
 
 .. math::
 
-   \int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
+   S\int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
    =
    \int_{V_{i,j,k}}\nabla\cdot(D\nabla c)\,dV
    +
@@ -135,9 +137,9 @@ Then
 
 .. math::
 
-   \int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
+   S\int_{V_{i,j,k}}\frac{\partial c}{\partial t}\,dV
    \approx
-   \delta x\,\delta y\,\delta z\;\frac{d c_{i,j,k}}{dt}
+   S\delta x\,\delta y\,\delta z\;\frac{d c_{i,j,k}}{dt}
 
 .. math::
 
@@ -179,11 +181,11 @@ Substituting the face fluxes into the surface-balance form and dividing by
 .. math::
 
    \begin{aligned}
-   \frac{d c_{i,j,k}}{dt} =\;&
+   \frac{d c_{i,j,k}}{dt} =\;& \frac{1}{S}\Bigg[
    \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \\
    &+ \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
    &+ \frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2}
-   + R_{i,j,k}
+   + R_{i,j,k}\Bigg]
    \end{aligned}
 
 where :math:`R_{i,j,k}` is the cell-centered reaction term.
@@ -285,9 +287,10 @@ above which the system becomes unstable:
 
 .. math::
 
-   \delta t \leq  \frac{1}{2 D_{\max} \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
+   \delta t \leq  \frac{S}{2 D_{\max} \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
 
-where :math:`D_{\max}` is the largest diffusion constant value over all voxels for the species.
+where :math:`D_{\max}` is the largest diffusion constant value over all voxels for the species,
+and :math:`S` is that species' storage coefficient.
 
 So if the user selects a timestep larger than this,
 the simulator automatically reduces it to the above value to avoid the system becoming unstable.

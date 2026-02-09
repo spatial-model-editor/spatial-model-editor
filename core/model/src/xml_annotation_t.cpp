@@ -37,6 +37,7 @@ TEST_CASE("XML Annotations",
     optCost.targetValues = {1.0, 3.0, 5.0};
     auto &optParam{optimizeOptions.optParams.emplace_back()};
     optParam.name = "myOptParam";
+    settings.speciesStorageValues["A"] = 2.5;
     // todo: populate all fields above
 
     model::setSbmlAnnotation(model, settings);
@@ -67,6 +68,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(newOptimizeOptions.optCosts[0].targetValues[2] == dbl_approx(5.0));
     REQUIRE(newOptimizeOptions.optParams.size() == 1);
     REQUIRE(newOptimizeOptions.optParams[0].name == "myOptParam");
+    REQUIRE(newSettings.speciesStorageValues.size() == 1);
+    REQUIRE(newSettings.speciesStorageValues["A"] == dbl_approx(2.5));
 
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});
@@ -75,6 +78,7 @@ TEST_CASE("XML Annotations",
     newOptimizeOptions.optAlgorithm.population = 4;
     newOptimizeOptions.optCosts.emplace_back().name = "optCost2";
     newOptimizeOptions.optParams[0].name = "newOptParamName";
+    newSettings.speciesStorageValues["A"] = 1.22;
     model::setSbmlAnnotation(model, newSettings);
     libsbml::writeSBMLToFile(doc.get(), "tmpxmlsettings.xml");
 
@@ -108,6 +112,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(optimizeOptions2.optCosts[1].targetValues.empty());
     REQUIRE(optimizeOptions2.optParams.size() == 1);
     REQUIRE(optimizeOptions2.optParams[0].name == "newOptParamName");
+    REQUIRE(settings2.speciesStorageValues.size() == 1);
+    REQUIRE(settings2.speciesStorageValues["A"] == dbl_approx(1.22));
   }
   SECTION("Invalid settings annotations") {
     auto doc{getTestSbmlDoc("ABtoC-invalid-annotation")};
@@ -120,5 +126,6 @@ TEST_CASE("XML Annotations",
     REQUIRE(settings.optimizeOptions.optCosts.empty());
     REQUIRE(settings.optimizeOptions.optParams.empty());
     REQUIRE(settings.speciesColors.empty());
+    REQUIRE(settings.speciesStorageValues.empty());
   }
 }

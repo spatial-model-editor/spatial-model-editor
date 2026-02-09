@@ -64,6 +64,14 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabSpecies::btnEditAnalyticDiffusionConstant_clicked);
   connect(ui->btnEditImageDiffusionConstant, &QPushButton::clicked, this,
           &TabSpecies::btnEditImageDiffusionConstant_clicked);
+  connect(ui->btnSpeciesAdvanced, &QToolButton::toggled, this,
+          [this](bool expanded) {
+            ui->btnSpeciesAdvanced->setArrowType(expanded ? Qt::DownArrow
+                                                          : Qt::RightArrow);
+            ui->wgtSpeciesAdvanced->setVisible(expanded);
+          });
+  connect(ui->txtStorage, &QLineEdit::editingFinished, this,
+          &TabSpecies::txtStorage_editingFinished);
   connect(ui->btnChangeSpeciesColor, &QPushButton::clicked, this,
           &TabSpecies::btnChangeSpeciesColor_clicked);
 }
@@ -110,6 +118,8 @@ void TabSpecies::enableWidgets(bool enable) {
   ui->btnEditAnalyticDiffusionConstant->setEnabled(enable);
   ui->radDiffusionConstantImage->setEnabled(enable);
   ui->btnEditImageDiffusionConstant->setEnabled(enable);
+  ui->btnSpeciesAdvanced->setEnabled(enable);
+  ui->txtStorage->setEnabled(enable);
   ui->btnChangeSpeciesColor->setEnabled(enable);
 }
 
@@ -199,6 +209,9 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
     ui->radDiffusionConstantAnalytic->setChecked(true);
   }
   radDiffusionConstant_toggled();
+  // storage
+  ui->txtStorage->setText(
+      QString::number(model.getSpecies().getStorage(currentSpeciesId)));
   // color
   lblSpeciesColorPixmap.fill(model.getSpecies().getColor(currentSpeciesId));
   ui->lblSpeciesColor->setPixmap(lblSpeciesColorPixmap);
@@ -412,6 +425,19 @@ void TabSpecies::btnEditImageDiffusionConstant_clicked() {
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(this, "Error editing diffusion image", e.what());
   }
+}
+
+void TabSpecies::txtStorage_editingFinished() {
+  bool ok{false};
+  double storage = ui->txtStorage->text().toDouble(&ok);
+  if (!ok || storage <= 0.0) {
+    ui->txtStorage->setText(
+        QString::number(model.getSpecies().getStorage(currentSpeciesId)));
+    return;
+  }
+  SPDLOG_INFO("setting storage value of Species {} to {}",
+              currentSpeciesId.toStdString(), storage);
+  model.getSpecies().setStorage(currentSpeciesId, storage);
 }
 
 void TabSpecies::btnChangeSpeciesColor_clicked() {

@@ -17,7 +17,11 @@ At the top, you can rename the species or assign it to a different compartment. 
 Two more properties of a species are of primary importance.
 
 :Initial concentration:
-   This can be set to a constant value, an analytic expression over the spatial coordinates `x` and `y` (and `z` for 3D images) or it can be derived from an image that's loaded from disk, in the .png format for 2D domains, and as .tiff file for 3D domains.
+   This can be set in three ways:
+
+   * Uniform: a single scalar value everywhere in the compartment.
+   * Analytic: an expression in the spatial coordinates (`x`, `y`, and `z` for 3D models).
+   * Image: a sampled field loaded from image data, giving a per-voxel value.
 
 :Diffusion constant: The presence of a diffusion term
 
@@ -25,7 +29,7 @@ Two more properties of a species are of primary importance.
 
          \nabla \cdot \left( D \nabla c_{i} \right)
 
-   is assumed by default (see the `documentation on the mathematical formulation <../reference/maths.html>`_ for more details). The diffusion constant can be set in three ways:
+   is assumed by default (see the `documentation on the mathematical formulation <../reference/maths.html>`_ for more details). The diffusion constant can also be set in three ways:
 
    * Uniform: a single scalar value everywhere in the compartment.
    * Analytic: an expression in the spatial coordinates (`x`, `y`, and `z` for 3D models).
@@ -34,6 +38,18 @@ Two more properties of a species are of primary importance.
    In all cases, `D` is isotropic (scalar, not tensor). If you don't want diffusion to be present, set `D = 0`.
 
 With the definition of these two elements, the species is fully defined and can be used in the next steps of the model definition.
+
+:Storage coefficient (Advanced):
+   In the species `Advanced` section, you can set a positive, dimensionless storage coefficient :math:`S`.
+   This scales the species time derivative in the PDE:
+
+   .. math::
+
+      S_i \frac{\partial c_i}{\partial t} = \nabla \cdot \left( D_i \nabla c_i \right) + R_i
+
+   The default is :math:`S=1`, which gives the standard reaction-diffusion form.
+   Larger :math:`S` values make concentration changes slower in time, while values between 0 and 1 make them faster.
+
 
 .. note::
    Take care to get the units correct. All quantities are assumed to have certain SI units, which are noted next to the input field for the respective quantity. For example, the diffusion constant could have units of :math: `cm^2/s`. For more on units, `see here <../reference/units.html>`_.

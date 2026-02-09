@@ -234,7 +234,8 @@ static void addCompartment(
     }
 
     // Factor to multiply d/dt term by in PDE
-    ini.addValue("storage.expression", "1");
+    double storageValue = model.getSpecies().getStorage(name);
+    ini.addValue("storage.expression", storageValue, doublePrecision);
 
     // reactions
     ini.addValue("reaction.expression", pde.getRHS()[i].c_str());

@@ -464,4 +464,23 @@ TEST_CASE("SBML species",
       REQUIRE(concentration[i] == dbl_approx(correct_conc(voxels[i])));
     }
   }
+  SECTION("Storage values") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    REQUIRE(s.getStorage("A_c1") == dbl_approx(1.0));
+    s.setStorage("A_c1", 2.5);
+    REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
+    // ignore invalid values
+    s.setStorage("A_c1", 0.0);
+    REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
+    s.setStorage("A_c1", -4.0);
+    REQUIRE(s.getStorage("A_c1") == dbl_approx(2.5));
+    // persists via SBML annotations
+    auto xml{m.getXml().toStdString()};
+    model::Model m2;
+    m2.importSBMLString(xml);
+    REQUIRE(m2.getSpecies().getStorage("A_c1") == dbl_approx(2.5));
+    // unknown species defaults to 1
+    REQUIRE(m2.getSpecies().getStorage("does_not_exist") == dbl_approx(1.0));
+  }
 }

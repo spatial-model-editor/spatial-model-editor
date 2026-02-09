@@ -955,118 +955,133 @@ TEST_CASE("Simulate: single-compartment-diffusion-3d, spherical geometry",
                                           "exp((-1/36) * (x^2 + y^2 + z^2))");
   auto voxel_volume{s.getGeometry().getVoxelSize().volume()};
   REQUIRE(voxel_volume == dbl_approx(initial_voxel_volume));
+  auto run3dDiffusionCase = [&](double slowStorage, double fastStorage,
+                                double pixelMaxRelErr, double pixelAvgRelErr,
+                                double duneMaxRelErr, double duneAvgRelErr) {
+    s.getSpecies().setStorage("slow", slowStorage);
+    s.getSpecies().setStorage("fast", fastStorage);
 
-  // check fields have correct compartments
-  const auto *slow{s.getSpecies().getField("slow")};
-  REQUIRE(slow->getCompartment()->getId() == "cube");
-  REQUIRE(slow->getId() == "slow");
-  const auto *fast{s.getSpecies().getField("fast")};
-  REQUIRE(fast->getCompartment()->getId() == "cube");
-  REQUIRE(fast->getId() == "fast");
+    // check fields have correct compartments
+    const auto *slow{s.getSpecies().getField("slow")};
+    REQUIRE(slow->getCompartment()->getId() == "cube");
+    REQUIRE(slow->getId() == "slow");
+    const auto *fast{s.getSpecies().getField("fast")};
+    REQUIRE(fast->getCompartment()->getId() == "cube");
+    REQUIRE(fast->getId() == "fast");
 
-  // check total initial species amount matches analytic value
-  double analytic_total = sigma2 * pi * std::sqrt(sigma2 * pi);
-  for (const auto &c : {slow->getConcentration(), fast->getConcentration()}) {
-    CAPTURE(analytic_total);
-    CAPTURE(std::abs(voxel_volume * common::sum(c)));
-    REQUIRE(std::abs(voxel_volume * common::sum(c) - analytic_total) /
-                analytic_total <
-            epsilon);
-  }
-
-  // check initial distribution matches analytic one
-  for (const auto &f : {slow, fast}) {
-    double D = f->getDiffusionConstant()[0];
-    double t0 = sigma2 / 4.0 / D;
-    double maxRelErr = 0;
-    for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
-      const auto &v{f->getCompartment()->getVoxel(i)};
-      auto physicalPoint{s.getGeometry().getPhysicalPoint(v)};
-      double c = analytic_3d(physicalPoint, 0, D, t0);
-      double relErr = std::abs(f->getConcentration()[i] - c) / c;
-      maxRelErr = std::max(maxRelErr, relErr);
-    }
-    CAPTURE(f->getDiffusionConstant()[0]);
-    REQUIRE(maxRelErr < epsilon);
-  }
-
-  auto &options{s.getSimulationSettings().options};
-  options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
-  options.dune.dt = 1.0;
-  options.dune.maxDt = 1.0;
-  options.dune.minDt = 0.5;
-  // make a fine mesh for dune
-  s.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(0, 4);
-  for (auto simType :
-       {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
-    // relative error on integral of initial concentration over all pixels:
-    double initialRelativeError{1e-9};
-    // largest relative error of any pixel after simulation:
-    double evolvedMaxRelativeError{0.030};
-    // average of relative errors of all pixels after simulation:
-    double evolvedAvgRelativeError{0.010};
-    if (simType == simulate::SimulatorType::DUNE) {
-      // increase allowed error for dune simulation
-      initialRelativeError = 0.03;
-      evolvedMaxRelativeError = 0.40;
-      evolvedAvgRelativeError = 0.10;
-    }
-    s.getSimulationSettings().simulatorType = simType;
-    s.getSimulationData().clear();
-
-    // integrate & compare
-    simulate::Simulation sim(s);
-    double t = 10.0;
-    for (std::size_t step = 0; step < 2; ++step) {
-      sim.doTimesteps(t);
-      for (auto speciesIndex : {0u, 1u}) {
-        // check total species amount is conserved
-        auto c = sim.getConc(step + 1, 0, speciesIndex);
-        double totalC = voxel_volume * common::sum(c);
-        double relErr = std::abs(totalC - analytic_total) / analytic_total;
-        CAPTURE(simType);
-        CAPTURE(speciesIndex);
-        CAPTURE(sim.getTimePoints().back());
-        CAPTURE(totalC);
-        CAPTURE(analytic_total);
-        REQUIRE(relErr < initialRelativeError);
-      }
+    // check total initial species amount matches analytic value
+    double analytic_total = sigma2 * pi * std::sqrt(sigma2 * pi);
+    for (const auto &c : {slow->getConcentration(), fast->getConcentration()}) {
+      CAPTURE(analytic_total);
+      CAPTURE(std::abs(voxel_volume * common::sum(c)));
+      REQUIRE(std::abs(voxel_volume * common::sum(c) - analytic_total) /
+                  analytic_total <
+              epsilon);
     }
 
-    // check new distribution matches analytic_3d one
-    std::vector<double> D{slow->getDiffusionConstant()[0],
-                          fast->getDiffusionConstant()[0]};
-    std::size_t timeIndex = sim.getTimePoints().size() - 1;
-    t = sim.getTimePoints().back();
-    for (auto speciesIndex : {0u, 1u}) {
-      double t0 = sigma2 / 4.0 / D[speciesIndex];
-      auto conc = sim.getConc(timeIndex, 0, speciesIndex);
-      double maxRelErr{0};
-      double avgRelErr{0};
-      std::size_t count{0};
-      for (std::size_t i = 0; i < slow->getCompartment()->nVoxels(); ++i) {
-        const auto &v{slow->getCompartment()->getVoxel(i)};
-        // only check part within a radius of 16 units from centre to avoid
-        // boundary effects: analytic solution is in infinite volume
+    // check initial distribution matches analytic one
+    for (const auto &f : {slow, fast}) {
+      double D = f->getDiffusionConstant()[0];
+      double t0 = sigma2 / 4.0 / D;
+      double maxRelErr = 0;
+      for (std::size_t i = 0; i < f->getCompartment()->nVoxels(); ++i) {
+        const auto &v{f->getCompartment()->getVoxel(i)};
         auto physicalPoint{s.getGeometry().getPhysicalPoint(v)};
-        if (std::pow(physicalPoint.p.x(), 2) +
-                std::pow(physicalPoint.p.y(), 2) +
-                std::pow(physicalPoint.z, 2) <
-            16 * 16) {
-          double c_analytic =
-              analytic_3d(physicalPoint, t, D[speciesIndex], t0);
-          double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
-          avgRelErr += relErr;
-          ++count;
-          maxRelErr = std::max(maxRelErr, relErr);
+        double c = analytic_3d(physicalPoint, 0, D, t0);
+        double relErr = std::abs(f->getConcentration()[i] - c) / c;
+        maxRelErr = std::max(maxRelErr, relErr);
+      }
+      CAPTURE(f->getDiffusionConstant()[0]);
+      REQUIRE(maxRelErr < epsilon);
+    }
+
+    auto &options{s.getSimulationSettings().options};
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.01};
+    options.dune.dt = 1.0;
+    options.dune.maxDt = 1.0;
+    options.dune.minDt = 0.5;
+    // make a fine mesh for dune
+    s.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(0, 4);
+    for (auto simType :
+         {simulate::SimulatorType::Pixel, simulate::SimulatorType::DUNE}) {
+      // relative error on integral of initial concentration over all pixels:
+      double initialRelativeError{1e-9};
+      // largest relative error of any pixel after simulation:
+      double evolvedMaxRelativeError{pixelMaxRelErr};
+      // average of relative errors of all pixels after simulation:
+      double evolvedAvgRelativeError{pixelAvgRelErr};
+      if (simType == simulate::SimulatorType::DUNE) {
+        // increase allowed error for dune simulation
+        initialRelativeError = 0.03;
+        evolvedMaxRelativeError = duneMaxRelErr;
+        evolvedAvgRelativeError = duneAvgRelErr;
+      }
+      s.getSimulationSettings().simulatorType = simType;
+      s.getSimulationData().clear();
+
+      // integrate & compare
+      simulate::Simulation sim(s);
+      double t = 10.0;
+      for (std::size_t step = 0; step < 2; ++step) {
+        sim.doTimesteps(t);
+        for (auto speciesIndex : {0u, 1u}) {
+          // check total species amount is conserved
+          auto c = sim.getConc(step + 1, 0, speciesIndex);
+          double totalC = voxel_volume * common::sum(c);
+          double relErr = std::abs(totalC - analytic_total) / analytic_total;
+          CAPTURE(simType);
+          CAPTURE(speciesIndex);
+          CAPTURE(sim.getTimePoints().back());
+          CAPTURE(totalC);
+          CAPTURE(analytic_total);
+          REQUIRE(relErr < initialRelativeError);
         }
       }
-      avgRelErr /= static_cast<double>(count);
-      CAPTURE(simType);
-      CAPTURE(t);
-      REQUIRE(maxRelErr < evolvedMaxRelativeError);
-      REQUIRE(avgRelErr < evolvedAvgRelativeError);
+
+      // check new distribution matches analytic_3d one
+      std::vector<double> D{slow->getDiffusionConstant()[0],
+                            fast->getDiffusionConstant()[0]};
+      std::vector<double> storage{slowStorage, fastStorage};
+      std::size_t timeIndex = sim.getTimePoints().size() - 1;
+      t = sim.getTimePoints().back();
+      for (auto speciesIndex : {0u, 1u}) {
+        double t0 = sigma2 / 4.0 / D[speciesIndex];
+        auto conc = sim.getConc(timeIndex, 0, speciesIndex);
+        double maxRelErr{0};
+        double avgRelErr{0};
+        std::size_t count{0};
+        for (std::size_t i = 0; i < slow->getCompartment()->nVoxels(); ++i) {
+          const auto &v{slow->getCompartment()->getVoxel(i)};
+          // only check part within a radius of 16 units from centre to avoid
+          // boundary effects: analytic solution is in infinite volume
+          auto physicalPoint{s.getGeometry().getPhysicalPoint(v)};
+          if (std::pow(physicalPoint.p.x(), 2) +
+                  std::pow(physicalPoint.p.y(), 2) +
+                  std::pow(physicalPoint.z, 2) <
+              16 * 16) {
+            double c_analytic = analytic_3d(
+                physicalPoint, t / storage[speciesIndex], D[speciesIndex], t0);
+            double relErr = std::abs(conc[i] - c_analytic) / c_analytic;
+            avgRelErr += relErr;
+            ++count;
+            maxRelErr = std::max(maxRelErr, relErr);
+          }
+        }
+        avgRelErr /= static_cast<double>(count);
+        CAPTURE(simType);
+        CAPTURE(t);
+        CAPTURE(storage[speciesIndex]);
+        REQUIRE(maxRelErr < evolvedMaxRelativeError);
+        REQUIRE(avgRelErr < evolvedAvgRelativeError);
+      }
     }
+  };
+
+  SECTION("unit storage") {
+    run3dDiffusionCase(1.0, 1.0, 0.030, 0.010, 0.40, 0.10);
+  }
+  SECTION("non-unit storage") {
+    run3dDiffusionCase(2.0, 3.0, 0.040, 0.015, 0.75, 0.20);
   }
 }
 
@@ -1814,6 +1829,40 @@ TEST_CASE("Reactions depend on x, y, t",
     constexpr double maxAllowedRelDiff{1e-7};
     s.getSpecies().remove("A");
     s.getSpecies().remove("B");
+    simulate::Simulation simPixel{s};
+    simPixel.doTimesteps(dt, 1);
+    REQUIRE(simPixel.errorMessage().empty());
+    REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+    s.getSimulationData().clear();
+    s.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune{s};
+    simDune.doTimesteps(dt, 1);
+    CAPTURE(simDune.errorMessage());
+    REQUIRE(simDune.errorMessage().empty());
+    REQUIRE(simDune.getNCompletedTimesteps() == 2);
+    auto p{simPixel.getConc(1, 0, 0)};
+    auto d{simDune.getConc(1, 0, 0)};
+    REQUIRE(p.size() == d.size());
+    double maxAbsDiff{0};
+    double maxRelDiff{0};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
+      maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
+                                            (std::abs(p[i] + d[i] + eps)));
+    }
+    CAPTURE(maxAbsDiff);
+    CAPTURE(maxRelDiff);
+    REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
+    REQUIRE(maxRelDiff < maxAllowedRelDiff);
+  }
+  SECTION("reaction with t-dependence and non-unit storage") {
+    // fairly tight tolerance, as solution is spatially uniform, so mesh vs
+    // pixel geometry is not a factor when comparing Pixel and Dune here
+    constexpr double maxAllowedAbsDiff{1e-10};
+    constexpr double maxAllowedRelDiff{1e-7};
+    s.getSpecies().remove("A");
+    s.getSpecies().remove("B");
+    s.getSpecies().setStorage("C", 2.0);
     simulate::Simulation simPixel{s};
     simPixel.doTimesteps(dt, 1);
     REQUIRE(simPixel.errorMessage().empty());

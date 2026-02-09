@@ -41,6 +41,17 @@ TEST_CASE("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "reaction.jacobian.C.expression = 0"));
     REQUIRE(symEq(*line++, "cross_diffusion.C.expression = 25"));
   }
+  SECTION("ABtoC model with non-default storage") {
+    auto s{getExampleModel(Mod::ABtoC)};
+    s.getSpecies().setStorage("C", 2.5);
+    simulate::DuneConverter dc(s, {}, true, {}, 14);
+    QStringList ini = dc.getIniFile().split("\n");
+    auto line = find_line("[model.scalar_field.C]", ini);
+    REQUIRE(*line++ == "[model.scalar_field.C]");
+    REQUIRE(*line++ == "compartment = comp");
+    REQUIRE(*line++ == "initial.expression = 0");
+    REQUIRE(*line++ == "storage.expression = 2.5");
+  }
   SECTION("brusselator model") {
     auto s{getExampleModel(Mod::Brusselator)};
     simulate::DuneConverter dc(s);

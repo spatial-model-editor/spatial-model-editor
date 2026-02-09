@@ -75,6 +75,8 @@ public:
   [[nodiscard]] bool getIsSpatial(const QString &id) const;
   void setDiffusionConstant(const QString &id, double diffusionConstant);
   [[nodiscard]] double getDiffusionConstant(const QString &id) const;
+  void setStorage(const QString &id, double storageValue);
+  [[nodiscard]] double getStorage(const QString &id) const;
   [[nodiscard]] SpatialDataType
   getDiffusionConstantType(const QString &id) const;
   [[nodiscard]] SpatialDataType

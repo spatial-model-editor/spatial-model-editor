@@ -46,4 +46,33 @@ TEST_CASE("PixelSim", "[core/simulate/pixelsim][core/"
       REQUIRE(cUniform[i] == dbl_approx(cArray[i]));
     }
   }
+  SECTION("Storage scales dcdt for species") {
+    auto mDefault{getExampleModel(Mod::ABtoC)};
+    auto mStorage{getExampleModel(Mod::ABtoC)};
+    mStorage.getSpecies().setStorage("C", 2.0);
+    for (auto *m : {&mDefault, &mStorage}) {
+      auto &options{m->getSimulationSettings().options};
+      options.pixel.enableMultiThreading = false;
+      options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+      options.pixel.maxTimestep = 1e-3;
+    }
+    std::vector<std::string> comps{"comp"};
+    std::vector<std::vector<std::string>> specs{{"A", "B", "C"}};
+    simulate::PixelSim simDefault(mDefault, comps, specs);
+    simulate::PixelSim simStorage(mStorage, comps, specs);
+    REQUIRE(simDefault.errorMessage().empty());
+    REQUIRE(simStorage.errorMessage().empty());
+    simDefault.run(1e-3, -1.0, {});
+    simStorage.run(1e-3, -1.0, {});
+    const auto &dcdtDefault = simDefault.getDcdt(0);
+    const auto &dcdtStorage = simStorage.getDcdt(0);
+    REQUIRE(dcdtDefault.size() == dcdtStorage.size());
+    for (std::size_t i = 0; i < dcdtDefault.size() / 3; ++i) {
+      // A and B unchanged as only C has non-unit storage
+      REQUIRE(dcdtStorage[i * 3] == dbl_approx(dcdtDefault[i * 3]));
+      REQUIRE(dcdtStorage[i * 3 + 1] == dbl_approx(dcdtDefault[i * 3 + 1]));
+      REQUIRE(dcdtStorage[i * 3 + 2] ==
+              dbl_approx(0.5 * dcdtDefault[i * 3 + 2]));
+    }
+  }
 }
