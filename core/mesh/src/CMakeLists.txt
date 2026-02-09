@@ -3,6 +3,7 @@ target_sources(
   PRIVATE boundaries.cpp
           boundary.cpp
           contour_map.cpp
+          gmsh.cpp
           interior_point.cpp
           line_simplifier.cpp
           mesh2d.cpp
@@ -18,6 +19,7 @@ if(BUILD_TESTING)
     PUBLIC boundaries_t.cpp
            boundary_t.cpp
            contour_map_t.cpp
+           gmsh_t.cpp
            interior_point_t.cpp
            line_simplifier_t.cpp
            mesh2d_t.cpp
