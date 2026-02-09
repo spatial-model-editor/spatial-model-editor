@@ -272,6 +272,14 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
     const auto *ssp = static_cast<const libsbml::SpatialSpeciesPlugin *>(
         spec->getPlugin("spatial"));
     field.setIsSpatial(ssp->getIsSpatial());
+    if (!sbmlAnnotation->speciesStorageValues.contains(id.toStdString())) {
+      sbmlAnnotation->speciesStorageValues[id.toStdString()] = 1.0;
+    } else if (sbmlAnnotation->speciesStorageValues[id.toStdString()] <= 0.0) {
+      SPDLOG_WARN("Invalid non-positive storage value for species '{}' - "
+                  "resetting to 1",
+                  id.toStdString());
+      sbmlAnnotation->speciesStorageValues[id.toStdString()] = 1.0;
+    }
     const auto *param = getOrCreateDiffusionConstantParameter(sbmlModel, id);
     if (param->isSetValue()) {
       // set uniform diffusion constant from parameter value if provided
@@ -346,6 +354,7 @@ QString ModelSpecies::add(const QString &name, const QString &compartmentId) {
   sbmlAnnotation->speciesColors[sId] = color;
   setIsSpatial(id, true);
   setDiffusionConstant(id, 1.0);
+  setStorage(id, 1.0);
   setInitialConcentration(id, 0.0);
   return newName;
 }
@@ -372,6 +381,7 @@ void ModelSpecies::remove(const QString &id) {
   sbmlAnnotation->speciesColors.erase(sId);
   sbmlAnnotation->speciesDiffusionConstantArrays.erase(sId);
   sbmlAnnotation->speciesAnalyticDiffusionConstants.erase(sId);
+  sbmlAnnotation->speciesStorageValues.erase(sId);
   compartmentIds.removeAt(i);
   removeInitialAssignment(sId.c_str());
   fields.erase(fields.begin() +
@@ -546,6 +556,26 @@ double ModelSpecies::getDiffusionConstant(const QString &id) const {
     return param->getValue();
   }
   return 0.0;
+}
+
+void ModelSpecies::setStorage(const QString &id, double storageValue) {
+  if (storageValue <= 0.0) {
+    SPDLOG_WARN("Ignoring non-positive storage value {} for species '{}'",
+                storageValue, id.toStdString());
+    return;
+  }
+  hasUnsavedChanges = true;
+  sbmlAnnotation->speciesStorageValues[id.toStdString()] = storageValue;
+}
+
+double ModelSpecies::getStorage(const QString &id) const {
+  if (const auto iter =
+          sbmlAnnotation->speciesStorageValues.find(id.toStdString());
+      iter != sbmlAnnotation->speciesStorageValues.cend() &&
+      iter->second > 0.0) {
+    return iter->second;
+  }
+  return 1.0;
 }
 
 SpatialDataType

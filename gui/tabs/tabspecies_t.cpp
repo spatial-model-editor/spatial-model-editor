@@ -10,6 +10,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QToolButton>
 #include <QTreeWidget>
 
 using namespace sme::test;
@@ -76,6 +77,10 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   auto *btnEditImageDiffusionConstant{
       tab.findChild<QPushButton *>("btnEditImageDiffusionConstant")};
   REQUIRE(btnEditImageDiffusionConstant != nullptr);
+  auto *btnSpeciesAdvanced{tab.findChild<QToolButton *>("btnSpeciesAdvanced")};
+  REQUIRE(btnSpeciesAdvanced != nullptr);
+  auto *txtStorage{tab.findChild<QLineEdit *>("txtStorage")};
+  REQUIRE(txtStorage != nullptr);
 
   auto *btnChangeSpeciesColor{
       tab.findChild<QPushButton *>("btnChangeSpeciesColor")};
@@ -98,6 +103,7 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(radDiffusionConstantAnalytic->isEnabled() == false);
     REQUIRE(radDiffusionConstantImage->isEnabled() == false);
     REQUIRE(txtDiffusionConstant->isEnabled() == false);
+    REQUIRE(txtStorage->text() == "1");
     // edit name
     txtSpeciesName->setFocus();
     sendKeyEvents(txtSpeciesName, {" ", "!", "Enter"});
@@ -173,13 +179,20 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     sendKeyEvents(listSpecies, {"Up"});
     sendKeyEvents(listSpecies, {"Down"});
     REQUIRE(txtDiffusionConstant->text() == "9");
+    // expand advanced settings and edit storage value
+    sendMouseClick(btnSpeciesAdvanced);
+    txtStorage->setFocus();
+    sendKeyEvents(txtStorage, {"End", "Backspace", "2", "Enter"});
+    sendKeyEvents(listSpecies, {"Up"});
+    sendKeyEvents(listSpecies, {"Down"});
+    REQUIRE(txtStorage->text() == "2");
     // click change species color, then cancel
     mwt.addUserAction({"Esc"});
     mwt.start();
     sendMouseClick(btnChangeSpeciesColor);
     // edit name
     txtSpeciesName->setFocus();
-    sendKeyEvents(txtSpeciesName, {"B", "Q", "Tab"});
+    sendKeyEvents(txtSpeciesName, {"B", "Q", "Enter"});
     REQUIRE(listSpecies->currentItem()->text(0) == "B_outBQ");
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     // change species location

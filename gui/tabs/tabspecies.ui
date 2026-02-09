@@ -508,6 +508,58 @@
            </property>
           </widget>
          </item>
+         <item row="13" column="0" colspan="8">
+          <widget class="QToolButton" name="btnSpeciesAdvanced">
+           <property name="text">
+            <string>Advanced</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>false</bool>
+           </property>
+           <property name="arrowType">
+            <enum>Qt::RightArrow</enum>
+           </property>
+           <property name="toolButtonStyle">
+            <enum>Qt::ToolButtonTextBesideIcon</enum>
+           </property>
+          </widget>
+         </item>
+         <item row="14" column="0" colspan="8">
+          <widget class="QWidget" name="wgtSpeciesAdvanced" native="true">
+           <property name="visible">
+            <bool>false</bool>
+           </property>
+           <layout class="QGridLayout" name="gridLayoutAdvancedSpecies">
+            <item row="0" column="0">
+             <widget class="QLabel" name="lblStorage">
+              <property name="text">
+               <string>Storage:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="txtStorage">
+              <property name="toolTip">
+               <string>Storage coefficient that multiplies this species time derivative</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QLabel" name="lblStorageUnits">
+              <property name="text">
+               <string>dimensionless</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>

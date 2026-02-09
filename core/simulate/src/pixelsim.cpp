@@ -33,6 +33,11 @@ void PixelSim::calculateDcdt() {
   }
   for (auto &sim : simCompartments) {
     sim->spatiallyAverageDcdt();
+    if (useTBB) {
+      sim->applyStorage_tbb();
+    } else {
+      sim->applyStorage();
+    }
   }
 }
 

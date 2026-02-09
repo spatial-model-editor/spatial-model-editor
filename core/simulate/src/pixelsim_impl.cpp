@@ -88,6 +88,32 @@ void SimCompartment::spatiallyAverageDcdt() {
   }
 }
 
+void SimCompartment::applyStorage(std::size_t begin, std::size_t end) {
+  for (std::size_t i = begin; i < end; ++i) {
+    const std::size_t ix{i * nSpecies};
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      dcdt[ix + is] *= invStorage[is];
+    }
+  }
+}
+
+void SimCompartment::applyStorage() {
+  if (!hasNonUnitStorage) {
+    return;
+  }
+  applyStorage(0, nPixels);
+}
+
+void SimCompartment::applyStorage_tbb() {
+  if (!hasNonUnitStorage) {
+    return;
+  }
+  tbbParallelFor(nPixels,
+                 [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+                   applyStorage(r.begin(), r.end());
+                 });
+}
+
 // Forwards Euler stability bound for dimensionless diffusion constant {D/dx^2,
 // D/dy^2, D/dz^2}
 static double calculateMaxStableTimestep(
@@ -114,6 +140,16 @@ SimCompartment::SimCompartment(
   dz2 = voxelSize.depth() * voxelSize.depth();
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
+    double storageValue = doc.getSpecies().getStorage(s.c_str());
+    if (storageValue <= 0.0) {
+      throw PixelSimImplError(
+          "Invalid non-positive storage value for species '" + s + "'");
+    }
+    double invStorageValue = 1.0 / storageValue;
+    invStorage.push_back(invStorageValue);
+    if (invStorageValue != 1.0) {
+      hasNonUnitStorage = true;
+    }
     if (useUniformDiffusionOperator) {
       const auto &diffArray = field->getDiffusionConstant();
       double d = diffArray.empty() ? 0.0 : diffArray.front();
@@ -121,8 +157,12 @@ SimCompartment::SimCompartment(
           {d / dx2, d / dy2, d / dz2}); // dimensionless diffusion
       maxStableTimestep =
           std::min(maxStableTimestep,
-                   calculateMaxStableTimestep(diffConstantsUniform.back()));
-      SPDLOG_DEBUG("  - adding species: {}, diff constant {}", s, d);
+                   calculateMaxStableTimestep(
+                       {diffConstantsUniform.back()[0] * invStorageValue,
+                        diffConstantsUniform.back()[1] * invStorageValue,
+                        diffConstantsUniform.back()[2] * invStorageValue}));
+      SPDLOG_DEBUG("  - adding species: {}, diff constant {}, storage {}", s, d,
+                   storageValue);
     } else {
       // store diffusion constant per voxel
       diffConstants.push_back(field->getDiffusionConstant());
@@ -133,10 +173,13 @@ SimCompartment::SimCompartment(
       double maxD{diffConstants.back().empty()
                       ? 0.0
                       : common::max(diffConstants.back())};
-      maxStableTimestep = std::min(
-          maxStableTimestep,
-          calculateMaxStableTimestep({maxD / dx2, maxD / dy2, maxD / dz2}));
-      SPDLOG_DEBUG("  - adding species: {}, diff constant (max) {}", s, maxD);
+      maxStableTimestep =
+          std::min(maxStableTimestep,
+                   calculateMaxStableTimestep({maxD * invStorageValue / dx2,
+                                               maxD * invStorageValue / dy2,
+                                               maxD * invStorageValue / dz2}));
+      SPDLOG_DEBUG("  - adding species: {}, diff constant (max) {}, storage {}",
+                   s, maxD, storageValue);
     }
     fields.push_back(field);
     speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
@@ -159,6 +202,7 @@ SimCompartment::SimCompartment(
   }
   if (timeDependent) {
     speciesIds.push_back("time");
+    invStorage.push_back(1.0);
     if (useUniformDiffusionOperator) {
       diffConstantsUniform.push_back({0.0, 0.0, 0.0});
     } else {
@@ -168,12 +212,14 @@ SimCompartment::SimCompartment(
   }
   if (spaceDependent) {
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().x.id);
+    invStorage.push_back(1.0);
     if (useUniformDiffusionOperator) {
       diffConstantsUniform.push_back({0.0, 0.0, 0.0});
     } else {
       diffConstants.emplace_back(nPixels, 0.0);
     }
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().y.id);
+    invStorage.push_back(1.0);
     if (useUniformDiffusionOperator) {
       diffConstantsUniform.push_back({0.0, 0.0, 0.0});
     } else {
@@ -184,6 +230,7 @@ SimCompartment::SimCompartment(
     // dependent reaction terms will not be imported - as most likely this
     // affects no-one.
     speciesIds.push_back(doc.getParameters().getSpatialCoordinates().z.id);
+    invStorage.push_back(1.0);
     if (useUniformDiffusionOperator) {
       diffConstantsUniform.push_back({0.0, 0.0, 0.0});
     } else {

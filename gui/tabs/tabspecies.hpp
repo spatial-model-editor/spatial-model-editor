@@ -51,5 +51,6 @@ private:
   void txtDiffusionConstant_editingFinished();
   void btnEditAnalyticDiffusionConstant_clicked();
   void btnEditImageDiffusionConstant_clicked();
+  void txtStorage_editingFinished();
   void btnChangeSpeciesColor_clicked();
 };

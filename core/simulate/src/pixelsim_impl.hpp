@@ -53,6 +53,8 @@ private:
   std::vector<std::vector<double>> diffConstants;
   // diffusion constants (D/dx^2, D/dy^2, D/dz^2) per species
   std::vector<std::array<double, 3>> diffConstantsUniform;
+  // inverse storage term (1 / S) per species
+  std::vector<double> invStorage;
   const geometry::Compartment *comp;
   std::size_t nPixels;
   std::size_t nSpecies;
@@ -65,6 +67,7 @@ private:
   double dy2{1.0};
   double dz2{1.0};
   bool useUniformDiffusionOperator{false};
+  bool hasNonUnitStorage{false};
 
 public:
   explicit SimCompartment(
@@ -81,6 +84,9 @@ public:
   void evaluateReactionsAndDiffusion();
   void evaluateReactionsAndDiffusion_tbb();
   void spatiallyAverageDcdt();
+  void applyStorage(std::size_t begin, std::size_t end);
+  void applyStorage();
+  void applyStorage_tbb();
   void doForwardsEulerTimestep(double dt, std::size_t begin, std::size_t end);
   void doForwardsEulerTimestep(double dt);
   void doForwardsEulerTimestep_tbb(double dt);
