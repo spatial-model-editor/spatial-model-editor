@@ -274,8 +274,8 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
     field.setIsSpatial(ssp->getIsSpatial());
     if (!sbmlAnnotation->speciesStorageValues.contains(id.toStdString())) {
       sbmlAnnotation->speciesStorageValues[id.toStdString()] = 1.0;
-    } else if (sbmlAnnotation->speciesStorageValues[id.toStdString()] <= 0.0) {
-      SPDLOG_WARN("Invalid non-positive storage value for species '{}' - "
+    } else if (sbmlAnnotation->speciesStorageValues[id.toStdString()] < 0.0) {
+      SPDLOG_WARN("Invalid negative storage value for species '{}' - "
                   "resetting to 1",
                   id.toStdString());
       sbmlAnnotation->speciesStorageValues[id.toStdString()] = 1.0;
@@ -559,8 +559,8 @@ double ModelSpecies::getDiffusionConstant(const QString &id) const {
 }
 
 void ModelSpecies::setStorage(const QString &id, double storageValue) {
-  if (storageValue <= 0.0) {
-    SPDLOG_WARN("Ignoring non-positive storage value {} for species '{}'",
+  if (storageValue < 0.0) {
+    SPDLOG_WARN("Ignoring negative storage value {} for species '{}'",
                 storageValue, id.toStdString());
     return;
   }
@@ -572,7 +572,7 @@ double ModelSpecies::getStorage(const QString &id) const {
   if (const auto iter =
           sbmlAnnotation->speciesStorageValues.find(id.toStdString());
       iter != sbmlAnnotation->speciesStorageValues.cend() &&
-      iter->second > 0.0) {
+      iter->second >= 0.0) {
     return iter->second;
   }
   return 1.0;

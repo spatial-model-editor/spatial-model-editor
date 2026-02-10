@@ -62,12 +62,17 @@ private:
   std::vector<std::string> speciesIds;
   std::vector<std::string> speciesNames;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
+  std::vector<std::size_t> zeroStorageSpeciesIndices;
+  std::vector<double> relaxOld;
+  std::vector<double> relaxFirstOrder;
   double maxStableTimestep = std::numeric_limits<double>::max();
+  double maxRelaxStableTimestep = std::numeric_limits<double>::max();
   double dx2{1.0};
   double dy2{1.0};
   double dz2{1.0};
   bool useUniformDiffusionOperator{false};
   bool hasNonUnitStorage{false};
+  bool hasZeroStorageSpecies{false};
 
 public:
   explicit SimCompartment(
@@ -113,6 +118,14 @@ public:
   [[nodiscard]] PixelIntegratorError calculateRKError(double epsilon) const;
   std::string plotRKError(common::ImageStack &images, double epsilon,
                           double max) const;
+  [[nodiscard]] bool getHasZeroStorageSpecies() const;
+  [[nodiscard]] double getMaxRelaxStableTimestep() const;
+  void doRelaxSubstep1(double dt);
+  void doRelaxSubstep2(double dt);
+  void undoRelaxStep();
+  [[nodiscard]] PixelIntegratorError calculateRelaxError(double epsilon) const;
+  [[nodiscard]] PixelIntegratorError
+  getZeroStorageResidual(double epsilon) const;
   [[nodiscard]] const std::string &getCompartmentId() const;
   [[nodiscard]] const std::vector<std::string> &getSpeciesIds() const;
   [[nodiscard]] const std::vector<double> &getConcentrations() const;

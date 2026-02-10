@@ -60,7 +60,7 @@ where the value with index :math:`(i,j,k)` corresponds to the concentration
 at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
 
 For diffusion constants that vary in space, the diffusion term is written in conservative form.
-With species storage coefficient :math:`S>0`, the PDE is
+With species storage coefficient :math:`S \geq 0`, the PDE is
 
 .. math::
 
@@ -276,6 +276,8 @@ We use the embedded lower order solution to estimate the error at each timestep,
 
    An example of the difference between order p and order p-1 solutions from embedded schemes as a function of the stepsize. This quantity is a measure of the local integration error, and scales like :math:`h^p`
 
+.. _maximum-timestep:
+
 Maximum timestep
 ----------------
 
@@ -315,6 +317,61 @@ Membranes
 ^^^^^^^^^
 
 Reactions that take place between two compartments involve a flux across the membrane separating the two compartments. For each neighbouring pair of pixels from the two compartments, whose common boundary constitutes the membrane, the flux term is converted into a reaction term that creates or destroys the appropriate amount of species concentration in each pixel.
+
+Zero-storage species
+^^^^^^^^^^^^^^^^^^^^
+
+When a species has storage coefficient :math:`S = 0`, its PDE becomes an algebraic constraint:
+
+.. math::
+
+   0 = \nabla \cdot \left( D \nabla c \right) + R
+
+Rather than being integrated forward in time, the concentration of such a species must satisfy this constraint at every timestep. The Pixel solver handles this via operator splitting with adaptive pseudo-time relaxation.
+
+**Operator splitting.** Zero-storage species are excluded from the main Runge-Kutta time integration.
+Their ``dcdt`` is set to zero by the storage term (since :math:`1/S` is treated as zero),
+so the RK stepper leaves their concentrations unchanged.
+Instead, a separate constraint solver is called before each evaluation of the right-hand side
+(i.e. before each RK stage), ensuring that time-integrated species always see
+zero-storage concentrations that satisfy the constraint.
+
+**Adaptive pseudo-time relaxation.** The constraint is solved by introducing a fictitious time
+:math:`\tau` and integrating the pseudo-time equation
+
+.. math::
+
+   \frac{\partial c}{\partial \tau} = \nabla \cdot \left( D \nabla c \right) + R
+
+to steady state. This is done using the same embedded RK2(1)2 (Heun) integrator
+used for the main time integration, with adaptive step size control.
+The pseudo-timestep is bounded by the CFL stability condition:
+
+.. math::
+
+   \delta \tau \leq \frac{1}{2 D_{\max} \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
+
+where :math:`D_{\max}` is the largest diffusion constant over all voxels for the zero-storage species.
+
+**Convergence criteria.** The relaxation iterations stop when the residual
+:math:`r = \nabla \cdot (D \nabla c) + R` is small enough.
+The same error tolerances (max absolute and max relative local error) configured for the
+main time integrator are used as convergence thresholds: the absolute residual
+must be below the configured max absolute error, and the relative residual
+(normalised by the species concentration) must be below the configured max relative error.
+A maximum of 100 iterations is allowed; if convergence is not reached, a warning is logged.
+
+**Error estimation.** Zero-storage species are excluded from the main RK error estimation,
+since they are not time-integrated and their accuracy is controlled by the constraint solver instead.
+
+**CFL bound.** Zero-storage species do not contribute to the maximum stable timestep
+for the main RK integrator, since the storage coefficient :math:`S` appears in the numerator of
+the CFL bound (see the :ref:`maximum-timestep` section).
+
+**Special case: D = 0 and S = 0.** When both diffusion and storage are zero,
+the constraint reduces to :math:`0 = R(c)`, a purely algebraic equation.
+The relaxation solver uses a fallback pseudo-timestep in this case,
+but convergence depends on the structure of :math:`R`.
 
 Non-spatial species
 ^^^^^^^^^^^^^^^^^^^

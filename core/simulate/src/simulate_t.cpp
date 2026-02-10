@@ -1132,6 +1132,41 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "Simulate: zero-storage species, dune vs pixel",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  // With S=0 and D>0, the constraint 0 = div(D grad c) should give spatially
+  // uniform c. Both DUNE and Pixel should agree.
+  auto s{getTestModel("small-single-compartment-diffusion")};
+  s.getSpecies().setStorage("slow", 0.0);
+  auto &options{s.getSimulationSettings().options};
+  options.pixel.maxErr = {1e-12, 1e-12};
+  options.pixel.maxThreads = 2;
+  options.dune.dt = 0.5;
+  for (auto simulator :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    CAPTURE(simulator);
+    s.getSimulationData().clear();
+    s.getSimulationSettings().simulatorType = simulator;
+    auto sim = simulate::Simulation(s);
+    REQUIRE(sim.errorMessage().empty());
+    auto simSteps =
+        std::async(std::launch::async, &simulate::Simulation::doTimesteps, &sim,
+                   5.0, 1, -1.0);
+    REQUIRE(simSteps.get() >= 1);
+    REQUIRE(sim.errorMessage().empty());
+    auto timeIndex = sim.getTimePoints().size() - 1;
+    // zero-storage species "slow" (index 0) should be spatially uniform
+    auto conc = sim.getAvgMinMax(timeIndex, 0, 0);
+    CAPTURE(conc.min);
+    CAPTURE(conc.avg);
+    CAPTURE(conc.max);
+    REQUIRE(conc.avg > 1e-12);
+    REQUIRE(std::abs((conc.min - conc.avg) / conc.avg) < 1e-6);
+    REQUIRE(std::abs((conc.max - conc.avg) / conc.avg) < 1e-6);
+  }
+}
+
+TEST_CASE(
     "Simulate: spatially varying diffusion steady state",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   SECTION("many steps: both species end up equally & uniformly distributed") {

@@ -141,26 +141,46 @@ SimCompartment::SimCompartment(
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
     double storageValue = doc.getSpecies().getStorage(s.c_str());
-    if (storageValue <= 0.0) {
-      throw PixelSimImplError(
-          "Invalid non-positive storage value for species '" + s + "'");
+    if (storageValue < 0.0) {
+      throw PixelSimImplError("Invalid negative storage value for species '" +
+                              s + "'");
     }
-    double invStorageValue = 1.0 / storageValue;
-    invStorage.push_back(invStorageValue);
-    if (invStorageValue != 1.0) {
+    if (storageValue == 0.0) {
+      // Zero-storage species: algebraic constraint, not time-evolution
+      invStorage.push_back(0.0);
       hasNonUnitStorage = true;
+      hasZeroStorageSpecies = true;
+      zeroStorageSpeciesIndices.push_back(invStorage.size() - 1);
+    } else {
+      double invStorageValue = 1.0 / storageValue;
+      invStorage.push_back(invStorageValue);
+      if (invStorageValue != 1.0) {
+        hasNonUnitStorage = true;
+      }
     }
     if (useUniformDiffusionOperator) {
       const auto &diffArray = field->getDiffusionConstant();
       double d = diffArray.empty() ? 0.0 : diffArray.front();
       diffConstantsUniform.push_back(
           {d / dx2, d / dy2, d / dz2}); // dimensionless diffusion
-      maxStableTimestep =
-          std::min(maxStableTimestep,
-                   calculateMaxStableTimestep(
-                       {diffConstantsUniform.back()[0] * invStorageValue,
-                        diffConstantsUniform.back()[1] * invStorageValue,
-                        diffConstantsUniform.back()[2] * invStorageValue}));
+      if (storageValue == 0.0) {
+        // Zero-storage: compute CFL-based max stable relaxation dt
+        if (d > 0.0) {
+          maxRelaxStableTimestep =
+              std::min(maxRelaxStableTimestep,
+                       calculateMaxStableTimestep({d / dx2, d / dy2, d / dz2}));
+        } else {
+          SPDLOG_WARN("Species '{}' has S=0 and D=0: pure algebraic constraint",
+                      s);
+        }
+      } else {
+        maxStableTimestep =
+            std::min(maxStableTimestep,
+                     calculateMaxStableTimestep(
+                         {diffConstantsUniform.back()[0] * invStorage.back(),
+                          diffConstantsUniform.back()[1] * invStorage.back(),
+                          diffConstantsUniform.back()[2] * invStorage.back()}));
+      }
       SPDLOG_DEBUG("  - adding species: {}, diff constant {}, storage {}", s, d,
                    storageValue);
     } else {
@@ -173,11 +193,22 @@ SimCompartment::SimCompartment(
       double maxD{diffConstants.back().empty()
                       ? 0.0
                       : common::max(diffConstants.back())};
-      maxStableTimestep =
-          std::min(maxStableTimestep,
-                   calculateMaxStableTimestep({maxD * invStorageValue / dx2,
-                                               maxD * invStorageValue / dy2,
-                                               maxD * invStorageValue / dz2}));
+      if (storageValue == 0.0) {
+        if (maxD > 0.0) {
+          maxRelaxStableTimestep = std::min(
+              maxRelaxStableTimestep,
+              calculateMaxStableTimestep({maxD / dx2, maxD / dy2, maxD / dz2}));
+        } else {
+          SPDLOG_WARN("Species '{}' has S=0 and D=0: pure algebraic constraint",
+                      s);
+        }
+      } else {
+        maxStableTimestep = std::min(
+            maxStableTimestep,
+            calculateMaxStableTimestep({maxD * invStorage.back() / dx2,
+                                        maxD * invStorage.back() / dy2,
+                                        maxD * invStorage.back() / dz2}));
+      }
       SPDLOG_DEBUG("  - adding species: {}, diff constant (max) {}, storage {}",
                    s, maxD, storageValue);
     }
@@ -241,6 +272,10 @@ SimCompartment::SimCompartment(
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
+  if (hasZeroStorageSpecies) {
+    relaxOld.resize(conc.size());
+    relaxFirstOrder.resize(conc.size());
+  }
   auto origin{doc.getGeometry().getPhysicalOrigin()};
   auto concIter{conc.begin()};
   for (std::size_t ix = 0; ix < compartment->nVoxels(); ++ix) {
@@ -472,14 +507,20 @@ void SimCompartment::undoRKStep_tbb() {
 
 PixelIntegratorError SimCompartment::calculateRKError(double epsilon) const {
   PixelIntegratorError err{0.0, 0.0};
-  std::size_t n{conc.size()};
-  for (std::size_t i = 0; i < n; ++i) {
-    double localErr = std::abs(conc[i] - s2[i]);
-    err.abs = std::max(err.abs, localErr);
-    // average current and previous concentrations and add a (hopefully) small
-    // constant term to avoid dividing by c=0 issues
-    double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
-    err.rel = std::max(err.rel, localErr / localNorm);
+  for (std::size_t ix = 0; ix < nPixels; ++ix) {
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      // skip zero-storage species: they are algebraically determined
+      if (invStorage[is] == 0.0) {
+        continue;
+      }
+      std::size_t i = ix * nSpecies + is;
+      double localErr = std::abs(conc[i] - s2[i]);
+      err.abs = std::max(err.abs, localErr);
+      // average current and previous concentrations and add a (hopefully) small
+      // constant term to avoid dividing by c=0 issues
+      double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
+      err.rel = std::max(err.rel, localErr / localNorm);
+    }
   }
   return err;
 }
@@ -490,18 +531,23 @@ std::string SimCompartment::plotRKError(common::ImageStack &images,
   images = {imageSize, QImage::Format_RGB32};
   images.fill(0);
   std::size_t iSpecies{nSpecies + 1};
-  for (std::size_t i = 0; i < conc.size(); ++i) {
-    double localErr = std::abs(conc[i] - s2[i]);
-    double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
-    double pixelIntensity{localErr / localNorm / max};
-    auto red{static_cast<int>(255.0 * pixelIntensity)};
-    auto voxel{comp->getVoxel(i / nSpecies)};
-    auto oldRed{qRed(images[voxel.z].pixel(voxel.p))};
-    if (red > oldRed) {
-      images[voxel.z].setPixel(voxel.p, qRgb(red, 0, 0));
-      if (red > 254) {
-        // update index of species with largest error
-        iSpecies = i % nSpecies;
+  for (std::size_t ix = 0; ix < nPixels; ++ix) {
+    for (std::size_t is = 0; is < nSpecies; ++is) {
+      if (invStorage[is] == 0.0) {
+        continue;
+      }
+      std::size_t i = ix * nSpecies + is;
+      double localErr = std::abs(conc[i] - s2[i]);
+      double localNorm = 0.5 * (conc[i] + s3[i] + epsilon);
+      double pixelIntensity{localErr / localNorm / max};
+      auto red{static_cast<int>(255.0 * pixelIntensity)};
+      auto voxel{comp->getVoxel(ix)};
+      auto oldRed{qRed(images[voxel.z].pixel(voxel.p))};
+      if (red > oldRed) {
+        images[voxel.z].setPixel(voxel.p, qRgb(red, 0, 0));
+        if (red > 254) {
+          iSpecies = is;
+        }
       }
     }
   }
@@ -509,6 +555,73 @@ std::string SimCompartment::plotRKError(common::ImageStack &images,
     return speciesNames[iSpecies];
   }
   return {};
+}
+
+bool SimCompartment::getHasZeroStorageSpecies() const {
+  return hasZeroStorageSpecies;
+}
+
+double SimCompartment::getMaxRelaxStableTimestep() const {
+  return maxRelaxStableTimestep;
+}
+
+void SimCompartment::doRelaxSubstep1(double dt) {
+  for (std::size_t is : zeroStorageSpeciesIndices) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      std::size_t i = ix * nSpecies + is;
+      relaxOld[i] = conc[i];
+      conc[i] += dt * dcdt[i];
+    }
+  }
+}
+
+void SimCompartment::doRelaxSubstep2(double dt) {
+  for (std::size_t is : zeroStorageSpeciesIndices) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      std::size_t i = ix * nSpecies + is;
+      relaxFirstOrder[i] = conc[i];
+      conc[i] = 0.5 * relaxOld[i] + 0.5 * conc[i] + 0.5 * dt * dcdt[i];
+    }
+  }
+}
+
+void SimCompartment::undoRelaxStep() {
+  for (std::size_t is : zeroStorageSpeciesIndices) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      std::size_t i = ix * nSpecies + is;
+      conc[i] = relaxOld[i];
+    }
+  }
+}
+
+PixelIntegratorError SimCompartment::calculateRelaxError(double epsilon) const {
+  PixelIntegratorError err{0.0, 0.0};
+  for (std::size_t is : zeroStorageSpeciesIndices) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      std::size_t i = ix * nSpecies + is;
+      double localErr = std::abs(conc[i] - relaxFirstOrder[i]);
+      err.abs = std::max(err.abs, localErr);
+      // match convention in calculateRKError: average current and pre-step
+      double localNorm = 0.5 * (conc[i] + relaxOld[i] + epsilon);
+      err.rel = std::max(err.rel, localErr / localNorm);
+    }
+  }
+  return err;
+}
+
+PixelIntegratorError
+SimCompartment::getZeroStorageResidual(double epsilon) const {
+  PixelIntegratorError res{0.0, 0.0};
+  for (std::size_t is : zeroStorageSpeciesIndices) {
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      std::size_t i = ix * nSpecies + is;
+      double absRes = std::abs(dcdt[i]);
+      res.abs = std::max(res.abs, absRes);
+      double norm = std::abs(conc[i]) + epsilon;
+      res.rel = std::max(res.rel, absRes / norm);
+    }
+  }
+  return res;
 }
 
 const std::string &SimCompartment::getCompartmentId() const {
