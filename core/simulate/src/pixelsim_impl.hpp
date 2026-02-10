@@ -42,13 +42,22 @@ struct ReacExpr {
 
 class SimCompartment {
 private:
+  struct CrossDiffusionTerm {
+    std::size_t targetSpeciesIndex{};
+    std::size_t sourceSpeciesIndex{};
+  };
   common::Symbolic sym;
+  common::Symbolic symCrossDiffusion;
   // species concentrations & corresponding dcdt values
   // ordering: ix, species
   std::vector<double> conc;
   std::vector<double> dcdt;
   std::vector<double> s2;
   std::vector<double> s3;
+  std::vector<CrossDiffusionTerm> crossDiffusionTerms;
+  // cross-diffusion coefficients D_ij(x, c, t) for each pixel and configured
+  // term (ordering: pixel, term)
+  std::vector<double> crossDiffusionCoefficients;
   // diffusion constants (D) per voxel for each species
   std::vector<std::vector<double>> diffConstants;
   // diffusion constants (D/dx^2, D/dy^2, D/dz^2) per species
@@ -63,6 +72,8 @@ private:
   std::vector<std::string> speciesNames;
   std::vector<std::size_t> nonSpatialSpeciesIndices;
   std::vector<std::size_t> zeroStorageSpeciesIndices;
+  std::size_t nPrimarySpecies{0};
+  std::vector<double> maxPrimaryDiagonalDiffusion;
   std::vector<double> relaxOld;
   std::vector<double> relaxFirstOrder;
   double maxStableTimestep = std::numeric_limits<double>::max();
@@ -73,6 +84,7 @@ private:
   bool useUniformDiffusionOperator{false};
   bool hasNonUnitStorage{false};
   bool hasZeroStorageSpecies{false};
+  bool hasCrossDiffusion{false};
 
 public:
   explicit SimCompartment(
@@ -86,6 +98,9 @@ public:
   void evaluateDiffusionOperator(std::size_t begin, std::size_t end);
   // dcdt += result of applying reaction expressions to conc
   void evaluateReactions(std::size_t begin, std::size_t end);
+  void evaluateCrossDiffusionCoefficients(std::size_t begin, std::size_t end);
+  void updateCrossDiffusionMaxStableTimestep();
+  void evaluateCrossDiffusionOperator(std::size_t begin, std::size_t end);
   void evaluateReactionsAndDiffusion();
   void evaluateReactionsAndDiffusion_tbb();
   void spatiallyAverageDcdt();
@@ -95,6 +110,9 @@ public:
   void doForwardsEulerTimestep(double dt, std::size_t begin, std::size_t end);
   void doForwardsEulerTimestep(double dt);
   void doForwardsEulerTimestep_tbb(double dt);
+  void clampNegativeConcentrations(std::size_t begin, std::size_t end);
+  void clampNegativeConcentrations();
+  void clampNegativeConcentrations_tbb();
   void doRKInit();
   void doRK212Substep1(double dt, std::size_t begin, std::size_t end);
   void doRK212Substep1(double dt);

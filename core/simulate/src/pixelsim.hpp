@@ -32,7 +32,7 @@ private:
   double maxStableTimestep{std::numeric_limits<double>::max()};
   void calculateDcdt();
   void solveZeroStorageConstraints();
-  void doRK101(double dt);
+  double doRK101(double dt);
   void doRK212(double dt);
   void doRK323(double dt);
   void doRK435(double dt);

@@ -3,14 +3,19 @@
 #include "dialogimagedata.hpp"
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qplaintextmathedit.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "ui_tabspecies.h"
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QColorDialog>
+#include <QHeaderView>
 #include <QInputDialog>
 #include <QMessageBox>
+#include <QSignalBlocker>
+#include <QTableWidgetItem>
 
 TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                        QVoxelRenderer *voxelRenderer, QWidget *parent)
@@ -74,6 +79,15 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
           &TabSpecies::txtStorage_editingFinished);
   connect(ui->btnChangeSpeciesColor, &QPushButton::clicked, this,
           &TabSpecies::btnChangeSpeciesColor_clicked);
+  auto *crossDiffusionTable = ui->tblCrossDiffusion;
+  crossDiffusionTable->horizontalHeader()->setSectionResizeMode(
+      0, QHeaderView::ResizeToContents);
+  crossDiffusionTable->horizontalHeader()->setSectionResizeMode(
+      1, QHeaderView::ResizeToContents);
+  crossDiffusionTable->horizontalHeader()->setSectionResizeMode(
+      2, QHeaderView::Stretch);
+  crossDiffusionTable->verticalHeader()->setVisible(false);
+  crossDiffusionTable->setFocusPolicy(Qt::NoFocus);
 }
 
 TabSpecies::~TabSpecies() = default;
@@ -120,6 +134,7 @@ void TabSpecies::enableWidgets(bool enable) {
   ui->btnEditImageDiffusionConstant->setEnabled(enable);
   ui->btnSpeciesAdvanced->setEnabled(enable);
   ui->txtStorage->setEnabled(enable);
+  ui->tblCrossDiffusion->setEnabled(enable);
   ui->btnChangeSpeciesColor->setEnabled(enable);
 }
 
@@ -212,6 +227,7 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   // storage
   ui->txtStorage->setText(
       QString::number(model.getSpecies().getStorage(currentSpeciesId)));
+  updateCrossDiffusionWidgets();
   // color
   lblSpeciesColorPixmap.fill(model.getSpecies().getColor(currentSpeciesId));
   ui->lblSpeciesColor->setPixmap(lblSpeciesColorPixmap);
@@ -450,5 +466,125 @@ void TabSpecies::btnChangeSpeciesColor_clicked() {
     SPDLOG_DEBUG("  - set new color to {:x}", newCol.rgb());
     model.getSpecies().setColor(currentSpeciesId, newCol.rgb());
     listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
+  }
+}
+
+void TabSpecies::updateCrossDiffusionWidgets() {
+  auto *table = ui->tblCrossDiffusion;
+  table->setRowCount(0);
+  if (currentSpeciesId.isEmpty()) {
+    return;
+  }
+  const auto compartmentId{model.getSpecies().getCompartment(currentSpeciesId)};
+  const auto speciesIds{model.getSpecies().getIds(compartmentId)};
+  const auto symbols{model.getParameters().getSymbols({compartmentId})};
+  const auto functions{model.getFunctions().getSymbolicFunctions()};
+  const bool allowCrossDiffusion{
+      model.getSpecies().getIsSpatial(currentSpeciesId) &&
+      !model.getSpecies().getIsConstant(currentSpeciesId)};
+  for (const auto &otherSpeciesId : speciesIds) {
+    if (otherSpeciesId == currentSpeciesId) {
+      continue;
+    }
+    const int row{table->rowCount()};
+    table->insertRow(row);
+    auto *speciesNameItem{
+        new QTableWidgetItem(model.getSpecies().getName(otherSpeciesId))};
+    speciesNameItem->setFlags(Qt::ItemIsEnabled);
+    table->setItem(row, 0, speciesNameItem);
+    const auto expression{model.getSpecies().getCrossDiffusionConstant(
+        currentSpeciesId, otherSpeciesId)};
+    auto *chkEnabled{new QCheckBox(table)};
+    chkEnabled->setChecked(!expression.isEmpty());
+    chkEnabled->setEnabled(allowCrossDiffusion);
+    table->setCellWidget(row, 1, chkEnabled);
+    auto *txtExpression{new QPlainTextMathEdit(table)};
+    txtExpression->setTabChangesFocus(true);
+    txtExpression->setMaximumHeight(35);
+    txtExpression->setMinimumHeight(30);
+    for (const auto &symbol : symbols) {
+      txtExpression->addVariable(symbol.id, symbol.name);
+    }
+    for (const auto &function : functions) {
+      txtExpression->addFunction(function);
+    }
+    {
+      QSignalBlocker blocker(txtExpression);
+      txtExpression->importVariableMath(
+          expression.isEmpty() ? "0" : expression.toStdString());
+    }
+    txtExpression->setEnabled(allowCrossDiffusion && chkEnabled->isChecked());
+    table->setCellWidget(row, 2, txtExpression);
+    connect(chkEnabled, &QCheckBox::toggled, this,
+            [this, otherSpeciesId, txtExpression](bool enabled) {
+              setCrossDiffusionEnabled(otherSpeciesId, txtExpression, enabled);
+            });
+    connect(txtExpression, &QPlainTextMathEdit::mathChanged, this,
+            [this, otherSpeciesId, txtExpression](
+                const QString &math, bool valid, const QString &errorMessage) {
+              Q_UNUSED(math);
+              Q_UNUSED(errorMessage);
+              setCrossDiffusionExpression(otherSpeciesId, txtExpression, valid);
+            });
+  }
+}
+
+void TabSpecies::setCrossDiffusionEnabled(const QString &otherSpeciesId,
+                                          QPlainTextMathEdit *txtExpression,
+                                          bool enabled) {
+  const bool allowCrossDiffusion{
+      model.getSpecies().getIsSpatial(currentSpeciesId) &&
+      !model.getSpecies().getIsConstant(currentSpeciesId)};
+  txtExpression->setEnabled(allowCrossDiffusion && enabled);
+  if (!allowCrossDiffusion) {
+    return;
+  }
+  if (!enabled) {
+    model.getSpecies().removeCrossDiffusionConstant(currentSpeciesId,
+                                                    otherSpeciesId);
+    return;
+  }
+  auto expr{txtExpression->getVariableMath()};
+  const bool exprIsZero{expr == "0" || expr == "0.0"};
+  const bool exprIsValid{txtExpression->mathIsValid() &&
+                         model.getSpecies().isValidCrossDiffusionExpression(
+                             currentSpeciesId, QString::fromStdString(expr))};
+  if (exprIsZero || !exprIsValid) {
+    expr = "1";
+    QSignalBlocker blocker(txtExpression);
+    txtExpression->importVariableMath(expr);
+  }
+  model.getSpecies().setCrossDiffusionConstant(currentSpeciesId, otherSpeciesId,
+                                               expr.c_str());
+}
+
+void TabSpecies::setCrossDiffusionExpression(const QString &otherSpeciesId,
+                                             QPlainTextMathEdit *txtExpression,
+                                             bool valid) {
+  if (!valid) {
+    return;
+  }
+  auto *table = ui->tblCrossDiffusion;
+  for (int row = 0; row < table->rowCount(); ++row) {
+    auto *chkEnabled = qobject_cast<QCheckBox *>(table->cellWidget(row, 1));
+    auto *txtExpr =
+        qobject_cast<QPlainTextMathEdit *>(table->cellWidget(row, 2));
+    if (txtExpr == txtExpression && chkEnabled != nullptr &&
+        chkEnabled->isChecked()) {
+      const auto expr{txtExpression->getVariableMath()};
+      if (expr == "0" || expr == "0.0") {
+        {
+          QSignalBlocker blocker(chkEnabled);
+          chkEnabled->setChecked(false);
+        }
+        txtExpression->setEnabled(false);
+        model.getSpecies().removeCrossDiffusionConstant(currentSpeciesId,
+                                                        otherSpeciesId);
+        return;
+      }
+      model.getSpecies().setCrossDiffusionConstant(
+          currentSpeciesId, otherSpeciesId, expr.c_str());
+      return;
+    }
   }
 }

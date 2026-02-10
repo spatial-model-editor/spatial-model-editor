@@ -174,6 +174,14 @@ TEST_CASE("SBML: import SBML doc without geometry",
       s.getSpecies().setDiffusionConstant("spec1c0", 0.999999);
       s.getSpecies().setDiffusionConstant("spec0c1", 23.1 + 1e-12);
       s.getSpecies().setAnalyticDiffusionConstant("spec1c0", "x+1");
+      s.getSpecies().setCrossDiffusionConstant("spec1c0", "spec0c0",
+                                               "spec0c0 + 1");
+      REQUIRE(
+          symEq(s.getSpecies().getCrossDiffusionConstant("spec1c0", "spec0c0"),
+                "spec0c0 + 1"));
+      REQUIRE(s.getSpecies()
+                  .getCrossDiffusionConstant("spec1c0", "spec0c1")
+                  .isEmpty());
       const auto spec1c0DiffusionBeforeInvalidExpr =
           s.getSpecies().getField("spec1c0")->getDiffusionConstant();
       s.getSpecies().setAnalyticDiffusionConstant("spec1c0", "x+(");
@@ -244,6 +252,12 @@ TEST_CASE("SBML: import SBML doc without geometry",
               model::SpatialDataType::Image);
       REQUIRE(symEq(s2.getSpecies().getAnalyticDiffusionConstant("spec1c0"),
                     "x + 1"));
+      REQUIRE(
+          symEq(s2.getSpecies().getCrossDiffusionConstant("spec1c0", "spec0c0"),
+                "spec0c0 + 1"));
+      REQUIRE(s2.getSpecies()
+                  .getCrossDiffusionConstant("spec1c0", "spec0c1")
+                  .isEmpty());
       REQUIRE(s2.getSpecies().getSampledFieldDiffusionConstant("spec0c1") ==
               spec0c1DiffArray);
     }

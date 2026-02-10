@@ -12,6 +12,7 @@
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
 #include "sme/simulate_options.hpp"
+#include "sme/symbolic.hpp"
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
 #include <QDir>
@@ -21,6 +22,7 @@
 #include <fstream>
 #include <memory>
 #include <numeric>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -92,6 +94,48 @@ static void addTimeStepping(IniFile &ini,
 static void addWriter(IniFile &ini) {
   ini.addSection("model", "writer.vtk");
   ini.addValue("path", "vtk");
+}
+
+static std::pair<std::string, std::vector<std::string>>
+getCrossDiffusionExpressionAndJacobian(
+    const model::Model &model, const std::string &expression,
+    const std::vector<std::string> &speciesIds,
+    const std::vector<std::string> &duneSpeciesIds,
+    const std::vector<std::string> &extraVariables,
+    const std::vector<std::string> &relabelledExtraVariables,
+    double speciesScaleFactor,
+    const std::map<std::string, double, std::less<>> &substitutions) {
+  std::vector<std::pair<std::string, double>> constants;
+  for (const auto &constant : model.getParameters().getGlobalConstants()) {
+    double value = constant.value;
+    if (auto it = substitutions.find(constant.id); it != substitutions.end()) {
+      value = it->second;
+    }
+    constants.emplace_back(constant.id, value);
+  }
+  auto inlinedExpression{model.inlineExpr(expression)};
+  auto variables{speciesIds};
+  variables.insert(variables.end(), extraVariables.cbegin(),
+                   extraVariables.cend());
+  common::Symbolic symbolicCrossDiffusion(inlinedExpression, variables,
+                                          constants);
+  if (!symbolicCrossDiffusion.isValid()) {
+    throw std::runtime_error(fmt::format(
+        "Invalid cross-diffusion expression '{}': {}", inlinedExpression,
+        symbolicCrossDiffusion.getErrorMessage()));
+  }
+  symbolicCrossDiffusion.rescale(speciesScaleFactor, extraVariables);
+  auto relabelledVariables{duneSpeciesIds};
+  relabelledVariables.insert(relabelledVariables.end(),
+                             relabelledExtraVariables.cbegin(),
+                             relabelledExtraVariables.cend());
+  symbolicCrossDiffusion.relabel(relabelledVariables);
+  std::vector<std::string> jacobianExpressions;
+  jacobianExpressions.reserve(duneSpeciesIds.size());
+  for (const auto &speciesId : duneSpeciesIds) {
+    jacobianExpressions.push_back(symbolicCrossDiffusion.diff(speciesId));
+  }
+  return {symbolicCrossDiffusion.inlinedExpr(), jacobianExpressions};
 }
 
 static void addCompartment(
@@ -259,6 +303,32 @@ static void addCompartment(
     } else {
       ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName),
                    f->getDiffusionConstant()[0], doublePrecision);
+    }
+    // off-diagonal cross-diffusion terms and jacobians
+    for (std::size_t j = 0; j < nSpecies; ++j) {
+      if (j == i) {
+        continue;
+      }
+      const QString sourceSpeciesId{nonConstantSpecies[j].c_str()};
+      const auto crossDiffusionExpression{
+          model.getSpecies().getCrossDiffusionConstant(sId, sourceSpeciesId)};
+      if (crossDiffusionExpression.isEmpty()) {
+        continue;
+      }
+      auto [crossExpression, crossJacobian] =
+          getCrossDiffusionExpressionAndJacobian(
+              model, crossDiffusionExpression.toStdString(), nonConstantSpecies,
+              duneSpeciesNames, extraReactionVars, relabelledExtraReactionVars,
+              volOverL3, substitutions);
+      ini.addValue(QString("cross_diffusion.%1.expression")
+                       .arg(duneSpeciesNames[j].c_str()),
+                   crossExpression.c_str());
+      for (std::size_t k = 0; k < nSpecies; ++k) {
+        ini.addValue(
+            QString("cross_diffusion.%1.jacobian.%2.expression")
+                .arg(duneSpeciesNames[j].c_str(), duneSpeciesNames[k].c_str()),
+            crossJacobian[k].c_str());
+      }
     }
 
     // membrane flux terms

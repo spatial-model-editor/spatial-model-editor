@@ -3,6 +3,7 @@
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
+#include "sme/simple_symbolic.hpp"
 #include "sme/utils.hpp"
 #include <QElapsedTimer>
 #include <QString>
@@ -89,12 +90,15 @@ void PixelSim::solveZeroStorageConstraints() {
 
 void PixelSim::calculateDcdt() {
   // calculate dcd/dt in all compartments
+  maxStableTimestep = std::numeric_limits<double>::max();
   for (auto &sim : simCompartments) {
     if (useTBB) {
       sim->evaluateReactionsAndDiffusion_tbb();
     } else {
       sim->evaluateReactionsAndDiffusion();
     }
+    maxStableTimestep =
+        std::min(maxStableTimestep, sim->getMaxStableTimestep());
   }
   // membrane contribution to dc/dt
   for (auto &sim : simMembranes) {
@@ -110,17 +114,24 @@ void PixelSim::calculateDcdt() {
   }
 }
 
-void PixelSim::doRK101(double dt) {
+double PixelSim::doRK101(double dt) {
   // RK1(0)1: Forwards Euler, no error estimate
   solveZeroStorageConstraints();
   calculateDcdt();
+  dt = std::min(dt, maxStableTimestep);
   for (auto &sim : simCompartments) {
     if (useTBB) {
       sim->doForwardsEulerTimestep_tbb(dt);
     } else {
       sim->doForwardsEulerTimestep(dt);
     }
+    if (useTBB) {
+      sim->clampNegativeConcentrations_tbb();
+    } else {
+      sim->clampNegativeConcentrations();
+    }
   }
+  return dt;
 }
 
 void PixelSim::doRK212(double dt) {
@@ -279,6 +290,13 @@ double PixelSim::doRKAdaptive(double dtMax) {
       }
     }
   } while (err.abs > errMax.abs || err.rel > errMax.rel);
+  for (auto &sim : simCompartments) {
+    if (useTBB) {
+      sim->clampNegativeConcentrations_tbb();
+    } else {
+      sim->clampNegativeConcentrations();
+    }
+  }
   return dt;
 }
 
@@ -295,14 +313,43 @@ PixelSim::PixelSim(
     // check if reactions explicitly depend on time or space
     auto xId{doc.getParameters().getSpatialCoordinates().x.id};
     auto yId{doc.getParameters().getSpatialCoordinates().y.id};
-    bool timeDependent{doc.getReactions().dependOnVariable("time")};
+    auto zId{doc.getParameters().getSpatialCoordinates().z.id};
+    const auto crossDiffusionDependsOnVariable =
+        [this, &compartmentSpeciesIds](const std::string &variableId) {
+          for (const auto &speciesIds : compartmentSpeciesIds) {
+            for (const auto &targetSpeciesId : speciesIds) {
+              for (const auto &sourceSpeciesId : speciesIds) {
+                if (targetSpeciesId == sourceSpeciesId) {
+                  continue;
+                }
+                const auto expression =
+                    doc.getSpecies().getCrossDiffusionConstant(
+                        targetSpeciesId.c_str(), sourceSpeciesId.c_str());
+                if (expression.isEmpty()) {
+                  continue;
+                }
+                if (common::SimpleSymbolic::contains(expression.toStdString(),
+                                                     variableId)) {
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        };
+    bool timeDependent{doc.getReactions().dependOnVariable("time") ||
+                       crossDiffusionDependsOnVariable("time")};
     if (timeDependent) {
       ++nExtraVars;
     }
     bool spaceDependent{doc.getReactions().dependOnVariable(xId.c_str()) ||
-                        doc.getReactions().dependOnVariable(yId.c_str())};
+                        doc.getReactions().dependOnVariable(yId.c_str()) ||
+                        doc.getReactions().dependOnVariable(zId.c_str()) ||
+                        crossDiffusionDependsOnVariable(xId) ||
+                        crossDiffusionDependsOnVariable(yId) ||
+                        crossDiffusionDependsOnVariable(zId)};
     if (spaceDependent) {
-      nExtraVars += 2;
+      nExtraVars += 3;
     }
     const bool allUniformDiffusion = [this, &compartmentSpeciesIds]() {
       for (const auto &speciesIds : compartmentSpeciesIds) {
@@ -420,7 +467,7 @@ std::size_t PixelSim::run(double time, double timeout_ms,
     double maxDt = std::min(maxTimestep, time - tNow);
     if (integrator == PixelIntegratorType::RK101) {
       double timestep = std::min(maxDt, maxStableTimestep);
-      doRK101(timestep);
+      timestep = doRK101(timestep);
       tNow += timestep;
     } else {
       tNow += doRKAdaptive(maxDt);

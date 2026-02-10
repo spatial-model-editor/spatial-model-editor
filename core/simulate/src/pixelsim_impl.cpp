@@ -57,10 +57,11 @@ ReacExpr::ReacExpr(
     SPDLOG_TRACE("model reactions depend on space");
     extraVars.push_back(doc.getParameters().getSpatialCoordinates().x.id);
     extraVars.push_back(doc.getParameters().getSpatialCoordinates().y.id);
+    extraVars.push_back(doc.getParameters().getSpatialCoordinates().z.id);
   }
   Pde pde(&doc, speciesIDs, reactionIDs, {}, pdeScaleFactors, extraVars, {},
           substitutions);
-  // add dt/dt = 1 reaction term, and t,x,y "species"
+  // add dt/dt = 1 reaction term, and t,x,y,z "species"
   variables = speciesIDs;
   variables.insert(variables.end(), extraVars.cbegin(), extraVars.cend());
   expressions = pde.getRHS();
@@ -70,6 +71,7 @@ ReacExpr::ReacExpr(
   if (spaceDependent) {
     expressions.emplace_back("0"); // dx/dt = 0
     expressions.emplace_back("0"); // dy/dt = 0
+    expressions.emplace_back("0"); // dz/dt = 0
   }
 }
 
@@ -130,8 +132,10 @@ SimCompartment::SimCompartment(
     : comp{compartment}, nPixels{compartment->nVoxels()}, nSpecies{sIds.size()},
       compartmentId{compartment->getId()}, speciesIds{std::move(sIds)},
       useUniformDiffusionOperator{useUniformDiffusionOp} {
+  nPrimarySpecies = nSpecies;
   // get species in compartment
   speciesNames.reserve(nSpecies);
+  maxPrimaryDiagonalDiffusion.reserve(nSpecies);
   SPDLOG_DEBUG("compartment: {}", compartmentId);
   std::vector<const geometry::Field *> fields;
   const auto voxelSize{doc.getGeometry().getVoxelSize()};
@@ -183,6 +187,7 @@ SimCompartment::SimCompartment(
       }
       SPDLOG_DEBUG("  - adding species: {}, diff constant {}, storage {}", s, d,
                    storageValue);
+      maxPrimaryDiagonalDiffusion.push_back(d);
     } else {
       // store diffusion constant per voxel
       diffConstants.push_back(field->getDiffusionConstant());
@@ -211,6 +216,7 @@ SimCompartment::SimCompartment(
       }
       SPDLOG_DEBUG("  - adding species: {}, diff constant (max) {}, storage {}",
                    s, maxD, storageValue);
+      maxPrimaryDiagonalDiffusion.push_back(maxD);
     }
     fields.push_back(field);
     speciesNames.push_back(doc.getSpecies().getName(s.c_str()).toStdString());
@@ -269,6 +275,44 @@ SimCompartment::SimCompartment(
     }
     nSpecies += 3;
   }
+  // sparse cross-diffusion terms D_ij * grad(c_j), with i != j
+  std::vector<std::string> crossDiffusionExpressions;
+  for (std::size_t iTarget = 0; iTarget < nPrimarySpecies; ++iTarget) {
+    const QString targetSpeciesId{speciesIds[iTarget].c_str()};
+    for (std::size_t iSource = 0; iSource < nPrimarySpecies; ++iSource) {
+      if (iSource == iTarget) {
+        continue;
+      }
+      const QString sourceSpeciesId{speciesIds[iSource].c_str()};
+      const auto expression = doc.getSpecies().getCrossDiffusionConstant(
+          targetSpeciesId, sourceSpeciesId);
+      if (expression.isEmpty()) {
+        continue;
+      }
+      crossDiffusionExpressions.push_back(
+          doc.inlineExpr(expression.toStdString()));
+      crossDiffusionTerms.push_back({iTarget, iSource});
+    }
+  }
+  if (!crossDiffusionExpressions.empty()) {
+    std::vector<std::pair<std::string, double>> constants;
+    for (const auto &constant : doc.getParameters().getGlobalConstants()) {
+      double value = constant.value;
+      if (auto it = substitutions.find(constant.id);
+          it != substitutions.end()) {
+        value = it->second;
+      }
+      constants.emplace_back(constant.id, value);
+    }
+    if (!(symCrossDiffusion.parse(crossDiffusionExpressions, speciesIds,
+                                  constants) &&
+          symCrossDiffusion.compile(doCSE, optLevel))) {
+      throw PixelSimImplError(symCrossDiffusion.getErrorMessage());
+    }
+    hasCrossDiffusion = true;
+    crossDiffusionCoefficients.resize(nPixels * crossDiffusionTerms.size(),
+                                      0.0);
+  }
   // setup concentrations vector with initial values
   conc.resize(nSpecies * nPixels);
   dcdt.resize(conc.size(), 0.0);
@@ -303,6 +347,10 @@ SimCompartment::SimCompartment(
     }
   }
   assert(concIter == conc.end());
+  if (hasCrossDiffusion) {
+    evaluateCrossDiffusionCoefficients(0, nPixels);
+    updateCrossDiffusionMaxStableTimestep();
+  }
 }
 
 void SimCompartment::evaluateDiffusionOperator(std::size_t begin,
@@ -367,17 +415,135 @@ void SimCompartment::evaluateReactions(std::size_t begin, std::size_t end) {
   }
 }
 
+void SimCompartment::evaluateCrossDiffusionCoefficients(std::size_t begin,
+                                                        std::size_t end) {
+  if (!hasCrossDiffusion) {
+    return;
+  }
+  const auto nTerms{crossDiffusionTerms.size()};
+  for (std::size_t i = begin; i < end; ++i) {
+    symCrossDiffusion.eval(crossDiffusionCoefficients.data() + i * nTerms,
+                           conc.data() + i * nSpecies);
+  }
+}
+
+void SimCompartment::updateCrossDiffusionMaxStableTimestep() {
+  if (!hasCrossDiffusion || crossDiffusionTerms.empty()) {
+    return;
+  }
+  const auto nTerms{crossDiffusionTerms.size()};
+  std::vector<double> maxAbsCrossDiffusionByTerm(nTerms, 0.0);
+  for (std::size_t ix = 0; ix < nPixels; ++ix) {
+    const auto iBase{ix * nTerms};
+    for (std::size_t iTerm = 0; iTerm < nTerms; ++iTerm) {
+      maxAbsCrossDiffusionByTerm[iTerm] =
+          std::max(maxAbsCrossDiffusionByTerm[iTerm],
+                   std::abs(crossDiffusionCoefficients[iBase + iTerm]));
+    }
+  }
+  auto maxEffectiveDiffusion{maxPrimaryDiagonalDiffusion};
+  for (std::size_t iTerm = 0; iTerm < nTerms; ++iTerm) {
+    const auto &term{crossDiffusionTerms[iTerm]};
+    maxEffectiveDiffusion[term.targetSpeciesIndex] +=
+        maxAbsCrossDiffusionByTerm[iTerm];
+  }
+  maxStableTimestep = std::numeric_limits<double>::max();
+  for (std::size_t iTarget = 0; iTarget < nPrimarySpecies; ++iTarget) {
+    const double invStorageValue{invStorage[iTarget]};
+    if (invStorageValue == 0.0) {
+      continue;
+    }
+    const double maxEffectiveD{maxEffectiveDiffusion[iTarget]};
+    if (maxEffectiveD <= 0.0) {
+      continue;
+    }
+    maxStableTimestep = std::min(
+        maxStableTimestep,
+        calculateMaxStableTimestep({maxEffectiveD * invStorageValue / dx2,
+                                    maxEffectiveD * invStorageValue / dy2,
+                                    maxEffectiveD * invStorageValue / dz2}));
+  }
+}
+
+void SimCompartment::evaluateCrossDiffusionOperator(std::size_t begin,
+                                                    std::size_t end) {
+  if (!hasCrossDiffusion) {
+    return;
+  }
+  const auto nTerms{crossDiffusionTerms.size()};
+  for (std::size_t i = begin; i < end; ++i) {
+    const std::size_t ix{i * nSpecies};
+    const std::size_t iupx{comp->up_x(i)};
+    const std::size_t idnx{comp->dn_x(i)};
+    const std::size_t iupy{comp->up_y(i)};
+    const std::size_t idny{comp->dn_y(i)};
+    const std::size_t iupz{comp->up_z(i)};
+    const std::size_t idnz{comp->dn_z(i)};
+    const std::size_t ixUpx{iupx * nSpecies};
+    const std::size_t ixDnx{idnx * nSpecies};
+    const std::size_t ixUpy{iupy * nSpecies};
+    const std::size_t ixDny{idny * nSpecies};
+    const std::size_t ixUpz{iupz * nSpecies};
+    const std::size_t ixDnz{idnz * nSpecies};
+    for (std::size_t iTerm = 0; iTerm < nTerms; ++iTerm) {
+      const auto &term{crossDiffusionTerms[iTerm]};
+      const std::size_t target{term.targetSpeciesIndex};
+      const std::size_t source{term.sourceSpeciesIndex};
+      const double dCenter{crossDiffusionCoefficients[i * nTerms + iTerm]};
+      const double dUpx{crossDiffusionCoefficients[iupx * nTerms + iTerm]};
+      const double dDnx{crossDiffusionCoefficients[idnx * nTerms + iTerm]};
+      const double dUpy{crossDiffusionCoefficients[iupy * nTerms + iTerm]};
+      const double dDny{crossDiffusionCoefficients[idny * nTerms + iTerm]};
+      const double dUpz{crossDiffusionCoefficients[iupz * nTerms + iTerm]};
+      const double dDnz{crossDiffusionCoefficients[idnz * nTerms + iTerm]};
+      const double dxp{0.5 * (dCenter + dUpx) / dx2};
+      const double dxm{0.5 * (dCenter + dDnx) / dx2};
+      const double dyp{0.5 * (dCenter + dUpy) / dy2};
+      const double dym{0.5 * (dCenter + dDny) / dy2};
+      const double dzp{0.5 * (dCenter + dUpz) / dz2};
+      const double dzm{0.5 * (dCenter + dDnz) / dz2};
+      dcdt[ix + target] += dxp * (conc[ixUpx + source] - conc[ix + source]) -
+                           dxm * (conc[ix + source] - conc[ixDnx + source]) +
+                           dyp * (conc[ixUpy + source] - conc[ix + source]) -
+                           dym * (conc[ix + source] - conc[ixDny + source]) +
+                           dzp * (conc[ixUpz + source] - conc[ix + source]) -
+                           dzm * (conc[ix + source] - conc[ixDnz + source]);
+    }
+  }
+}
+
 void SimCompartment::evaluateReactionsAndDiffusion() {
   evaluateReactions(0, nPixels);
+  if (hasCrossDiffusion) {
+    evaluateCrossDiffusionCoefficients(0, nPixels);
+    updateCrossDiffusionMaxStableTimestep();
+  }
   evaluateDiffusionOperator(0, nPixels);
+  evaluateCrossDiffusionOperator(0, nPixels);
 }
 
 void SimCompartment::evaluateReactionsAndDiffusion_tbb() {
   tbbParallelFor(nPixels,
                  [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
                    evaluateReactions(r.begin(), r.end());
+                 });
+  if (hasCrossDiffusion) {
+    tbbParallelFor(nPixels,
+                   [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+                     evaluateCrossDiffusionCoefficients(r.begin(), r.end());
+                   });
+    updateCrossDiffusionMaxStableTimestep();
+  }
+  tbbParallelFor(nPixels,
+                 [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
                    evaluateDiffusionOperator(r.begin(), r.end());
                  });
+  if (hasCrossDiffusion) {
+    tbbParallelFor(nPixels,
+                   [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+                     evaluateCrossDiffusionOperator(r.begin(), r.end());
+                   });
+  }
 }
 
 void SimCompartment::doForwardsEulerTimestep(double dt, std::size_t begin,
@@ -395,6 +561,30 @@ void SimCompartment::doForwardsEulerTimestep_tbb(double dt) {
   tbbParallelFor(conc.size(),
                  [this, dt](const oneapi::tbb::blocked_range<std::size_t> &r) {
                    doForwardsEulerTimestep(dt, r.begin(), r.end());
+                 });
+}
+
+void SimCompartment::clampNegativeConcentrations(std::size_t begin,
+                                                 std::size_t end) {
+  for (std::size_t ix = begin; ix < end; ++ix) {
+    const std::size_t iOffset{ix * nSpecies};
+    for (std::size_t is = 0; is < nPrimarySpecies; ++is) {
+      auto &c{conc[iOffset + is]};
+      if (c < 0.0) {
+        c = 0.0;
+      }
+    }
+  }
+}
+
+void SimCompartment::clampNegativeConcentrations() {
+  clampNegativeConcentrations(0, nPixels);
+}
+
+void SimCompartment::clampNegativeConcentrations_tbb() {
+  tbbParallelFor(nPixels,
+                 [this](const oneapi::tbb::blocked_range<std::size_t> &r) {
+                   clampNegativeConcentrations(r.begin(), r.end());
                  });
 }
 

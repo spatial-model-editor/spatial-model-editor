@@ -1958,6 +1958,58 @@ TEST_CASE("Reactions depend on x, y, t",
       REQUIRE(maxRelDiff < maxAllowedRelDiff);
     }
   }
+  SECTION("reaction with x,y,z-dependence") {
+    // looser tolerance: 3d mesh distorts results more than pixel geometry
+    constexpr double maxAllowedAbsDiff{0.01};
+    constexpr double maxAllowedRelDiff{0.08};
+    auto s3d{getExampleModel(Mod::VerySimpleModel3D)};
+    s3d.getReactions().setRateExpression("A_uptake", "0");
+    s3d.getReactions().setRateExpression("A_transport", "0");
+    s3d.getReactions().setRateExpression("B_transport", "0");
+    s3d.getReactions().setRateExpression("B_excretion", "0");
+    s3d.getReactions().setRateExpression("A_B_conversion", "x + y + z");
+    auto &options3d{s3d.getSimulationSettings().options};
+    options3d.dune.dt = dt;
+    options3d.dune.minDt = dt;
+    options3d.dune.maxDt = dt;
+    options3d.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options3d.pixel.maxErr = {std::numeric_limits<double>::max(),
+                              std::numeric_limits<double>::max()};
+    options3d.pixel.maxTimestep = dt;
+
+    s3d.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    simulate::Simulation simPixel{s3d};
+    simPixel.doTimesteps(dt, 1);
+    REQUIRE(simPixel.errorMessage().empty());
+    REQUIRE(simPixel.getNCompletedTimesteps() == 2);
+
+    s3d.getSimulationData().clear();
+    s3d.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+    simulate::Simulation simDune{s3d};
+    simDune.doTimesteps(dt, 1);
+    CAPTURE(simDune.errorMessage());
+    REQUIRE(simDune.errorMessage().empty());
+    REQUIRE(simDune.getNCompletedTimesteps() == 2);
+
+    const auto compartmentIndex{
+        common::element_index(simPixel.getCompartmentIds(), std::string{"c3"})};
+    const auto speciesIndex{common::element_index(
+        simPixel.getSpeciesIds(compartmentIndex), std::string{"A_c3"})};
+    auto p{simPixel.getConc(1, compartmentIndex, speciesIndex)};
+    auto d{simDune.getConc(1, compartmentIndex, speciesIndex)};
+    REQUIRE(p.size() == d.size());
+    double maxAbsDiff{0};
+    double maxRelDiff{0};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      maxAbsDiff = std::max(maxAbsDiff, std::abs(p[i] - d[i]));
+      maxRelDiff = std::max(maxRelDiff, std::abs(p[i] - d[i]) /
+                                            (std::abs(p[i] + d[i] + eps)));
+    }
+    CAPTURE(maxAbsDiff);
+    CAPTURE(maxRelDiff);
+    REQUIRE(maxAbsDiff < maxAllowedAbsDiff);
+    REQUIRE(maxRelDiff < maxAllowedRelDiff);
+  }
   SECTION("reaction with t,x,y-dependence") {
     // looser tolerance: mesh distorts results
     constexpr double maxAllowedAbsDiff{0.002};
@@ -2462,6 +2514,157 @@ TEST_CASE("pixel simulation with invalid reaction rate expression",
   m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
   REQUIRE_THAT(simulate::Simulation(m).errorMessage(),
                ContainsSubstring("Unknown symbol 'idontexist'"));
+}
+
+TEST_CASE("Cross-diffusion: zero diffusion with equivalent cross-diffusion",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]") {
+  auto m{getExampleModel(Mod::SingleCompartmentDiffusion)};
+  // slow species has diffusion constant of 1, so should diffuse as normal
+  // fast species has diffusion constant of 0
+  m.getSpecies().setDiffusionConstant("fast", 0);
+  // but cross-diffusion constant of 1 with slow species, so should diffuse at
+  // same rate as slow species
+  m.getSpecies().setCrossDiffusionConstant("fast", "slow", "1");
+  m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  simulate::Simulation sim(m);
+  REQUIRE(sim.errorMessage().empty());
+  sim.doTimesteps(5);
+  REQUIRE(sim.errorMessage().empty());
+  constexpr double eps{1e-15};
+  constexpr double allowedAvgAbsDiff{1e-11};
+  constexpr double allowedAvgRelDiff{1e-7};
+  for (std::size_t timeIndex : {std::size_t{0}, std::size_t{1}}) {
+    const auto slow{sim.getConc(timeIndex, 0, 0)};
+    const auto fast{sim.getConc(timeIndex, 0, 1)};
+    REQUIRE(slow.size() == fast.size());
+    double avgAbsDiff{0.0};
+    double avgRelDiff{0.0};
+    for (std::size_t i = 0; i < slow.size(); ++i) {
+      const auto absDiff{std::abs(slow[i] - fast[i])};
+      avgAbsDiff += absDiff;
+      avgRelDiff += 2.0 * absDiff / (std::abs(slow[i] + fast[i]) + eps);
+    }
+    avgAbsDiff /= static_cast<double>(slow.size());
+    avgRelDiff /= static_cast<double>(slow.size());
+    CAPTURE(timeIndex);
+    CAPTURE(avgAbsDiff);
+    CAPTURE(avgRelDiff);
+    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+    REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  }
+}
+
+TEST_CASE(
+    "Cross-diffusion: DUNE and Pixel give similar concentrations",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  auto mDune{getExampleModel(Mod::SingleCompartmentDiffusion)};
+  auto mPixel{getExampleModel(Mod::SingleCompartmentDiffusion)};
+  mDune.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, 1);
+  // set zero diffusion constant for "fast" species
+  mDune.getSpecies().setDiffusionConstant("fast", 0);
+  mPixel.getSpecies().setDiffusionConstant("fast", 0);
+  // add cross-diffusion term so "fast" species can diffuse via "slow" species
+  mDune.getSpecies().setCrossDiffusionConstant("fast", "slow", "2");
+  mPixel.getSpecies().setCrossDiffusionConstant("fast", "slow", "2");
+  mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+  mDune.getSimulationSettings().options.dune.dt = 1e-1;
+  mDune.getSimulationSettings().options.dune.maxDt = 1e-1;
+  simulate::Simulation simDune(mDune);
+  simulate::Simulation simPixel(mPixel);
+  REQUIRE(simDune.errorMessage().empty());
+  REQUIRE(simPixel.errorMessage().empty());
+  simDune.doTimesteps(5);
+  simPixel.doTimesteps(5);
+  REQUIRE(simDune.errorMessage().empty());
+  REQUIRE(simPixel.errorMessage().empty());
+  const auto iLastDune{simDune.getTimePoints().size() - 1};
+  const auto iLastPixel{simPixel.getTimePoints().size() - 1};
+  constexpr double eps{1e-8};
+  constexpr double allowedAvgAbsDiff{5e-3};
+  constexpr double allowedAvgRelDiff{0.3};
+  for (std::size_t speciesIndex : {std::size_t{0}, std::size_t{1}}) {
+    const auto p{simPixel.getConc(iLastPixel, 0, speciesIndex)};
+    const auto d{simDune.getConc(iLastDune, 0, speciesIndex)};
+    REQUIRE(p.size() == d.size());
+    double avgAbsDiff{0.0};
+    double avgRelDiff{0.0};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      const auto absDiff{std::abs(p[i] - d[i])};
+      avgAbsDiff += absDiff;
+      avgRelDiff += 2.0 * absDiff / (std::abs(p[i] + d[i]) + eps);
+    }
+    avgAbsDiff /= static_cast<double>(p.size());
+    avgRelDiff /= static_cast<double>(p.size());
+    CAPTURE(speciesIndex);
+    CAPTURE(avgAbsDiff);
+    CAPTURE(avgRelDiff);
+    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+    REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  }
+}
+
+TEST_CASE(
+    "Cross-diffusion 3d: DUNE and Pixel remain close for "
+    "SingleCompartmentDiffusion3D",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel][3d]"
+    "[expensive]") {
+  auto configureModel = [](model::Model &m) {
+    m.getSpecies().setAnalyticConcentration(
+        "slow", "exp((-1/36) * ((x+4)^2 + y^2 + z^2))");
+    m.getSpecies().setAnalyticConcentration(
+        "fast", "exp((-1/49) * ((x-3)^2 + (y+2)^2 + z^2))");
+    m.getSpecies().setCrossDiffusionConstant("slow", "fast", "5 + 3*fast");
+    m.getSpecies().setCrossDiffusionConstant("fast", "slow", "7 + 2*slow");
+    m.getGeometry().getMesh3d()->setCompartmentMaxCellVolume(0, 4);
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.002};
+    options.pixel.integrator = simulate::PixelIntegratorType::RK435;
+    options.pixel.maxTimestep = 2e-3;
+    options.pixel.maxThreads = 2;
+    options.dune.dt = 2e-3;
+    options.dune.minDt = 1e-6;
+    options.dune.maxDt = 1e-2;
+  };
+
+  auto mDune{getExampleModel(Mod::SingleCompartmentDiffusion3D)};
+  auto mPixel{getExampleModel(Mod::SingleCompartmentDiffusion3D)};
+  configureModel(mDune);
+  configureModel(mPixel);
+  mDune.getSimulationSettings().simulatorType = simulate::SimulatorType::DUNE;
+  mPixel.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+
+  simulate::Simulation simDune(mDune);
+  simulate::Simulation simPixel(mPixel);
+  REQUIRE(simDune.errorMessage().empty());
+  REQUIRE(simPixel.errorMessage().empty());
+  REQUIRE(simDune.doTimesteps(0.02, 2) >= 1);
+  REQUIRE(simPixel.doTimesteps(0.02, 2) >= 1);
+
+  const auto iLastDune{simDune.getTimePoints().size() - 1};
+  const auto iLastPixel{simPixel.getTimePoints().size() - 1};
+  constexpr double eps{1e-7};
+  constexpr double allowedAvgAbsDiff{1e-3};
+  constexpr double allowedAvgRelDiff{0.5};
+  for (std::size_t speciesIndex : {std::size_t{0}, std::size_t{1}}) {
+    const auto p{simPixel.getConc(iLastPixel, 0, speciesIndex)};
+    const auto d{simDune.getConc(iLastDune, 0, speciesIndex)};
+    REQUIRE(p.size() == d.size());
+    double avgAbsDiff{0.0};
+    double avgRelDiff{0.0};
+    for (std::size_t i = 0; i < p.size(); ++i) {
+      const auto absDiff{std::abs(p[i] - d[i])};
+      avgAbsDiff += absDiff;
+      avgRelDiff += 2.0 * absDiff / (std::abs(p[i] + d[i]) + eps);
+    }
+    avgAbsDiff /= static_cast<double>(p.size());
+    avgRelDiff /= static_cast<double>(p.size());
+    CAPTURE(speciesIndex);
+    CAPTURE(avgAbsDiff);
+    CAPTURE(avgRelDiff);
+    REQUIRE(avgAbsDiff < allowedAvgAbsDiff);
+    REQUIRE(avgRelDiff < allowedAvgRelDiff);
+  }
 }
 
 TEST_CASE("Fish model: simulation with piecewise function in reactions",

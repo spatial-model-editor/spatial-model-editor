@@ -59,8 +59,8 @@ The concentration is defined as a 3d array of values :math:`c_{i,j,k}`,
 where the value with index :math:`(i,j,k)` corresponds to the concentration
 at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
 
-For diffusion constants that vary in space, the diffusion term is written in conservative form.
-With species storage coefficient :math:`S \geq 0`, the PDE is
+For spatially varying self-diffusion constants, the diffusion term is written in conservative form.
+With species storage coefficient :math:`S \geq 0`, the PDE for one species is
 
 .. math::
 
@@ -71,14 +71,14 @@ For one species in voxel :math:`(i,j,k)`:
 
 .. math::
 
-   \begin{eqnarray}
-   \frac{dc_{i,j,k}}{dt}
-   & = & \frac{1}{S}\left(
-   \frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \right.\\
-   & & + \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
-   & & + \left.\frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2}
-   + R_{i,j,k}\right)
-   \end{eqnarray}
+   \begin{aligned}
+   \frac{dc_{i,j,k}}{dt} = \frac{1}{S}\Bigg(
+   &\frac{D^x_{i+1/2,j,k}(c_{i+1,j,k}-c_{i,j,k}) - D^x_{i-1/2,j,k}(c_{i,j,k}-c_{i-1,j,k})}{\delta x^2} \\
+   &+ \frac{D^y_{i,j+1/2,k}(c_{i,j+1,k}-c_{i,j,k}) - D^y_{i,j-1/2,k}(c_{i,j,k}-c_{i,j-1,k})}{\delta y^2} \\
+   &+ \frac{D^z_{i,j,k+1/2}(c_{i,j,k+1}-c_{i,j,k}) - D^z_{i,j,k-1/2}(c_{i,j,k}-c_{i,j,k-1})}{\delta z^2} \\
+   &+ R_{i,j,k}
+   \Bigg)
+   \end{aligned}
 
 with face diffusion constants
 
@@ -93,10 +93,38 @@ Inserting this approximation into the reaction-diffusion equation converts the P
 
 If :math:`D` is spatially constant, this reduces to the usual central-difference Laplacian form.
 
+Cross-diffusion
+^^^^^^^^^^^^^^^
+
+If cross-diffusion is enabled, Pixel solves for each target species :math:`s`
+
+.. math::
+
+   S_s\frac{\partial c_s}{\partial t}
+   =
+   \nabla \cdot \left(
+     D_{s,s}\nabla c_s
+     + \sum_{r \ne s} D_{s,r}\nabla c_r
+   \right)
+   + R_s
+
+where :math:`D_{s,r}` is the cross-diffusion coefficient that maps gradients of species :math:`r`
+to flux of species :math:`s`.
+The same conservative face-flux stencil is applied term-by-term: for each pair :math:`(s,r)`,
+Pixel adds a face-averaged discretization of :math:`\nabla \cdot (D_{s,r}\nabla c_r)` to species :math:`s`.
+
+Space-dependent expressions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For spatially dependent reactions and cross-diffusion expressions, Pixel provides all three
+spatial coordinates as local variables per voxel: :math:`x`, :math:`y`, :math:`z`.
+The internal state vector therefore includes three spatial padding values (plus optional time),
+and these values are held constant during time integration.
+
 Step-by-step derivation
 ^^^^^^^^^^^^^^^^^^^^^^^
 
-For one species, start from
+For one species (without cross-diffusion), start from
 
 .. math::
 
@@ -291,8 +319,20 @@ above which the system becomes unstable:
 
    \delta t \leq  \frac{S}{2 D_{\max} \left(\frac{1}{\delta x^2}+\frac{1}{\delta y^2}+\frac{1}{\delta z^2}\right)}
 
-where :math:`D_{\max}` is the largest diffusion constant value over all voxels for the species,
-and :math:`S` is that species' storage coefficient.
+where :math:`D_{\max}` is an effective diffusion scale for the species, and :math:`S` is that
+species' storage coefficient.
+
+Without cross-diffusion, :math:`D_{\max}` is the largest self-diffusion value over all voxels.
+With cross-diffusion, Pixel uses a conservative bound based on
+
+.. math::
+
+   D_{\mathrm{eff},s}
+   =
+   D_{s,s,\max}
+   + \sum_{r \ne s} \max_{\mathbf{x}} \left|D_{s,r}(\mathbf{x})\right|
+
+and applies the same CFL expression with :math:`D_{\max} = D_{\mathrm{eff},s}`.
 
 So if the user selects a timestep larger than this,
 the simulator automatically reduces it to the above value to avoid the system becoming unstable.
@@ -326,6 +366,9 @@ When a species has storage coefficient :math:`S = 0`, its PDE becomes an algebra
 .. math::
 
    0 = \nabla \cdot \left( D \nabla c \right) + R
+
+If cross-diffusion terms are present, the same generalized diffusion operator from the
+``Cross-diffusion`` section is used in this constraint.
 
 Rather than being integrated forward in time, the concentration of such a species must satisfy this constraint at every timestep. The Pixel solver handles this via operator splitting with adaptive pseudo-time relaxation.
 
@@ -377,3 +420,9 @@ Non-spatial species
 ^^^^^^^^^^^^^^^^^^^
 
 A species can be 'non-spatial', which means that at each timestep, its time derivative is calculated as normal at each point in the compartment, but is then spatially averaged over the whole compartment. This can be used to approximate a species with a very high diffusion constant without requiring a correspondingly tiny timestep to maintain the stability of the solver.
+
+Non-negativity clamp
+^^^^^^^^^^^^^^^^^^^^
+
+After each accepted timestep, Pixel clamps negative primary-species concentrations to zero.
+This keeps concentrations physically meaningful and matches the behaviour of dune-copasi.

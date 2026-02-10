@@ -54,3 +54,4 @@ artifacts/*
 sme/test/__pycache__
 .cache
 .clangd
+.idea

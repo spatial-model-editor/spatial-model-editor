@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
@@ -10,6 +11,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QRadioButton>
+#include <QTableWidget>
 #include <QToolButton>
 #include <QTreeWidget>
 
@@ -81,6 +83,8 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
   REQUIRE(btnSpeciesAdvanced != nullptr);
   auto *txtStorage{tab.findChild<QLineEdit *>("txtStorage")};
   REQUIRE(txtStorage != nullptr);
+  auto *tblCrossDiffusion{tab.findChild<QTableWidget *>("tblCrossDiffusion")};
+  REQUIRE(tblCrossDiffusion != nullptr);
 
   auto *btnChangeSpeciesColor{
       tab.findChild<QPushButton *>("btnChangeSpeciesColor")};
@@ -180,12 +184,59 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     sendKeyEvents(listSpecies, {"Down"});
     REQUIRE(txtDiffusionConstant->text() == "9");
     // expand advanced settings and edit storage value
-    sendMouseClick(btnSpeciesAdvanced);
+    sendMouseClick(btnSpeciesAdvanced, btnSpeciesAdvanced->rect().center());
     txtStorage->setFocus();
     sendKeyEvents(txtStorage, {"End", "Backspace", "2", "Enter"});
+    REQUIRE(tblCrossDiffusion->rowCount() == 1);
+    auto *chkCrossDiffusionEnabled{
+        qobject_cast<QCheckBox *>(tblCrossDiffusion->cellWidget(0, 1))};
+    REQUIRE(chkCrossDiffusionEnabled != nullptr);
+    auto *txtCrossDiffusionExpression{qobject_cast<QPlainTextMathEdit *>(
+        tblCrossDiffusion->cellWidget(0, 2))};
+    REQUIRE(txtCrossDiffusionExpression != nullptr);
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == false);
+    REQUIRE(chkCrossDiffusionEnabled->isEnabled() == true);
+    REQUIRE(chkCrossDiffusionEnabled->isVisible() == true);
+    chkCrossDiffusionEnabled->setFocus();
+    sendKeyEvents(chkCrossDiffusionEnabled, {" "});
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == true);
+    txtCrossDiffusionExpression->setFocus();
+    sendKeyEvents(txtCrossDiffusionExpression,
+                  {"Backspace", "A", "_", "o", "u", "t"});
     sendKeyEvents(listSpecies, {"Up"});
     sendKeyEvents(listSpecies, {"Down"});
     REQUIRE(txtStorage->text() == "2");
+    REQUIRE(tblCrossDiffusion->rowCount() == 1);
+    chkCrossDiffusionEnabled =
+        qobject_cast<QCheckBox *>(tblCrossDiffusion->cellWidget(0, 1));
+    REQUIRE(chkCrossDiffusionEnabled != nullptr);
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == true);
+    txtCrossDiffusionExpression =
+        qobject_cast<QPlainTextMathEdit *>(tblCrossDiffusion->cellWidget(0, 2));
+    REQUIRE(txtCrossDiffusionExpression != nullptr);
+    // expression=0 should disable + remove the term
+    txtCrossDiffusionExpression->importVariableMath("0");
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == false);
+    REQUIRE(txtCrossDiffusionExpression->isEnabled() == false);
+    REQUIRE(
+        model.getSpecies().getCrossDiffusionConstant("B_c1", "A_c1").isEmpty());
+    // re-enable and set a non-zero expression again
+    chkCrossDiffusionEnabled->setFocus();
+    sendKeyEvents(chkCrossDiffusionEnabled, {" "});
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == true);
+    txtCrossDiffusionExpression->importVariableMath("A_c1 + 2");
+    sendKeyEvents(listSpecies, {"Up"});
+    sendKeyEvents(listSpecies, {"Down"});
+    chkCrossDiffusionEnabled =
+        qobject_cast<QCheckBox *>(tblCrossDiffusion->cellWidget(0, 1));
+    REQUIRE(chkCrossDiffusionEnabled != nullptr);
+    REQUIRE(chkCrossDiffusionEnabled->isChecked() == true);
+    auto storedCrossDiffusionExpr{
+        model.getSpecies().getCrossDiffusionConstant("B_c1", "A_c1")};
+    REQUIRE(!storedCrossDiffusionExpr.isEmpty());
+    REQUIRE(storedCrossDiffusionExpr != "1");
+    REQUIRE(storedCrossDiffusionExpr != "1.0");
+    REQUIRE(storedCrossDiffusionExpr.contains("2"));
     // click change species color, then cancel
     mwt.addUserAction({"Esc"});
     mwt.start();
