@@ -156,4 +156,99 @@ TEST_CASE("PixelSim", "[core/simulate/pixelsim][core/"
               dbl_approx(0.5 * dcdtDefault[i * 3 + 2]));
     }
   }
+  SECTION("Cross-diffusion vanishes for zero source gradient") {
+    auto mReference{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    auto mCross{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    // make source species spatially uniform so grad(source) = 0
+    mReference.getSpecies().setInitialConcentration("slow", 1.0);
+    mCross.getSpecies().setInitialConcentration("slow", 1.0);
+    mCross.getSpecies().setCrossDiffusionConstant("fast", "slow", "2");
+    for (auto *m : {&mReference, &mCross}) {
+      auto &options{m->getSimulationSettings().options};
+      options.pixel.enableMultiThreading = false;
+      options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+      options.pixel.maxTimestep = 1e-3;
+    }
+    std::vector<std::string> comps{"circle"};
+    std::vector<std::vector<std::string>> specs{{"slow", "fast"}};
+    simulate::PixelSim simReference(mReference, comps, specs);
+    simulate::PixelSim simCross(mCross, comps, specs);
+    REQUIRE(simReference.errorMessage().empty());
+    REQUIRE(simCross.errorMessage().empty());
+    simReference.run(1e-3, -1.0, {});
+    simCross.run(1e-3, -1.0, {});
+    const auto &cReference = simReference.getConcentrations(0);
+    const auto &cCross = simCross.getConcentrations(0);
+    REQUIRE(cReference.size() == cCross.size());
+    for (std::size_t i = 0; i < cReference.size(); ++i) {
+      REQUIRE(cCross[i] == dbl_approx(cReference[i]));
+    }
+  }
+  SECTION("Cross-diffusion multithreaded path matches single-threaded") {
+    auto mSingle{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    auto mParallel{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    for (auto *m : {&mSingle, &mParallel}) {
+      m->getSpecies().setCrossDiffusionConstant("slow", "fast", "4 + fast");
+      m->getSpecies().setCrossDiffusionConstant("fast", "slow", "6 + slow");
+      auto &options{m->getSimulationSettings().options};
+      options.pixel.integrator = simulate::PixelIntegratorType::RK435;
+      options.pixel.maxTimestep = 1e-3;
+    }
+    mSingle.getSimulationSettings().options.pixel.enableMultiThreading = false;
+    mParallel.getSimulationSettings().options.pixel.enableMultiThreading = true;
+    mParallel.getSimulationSettings().options.pixel.maxThreads = 2;
+
+    std::vector<std::string> comps{"circle"};
+    std::vector<std::vector<std::string>> specs{{"slow", "fast"}};
+    simulate::PixelSim simSingle(mSingle, comps, specs);
+    simulate::PixelSim simParallel(mParallel, comps, specs);
+    REQUIRE(simSingle.errorMessage().empty());
+    REQUIRE(simParallel.errorMessage().empty());
+    simSingle.run(5e-3, -1.0, {});
+    simParallel.run(5e-3, -1.0, {});
+    const auto &cSingle = simSingle.getConcentrations(0);
+    const auto &cParallel = simParallel.getConcentrations(0);
+    REQUIRE(cSingle.size() == cParallel.size());
+    for (std::size_t i = 0; i < cSingle.size(); ++i) {
+      REQUIRE(cParallel[i] == Catch::Approx(cSingle[i]).epsilon(1e-7));
+    }
+  }
+  SECTION("Cross-diffusion z-only dependence is supported in 3d") {
+    auto m{getExampleModel(Mod::SingleCompartmentDiffusion3D)};
+    m.getSpecies().setCrossDiffusionConstant("slow", "fast", "1 + z");
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxTimestep = 1e-3;
+    std::vector<std::string> comps{"cube"};
+    std::vector<std::vector<std::string>> specs{{"slow", "fast"}};
+    simulate::PixelSim sim(m, comps, specs);
+    REQUIRE(sim.errorMessage().empty());
+    REQUIRE(sim.getConcentrationPadding() == 3);
+    sim.run(1e-3, -1.0, {});
+    REQUIRE(sim.errorMessage().empty());
+  }
+  SECTION("RK101 timestep is capped by strong cross-diffusion terms") {
+    auto m{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    m.getSpecies().setDiffusionConstant("slow", 0.0);
+    m.getSpecies().setDiffusionConstant("fast", 0.0);
+    m.getSpecies().setCrossDiffusionConstant("slow", "fast", "80");
+    m.getSpecies().setCrossDiffusionConstant("fast", "slow", "80");
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxTimestep = 1e-2;
+    std::vector<std::string> comps{"circle"};
+    std::vector<std::vector<std::string>> specs{{"slow", "fast"}};
+    simulate::PixelSim sim(m, comps, specs);
+    REQUIRE(sim.errorMessage().empty());
+    const auto nSteps{sim.run(1e-2, -1.0, {})};
+    REQUIRE(sim.errorMessage().empty());
+    REQUIRE(nSteps > 1);
+    const auto &conc{sim.getConcentrations(0)};
+    double minConc{std::numeric_limits<double>::max()};
+    for (double c : conc) {
+      minConc = std::min(minConc, c);
+    }
+    CAPTURE(minConc);
+    REQUIRE(minConc >= 0.0);
+  }
 }

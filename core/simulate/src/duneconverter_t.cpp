@@ -52,6 +52,26 @@ TEST_CASE("DUNE: DuneConverter",
     REQUIRE(*line++ == "initial.expression = 0");
     REQUIRE(*line++ == "storage.expression = 2.5");
   }
+  SECTION("ABtoC model with off-diagonal cross-diffusion") {
+    auto s{getExampleModel(Mod::ABtoC)};
+    s.getSpecies().setCrossDiffusionConstant("C", "A", "2");
+    simulate::DuneConverter dc(s, {}, true, {}, 14);
+    QStringList ini = dc.getIniFile().split("\n");
+    auto line = find_line("[model.scalar_field.C]", ini);
+    REQUIRE(*line++ == "[model.scalar_field.C]");
+    REQUIRE(*line++ == "compartment = comp");
+    REQUIRE(*line++ == "initial.expression = 0");
+    REQUIRE(*line++ == "storage.expression = 1");
+    REQUIRE(symEq(*line++, "reaction.expression = 0.0001*A*B"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.A.expression = 0.0001*B"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.B.expression = 0.0001*A"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.C.expression = 0"));
+    REQUIRE(symEq(*line++, "cross_diffusion.C.expression = 25"));
+    REQUIRE(symEq(*line++, "cross_diffusion.A.expression = 2"));
+    REQUIRE(symEq(*line++, "cross_diffusion.A.jacobian.A.expression = 0"));
+    REQUIRE(symEq(*line++, "cross_diffusion.A.jacobian.B.expression = 0"));
+    REQUIRE(symEq(*line++, "cross_diffusion.A.jacobian.C.expression = 0"));
+  }
   SECTION("brusselator model") {
     auto s{getExampleModel(Mod::Brusselator)};
     simulate::DuneConverter dc(s);

@@ -76,6 +76,8 @@ struct Settings {
   std::vector<QRgb> sampledFieldColors{};
   std::map<std::string, std::vector<double>> speciesDiffusionConstantArrays{};
   std::map<std::string, std::string> speciesAnalyticDiffusionConstants{};
+  std::map<std::string, std::map<std::string, std::string>>
+      speciesCrossDiffusionConstants{};
   std::map<std::string, double> speciesStorageValues{};
 
   template <class Archive>
@@ -111,7 +113,8 @@ struct Settings {
          CEREAL_NVP(optimizeOptions), CEREAL_NVP(sampledFieldColors),
          CEREAL_NVP(speciesDiffusionConstantArrays),
          CEREAL_NVP(speciesAnalyticDiffusionConstants),
-         CEREAL_NVP(speciesStorageValues));
+         CEREAL_NVP(speciesStorageValues),
+         CEREAL_NVP(speciesCrossDiffusionConstants));
     }
   }
 };

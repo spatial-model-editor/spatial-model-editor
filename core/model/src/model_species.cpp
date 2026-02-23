@@ -8,6 +8,7 @@
 #include "sme/model_parameters.hpp"
 #include "sme/model_reactions.hpp"
 #include "sme/simulate_data.hpp"
+#include "sme/symbolic.hpp"
 #include "sme/utils.hpp"
 #include "sme/xml_annotation.hpp"
 #include <QString>
@@ -304,6 +305,7 @@ ModelSpecies::ModelSpecies(libsbml::Model *model,
       field.importDiffusionConstant(iter->second);
     }
   }
+  removeInvalidCrossDiffusionConstants();
 }
 
 void ModelSpecies::setReactionsPtr(ModelReactions *reactions) {
@@ -381,6 +383,12 @@ void ModelSpecies::remove(const QString &id) {
   sbmlAnnotation->speciesColors.erase(sId);
   sbmlAnnotation->speciesDiffusionConstantArrays.erase(sId);
   sbmlAnnotation->speciesAnalyticDiffusionConstants.erase(sId);
+  sbmlAnnotation->speciesCrossDiffusionConstants.erase(sId);
+  for (auto &[targetSpeciesId, sourceSpeciesToExpr] :
+       sbmlAnnotation->speciesCrossDiffusionConstants) {
+    Q_UNUSED(targetSpeciesId);
+    sourceSpeciesToExpr.erase(sId);
+  }
   sbmlAnnotation->speciesStorageValues.erase(sId);
   compartmentIds.removeAt(i);
   removeInitialAssignment(sId.c_str());
@@ -392,6 +400,7 @@ void ModelSpecies::remove(const QString &id) {
     SPDLOG_INFO("Removing diffusion constant parameter '{}'", param->getId());
     param->removeFromParentAndDelete();
   }
+  removeInvalidCrossDiffusionConstants();
   SPDLOG_INFO("  - species {} removed", spec->getId());
 }
 
@@ -477,6 +486,7 @@ void ModelSpecies::setCompartment(const QString &id,
     }
     field.setUniformDiffusionConstant(uniformDiffusionConstant);
   }
+  removeInvalidCrossDiffusionConstants();
 }
 
 QString ModelSpecies::getCompartment(const QString &id) const {
@@ -711,6 +721,41 @@ void ModelSpecies::setFieldDiffAnalytic(
   field.setIsUniformDiffusionConstant(false);
 }
 
+void ModelSpecies::removeInvalidCrossDiffusionConstants() {
+  if (sbmlAnnotation == nullptr) {
+    return;
+  }
+  auto &crossDiffusion{sbmlAnnotation->speciesCrossDiffusionConstants};
+  for (auto targetSpeciesIt = crossDiffusion.begin();
+       targetSpeciesIt != crossDiffusion.end();) {
+    const QString targetSpeciesId{targetSpeciesIt->first.c_str()};
+    if (!ids.contains(targetSpeciesId)) {
+      targetSpeciesIt = crossDiffusion.erase(targetSpeciesIt);
+      continue;
+    }
+    const auto compartmentId{getCompartment(targetSpeciesId)};
+    auto &sourceSpeciesToExpr{targetSpeciesIt->second};
+    for (auto sourceSpeciesIt = sourceSpeciesToExpr.begin();
+         sourceSpeciesIt != sourceSpeciesToExpr.end();) {
+      const QString sourceSpeciesId{sourceSpeciesIt->first.c_str()};
+      const bool invalidPair{sourceSpeciesIt->second.empty() ||
+                             sourceSpeciesId == targetSpeciesId ||
+                             !ids.contains(sourceSpeciesId) ||
+                             getCompartment(sourceSpeciesId) != compartmentId};
+      if (invalidPair) {
+        sourceSpeciesIt = sourceSpeciesToExpr.erase(sourceSpeciesIt);
+      } else {
+        ++sourceSpeciesIt;
+      }
+    }
+    if (sourceSpeciesToExpr.empty()) {
+      targetSpeciesIt = crossDiffusion.erase(targetSpeciesIt);
+    } else {
+      ++targetSpeciesIt;
+    }
+  }
+}
+
 void ModelSpecies::updateAllAnalyticConcentrations() {
   for (auto &field : fields) {
     const auto analyticConcentration{
@@ -853,6 +898,99 @@ ModelSpecies::getAnalyticDiffusionConstant(const QString &id) const {
           id.toStdString());
       it != sbmlAnnotation->speciesAnalyticDiffusionConstants.cend()) {
     return it->second.c_str();
+  }
+  return {};
+}
+
+bool ModelSpecies::isValidCrossDiffusionExpression(
+    const QString &id, const QString &expression) const {
+  const auto compartmentId{getCompartment(id)};
+  if (compartmentId.isEmpty() || expression.trimmed().isEmpty()) {
+    return false;
+  }
+  const auto expr{expression.toStdString()};
+  if (mathStringToAST(expr, sbmlModel) == nullptr) {
+    return false;
+  }
+  auto inlinedExpr = inlineFunctions(expr, *modelFunctions);
+  inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
+  std::vector<std::string> variableIds;
+  for (const auto &symbol : modelParameters->getSymbols({compartmentId})) {
+    variableIds.push_back(symbol.id);
+  }
+  return common::Symbolic(inlinedExpr, variableIds).isValid();
+}
+
+void ModelSpecies::setCrossDiffusionConstant(const QString &id,
+                                             const QString &otherId,
+                                             const QString &expression) {
+  if (id == otherId) {
+    SPDLOG_WARN("Ignoring cross-diffusion: species '{}' cannot depend on "
+                "itself",
+                id.toStdString());
+    return;
+  }
+  const auto idCompartment{getCompartment(id)};
+  if (idCompartment.isEmpty() || idCompartment != getCompartment(otherId)) {
+    SPDLOG_WARN("Ignoring cross-diffusion: species '{}' and '{}' are in "
+                "different compartments",
+                id.toStdString(), otherId.toStdString());
+    return;
+  }
+  const auto trimmedExpression{expression.trimmed()};
+  if (trimmedExpression.isEmpty() || trimmedExpression == "0" ||
+      trimmedExpression == "0.0") {
+    removeCrossDiffusionConstant(id, otherId);
+    return;
+  }
+  if (!isValidCrossDiffusionExpression(id, trimmedExpression)) {
+    SPDLOG_ERROR("Failed to parse cross-diffusion expression '{}'",
+                 trimmedExpression.toStdString());
+    return;
+  }
+  hasUnsavedChanges = true;
+  sbmlAnnotation->speciesCrossDiffusionConstants[id.toStdString()]
+                                                [otherId.toStdString()] =
+      trimmedExpression.toStdString();
+  removeInvalidCrossDiffusionConstants();
+}
+
+void ModelSpecies::removeCrossDiffusionConstant(const QString &id,
+                                                const QString &otherId) {
+  if (auto targetSpeciesIt =
+          sbmlAnnotation->speciesCrossDiffusionConstants.find(id.toStdString());
+      targetSpeciesIt != sbmlAnnotation->speciesCrossDiffusionConstants.end()) {
+    const auto erased{targetSpeciesIt->second.erase(otherId.toStdString()) >
+                      0U};
+    if (targetSpeciesIt->second.empty()) {
+      sbmlAnnotation->speciesCrossDiffusionConstants.erase(targetSpeciesIt);
+    }
+    if (erased) {
+      hasUnsavedChanges = true;
+    }
+  }
+}
+
+QString ModelSpecies::getCrossDiffusionConstant(const QString &id,
+                                                const QString &otherId) const {
+  if (auto targetSpeciesIt =
+          sbmlAnnotation->speciesCrossDiffusionConstants.find(id.toStdString());
+      targetSpeciesIt != sbmlAnnotation->speciesCrossDiffusionConstants.end()) {
+    if (auto sourceSpeciesIt =
+            targetSpeciesIt->second.find(otherId.toStdString());
+        sourceSpeciesIt != targetSpeciesIt->second.end()) {
+      return sourceSpeciesIt->second.c_str();
+    }
+  }
+  return {};
+}
+
+std::map<std::string, std::string>
+ModelSpecies::getCrossDiffusionConstants(const QString &id) const {
+  if (auto targetSpeciesIt =
+          sbmlAnnotation->speciesCrossDiffusionConstants.find(id.toStdString());
+      targetSpeciesIt != sbmlAnnotation->speciesCrossDiffusionConstants.end()) {
+    return targetSpeciesIt->second;
   }
   return {};
 }

@@ -1,4 +1,5 @@
 #include "catch_wrapper.hpp"
+#include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
 #include "sme/simulate_options.hpp"
 #include "sme/xml_annotation.hpp"
@@ -38,6 +39,7 @@ TEST_CASE("XML Annotations",
     auto &optParam{optimizeOptions.optParams.emplace_back()};
     optParam.name = "myOptParam";
     settings.speciesStorageValues["A"] = 2.5;
+    settings.speciesCrossDiffusionConstants["A"]["B"] = "A + 1";
     // todo: populate all fields above
 
     model::setSbmlAnnotation(model, settings);
@@ -70,6 +72,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(newOptimizeOptions.optParams[0].name == "myOptParam");
     REQUIRE(newSettings.speciesStorageValues.size() == 1);
     REQUIRE(newSettings.speciesStorageValues["A"] == dbl_approx(2.5));
+    REQUIRE(
+        symEq(newSettings.speciesCrossDiffusionConstants["A"]["B"], "A + 1"));
 
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});
@@ -79,6 +83,7 @@ TEST_CASE("XML Annotations",
     newOptimizeOptions.optCosts.emplace_back().name = "optCost2";
     newOptimizeOptions.optParams[0].name = "newOptParamName";
     newSettings.speciesStorageValues["A"] = 1.22;
+    newSettings.speciesCrossDiffusionConstants["A"]["B"] = "A + 2";
     model::setSbmlAnnotation(model, newSettings);
     libsbml::writeSBMLToFile(doc.get(), "tmpxmlsettings.xml");
 
@@ -114,6 +119,7 @@ TEST_CASE("XML Annotations",
     REQUIRE(optimizeOptions2.optParams[0].name == "newOptParamName");
     REQUIRE(settings2.speciesStorageValues.size() == 1);
     REQUIRE(settings2.speciesStorageValues["A"] == dbl_approx(1.22));
+    REQUIRE(symEq(settings2.speciesCrossDiffusionConstants["A"]["B"], "A + 2"));
   }
   SECTION("Invalid settings annotations") {
     auto doc{getTestSbmlDoc("ABtoC-invalid-annotation")};
@@ -127,5 +133,6 @@ TEST_CASE("XML Annotations",
     REQUIRE(settings.optimizeOptions.optParams.empty());
     REQUIRE(settings.speciesColors.empty());
     REQUIRE(settings.speciesStorageValues.empty());
+    REQUIRE(settings.speciesCrossDiffusionConstants.empty());
   }
 }

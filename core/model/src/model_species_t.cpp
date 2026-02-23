@@ -494,4 +494,60 @@ TEST_CASE("SBML species",
     // unknown species defaults to 1
     REQUIRE(m2.getSpecies().getStorage("does_not_exist") == dbl_approx(1.0));
   }
+  SECTION("Cross-diffusion constants") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+
+    REQUIRE(s.getCrossDiffusionConstants("B_c1").empty());
+    REQUIRE(s.getCrossDiffusionConstant("B_c1", "A_c1").isEmpty());
+    REQUIRE(s.isValidCrossDiffusionExpression("B_c1", "A_c1 + param"));
+    REQUIRE(!s.isValidCrossDiffusionExpression("B_c1", ""));
+    REQUIRE(!s.isValidCrossDiffusionExpression("B_c1", "A_c1 + *"));
+    REQUIRE(!s.isValidCrossDiffusionExpression("does_not_exist", "1"));
+
+    s.setCrossDiffusionConstant("B_c1", "A_c1", " 1 + A_c1 + param ");
+    REQUIRE(
+        symEq(s.getCrossDiffusionConstant("B_c1", "A_c1"), "1 + A_c1 + param"));
+    REQUIRE(s.getCrossDiffusionConstants("B_c1").size() == 1);
+
+    // invalid target/source pairs are ignored
+    s.setHasUnsavedChanges(false);
+    s.setCrossDiffusionConstant("B_c1", "B_c1", "2");
+    REQUIRE(s.getHasUnsavedChanges() == false);
+    s.setCrossDiffusionConstant("B_c1", "A_c2", "2");
+    REQUIRE(s.getCrossDiffusionConstants("B_c1").size() == 1);
+
+    // invalid expression is ignored
+    s.setCrossDiffusionConstant("B_c1", "A_c1", "A_c1 + *");
+    REQUIRE(
+        symEq(s.getCrossDiffusionConstant("B_c1", "A_c1"), "1 + A_c1 + param"));
+
+    // zero removes term
+    s.setCrossDiffusionConstant("B_c1", "A_c1", "0");
+    REQUIRE(s.getCrossDiffusionConstant("B_c1", "A_c1").isEmpty());
+    REQUIRE(s.getCrossDiffusionConstants("B_c1").empty());
+
+    // removing absent term is a no-op
+    s.setHasUnsavedChanges(false);
+    s.removeCrossDiffusionConstant("B_c1", "A_c1");
+    REQUIRE(s.getHasUnsavedChanges() == false);
+
+    // relocation removes invalid cross-compartment entries
+    s.setCrossDiffusionConstant("A_c2", "B_c2", "3");
+    s.setCrossDiffusionConstant("B_c2", "A_c2", "4");
+    REQUIRE(!s.getCrossDiffusionConstant("A_c2", "B_c2").isEmpty());
+    REQUIRE(!s.getCrossDiffusionConstant("B_c2", "A_c2").isEmpty());
+    s.setCompartment("A_c2", "c1");
+    REQUIRE(s.getCrossDiffusionConstant("A_c2", "B_c2").isEmpty());
+    REQUIRE(s.getCrossDiffusionConstant("B_c2", "A_c2").isEmpty());
+
+    // removing a species removes outgoing and incoming terms
+    s.setCrossDiffusionConstant("B_c1", "A_c1", "5");
+    s.setCrossDiffusionConstant("A_c1", "B_c1", "6");
+    REQUIRE(!s.getCrossDiffusionConstant("B_c1", "A_c1").isEmpty());
+    REQUIRE(!s.getCrossDiffusionConstant("A_c1", "B_c1").isEmpty());
+    s.remove("A_c1");
+    REQUIRE(s.getCrossDiffusionConstant("B_c1", "A_c1").isEmpty());
+    REQUIRE(s.getCrossDiffusionConstants("A_c1").empty());
+  }
 }

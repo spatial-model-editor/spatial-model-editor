@@ -52,6 +52,7 @@ private:
   void setFieldDiffAnalytic(
       geometry::Field &field, const std::string &expr,
       const std::map<std::string, double, std::less<>> &substitutions = {});
+  void removeInvalidCrossDiffusionConstants();
 
 public:
   ModelSpecies();
@@ -106,6 +107,16 @@ public:
   void setAnalyticDiffusionConstant(const QString &id,
                                     const QString &analyticExpression);
   [[nodiscard]] QString getAnalyticDiffusionConstant(const QString &id) const;
+  [[nodiscard]] bool
+  isValidCrossDiffusionExpression(const QString &id,
+                                  const QString &expression) const;
+  void setCrossDiffusionConstant(const QString &id, const QString &otherId,
+                                 const QString &expression);
+  void removeCrossDiffusionConstant(const QString &id, const QString &otherId);
+  [[nodiscard]] QString getCrossDiffusionConstant(const QString &id,
+                                                  const QString &otherId) const;
+  [[nodiscard]] std::map<std::string, std::string>
+  getCrossDiffusionConstants(const QString &id) const;
   [[nodiscard]] common::ImageStack
   getConcentrationImages(const QString &id) const;
   void setColor(const QString &id, QRgb color);

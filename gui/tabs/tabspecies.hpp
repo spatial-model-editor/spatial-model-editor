@@ -16,6 +16,7 @@ class Model;
 } // namespace sme::model
 
 class QLabelMouseTracker;
+class QPlainTextMathEdit;
 class QVoxelRenderer;
 
 class TabSpecies : public QWidget {
@@ -53,4 +54,11 @@ private:
   void btnEditImageDiffusionConstant_clicked();
   void txtStorage_editingFinished();
   void btnChangeSpeciesColor_clicked();
+  void updateCrossDiffusionWidgets();
+  void setCrossDiffusionEnabled(const QString &otherSpeciesId,
+                                QPlainTextMathEdit *txtExpression,
+                                bool enabled);
+  void setCrossDiffusionExpression(const QString &otherSpeciesId,
+                                   QPlainTextMathEdit *txtExpression,
+                                   bool valid);
 };
