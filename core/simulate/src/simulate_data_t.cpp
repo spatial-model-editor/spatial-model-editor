@@ -22,6 +22,44 @@ TEST_CASE("SimulateData",
   REQUIRE(data.avgMinMax.size() == 2);
   REQUIRE(data.concentrationMax.size() == 2);
   REQUIRE(data.concPadding.size() == 2);
+  SECTION("memory size estimates") {
+    std::size_t expectedBytes{0};
+    expectedBytes += data.timePoints.size() * sizeof(double);
+    expectedBytes += data.concPadding.size() * sizeof(std::size_t);
+    for (const auto &tp : data.concentration) {
+      for (const auto &comp : tp) {
+        expectedBytes += comp.size() * sizeof(double);
+      }
+    }
+    for (const auto &tp : data.avgMinMax) {
+      for (const auto &comp : tp) {
+        expectedBytes += comp.size() * sizeof(simulate::AvgMinMax);
+      }
+    }
+    for (const auto &tp : data.concentrationMax) {
+      for (const auto &comp : tp) {
+        expectedBytes += comp.size() * sizeof(double);
+      }
+    }
+    expectedBytes += data.xmlModel.size() * sizeof(char);
+    REQUIRE(data.getEstimatedMemoryBytes() == expectedBytes);
+
+    std::size_t expectedAdditionalPerTimepoint{sizeof(double) +
+                                               sizeof(std::size_t)};
+    for (const auto &comp : data.concentration.back()) {
+      expectedAdditionalPerTimepoint += comp.size() * sizeof(double);
+    }
+    for (const auto &comp : data.avgMinMax.back()) {
+      expectedAdditionalPerTimepoint +=
+          comp.size() * sizeof(simulate::AvgMinMax);
+    }
+    for (const auto &comp : data.concentrationMax.back()) {
+      expectedAdditionalPerTimepoint += comp.size() * sizeof(double);
+    }
+    REQUIRE(data.getEstimatedAdditionalMemoryBytes(0) == 0);
+    REQUIRE(data.getEstimatedAdditionalMemoryBytes(3) ==
+            3 * expectedAdditionalPerTimepoint);
+  }
   SECTION("clear()") {
     data.clear();
     REQUIRE(data.timePoints.empty());

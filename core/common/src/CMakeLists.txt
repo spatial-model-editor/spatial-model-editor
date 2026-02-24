@@ -8,6 +8,7 @@ target_sources(
           serialization.cpp
           simple_symbolic.cpp
           symbolic.cpp
+          system_memory.cpp
           tiff.cpp
           utils.cpp
           ${PROJECT_BINARY_DIR}/src/core/common/src/version.cpp)
@@ -20,6 +21,7 @@ if(BUILD_TESTING)
            serialization_t.cpp
            simple_symbolic_t.cpp
            symbolic_t.cpp
+           system_memory_t.cpp
            tiff_t.cpp
            utils_t.cpp
            voxel_t.cpp)

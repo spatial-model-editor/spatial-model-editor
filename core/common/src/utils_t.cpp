@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QImage>
 #include <QRgb>
+#include <limits>
 #include <list>
 #include <set>
 #include <vector>
@@ -122,5 +123,21 @@ TEST_CASE("Utils", "[core/common/utils][core/common][core][utils]") {
       REQUIRE(sme::common::get_unique_values(in) == out);
       REQUIRE(sme::common::get_unique_values(in1) == out1);
     }
+  }
+  SECTION("saturatingAdd") {
+    REQUIRE(common::saturatingAdd(2, 3) == 5);
+    REQUIRE(common::saturatingAdd(std::numeric_limits<std::size_t>::max(), 1) ==
+            std::numeric_limits<std::size_t>::max());
+    REQUIRE(
+        common::saturatingAdd(std::numeric_limits<std::size_t>::max() - 5, 5) ==
+        std::numeric_limits<std::size_t>::max());
+  }
+  SECTION("formatMemoryBytes") {
+    REQUIRE(common::formatMemoryBytes(0) == "0 B");
+    REQUIRE(common::formatMemoryBytes(1023) == "1023 B");
+    REQUIRE(common::formatMemoryBytes(1024) == "1.0 KiB");
+    REQUIRE(common::formatMemoryBytes(1536) == "1.5 KiB");
+    REQUIRE(common::formatMemoryBytes(1024 * 100) == "100 KiB");
+    REQUIRE(common::formatMemoryBytes(1024 * 1024) == "1.0 MiB");
   }
 }

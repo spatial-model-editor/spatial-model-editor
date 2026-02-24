@@ -24,6 +24,9 @@ public:
   std::string xmlModel;
   void clear();
   [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] std::size_t getEstimatedMemoryBytes() const;
+  [[nodiscard]] std::size_t
+  getEstimatedAdditionalMemoryBytes(std::size_t nAdditionalTimepoints) const;
   void reserve(std::size_t n);
   void pop_back();
 

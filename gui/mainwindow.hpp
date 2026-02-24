@@ -13,6 +13,7 @@ class TabParameters;
 class TabReactions;
 class TabSimulate;
 class TabSpecies;
+class MemoryUsageBarWidget;
 
 namespace Ui {
 class MainWindow;
@@ -27,7 +28,8 @@ public:
 
 private:
   std::unique_ptr<Ui::MainWindow> ui;
-  QLabel *statusBarPermanentMessage;
+  QLabel *statusBarPermanentMessage{};
+  MemoryUsageBarWidget *statusBarMemoryUsageBar{};
   sme::model::Model model;
   bool haveCopasiSE{false};
 

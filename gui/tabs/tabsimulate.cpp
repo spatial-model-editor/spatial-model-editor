@@ -11,12 +11,15 @@
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/simulate.hpp"
+#include "sme/system_memory.hpp"
 #include "sme/utils.hpp"
 #include "ui_tabsimulate.h"
 #include <QMessageBox>
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
 #include <algorithm>
+#include <cmath>
+#include <limits>
 
 TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
                          QVoxelRenderer *voxelRenderer, QWidget *parent)
@@ -84,6 +87,74 @@ static void importModelTimesAndIntervals(
   if (!simInterval.isEmpty()) {
     ui->txtSimInterval->setText(simInterval);
   }
+}
+
+[[nodiscard]] static std::size_t getTotalTimesteps(
+    const std::vector<std::pair<std::size_t, double>> &timesteps) {
+  std::size_t total{0};
+  for (const auto &[n, dt] : timesteps) {
+    Q_UNUSED(dt);
+    total += n;
+  }
+  return total;
+}
+
+[[nodiscard]] static bool continueWithEstimatedMemoryUse(
+    QWidget *parent, const sme::simulate::SimulationData &data,
+    const std::vector<std::pair<std::size_t, double>> &timesteps) {
+  constexpr std::size_t absoluteWarningThresholdBytesNoMemInfo{
+      10ULL * 1024ULL * 1024ULL * 1024ULL};
+  constexpr double additionalDataSafetyFactor{1.25};
+  constexpr double availableMemoryWarningFraction{0.8};
+  const std::size_t nAdditionalTimesteps{getTotalTimesteps(timesteps)};
+  const std::size_t currentBytes{data.getEstimatedMemoryBytes()};
+  const auto additionalBytesUnscaled{
+      data.getEstimatedAdditionalMemoryBytes(nAdditionalTimesteps)};
+  std::size_t additionalBytes{additionalBytesUnscaled};
+  const auto maxBytes{std::numeric_limits<std::size_t>::max()};
+  const auto additionalLimit{static_cast<double>(maxBytes) /
+                             additionalDataSafetyFactor};
+  if (static_cast<double>(additionalBytesUnscaled) >= additionalLimit) {
+    additionalBytes = maxBytes;
+  } else {
+    additionalBytes = static_cast<std::size_t>(
+        std::ceil(additionalDataSafetyFactor *
+                  static_cast<double>(additionalBytesUnscaled)));
+  }
+  const std::size_t estimatedTotalBytes{
+      sme::common::saturatingAdd(currentBytes, additionalBytes)};
+  const auto memInfo{sme::common::getSystemMemoryInfo()};
+  bool showWarning{false};
+  if (memInfo.has_value()) {
+    const std::size_t availableWarningThreshold{static_cast<std::size_t>(
+        availableMemoryWarningFraction *
+        static_cast<double>(memInfo->availablePhysicalBytes))};
+    showWarning = estimatedTotalBytes >= availableWarningThreshold;
+  } else {
+    showWarning = estimatedTotalBytes >= absoluteWarningThresholdBytesNoMemInfo;
+  }
+  if (!showWarning) {
+    return true;
+  }
+  QString warning{
+      QString("The requested simulation is estimated to require around %1 "
+              "of simulation data RAM.\n\n"
+              "Current simulation data: %2\n"
+              "Additional data for this run: %3")
+          .arg(sme::common::formatMemoryBytes(estimatedTotalBytes),
+               sme::common::formatMemoryBytes(currentBytes),
+               sme::common::formatMemoryBytes(additionalBytes))};
+  if (memInfo.has_value()) {
+    warning.append(
+        QString("\n\nSystem memory available: %1\nSystem memory total: %2")
+            .arg(
+                sme::common::formatMemoryBytes(memInfo->availablePhysicalBytes),
+                sme::common::formatMemoryBytes(memInfo->totalPhysicalBytes)));
+  }
+  warning.append("\n\nContinue?");
+  return QMessageBox::question(parent, "High memory usage expected", warning,
+                               QMessageBox::Yes | QMessageBox::No,
+                               QMessageBox::No) == QMessageBox::Yes;
 }
 
 void TabSimulate::loadModelData() {
@@ -272,8 +343,13 @@ void TabSimulate::btnSimulate_clicked() {
                          "Invalid simulation times or image intervals");
     return;
   }
+  const auto timesteps{simulationTimes.value()};
+  if (!continueWithEstimatedMemoryUse(this, model.getSimulationData(),
+                                      timesteps)) {
+    return;
+  }
   QString imageIntervalsText;
-  for (const auto &[n, dt] : simulationTimes.value()) {
+  for (const auto &[n, dt] : timesteps) {
     SPDLOG_DEBUG("{} x {}", n, dt);
     imageIntervalsText.append(QString::number(dt));
     imageIntervalsText.append(";");
@@ -288,7 +364,7 @@ void TabSimulate::btnSimulate_clicked() {
   ui->btnSimulate->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
   auto progressMax{static_cast<int>(time.size())};
-  for (const auto &simulationTime : simulationTimes.value()) {
+  for (const auto &simulationTime : timesteps) {
     progressMax += static_cast<int>(simulationTime.first);
   }
   progressDialog->setMaximum(progressMax);
@@ -296,9 +372,9 @@ void TabSimulate::btnSimulate_clicked() {
   this->setCursor(Qt::WaitCursor);
   simFinishedHandled.store(false);
   // start simulation in a new thread
-  simSteps = QtConcurrent::run(&sme::simulate::Simulation::doMultipleTimesteps,
-                               sim.get(), simulationTimes.value(), -1.0,
-                               std::function<bool()>{});
+  simSteps =
+      QtConcurrent::run(&sme::simulate::Simulation::doMultipleTimesteps,
+                        sim.get(), timesteps, -1.0, std::function<bool()>{});
   simWatcher.setFuture(simSteps);
   // start timer to periodically update simulation results
   plotRefreshTimer.start();
