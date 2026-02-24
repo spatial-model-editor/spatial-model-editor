@@ -98,6 +98,30 @@ def test_simulate_invalid_timesteps():
             m.simulate("10;seven", "1;1", simulator_type=sim_type)
 
 
+def test_model_simulation_settings():
+    m = sme.open_example_model()
+    m.simulation_settings.simulator_type = sme.SimulatorType.Pixel
+    assert m.simulation_settings.simulator_type == sme.SimulatorType.Pixel
+
+    settings = m.simulation_settings
+    settings.options.pixel.enable_multithreading = True
+    settings.options.pixel.max_threads = 2
+    m.simulation_settings = settings
+
+    sim_results = m.simulate(0.002, 0.001)
+    assert len(sim_results) == 3
+
+    settings2 = m.simulation_settings
+    assert settings2.simulator_type == sme.SimulatorType.Pixel
+    assert settings2.options.pixel.enable_multithreading
+    assert settings2.options.pixel.max_threads == 2
+
+    # if simulation times are in model settings, simulate() can omit time args
+    m.simulation_settings.times = [(2, 0.001)]
+    sim_results2 = m.simulate()
+    assert len(sim_results2) == 3
+
+
 def test_simulate():
     for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
         m = sme.open_example_model()
@@ -169,7 +193,10 @@ def test_simulate():
 
     # approximate dcdt (only returned from simulate & pixel & last timepoint)
     m = sme.open_example_model()
-    sim_results = m.simulate(0.002, 0.001, simulator_type=sme.SimulatorType.Pixel)
+    settings = m.simulation_settings
+    settings.simulator_type = sme.SimulatorType.Pixel
+    m.simulation_settings = settings
+    sim_results = m.simulate(0.002, 0.001)
     assert len(sim_results) == 3
     assert len(sim_results[0].species_dcdt) == 0
     assert len(sim_results[1].species_dcdt) == 0
@@ -209,6 +236,35 @@ def test_simulate():
         # but results are still available from the model
         sim_results2 = m.simulation_results()
         assert len(sim_results2) == 3
+
+    # explicit Pixel solver options
+    m = sme.open_example_model()
+    settings = m.simulation_settings
+    settings.simulator_type = sme.SimulatorType.Pixel
+    settings.options.pixel.integrator = sme.PixelIntegratorType.RK323
+    settings.options.pixel.max_err.rel = 0.1
+    settings.options.pixel.max_err.abs = 0.1
+    settings.options.pixel.max_timestep = 0.01
+    settings.options.pixel.enable_multithreading = True
+    settings.options.pixel.max_threads = 1
+    settings.options.pixel.do_cse = False
+    settings.options.pixel.opt_level = 2
+    m.simulation_settings = settings
+    sim_results = m.simulate(0.002, 0.001, return_results=False)
+    assert len(sim_results) == 0
+    assert len(m.simulation_results()) == 3
+
+    # explicit DUNE solver options
+    m = sme.open_example_model()
+    settings = m.simulation_settings
+    settings.simulator_type = sme.SimulatorType.DUNE
+    settings.options.dune.integrator = "Alexander2"
+    settings.options.dune.write_vtk_files = False
+    settings.options.dune.max_threads = 1
+    m.simulation_settings = settings
+    sim_results = m.simulate(0.002, 0.001, return_results=False)
+    assert len(sim_results) == 0
+    assert len(m.simulation_results()) == 3
 
 
 def test_simulate_3d():

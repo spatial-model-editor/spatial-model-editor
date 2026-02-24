@@ -9,11 +9,17 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QImage>
+#include <nanobind/stl/optional.h>
+#include <nanobind/stl/pair.h>
 #include <nanobind/stl/string.h>
+#include <nanobind/stl/vector.h>
 
 namespace pysme {
 
 void bindModel(nanobind::module_ &m) {
+  nanobind::enum_<::sme::simulate::DuneDiscretizationType>(
+      m, "DuneDiscretizationType")
+      .value("FEM1", ::sme::simulate::DuneDiscretizationType::FEM1);
   nanobind::class_<Model> model(m, "Model",
                                 R"(
                                      the spatial model
@@ -21,11 +27,84 @@ void bindModel(nanobind::module_ &m) {
   nanobind::enum_<::sme::simulate::SimulatorType>(m, "SimulatorType")
       .value("DUNE", ::sme::simulate::SimulatorType::DUNE)
       .value("Pixel", ::sme::simulate::SimulatorType::Pixel);
+  nanobind::enum_<::sme::simulate::PixelIntegratorType>(m,
+                                                        "PixelIntegratorType")
+      .value("RK101", ::sme::simulate::PixelIntegratorType::RK101)
+      .value("RK212", ::sme::simulate::PixelIntegratorType::RK212)
+      .value("RK323", ::sme::simulate::PixelIntegratorType::RK323)
+      .value("RK435", ::sme::simulate::PixelIntegratorType::RK435);
+  nanobind::class_<::sme::simulate::PixelIntegratorError>(
+      m, "PixelIntegratorError")
+      .def(nanobind::init<>())
+      .def_rw("abs", &::sme::simulate::PixelIntegratorError::abs)
+      .def_rw("rel", &::sme::simulate::PixelIntegratorError::rel);
+  nanobind::class_<::sme::simulate::DuneOptions>(m, "DuneOptions")
+      .def(nanobind::init<>())
+      .def_rw("discretization", &::sme::simulate::DuneOptions::discretization)
+      .def_rw("integrator", &::sme::simulate::DuneOptions::integrator)
+      .def_rw("dt", &::sme::simulate::DuneOptions::dt)
+      .def_rw("min_dt", &::sme::simulate::DuneOptions::minDt)
+      .def_rw("max_dt", &::sme::simulate::DuneOptions::maxDt)
+      .def_rw("increase", &::sme::simulate::DuneOptions::increase)
+      .def_rw("decrease", &::sme::simulate::DuneOptions::decrease)
+      .def_rw("write_vtk_files", &::sme::simulate::DuneOptions::writeVTKfiles)
+      .def_rw("newton_rel_err", &::sme::simulate::DuneOptions::newtonRelErr)
+      .def_rw("newton_abs_err", &::sme::simulate::DuneOptions::newtonAbsErr)
+      .def_rw("linear_solver", &::sme::simulate::DuneOptions::linearSolver)
+      .def_rw("max_threads", &::sme::simulate::DuneOptions::maxThreads);
+  nanobind::class_<::sme::simulate::PixelOptions>(m, "PixelOptions")
+      .def(nanobind::init<>())
+      .def_rw("integrator", &::sme::simulate::PixelOptions::integrator)
+      .def_rw("max_err", &::sme::simulate::PixelOptions::maxErr)
+      .def_rw("max_timestep", &::sme::simulate::PixelOptions::maxTimestep)
+      .def_rw("enable_multithreading",
+              &::sme::simulate::PixelOptions::enableMultiThreading)
+      .def_rw("max_threads", &::sme::simulate::PixelOptions::maxThreads)
+      .def_rw("do_cse", &::sme::simulate::PixelOptions::doCSE)
+      .def_rw("opt_level", &::sme::simulate::PixelOptions::optLevel);
+  nanobind::class_<::sme::simulate::Options>(m, "SimulationOptions")
+      .def(nanobind::init<>())
+      .def_rw("dune", &::sme::simulate::Options::dune)
+      .def_rw("pixel", &::sme::simulate::Options::pixel);
+  nanobind::class_<SimulationSettings>(m, "SimulationSettings",
+                                       R"(
+      simulation settings used by :func:`Model.simulate`
+      )")
+      .def(nanobind::init<>())
+      .def_rw("times", &SimulationSettings::times,
+              R"(
+              list[tuple[int, float]]: list of `(n_steps, step_size)` simulation stages
+              )")
+      .def_rw("options", &SimulationSettings::options,
+              R"(
+              SimulationOptions: simulator-specific options
+              )")
+      .def_rw("simulator_type", &SimulationSettings::simulatorType,
+              R"(
+              SimulatorType: simulator to use
+              )");
   model.def(nanobind::init<const std::string &>(), nanobind::arg("filename"))
       .def_prop_rw("name", &Model::getName, &Model::setName,
                    R"(
                     str: the name of this model
                     )")
+      .def_prop_rw("simulation_settings",
+                   static_cast<SimulationSettings &(Model::*)()>(
+                       &Model::getSimulationSettings),
+                   &Model::setSimulationSettings,
+                   nanobind::rv_policy::reference_internal,
+                   R"(
+          SimulationSettings: settings used when running simulations
+
+          Modify this object and assign it back to update the model defaults:
+
+          >>> settings = model.simulation_settings
+          >>> settings.times = [(2, 0.1)]
+          >>> settings.simulator_type = sme.SimulatorType.Pixel
+          >>> settings.options.pixel.enable_multithreading = True
+          >>> settings.options.pixel.max_threads = 4
+          >>> model.simulation_settings = settings
+          )")
       .def("export_sbml_file", &Model::exportSbmlFile,
            nanobind::arg("filename"),
            R"(
@@ -174,62 +253,92 @@ void bindModel(nanobind::module_ &m) {
            Args:
                filename (str): the name of the geometry image to import
            )")
-      .def("simulate", &Model::simulateFloat, nanobind::arg("simulation_time"),
-           nanobind::arg("image_interval"),
-           nanobind::arg("timeout_seconds") = 86400,
-           nanobind::arg("throw_on_timeout") = true,
-           nanobind::arg("simulator_type") =
-               ::sme::simulate::SimulatorType::Pixel,
-           nanobind::arg("continue_existing_simulation") = false,
-           nanobind::arg("return_results") = true,
-           nanobind::arg("n_threads") = 1,
-           R"(
-           returns the results of the simulation.
+      .def(
+          "simulate",
+          [](Model &self, std::optional<double> simulationTime,
+             std::optional<double> imageInterval, int timeoutSeconds,
+             bool throwOnTimeout,
+             std::optional<::sme::simulate::SimulatorType> simulatorType,
+             bool continueExistingSimulation, bool returnResults,
+             std::optional<int> nThreads,
+             std::optional<SimulationSettings> settings) {
+            return self.simulateFloat(simulationTime, imageInterval,
+                                      timeoutSeconds, throwOnTimeout,
+                                      simulatorType, continueExistingSimulation,
+                                      returnResults, nThreads, settings);
+          },
+          nanobind::arg("simulation_time") = nanobind::none(),
+          nanobind::arg("image_interval") = nanobind::none(),
+          nanobind::arg("timeout_seconds") = 86400,
+          nanobind::arg("throw_on_timeout") = true,
+          nanobind::arg("simulator_type") = nanobind::none(),
+          nanobind::arg("continue_existing_simulation") = false,
+          nanobind::arg("return_results") = true,
+          nanobind::arg("n_threads") = nanobind::none(), nanobind::kw_only(),
+          nanobind::arg("settings") = nanobind::none(),
+          R"(
+          returns the results of the simulation.
 
-           Args:
-               simulation_time (float): The length of the simulation in model units of time, e.g. `5.5`
-               image_interval (float): The interval between images in model units of time, e.g. `1.1`
-               timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
-               throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `True`.
-               simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
-               continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `False`, i.e. any existing simulation results are discarded before doing the simulation.
-               return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
-               n_threads(int): Number of cpu threads to use (for Pixel simulations). Default value is 1, 0 means use all available threads.
+          Args:
+              simulation_time (float, optional): The length of the simulation in model units of time, e.g. `5.5`.
+              image_interval (float, optional): The interval between images in model units of time, e.g. `1.1`.
+                  If both are omitted, simulation stages are taken from `model.simulation_settings.times` (or from `settings.times` when `settings` is provided).
+              timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
+              throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `True`.
+              simulator_type (sme.SimulatorType, optional): Per-call simulator override. If not supplied, the model's simulation settings are used.
+              continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `False`, i.e. any existing simulation results are discarded before doing the simulation.
+              return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
+              n_threads(int, optional): Per-call Pixel thread override, where `0` means use all available threads.
+              settings (sme.SimulationSettings, optional): Per-call simulation settings override. If not supplied, `model.simulation_settings` is used.
 
-           Returns:
-               SimulationResultList: the results of the simulation
+          Returns:
+              SimulationResultList: the results of the simulation
 
-           Raises:
-               RuntimeError: if the simulation times out or fails
-           )")
-      .def("simulate", &Model::simulateString,
-           nanobind::arg("simulation_times"), nanobind::arg("image_intervals"),
-           nanobind::arg("timeout_seconds") = 86400,
-           nanobind::arg("throw_on_timeout") = true,
-           nanobind::arg("simulator_type") =
-               ::sme::simulate::SimulatorType::Pixel,
-           nanobind::arg("continue_existing_simulation") = false,
-           nanobind::arg("return_results") = true,
-           nanobind::arg("n_threads") = 1,
-           R"(
-           returns the results of the simulation.
+          Raises:
+              RuntimeError: if the simulation times out or fails
+          )")
+      .def(
+          "simulate",
+          [](Model &self, const std::string &simulationTimes,
+             const std::string &imageIntervals, int timeoutSeconds,
+             bool throwOnTimeout,
+             std::optional<::sme::simulate::SimulatorType> simulatorType,
+             bool continueExistingSimulation, bool returnResults,
+             std::optional<int> nThreads,
+             std::optional<SimulationSettings> settings) {
+            return self.simulateString(
+                simulationTimes, imageIntervals, timeoutSeconds, throwOnTimeout,
+                simulatorType, continueExistingSimulation, returnResults,
+                nThreads, settings);
+          },
+          nanobind::arg("simulation_times"), nanobind::arg("image_intervals"),
+          nanobind::arg("timeout_seconds") = 86400,
+          nanobind::arg("throw_on_timeout") = true,
+          nanobind::arg("simulator_type") = nanobind::none(),
+          nanobind::arg("continue_existing_simulation") = false,
+          nanobind::arg("return_results") = true,
+          nanobind::arg("n_threads") = nanobind::none(), nanobind::kw_only(),
+          nanobind::arg("settings") = nanobind::none(),
+          R"(
+          returns the results of the simulation.
 
-           Args:
-               simulation_times (str): The length(s) of the simulation in model units of time as a semicolon-delimited list, e.g. `"5"`, or `"10;100;20"`
-               image_intervals (str): The interval(s) between images in model units of time as a semicolon-delimited list, e.g. `"1"`, or `"2;10;0.5"`
-               timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
-               throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
-               simulator_type (sme.SimulatorType): The simulator to use: `sme.SimulatorType.DUNE` or `sme.SimulatorType.Pixel`. Default value: Pixel.
-               continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
-               return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
-               n_threads(int): Number of cpu threads to use (for Pixel simulations). Default value is 1, 0 means use all available threads.
+          Args:
+              simulation_times (str): The length(s) of the simulation in model units of time as a semicolon-delimited list, e.g. `"5"`, or `"10;100;20"`
+              image_intervals (str): The interval(s) between images in model units of time as a semicolon-delimited list, e.g. `"1"`, or `"2;10;0.5"`
+              timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
+              throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
+              simulator_type (sme.SimulatorType, optional): Per-call simulator override. If not supplied, the model's simulation settings are used.
+              continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
+              return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
+              n_threads(int, optional): Per-call Pixel thread override, where `0` means use all available threads.
+              settings (sme.SimulationSettings, optional): Per-call simulation settings override. If not supplied, `model.simulation_settings` is used.
 
-           Returns:
-               SimulationResultList: the results of the simulation
+          Returns:
+              SimulationResultList: the results of the simulation
 
-           Raises:
-               RuntimeError: if the simulation times out or fails
-           )")
+          Raises:
+              RuntimeError: if the simulation times out or fails
+          )")
       .def("simulation_results", &Model::getSimulationResults,
            R"(
           returns the simulation results.
@@ -329,6 +438,18 @@ std::string Model::getName() const { return s->getName().toStdString(); }
 
 void Model::setName(const std::string &name) { s->setName(name.c_str()); }
 
+const SimulationSettings &Model::getSimulationSettings() const {
+  return s->getSimulationSettings();
+}
+
+SimulationSettings &Model::getSimulationSettings() {
+  return s->getSimulationSettings();
+}
+
+void Model::setSimulationSettings(const SimulationSettings &settings) {
+  s->getSimulationSettings() = settings;
+}
+
 nanobind::ndarray<nanobind::numpy, std::uint8_t>
 Model::compartment_image() const {
   return toPyImageRgb(s->getGeometry().getImages());
@@ -352,32 +473,62 @@ void Model::exportSmeFile(const std::string &filename) {
   s->exportSMEFile(filename);
 }
 
-std::vector<SimulationResult>
-Model::simulateString(const std::string &lengths, const std::string &intervals,
-                      int timeoutSeconds, bool throwOnTimeout,
-                      ::sme::simulate::SimulatorType simulatorType,
-                      bool continueExistingSimulation, bool returnResults,
-                      int nThreads) {
+std::vector<SimulationResult> Model::simulateString(
+    std::optional<std::string> lengths, std::optional<std::string> intervals,
+    int timeoutSeconds, bool throwOnTimeout,
+    std::optional<::sme::simulate::SimulatorType> simulatorType,
+    bool continueExistingSimulation, bool returnResults,
+    std::optional<int> nThreads,
+    const std::optional<SimulationSettings> &simulationSettingsOverride) {
   QElapsedTimer simulationRuntimeTimer;
   simulationRuntimeTimer.start();
   double timeoutMillisecs{static_cast<double>(timeoutSeconds) * 1000.0};
+  auto currentTimes{s->getSimulationSettings().times};
   if (!continueExistingSimulation) {
     s->getSimulationData().clear();
+    s->getSimulationSettings().times.clear();
   }
-  s->getSimulationSettings().simulatorType = simulatorType;
-  if (simulatorType == ::sme::simulate::SimulatorType::Pixel) {
-    auto &pixelOpts{s->getSimulationSettings().options.pixel};
-    if (nThreads != 1) {
+  if ((lengths.has_value() && !intervals.has_value()) ||
+      (!lengths.has_value() && intervals.has_value())) {
+    throw std::invalid_argument(
+        "simulation lengths and intervals must both be set or both be omitted");
+  }
+  auto &effectiveSettings{s->getSimulationSettings()};
+  if (simulationSettingsOverride.has_value()) {
+    effectiveSettings = simulationSettingsOverride.value();
+  }
+  if (simulatorType.has_value()) {
+    effectiveSettings.simulatorType = simulatorType.value();
+  }
+  if (nThreads.has_value() && effectiveSettings.simulatorType ==
+                                  ::sme::simulate::SimulatorType::Pixel) {
+    auto &pixelOpts{effectiveSettings.options.pixel};
+    if (nThreads.value() != 1) {
       pixelOpts.enableMultiThreading = true;
-      pixelOpts.maxThreads = static_cast<std::size_t>(nThreads);
+      pixelOpts.maxThreads = static_cast<std::size_t>(nThreads.value());
     } else {
       pixelOpts.enableMultiThreading = false;
+      pixelOpts.maxThreads = 1;
     }
   }
-  auto times{::sme::simulate::parseSimulationTimes(lengths.c_str(),
-                                                   intervals.c_str())};
-  if (!times.has_value()) {
-    throw std::invalid_argument("Invalid simulation lengths or intervals");
+  std::vector<std::pair<std::size_t, double>> times;
+  if (lengths.has_value() && intervals.has_value()) {
+    auto parsedTimes{::sme::simulate::parseSimulationTimes(lengths->c_str(),
+                                                           intervals->c_str())};
+    if (!parsedTimes.has_value()) {
+      throw std::invalid_argument("Invalid simulation lengths or intervals");
+    }
+    times = parsedTimes.value();
+  } else if (simulationSettingsOverride.has_value() &&
+             !simulationSettingsOverride->times.empty()) {
+    times = simulationSettingsOverride->times;
+  } else {
+    times = currentTimes;
+  }
+  if (times.empty()) {
+    throw std::invalid_argument(
+        "No simulation times specified: set simulation_time/image_interval, "
+        "or set simulation_settings.times");
   }
   // ensure any existing DUNE objects are destroyed to avoid later segfaults
   sim.reset();
@@ -385,7 +536,7 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
   if (const auto &e = sim->errorMessage(); !e.empty()) {
     throw std::runtime_error(fmt::format("Error in simulation setup: {}", e));
   }
-  sim->doMultipleTimesteps(times.value(), timeoutMillisecs, []() {
+  sim->doMultipleTimesteps(times, timeoutMillisecs, []() {
     if (PyErr_CheckSignals() != 0) {
       throw nanobind::python_error();
     }
@@ -401,13 +552,28 @@ Model::simulateString(const std::string &lengths, const std::string &intervals,
 }
 
 std::vector<SimulationResult> Model::simulateFloat(
-    double simulationTime, double imageInterval, int timeoutSeconds,
-    bool throwOnTimeout, ::sme::simulate::SimulatorType simulatorType,
-    bool continueExistingSimulation, bool returnResults, int nThreads) {
-  return simulateString(QString::number(simulationTime, 'g', 17).toStdString(),
-                        QString::number(imageInterval, 'g', 17).toStdString(),
-                        timeoutSeconds, throwOnTimeout, simulatorType,
-                        continueExistingSimulation, returnResults, nThreads);
+    std::optional<double> simulationTime, std::optional<double> imageInterval,
+    int timeoutSeconds, bool throwOnTimeout,
+    std::optional<::sme::simulate::SimulatorType> simulatorType,
+    bool continueExistingSimulation, bool returnResults,
+    std::optional<int> nThreads,
+    const std::optional<SimulationSettings> &simulationSettingsOverride) {
+  if (simulationTime.has_value() != imageInterval.has_value()) {
+    throw std::invalid_argument("simulation_time and image_interval must both "
+                                "be set or both be omitted");
+  }
+  if (simulationTime.has_value()) {
+    return simulateString(
+        QString::number(simulationTime.value(), 'g', 17).toStdString(),
+        QString::number(imageInterval.value(), 'g', 17).toStdString(),
+        timeoutSeconds, throwOnTimeout, simulatorType,
+        continueExistingSimulation, returnResults, nThreads,
+        simulationSettingsOverride);
+  }
+  return simulateString(std::nullopt, std::nullopt, timeoutSeconds,
+                        throwOnTimeout, simulatorType,
+                        continueExistingSimulation, returnResults, nThreads,
+                        simulationSettingsOverride);
 }
 
 std::vector<SimulationResult> Model::getSimulationResults() {

@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - dialog for importing analytic geometry where users can set voxel resolution and preview the converted sampled image before import
+- aligned simulation option exposure and naming across GUI, CLI and Python interfaces by adding DUNE/Pixel solver option overrides to CLI and exposing Python `model.simulation_settings` (including simulation times) plus optional `simulate(...)` time arguments
 
 ## [1.11.0] - 2026-02-04
 ### Added

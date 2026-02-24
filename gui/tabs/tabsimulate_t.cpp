@@ -123,7 +123,7 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
 
     // set an invalid simulation lengths / image intervals
     sendMouseClick(btnResetSimulation);
-    QString invalidMessage{"Invalid simulation length or image interval"};
+    QString invalidMessage{"Invalid simulation times or image intervals"};
     // invalid double
     sendKeyEvents(txtSimLength, {";", "c"});
     mwt.start();

@@ -268,8 +268,8 @@ void TabSimulate::btnSimulate_clicked() {
   auto simulationTimes{sme::simulate::parseSimulationTimes(
       ui->txtSimLength->text(), ui->txtSimInterval->text())};
   if (!simulationTimes.has_value()) {
-    QMessageBox::warning(this, "Invalid simulation length or image interval",
-                         "Invalid simulation length or image interval");
+    QMessageBox::warning(this, "Invalid simulation times or image intervals",
+                         "Invalid simulation times or image intervals");
     return;
   }
   QString imageIntervalsText;

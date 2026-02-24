@@ -9,12 +9,15 @@
 #include "sme_simulationresult.hpp"
 #include <memory>
 #include <nanobind/nanobind.h>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace pysme {
 
 void bindModel(nanobind::module_ &m);
+
+using SimulationSettings = ::sme::model::SimulationSettings;
 
 class Model {
 private:
@@ -28,6 +31,9 @@ public:
   void importSbmlString(const std::string &xml);
   [[nodiscard]] std::string getName() const;
   void setName(const std::string &name);
+  [[nodiscard]] const SimulationSettings &getSimulationSettings() const;
+  SimulationSettings &getSimulationSettings();
+  void setSimulationSettings(const SimulationSettings &settings);
   nanobind::ndarray<nanobind::numpy, std::uint8_t> compartment_image() const;
   void importGeometryFromImage(const std::string &filename);
   void exportSbmlFile(const std::string &filename);
@@ -35,16 +41,20 @@ public:
   std::vector<Compartment> compartments;
   std::vector<Membrane> membranes;
   std::vector<Parameter> parameters;
-  std::vector<SimulationResult>
-  simulateString(const std::string &lengths, const std::string &intervals,
-                 int timeoutSeconds, bool throwOnTimeout,
-                 ::sme::simulate::SimulatorType simulatorType,
-                 bool continueExistingSimulation, bool returnResults,
-                 int nThreads);
+  std::vector<SimulationResult> simulateString(
+      std::optional<std::string> lengths, std::optional<std::string> intervals,
+      int timeoutSeconds, bool throwOnTimeout,
+      std::optional<::sme::simulate::SimulatorType> simulatorType,
+      bool continueExistingSimulation, bool returnResults,
+      std::optional<int> nThreads,
+      const std::optional<SimulationSettings> &simulationSettingsOverride);
   std::vector<SimulationResult> simulateFloat(
-      double simulationTime, double imageInterval, int timeoutSeconds,
-      bool throwOnTimeout, ::sme::simulate::SimulatorType simulatorType,
-      bool continueExistingSimulation, bool returnResults, int nThreads);
+      std::optional<double> simulationTime, std::optional<double> imageInterval,
+      int timeoutSeconds, bool throwOnTimeout,
+      std::optional<::sme::simulate::SimulatorType> simulatorType,
+      bool continueExistingSimulation, bool returnResults,
+      std::optional<int> nThreads,
+      const std::optional<SimulationSettings> &simulationSettingsOverride);
   std::vector<SimulationResult> getSimulationResults();
   [[nodiscard]] std::string getStr() const;
 };

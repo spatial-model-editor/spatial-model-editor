@@ -5,6 +5,41 @@
 
 namespace sme::cli {
 
+static auto makeSimulatorTypeMap() {
+  return std::map<std::string, simulate::SimulatorType, std::less<>>{
+      {"dune", simulate::SimulatorType::DUNE},
+      {"pixel", simulate::SimulatorType::Pixel}};
+}
+
+static auto makeDuneIntegratorMap() {
+  return std::map<std::string, std::string, std::less<>>{
+      {"expliciteuler", "ExplicitEuler"},
+      {"impliciteuler", "ImplicitEuler"},
+      {"heun", "Heun"},
+      {"fractionalsteptheta", "FractionalStepTheta"},
+      {"alexander2", "Alexander2"},
+      {"shu3", "Shu3"},
+      {"alexander3", "Alexander3"},
+      {"rungekutta4", "RungeKutta4"}};
+}
+
+static auto makeDuneLinearSolverMap() {
+  return std::map<std::string, std::string, std::less<>>{
+      {"bicgstab", "BiCGSTAB"},
+      {"cg", "CG"},
+      {"restartedgmres", "RestartedGMRes"},
+      {"umfpack", "UMFPack"},
+      {"superlu", "SuperLU"}};
+}
+
+static auto makePixelIntegratorMap() {
+  return std::map<std::string, simulate::PixelIntegratorType, std::less<>>{
+      {"rk101", simulate::PixelIntegratorType::RK101},
+      {"rk212", simulate::PixelIntegratorType::RK212},
+      {"rk323", simulate::PixelIntegratorType::RK323},
+      {"rk435", simulate::PixelIntegratorType::RK435}};
+}
+
 static void addParams(CLI::App &app, Params &params) {
   app.require_subcommand(1, 1);
   auto *sim_app = app.add_subcommand("simulate", "Run a spatial simulation");
@@ -19,34 +54,104 @@ static void addParams(CLI::App &app, Params &params) {
     sub_app
         ->add_option("-s,--simulator", params.simType,
                      "The simulator to use: dune or pixel")
-        ->transform(CLI::CheckedTransformer(
-            std::map<std::string, simulate::SimulatorType, std::less<>>{
-                {"dune", simulate::SimulatorType::DUNE},
-                {"pixel", simulate::SimulatorType::Pixel}},
-            CLI::ignore_case))
-        ->capture_default_str();
+        ->transform(
+            CLI::CheckedTransformer(makeSimulatorTypeMap(), CLI::ignore_case));
     sub_app
-        ->add_option("-t,--nthreads", params.maxThreads,
+        ->add_option("-t,--max-threads,--nthreads", params.maxThreads,
                      "The maximum number of CPU threads to use when simulating "
-                     "(0 means unlimited)")
-        ->check(CLI::NonNegativeNumber)
-        ->capture_default_str();
+                     "(0 means unlimited). This sets both DUNE and Pixel "
+                     "thread limits.")
+        ->check(CLI::NonNegativeNumber);
+    sub_app
+        ->add_option("--dune-integrator", params.sim.duneIntegrator,
+                     "DUNE integrator: expliciteuler, impliciteuler, heun, "
+                     "fractionalsteptheta, alexander2, shu3, alexander3, or "
+                     "rungekutta4")
+        ->transform(
+            CLI::CheckedTransformer(makeDuneIntegratorMap(), CLI::ignore_case));
+    sub_app->add_option("--dune-initial-timestep",
+                        params.sim.duneInitialTimestep,
+                        "DUNE initial timestep");
+    sub_app->add_option("--dune-min-timestep", params.sim.duneMinTimestep,
+                        "DUNE minimum timestep");
+    sub_app->add_option("--dune-max-timestep", params.sim.duneMaxTimestep,
+                        "DUNE maximum timestep");
+    sub_app->add_option("--dune-increase-factor", params.sim.duneIncreaseFactor,
+                        "DUNE timestep increase factor");
+    sub_app->add_option("--dune-decrease-factor", params.sim.duneDecreaseFactor,
+                        "DUNE timestep decrease factor");
+    sub_app->add_option("--dune-output-vtk-files",
+                        params.sim.duneOutputVtkFiles,
+                        "DUNE output VTK files (true/false)");
+    sub_app->add_option("--dune-newton-relative-error",
+                        params.sim.duneNewtonRelativeError,
+                        "DUNE Newton relative error");
+    sub_app->add_option("--dune-newton-absolute-error",
+                        params.sim.duneNewtonAbsoluteError,
+                        "DUNE Newton absolute error");
+    sub_app
+        ->add_option("--dune-linear-solver", params.sim.duneLinearSolver,
+                     "DUNE linear solver: bicgstab, cg, restartedgmres, "
+                     "umfpack, or superlu")
+        ->transform(CLI::CheckedTransformer(makeDuneLinearSolverMap(),
+                                            CLI::ignore_case));
+    sub_app->add_option("--dune-max-threads", params.sim.duneMaxThreads,
+                        "DUNE max CPU threads (0 means unlimited)");
+    sub_app
+        ->add_option("--pixel-integrator", params.sim.pixelIntegrator,
+                     "Pixel integrator: rk101, rk212, rk323, or rk435")
+        ->transform(CLI::CheckedTransformer(makePixelIntegratorMap(),
+                                            CLI::ignore_case));
+    sub_app->add_option("--pixel-max-relative-error",
+                        params.sim.pixelMaxRelativeError,
+                        "Pixel max relative local error");
+    sub_app->add_option("--pixel-max-absolute-error",
+                        params.sim.pixelMaxAbsoluteError,
+                        "Pixel max absolute local error");
+    sub_app->add_option("--pixel-max-timestep", params.sim.pixelMaxTimestep,
+                        "Pixel max timestep");
+    sub_app->add_option("--pixel-enable-multithreading",
+                        params.sim.pixelEnableMultithreading,
+                        "Enable Pixel multithreading (true/false)");
+    sub_app->add_option("--pixel-max-threads", params.sim.pixelMaxThreads,
+                        "Pixel max CPU threads (0 means unlimited)");
+    sub_app->add_option("--pixel-do-cse", params.sim.pixelDoCSE,
+                        "Enable Pixel common subexpression elimination "
+                        "(true/false)");
+    sub_app
+        ->add_option("--pixel-opt-level", params.sim.pixelOptLevel,
+                     "Pixel compiler optimization level (0-3)")
+        ->check(CLI::Range(0, 3));
     sub_app->add_option(
         "-o,--output-file", params.outputFile,
         "The output file to write the results to. If not set, then "
         "the input file is used.");
   }
   // simulation options
+  sim_app->add_option(
+      "times", params.sim.simulationTimes,
+      "The simulation time(s) (in model units of time, separated by ';'). "
+      "Optional if image-intervals is also omitted, in which case model "
+      "simulation settings are used.");
+  sim_app->add_option(
+      "image-intervals", params.sim.imageIntervals,
+      "The interval(s) between saving images (in model units of time). "
+      "Optional if times is also omitted, in which case model simulation "
+      "settings are used.");
   sim_app
-      ->add_option(
-          "times", params.sim.simulationTimes,
-          "The simulation time(s) (in model units of time, separated by ';') ")
-      ->required();
+      ->add_option("--timeout-seconds", params.sim.timeoutSeconds,
+                   "Simulation timeout in seconds (-1 means no timeout)")
+      ->capture_default_str();
   sim_app
-      ->add_option(
-          "image-intervals", params.sim.imageIntervals,
-          "The interval(s) between saving images (in model units of time)")
-      ->required();
+      ->add_option("--throw-on-timeout", params.sim.throwOnTimeout,
+                   "Whether to treat timeout as an error (true/false)")
+      ->capture_default_str();
+  sim_app
+      ->add_option("--continue-existing-simulation",
+                   params.sim.continueExistingSimulation,
+                   "Whether to continue existing simulation results from the "
+                   "input model (true/false)")
+      ->capture_default_str();
   // fitting options
   using enum sme::simulate::OptAlgorithmType;
   fit_app
@@ -125,6 +230,7 @@ std::string toString(const simulate::SimulatorType &s) {
 }
 
 void printParams(const Params &params) {
+  auto boolToString = [](bool b) { return b ? "true" : "false"; };
   if (params.command == "fit") {
     fmt::print("\n# Fitting parameters:\n");
   } else if (params.command == "simulate") {
@@ -132,8 +238,13 @@ void printParams(const Params &params) {
   }
   fmt::print("#   - Input file: {}\n", params.inputFile);
   fmt::print("#   - Output file: {}\n", params.outputFile);
-  fmt::print("#   - Simulation Type: {}\n", toString(params.simType));
-  fmt::print("#   - Max CPU threads (simulation): {}\n", params.maxThreads);
+  fmt::print("#   - Simulation Type: {}\n",
+             params.simType.has_value() ? toString(params.simType.value())
+                                        : "(from model)");
+  fmt::print("#   - Max CPU threads (simulation): {}\n",
+             params.maxThreads.has_value()
+                 ? fmt::format("{}", params.maxThreads.value())
+                 : "(from model)");
   if (params.command == "fit") {
     fmt::print("#   - Optimization algorithm: {}\n",
                simulate::toString(params.fit.algorithm));
@@ -144,8 +255,17 @@ void printParams(const Params &params) {
     fmt::print("#   - Number of iterations: {}\n", params.fit.nIterations);
   }
   if (params.command == "simulate") {
-    fmt::print("#   - Simulation Length(s): {}\n", params.sim.simulationTimes);
-    fmt::print("#   - Image Interval(s): {}\n", params.sim.imageIntervals);
+    fmt::print("#   - Simulation Length(s): {}\n",
+               params.sim.simulationTimes.empty() ? "(from model)"
+                                                  : params.sim.simulationTimes);
+    fmt::print("#   - Image Interval(s): {}\n",
+               params.sim.imageIntervals.empty() ? "(from model)"
+                                                 : params.sim.imageIntervals);
+    fmt::print("#   - Timeout (seconds): {}\n", params.sim.timeoutSeconds);
+    fmt::print("#   - Throw on timeout: {}\n",
+               boolToString(params.sim.throwOnTimeout));
+    fmt::print("#   - Continue existing simulation: {}\n",
+               boolToString(params.sim.continueExistingSimulation));
   }
 }
 

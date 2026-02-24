@@ -2,7 +2,8 @@ Running a Simulation
 ====================
 
 To simulate the spatial model, click on the "Simulate" tab,
-specify the simulation time and desired interval between images, then click "Simulate".
+specify the simulation times and desired image intervals, then click "Simulate".
+Both fields accept semicolon-delimited lists for multi-stage simulations.
 
 The default simulation type is `DUNE`, a high-quality FEM solver,
 which solves the PDE on the triangular meshed approximation of the geometry.

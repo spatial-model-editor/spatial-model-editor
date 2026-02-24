@@ -22,4 +22,37 @@ TEST_CASE("CLI Params", "[cli][params]") {
     REQUIRE_NOTHROW(a.parse(fmt::format("fit x.sme -a{}", i)));
     REQUIRE(params.fit.algorithm == simulate::optAlgorithmTypes[i]);
   }
+
+  CLI::App b;
+  auto simParams = cli::setupCLI(b);
+  REQUIRE_NOTHROW(b.parse(
+      "simulate x.sme 1 0.1 --simulator pixel --max-threads 3 "
+      "--dune-integrator heun --dune-linear-solver superlu "
+      "--pixel-integrator rk323 --pixel-enable-multithreading true "
+      "--pixel-opt-level 2 --timeout-seconds 10 --throw-on-timeout false "
+      "--continue-existing-simulation false"));
+  REQUIRE(simParams.simType.has_value());
+  REQUIRE(simParams.simType.value() == simulate::SimulatorType::Pixel);
+  REQUIRE(simParams.maxThreads.has_value());
+  REQUIRE(simParams.maxThreads.value() == 3);
+  REQUIRE(simParams.sim.duneIntegrator.has_value());
+  REQUIRE(simParams.sim.duneIntegrator.value() == "Heun");
+  REQUIRE(simParams.sim.duneLinearSolver.has_value());
+  REQUIRE(simParams.sim.duneLinearSolver.value() == "SuperLU");
+  REQUIRE(simParams.sim.pixelIntegrator.has_value());
+  REQUIRE(simParams.sim.pixelIntegrator.value() ==
+          simulate::PixelIntegratorType::RK323);
+  REQUIRE(simParams.sim.pixelEnableMultithreading.has_value());
+  REQUIRE(simParams.sim.pixelEnableMultithreading.value() == true);
+  REQUIRE(simParams.sim.pixelOptLevel.has_value());
+  REQUIRE(simParams.sim.pixelOptLevel.value() == 2);
+  REQUIRE(simParams.sim.timeoutSeconds == dbl_approx(10));
+  REQUIRE(simParams.sim.throwOnTimeout == false);
+  REQUIRE(simParams.sim.continueExistingSimulation == false);
+
+  CLI::App c;
+  auto simParamsNoTimes = cli::setupCLI(c);
+  REQUIRE_NOTHROW(c.parse("simulate x.sme"));
+  REQUIRE(simParamsNoTimes.sim.simulationTimes.empty());
+  REQUIRE(simParamsNoTimes.sim.imageIntervals.empty());
 }

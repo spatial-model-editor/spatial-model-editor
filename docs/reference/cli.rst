@@ -47,6 +47,13 @@ For example:
 
     ./spatial-cli simulate results.sme "5;25;10" "1;2.5;0.1"
 
+If the model already has simulation settings, the positional ``times`` and ``image-intervals``
+arguments can be omitted and the stored settings will be used:
+
+.. code-block:: bash
+
+    ./spatial-cli simulate results.sme --continue-existing-simulation false
+
 Parameter fitting
 -----------------
 
@@ -67,7 +74,7 @@ Command line parameters
 
 .. code-block:: bash
 
-    Spatial Model Editor CLI v1.9.0
+    Spatial Model Editor CLI v1.11.0
 
 
     ./cli/spatial-cli [OPTIONS] SUBCOMMAND
@@ -90,24 +97,73 @@ Command line parameters
     Run a spatial simulation
 
 
-    ./spatial-cli simulate [OPTIONS] file times image-intervals
+    ./spatial-cli simulate [OPTIONS] file [times] [image-intervals]
 
 
     POSITIONALS:
       file TEXT:FILE REQUIRED     The spatial SBML model to simulate
-      times TEXT REQUIRED         The simulation time(s) (in model units of time, separated by ';')
-      image-intervals TEXT REQUIRED
-                                  The interval(s) between saving images (in model units of time)
+      times TEXT                  The simulation time(s) (in model units of time, separated by ';').
+                                  Optional if image-intervals is also omitted, in which case model
+                                  simulation settings are used.
+      image-intervals TEXT        The interval(s) between saving images (in model units of time).
+                                  Optional if times is also omitted, in which case model simulation
+                                  settings are used.
 
     OPTIONS:
       -h,     --help              Print this help message and exit
-      -s,     --simulator ENUM:value in {dune->0,pixel->1} OR {0,1} [0]
+      -s,     --simulator ENUM:value in {dune->0,pixel->1} OR {0,1}
                                   The simulator to use: dune or pixel
-      -t,     --nthreads UINT:NONNEGATIVE [0]
+      -t,     --max-threads, --nthreads UINT:NONNEGATIVE
                                   The maximum number of CPU threads to use when simulating (0 means
-                                  unlimited)
+                                  unlimited). This sets both DUNE and Pixel thread limits.
+              --dune-integrator TEXT
+                                  DUNE integrator: expliciteuler, impliciteuler, heun,
+                                  fractionalsteptheta, alexander2, shu3, alexander3, or rungekutta4
+              --dune-initial-timestep FLOAT
+                                  DUNE initial timestep
+              --dune-min-timestep FLOAT
+                                  DUNE minimum timestep
+              --dune-max-timestep FLOAT
+                                  DUNE maximum timestep
+              --dune-increase-factor FLOAT
+                                  DUNE timestep increase factor
+              --dune-decrease-factor FLOAT
+                                  DUNE timestep decrease factor
+              --dune-output-vtk-files BOOLEAN
+                                  DUNE output VTK files (true/false)
+              --dune-newton-relative-error FLOAT
+                                  DUNE Newton relative error
+              --dune-newton-absolute-error FLOAT
+                                  DUNE Newton absolute error
+              --dune-linear-solver TEXT
+                                  DUNE linear solver: bicgstab, cg, restartedgmres, umfpack, or superlu
+              --dune-max-threads UINT
+                                  DUNE max CPU threads (0 means unlimited)
+              --pixel-integrator ENUM
+                                  Pixel integrator: rk101, rk212, rk323, or rk435
+              --pixel-max-relative-error FLOAT
+                                  Pixel max relative local error
+              --pixel-max-absolute-error FLOAT
+                                  Pixel max absolute local error
+              --pixel-max-timestep FLOAT
+                                  Pixel max timestep
+              --pixel-enable-multithreading BOOLEAN
+                                  Enable Pixel multithreading (true/false)
+              --pixel-max-threads UINT
+                                  Pixel max CPU threads (0 means unlimited)
+              --pixel-do-cse BOOLEAN
+                                  Enable Pixel common subexpression elimination (true/false)
+              --pixel-opt-level UINT
+                                  Pixel compiler optimization level (0-3)
       -o,     --output-file TEXT  The output file to write the results to. If not set, then the
                                   input file is used.
+              --timeout-seconds FLOAT [-1]
+                                  Simulation timeout in seconds (-1 means no timeout)
+              --throw-on-timeout BOOLEAN [1]
+                                  Whether to treat timeout as an error (true/false)
+              --continue-existing-simulation BOOLEAN [1]
+                                  Whether to continue existing simulation results from the input model
+                                  (true/false)
 
 `spatial-cli fit --help` displays the available options for the parameter fitting subcommand:
 
@@ -124,11 +180,30 @@ Command line parameters
 
     OPTIONS:
       -h,     --help              Print this help message and exit
-      -s,     --simulator ENUM:value in {dune->0,pixel->1} OR {0,1} [0]
+      -s,     --simulator ENUM:value in {dune->0,pixel->1} OR {0,1}
                                   The simulator to use: dune or pixel
-      -t,     --nthreads UINT:NONNEGATIVE [0]
+      -t,     --max-threads, --nthreads UINT:NONNEGATIVE
                                   The maximum number of CPU threads to use when simulating (0 means
-                                  unlimited)
+                                  unlimited). This sets both DUNE and Pixel thread limits.
+              --dune-integrator TEXT
+              --dune-initial-timestep FLOAT
+              --dune-min-timestep FLOAT
+              --dune-max-timestep FLOAT
+              --dune-increase-factor FLOAT
+              --dune-decrease-factor FLOAT
+              --dune-output-vtk-files BOOLEAN
+              --dune-newton-relative-error FLOAT
+              --dune-newton-absolute-error FLOAT
+              --dune-linear-solver TEXT
+              --dune-max-threads UINT
+              --pixel-integrator ENUM
+              --pixel-max-relative-error FLOAT
+              --pixel-max-absolute-error FLOAT
+              --pixel-max-timestep FLOAT
+              --pixel-enable-multithreading BOOLEAN
+              --pixel-max-threads UINT
+              --pixel-do-cse BOOLEAN
+              --pixel-opt-level UINT
       -o,     --output-file TEXT  The output file to write the results to. If not set, then the
                                   input file is used.
       -a,     --algorithm ENUM:value in {ABC->6,AL->12,BOBYQA->9,COBYLA->8,DE->2,GPSO->1,NMS->10,PRAXIS->13,PSO->0,gaco->7,iDE->3,jDE->4,pDE->5,sbplx->11} OR {6,12,9,8,2,1,10,13,0,7,3,4,5,11} [0]
