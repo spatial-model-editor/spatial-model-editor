@@ -2,6 +2,7 @@
 #include "cli_command.hpp"
 #include "sme/model.hpp"
 #include <QFile>
+#include <optional>
 
 using namespace sme;
 
@@ -61,6 +62,63 @@ TEST_CASE("CLI Simulate", "[cli][simulate]") {
     m2.importFile(tmpOutputFile);
     REQUIRE(m2.getSimulationData().timePoints.size() == 13);
     REQUIRE(m2.getSimulationData().timePoints[12] == dbl_approx(1.20));
+
+    // run again, but clear existing simulation results before starting
+    params.sim.continueExistingSimulation = false;
+    cli::runCommand(params);
+    model::Model m3;
+    m3.importFile(tmpOutputFile);
+    REQUIRE(m3.getSimulationData().timePoints.size() == 7);
+    REQUIRE(m3.getSimulationSettings().options.pixel.integrator ==
+            simulate::PixelIntegratorType::RK212);
+
+    // and override some Pixel options
+    params.sim.pixelIntegrator = simulate::PixelIntegratorType::RK323;
+    params.sim.pixelEnableMultithreading = true;
+    params.sim.pixelMaxThreads = 1;
+    params.sim.pixelOptLevel = 2;
+    cli::runCommand(params);
+    model::Model m4;
+    m4.importFile(tmpOutputFile);
+    REQUIRE(m4.getSimulationSettings().options.pixel.integrator ==
+            simulate::PixelIntegratorType::RK323);
+    REQUIRE(m4.getSimulationSettings().options.pixel.enableMultiThreading ==
+            true);
+    REQUIRE(m4.getSimulationSettings().options.pixel.maxThreads == 1);
+    REQUIRE(m4.getSimulationSettings().options.pixel.optLevel == 2);
+
+    // overriding Pixel max threads should enable multithreading if not explicit
+    params.sim.pixelEnableMultithreading = std::nullopt;
+    params.sim.pixelMaxThreads = 4;
+    cli::runCommand(params);
+    model::Model m5;
+    m5.importFile(tmpOutputFile);
+    REQUIRE(m5.getSimulationSettings().options.pixel.enableMultiThreading ==
+            true);
+    REQUIRE(m5.getSimulationSettings().options.pixel.maxThreads == 4);
+
+    // omit times and intervals: use model simulation settings from input file
+    params.sim.simulationTimes.clear();
+    params.sim.imageIntervals.clear();
+    params.sim.continueExistingSimulation = false;
+    cli::runCommand(params);
+    model::Model m6;
+    m6.importFile(tmpOutputFile);
+    REQUIRE(m6.getSimulationData().timePoints.size() == 7);
+    REQUIRE(m6.getSimulationData().timePoints[6] == dbl_approx(0.60));
+  }
+  SECTION("Invalid partial simulation times") {
+    const char *tmpInputFile{"tmpcli4.xml"};
+    const char *tmpOutputFile{"tmpcli4.sme"};
+    QFile::remove(tmpInputFile);
+    QFile::remove(tmpOutputFile);
+    QFile::copy(":/models/ABtoC.xml", tmpInputFile);
+    cli::Params params;
+    params.command = "simulate";
+    params.inputFile = tmpInputFile;
+    params.sim.simulationTimes = "0.2";
+    params.outputFile = tmpOutputFile;
+    REQUIRE(cli::runCommand(params) == false);
   }
   SECTION("Parameter fitting") {
     const char *tmpInputFile{"tmpcli3.xml"};
