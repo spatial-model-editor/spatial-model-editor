@@ -21,9 +21,15 @@ namespace sme::simulate {
 
 namespace detail {
 
+/**
+ * @brief Sentinel value for vertices not used in selected elements.
+ */
 static constexpr std::size_t UnusedVertexIndex =
     std::numeric_limits<unsigned int>::max();
 
+/**
+ * @brief Predicate for compartment inclusion filter.
+ */
 static inline bool
 useCompartment(std::size_t compIndex,
                const std::unordered_set<int> &compartmentIndicies) {
@@ -32,6 +38,9 @@ useCompartment(std::size_t compIndex,
              compartmentIndicies.cend();
 }
 
+/**
+ * @brief Map old mesh vertex index to compacted host-grid index.
+ */
 static inline unsigned int
 getOrCreateVertexIndex(std::size_t oldVertexIndex,
                        std::vector<unsigned int> &newVertexIndices,
@@ -44,16 +53,25 @@ getOrCreateVertexIndex(std::size_t oldVertexIndex,
   return newVertexIndex;
 }
 
+/**
+ * @brief Access element indices from 2D mesh.
+ */
 static inline const std::vector<std::vector<mesh::TriangulateTriangleIndex>> &
 getElementIndices(const mesh::Mesh2d &mesh) {
   return mesh.getTriangleIndices();
 }
 
+/**
+ * @brief Access element indices from 3D mesh.
+ */
 static inline const std::vector<std::vector<mesh::TetrahedronVertexIndices>> &
 getElementIndices(const mesh::Mesh3d &mesh3d) {
   return mesh3d.getTetrahedronIndices();
 }
 
+/**
+ * @brief Build host grid and per-compartment element counts from mesh.
+ */
 template <typename HostGrid, typename MeshType>
 std::pair<std::vector<std::size_t>, std::shared_ptr<HostGrid>>
 makeHostGrid(const MeshType &mesh) {
@@ -98,6 +116,9 @@ makeHostGrid(const MeshType &mesh) {
   return {numElements, factory.createGrid()};
 }
 
+/**
+ * @brief Create multi-domain grid from host grid.
+ */
 template <typename HostGrid, typename MDGTraits>
 auto makeGrid(HostGrid &hostGrid, std::size_t maxSubdomains) {
   using Grid = Dune::mdgrid::MultiDomainGrid<HostGrid, MDGTraits>;
@@ -110,6 +131,9 @@ auto makeGrid(HostGrid &hostGrid, std::size_t maxSubdomains) {
   return std::make_shared<Grid>(hostGrid, *traits);
 }
 
+/**
+ * @brief Assign host-grid elements to subdomains.
+ */
 template <typename Grid>
 void assignElements(Grid &grid, const std::vector<std::size_t> &numElements) {
   // assign each element to its subdomain / compartment
@@ -131,6 +155,9 @@ void assignElements(Grid &grid, const std::vector<std::size_t> &numElements) {
 
 } // namespace detail
 
+/**
+ * @brief Build multi-domain DUNE grid from 2D/3D mesh.
+ */
 template <class HostGrid, class MDGTraits, class MeshType>
 auto makeDuneGrid(const MeshType &mesh) {
   auto [numElements, hostGrid] = detail::makeHostGrid<HostGrid>(mesh);

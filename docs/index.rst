@@ -70,3 +70,8 @@ Spatial Model Editor Documentation
 
    developer/core
    developer/tests
+
+.. toctree::
+   :hidden:
+
+   README.md

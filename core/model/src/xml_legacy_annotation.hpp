@@ -27,17 +27,41 @@ class Mesh2d;
 
 namespace model {
 
+/**
+ * @brief Returns ``true`` if legacy SME annotations are present.
+ */
 bool hasLegacyAnnotations(const libsbml::Model *model);
+/**
+ * @brief Import legacy annotations into current settings and remove them.
+ */
 Settings importAndRemoveLegacyAnnotations(libsbml::Model *model);
 
+/**
+ * @brief Remove legacy mesh-parameter annotation from parametric geometry.
+ */
 void removeMeshParamsAnnotation(libsbml::ParametricGeometry *pg);
+/**
+ * @brief Parse legacy mesh-parameter annotation.
+ */
 std::optional<MeshParameters>
 getMeshParamsAnnotationData(const libsbml::ParametricGeometry *pg);
 
+/**
+ * @brief Remove legacy species color annotation.
+ */
 void removeSpeciesColorAnnotation(libsbml::Species *species);
+/**
+ * @brief Parse legacy species color annotation.
+ */
 std::optional<QRgb> getSpeciesColorAnnotation(const libsbml::Species *species);
 
+/**
+ * @brief Remove legacy display-options annotation.
+ */
 void removeDisplayOptionsAnnotation(libsbml::Model *model);
+/**
+ * @brief Parse legacy display-options annotation.
+ */
 std::optional<model::DisplayOptions>
 getDisplayOptionsAnnotation(const libsbml::Model *model);
 

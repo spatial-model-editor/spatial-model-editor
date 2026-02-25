@@ -15,25 +15,73 @@
 
 namespace sme::simulate {
 
+/**
+ * @brief Parse textual simulation segment lengths/intervals.
+ */
 std::optional<std::vector<std::pair<std::size_t, double>>>
 parseSimulationTimes(const QString &lengths, const QString &intervals);
 
+/**
+ * @brief Solver backend selection.
+ */
 enum class SimulatorType { DUNE, Pixel };
 
+/**
+ * @brief DUNE spatial discretization type.
+ */
 enum class DuneDiscretizationType { FEM1 };
 
+/**
+ * @brief DUNE solver options.
+ */
 struct DuneOptions {
+  /**
+   * @brief Spatial discretization scheme.
+   */
   DuneDiscretizationType discretization{DuneDiscretizationType::FEM1};
+  /**
+   * @brief Time integrator name.
+   */
   std::string integrator{"Alexander2"};
+  /**
+   * @brief Initial timestep.
+   */
   double dt{1e-1};
+  /**
+   * @brief Minimum adaptive timestep.
+   */
   double minDt{1e-10};
+  /**
+   * @brief Maximum adaptive timestep.
+   */
   double maxDt{1e4};
+  /**
+   * @brief Adaptive timestep increase factor.
+   */
   double increase{1.5};
+  /**
+   * @brief Adaptive timestep decrease factor.
+   */
   double decrease{0.5};
+  /**
+   * @brief Enable VTK output files.
+   */
   bool writeVTKfiles{false};
+  /**
+   * @brief Newton relative tolerance.
+   */
   double newtonRelErr{1e-8};
+  /**
+   * @brief Newton absolute tolerance.
+   */
   double newtonAbsErr{0.0};
+  /**
+   * @brief Linear solver name.
+   */
   std::string linearSolver{"RestartedGMRes"};
+  /**
+   * @brief Max thread count (0 means automatic/default).
+   */
   std::size_t maxThreads{0};
 
   template <class Archive>
@@ -59,10 +107,22 @@ struct DuneOptions {
   }
 };
 
+/**
+ * @brief Pixel integrator scheme selection.
+ */
 enum class PixelIntegratorType { RK101, RK212, RK323, RK435 };
 
+/**
+ * @brief Error tolerances for pixel adaptive integration.
+ */
 struct PixelIntegratorError {
+  /**
+   * @brief Absolute tolerance.
+   */
   double abs{std::numeric_limits<double>::max()};
+  /**
+   * @brief Relative tolerance.
+   */
   double rel{0.005};
 
   template <class Archive>
@@ -73,13 +133,37 @@ struct PixelIntegratorError {
   }
 };
 
+/**
+ * @brief Pixel solver options.
+ */
 struct PixelOptions {
+  /**
+   * @brief RK integrator scheme.
+   */
   PixelIntegratorType integrator{PixelIntegratorType::RK212};
+  /**
+   * @brief Adaptive error tolerances.
+   */
   PixelIntegratorError maxErr;
+  /**
+   * @brief Maximum timestep.
+   */
   double maxTimestep{std::numeric_limits<double>::max()};
+  /**
+   * @brief Enable multithreading for pixel solver.
+   */
   bool enableMultiThreading{false};
+  /**
+   * @brief Max thread count (0 means automatic/default).
+   */
   std::size_t maxThreads{0};
+  /**
+   * @brief Enable common subexpression elimination in symbolic expressions.
+   */
   bool doCSE{true};
+  /**
+   * @brief LLVM optimization level.
+   */
   unsigned optLevel{3};
 
   template <class Archive>
@@ -92,8 +176,17 @@ struct PixelOptions {
   }
 };
 
+/**
+ * @brief Global simulation options for all solver backends.
+ */
 struct Options {
+  /**
+   * @brief DUNE backend options.
+   */
   DuneOptions dune;
+  /**
+   * @brief Pixel backend options.
+   */
   PixelOptions pixel;
 
   template <class Archive>
@@ -104,9 +197,21 @@ struct Options {
   }
 };
 
+/**
+ * @brief Aggregate concentration statistics.
+ */
 struct AvgMinMax {
+  /**
+   * @brief Average concentration.
+   */
   double avg = 0;
+  /**
+   * @brief Minimum concentration.
+   */
   double min = std::numeric_limits<double>::max();
+  /**
+   * @brief Maximum concentration.
+   */
   double max = 0;
 
   template <class Archive>
@@ -115,6 +220,9 @@ struct AvgMinMax {
       ar(avg, min, max);
     }
   }
+  /**
+   * @brief Equality comparison.
+   */
   friend bool operator==(const AvgMinMax &lhs, const AvgMinMax &rhs);
 };
 

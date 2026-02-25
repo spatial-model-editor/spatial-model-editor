@@ -12,6 +12,12 @@
 
 namespace sme::mesh {
 
+/**
+ * @brief Find representative interior points for each connected region.
+ *
+ * For each color in ``cols``, connected components are identified in ``img``
+ * and one interior point is returned per component.
+ */
 std::vector<std::vector<QPointF>>
 getInteriorPoints(const QImage &img, const std::vector<QRgb> &cols);
 

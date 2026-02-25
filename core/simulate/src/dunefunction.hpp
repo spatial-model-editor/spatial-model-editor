@@ -22,8 +22,14 @@ template <typename F, int n> class FieldVector;
 
 namespace sme::simulate {
 
+/**
+ * @brief Analytic grid function sampling concentration from voxel arrays.
+ */
 template <typename Domain> class SmeGridFunction {
 public:
+  /**
+   * @brief Construct sampling function from geometry and concentration array.
+   */
   SmeGridFunction(const common::VoxelF &physicalOrigin,
                   const common::VolumeF &voxelVolume,
                   const common::Volume &imageVolume,
@@ -35,6 +41,9 @@ public:
                  voxel.height());
     SPDLOG_TRACE("  - ({},{},{}) origin", origin.p.x(), origin.p.y(), origin.z);
   }
+  /**
+   * @brief Evaluate concentration at global coordinate.
+   */
   double operator()(Domain globalPos) const {
     SPDLOG_TRACE("globalPos ({})", globalPos);
     if (c.empty()) {
@@ -65,6 +74,9 @@ private:
   std::vector<double> c;
 };
 
+/**
+ * @brief Build DUNE grid functions for each non-constant species.
+ */
 template <typename Grid, typename GridFunction>
 std::unordered_map<std::string, GridFunction>
 makeModelDuneFunctions(const DuneConverter &dc, const Grid &grid) {
