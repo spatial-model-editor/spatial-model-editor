@@ -57,6 +57,25 @@ std::vector<int> toInt(const std::vector<bool> &v) {
   return r;
 }
 
+std::size_t saturatingAdd(std::size_t a, std::size_t b) {
+  if (a > std::numeric_limits<std::size_t>::max() - b) {
+    return std::numeric_limits<std::size_t>::max();
+  }
+  return a + b;
+}
+
+QString formatMemoryBytes(std::size_t nBytes) {
+  static const std::array units{"B", "KiB", "MiB", "GiB", "TiB"};
+  double value{static_cast<double>(nBytes)};
+  std::size_t unitIndex{0};
+  while (value >= 1024.0 && unitIndex + 1 < units.size()) {
+    value /= 1024.0;
+    ++unitIndex;
+  }
+  const int precision{(unitIndex == 0 || value >= 100.0) ? 0 : 1};
+  return QString("%1 %2").arg(value, 0, 'f', precision).arg(units[unitIndex]);
+}
+
 const std::vector<QColor> indexedColors::colors = std::vector<QColor>{
     {230, 25, 75},  {60, 180, 75},   {255, 225, 25}, {0, 130, 200},
     {245, 130, 48}, {145, 30, 180},  {70, 240, 240}, {240, 50, 230},

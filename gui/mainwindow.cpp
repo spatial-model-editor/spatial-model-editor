@@ -11,6 +11,7 @@
 #include "dialogsteadystate.hpp"
 #include "dialogunits.hpp"
 #include "guiutils.hpp"
+#include "memoryusagebarwidget.hpp"
 #include "ode_import_wizard.hpp"
 #include "sme/duneconverter.hpp"
 #include "sme/logger.hpp"
@@ -92,6 +93,7 @@ QString MainWindow::getConvertedFilename(const QString &filename) {
 
 static QLabel *makeStatusBarPermanentMessage(QWidget *parent) {
   QLabel *lbl{new QLabel(QString(), parent)};
+  lbl->setObjectName("statusBarPermanentMessage");
   lbl->setTextFormat(Qt::TextFormat::RichText);
   lbl->setOpenExternalLinks(false);
   lbl->setTextInteractionFlags(
@@ -111,6 +113,8 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   statusBarPermanentMessage = makeStatusBarPermanentMessage(this);
   ui->statusBar->addPermanentWidget(statusBarPermanentMessage);
   statusBarPermanentMessage->hide();
+  statusBarMemoryUsageBar = new MemoryUsageBarWidget(this);
+  ui->statusBar->addPermanentWidget(statusBarMemoryUsageBar);
 
   setupTabs();
   setupConnections();

@@ -137,7 +137,8 @@ target_link_libraries(
           Combine-static
           CGAL::CGAL
           cereal::cereal
-          TBB::tbb)
+          TBB::tbb
+          $<$<PLATFORM_ID:Windows>:psapi>)
 target_link_libraries(
   core
   PUBLIC opencv_core

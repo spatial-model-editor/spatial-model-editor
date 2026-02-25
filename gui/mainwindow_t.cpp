@@ -3,11 +3,13 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include "sme/system_memory.hpp"
 #include <QComboBox>
 #include <QFile>
 #include <QMenu>
 #include <QSpinBox>
 #include <QStatusBar>
+#include <QWidget>
 
 using namespace sme::test;
 using Catch::Matchers::ContainsSubstring;
@@ -480,7 +482,8 @@ TEST_CASE("MainWindow: non-spatial model import", tags) {
   MainWindow w("tmpmainw-nonspatial.xml");
   w.show();
   waitFor(&w);
-  auto *statusBarPermanentMessage{w.statusBar()->findChild<QLabel *>()};
+  auto *statusBarPermanentMessage{
+      w.statusBar()->findChild<QLabel *>("statusBarPermanentMessage")};
   REQUIRE(statusBarPermanentMessage != nullptr);
   REQUIRE(statusBarPermanentMessage->text().contains(
       "Importing non-spatial model. Step 1/3"));
@@ -497,6 +500,24 @@ TEST_CASE("MainWindow: non-spatial model import", tags) {
   REQUIRE(mwt.getResult() == "Edit Geometry Image");
   REQUIRE(statusBarPermanentMessage->text().contains(
       "Importing non-spatial model. Step 2/3"));
+}
+
+TEST_CASE("MainWindow: status bar memory info", tags) {
+  MainWindow w;
+  w.show();
+  waitFor(&w);
+  auto *statusBarMemoryUsageBar{
+      w.statusBar()->findChild<QWidget *>("statusBarMemoryUsageBar")};
+  REQUIRE(statusBarMemoryUsageBar != nullptr);
+
+  const auto memoryInfo{sme::common::getSystemMemoryInfo()};
+  const auto processMemoryInfo{
+      sme::common::getCurrentProcessMemoryUsageBytes()};
+  REQUIRE(memoryInfo.has_value());
+  REQUIRE(processMemoryInfo.has_value());
+  REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM used by SME:"));
+  REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM used by system:"));
+  REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM total available:"));
 }
 
 TEST_CASE("MainWindow: drag & drop events", tags) {

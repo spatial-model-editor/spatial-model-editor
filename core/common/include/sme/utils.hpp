@@ -165,6 +165,16 @@ std::vector<bool> toBool(const std::vector<int> &v);
 std::vector<int> toInt(const std::vector<bool> &v);
 
 /**
+ * @brief Add byte counts with saturation at max size_t
+ */
+[[nodiscard]] std::size_t saturatingAdd(std::size_t a, std::size_t b);
+
+/**
+ * @brief Format bytes using binary units (B, KiB, MiB, GiB, TiB)
+ */
+[[nodiscard]] QString formatMemoryBytes(std::size_t nBytes);
+
+/**
  * @brief Convert a string to a vector of values
  *
  * The values in the string are separated by spaces.
