@@ -49,8 +49,7 @@ tail -n 100 tests.txt
 cd sme
 python -m pip install -r ../../sme/requirements-test.txt
 python -m pytest ../../sme/test -v
-# disable doctest temporarily due to segfault in CI:
-#PYTHONPATH=$(pwd) python ../../sme/test/sme_doctest.py -v
+PYTHONFAULTHANDLER=1 MPLBACKEND=Agg PYTHONPATH=$(pwd) python -X faulthandler ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)

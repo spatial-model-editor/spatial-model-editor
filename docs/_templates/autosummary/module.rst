@@ -33,7 +33,9 @@
    .. autosummary::
       :toctree:
    {% for item in classes %}
+   {% if item != "ConcentrationType" %}
       {{ item }}
+   {% endif %}
    {%- endfor %}
    {% endif %}
    {% endblock %}

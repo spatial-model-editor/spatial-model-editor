@@ -53,7 +53,9 @@ nbsphinx_prolog = """
 |colab-icon|_ `Interactive online version <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
 
 .. |colab-icon| image:: https://colab.research.google.com/assets/colab-badge.svg
+
 .. _colab-icon: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}
+
 """
 
 # Add any paths that contain templates here, relative to this directory.
@@ -62,7 +64,13 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = [
+    "_build",
+    "build",
+    "Thumbs.db",
+    ".DS_Store",
+    "sme/_autosummary/sme.ConcentrationType*.rst",
+]
 
 # breathe: generate docs from doxygen xml output
 breathe_projects = {"sme": "build/xml"}

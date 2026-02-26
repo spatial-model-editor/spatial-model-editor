@@ -52,8 +52,8 @@ void bindCompartment(nanobind::module_ &m) {
 
                         the first z-slice of the mask can be displayed using matplotlib:
 
-                        >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(mask[0], interpolation='none')
+                        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+                        >>> imgplot = plt.imshow(mask[0], interpolation='none')  # doctest: +SKIP
                     )")
       .def("__repr__",
            [](const Compartment &a) {

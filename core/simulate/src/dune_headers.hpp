@@ -1,4 +1,7 @@
-//  - include dune headers ignoring diagnostic warnings
+/**
+ * @file
+ * @brief DUNE include wrapper with diagnostic suppression.
+ */
 
 #pragma once
 

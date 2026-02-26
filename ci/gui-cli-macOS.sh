@@ -8,7 +8,15 @@ set -e -x
 export CMAKE_POLICY_VERSION_MINIMUM=3.5
 
 retry() {
-    "$@" || (sleep 1 && "$@") || (sleep 3 && "$@") || (sleep 5 && "$@") || echo "$* failed"
+    "$@" && return 0
+    sleep 1
+    "$@" && return 0
+    sleep 3
+    "$@" && return 0
+    sleep 5
+    "$@" && return 0
+    echo "$* failed" >&2
+    return 1
 }
 
 # do build
@@ -40,7 +48,7 @@ tail -n 100 tests.txt
 cd sme
 python -m pip install -r ../../sme/requirements-test.txt
 python -m pytest ../../sme/test -v
-PYTHONPATH=$(pwd) python ../../sme/test/sme_doctest.py -v
+PYTHONFAULTHANDLER=1 MPLBACKEND=Agg PYTHONPATH=$(pwd) python -X faulthandler ../../sme/test/sme_doctest.py -v
 cd ..
 
 # run benchmarks (~1 sec per benchmark, ~20secs total)

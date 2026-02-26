@@ -24,6 +24,9 @@ namespace simulate {
 class SimCompartment;
 class SimMembrane;
 
+/**
+ * @brief Finite-difference pixel simulation backend.
+ */
 class PixelSim : public BaseSim {
 private:
   std::vector<std::unique_ptr<SimCompartment>> simCompartments;
@@ -55,26 +58,62 @@ private:
   std::size_t nExtraVars{0};
 
 public:
+  /**
+   * @brief Construct pixel simulator for selected compartments/species.
+   */
   explicit PixelSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
+  /**
+   * @brief Destructor.
+   */
   ~PixelSim() override;
+  /**
+   * @brief Run simulation segment.
+   */
   std::size_t run(double time, double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;
+  /**
+   * @brief Concentration array for compartment.
+   */
   [[nodiscard]] const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const override;
+  /**
+   * @brief Concentration array padding.
+   */
   [[nodiscard]] std::size_t getConcentrationPadding() const override;
+  /**
+   * @brief Time derivative array for compartment.
+   */
   [[nodiscard]] const std::vector<double> &
   getDcdt(std::size_t compartmentIndex) const;
+  /**
+   * @brief Lower-order concentration value for adaptive RK.
+   */
   [[nodiscard]] double getLowerOrderConcentration(std::size_t compartmentIndex,
                                                   std::size_t speciesIndex,
                                                   std::size_t pixelIndex) const;
+  /**
+   * @brief Current error message.
+   */
   [[nodiscard]] const std::string &errorMessage() const override;
+  /**
+   * @brief Current error images.
+   */
   [[nodiscard]] const common::ImageStack &errorImages() const override;
+  /**
+   * @brief Request/clear stop flag.
+   */
   void setStopRequested(bool stop) override;
+  /**
+   * @brief Stop-request flag.
+   */
   bool getStopRequested() const override;
+  /**
+   * @brief Set current error message.
+   */
   void setCurrentErrormessage(const std::string &msg) override;
 };
 

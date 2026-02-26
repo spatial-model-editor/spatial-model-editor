@@ -98,6 +98,8 @@ void bindModel(nanobind::module_ &m) {
 
           Modify this object and assign it back to update the model defaults:
 
+          >>> import sme
+          >>> model = sme.open_example_model()
           >>> settings = model.simulation_settings
           >>> settings.times = [(2, 0.1)]
           >>> settings.simulator_type = sme.SimulatorType.Pixel
@@ -237,8 +239,8 @@ void bindModel(nanobind::module_ &m) {
 
                         the first z-slice of the image can be displayed using matplotlib:
 
-                        >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(model.compartment_image[0]))")
+                        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+                        >>> imgplot = plt.imshow(model.compartment_image[0])  # doctest: +SKIP)")
       .def("import_geometry_from_image", &Model::importGeometryFromImage,
            nanobind::arg("filename"),
            R"(
@@ -277,25 +279,49 @@ void bindModel(nanobind::module_ &m) {
           nanobind::arg("n_threads") = nanobind::none(), nanobind::kw_only(),
           nanobind::arg("settings") = nanobind::none(),
           R"(
-          returns the results of the simulation.
+          Run a simulation and optionally return the results.
 
-          Args:
-              simulation_time (float, optional): The length of the simulation in model units of time, e.g. `5.5`.
-              image_interval (float, optional): The interval between images in model units of time, e.g. `1.1`.
-                  If both are omitted, simulation stages are taken from `model.simulation_settings.times` (or from `settings.times` when `settings` is provided).
-              timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
-              throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `True`.
-              simulator_type (sme.SimulatorType, optional): Per-call simulator override. If not supplied, the model's simulation settings are used.
-              continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `False`, i.e. any existing simulation results are discarded before doing the simulation.
-              return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
-              n_threads(int, optional): Per-call Pixel thread override, where `0` means use all available threads.
-              settings (sme.SimulationSettings, optional): Per-call simulation settings override. If not supplied, `model.simulation_settings` is used.
-
-          Returns:
-              SimulationResultList: the results of the simulation
-
-          Raises:
-              RuntimeError: if the simulation times out or fails
+          :param simulation_time:
+              Length of the simulation in model time units, for example
+              `5.5`.
+          :type simulation_time: float, optional
+          :param image_interval:
+              Interval between saved images in model time units, for example
+              `1.1`.
+              If both `simulation_time` and `image_interval` are omitted,
+              simulation stages are taken from
+              `model.simulation_settings.times` (or from `settings.times` when
+              `settings` is provided).
+          :type image_interval: float, optional
+          :param timeout_seconds:
+              Maximum wall-clock runtime in seconds. Default: `86400` (1 day).
+          :type timeout_seconds: int
+          :param throw_on_timeout:
+              If `True`, raise an exception on timeout. Default: `True`.
+          :type throw_on_timeout: bool
+          :param simulator_type:
+              Per-call simulator override. If omitted, use
+              `model.simulation_settings.simulator_type`.
+          :type simulator_type: sme.SimulatorType, optional
+          :param continue_existing_simulation:
+              If `True`, continue from existing results. If `False`, start a
+              new simulation and discard existing results. Default: `False`.
+          :type continue_existing_simulation: bool
+          :param return_results:
+              If `True`, return simulation results. If `False`, return an empty
+              `SimulationResultList`. Default: `True`.
+          :type return_results: bool
+          :param n_threads:
+              Per-call Pixel thread override. `0` means use all available
+              threads.
+          :type n_threads: int, optional
+          :param settings:
+              Per-call simulation settings override. If omitted, use
+              `model.simulation_settings`.
+          :type settings: sme.SimulationSettings, optional
+          :returns: simulation results.
+          :rtype: SimulationResultList
+          :raises RuntimeError: if the simulation times out or fails.
           )")
       .def(
           "simulate",
@@ -320,24 +346,45 @@ void bindModel(nanobind::module_ &m) {
           nanobind::arg("n_threads") = nanobind::none(), nanobind::kw_only(),
           nanobind::arg("settings") = nanobind::none(),
           R"(
-          returns the results of the simulation.
+          Run a simulation and optionally return the results.
 
-          Args:
-              simulation_times (str): The length(s) of the simulation in model units of time as a semicolon-delimited list, e.g. `"5"`, or `"10;100;20"`
-              image_intervals (str): The interval(s) between images in model units of time as a semicolon-delimited list, e.g. `"1"`, or `"2;10;0.5"`
-              timeout_seconds (int): The maximum time in seconds that the simulation can run for. Default value: 86400 = 1 day.
-              throw_on_timeout (bool): Whether to throw an exception on simulation timeout. Default value: `true`.
-              simulator_type (sme.SimulatorType, optional): Per-call simulator override. If not supplied, the model's simulation settings are used.
-              continue_existing_simulation (bool): Whether to continue the existing simulation, or start a new simulation. Default value: `false`, i.e. any existing simulation results are discarded before doing the simulation.
-              return_results (bool): Whether to return the simulation results. Default value: `True`. If `False`, an empty SimulationResultList is returned.
-              n_threads(int, optional): Per-call Pixel thread override, where `0` means use all available threads.
-              settings (sme.SimulationSettings, optional): Per-call simulation settings override. If not supplied, `model.simulation_settings` is used.
-
-          Returns:
-              SimulationResultList: the results of the simulation
-
-          Raises:
-              RuntimeError: if the simulation times out or fails
+          :param simulation_times:
+              Semicolon-delimited simulation stage lengths in model time units,
+              for example `"5"` or `"10;100;20"`.
+          :type simulation_times: str
+          :param image_intervals:
+              Semicolon-delimited image intervals in model time units, for
+              example `"1"` or `"2;10;0.5"`.
+          :type image_intervals: str
+          :param timeout_seconds:
+              Maximum wall-clock runtime in seconds. Default: `86400` (1 day).
+          :type timeout_seconds: int
+          :param throw_on_timeout:
+              If `True`, raise an exception on timeout. Default: `True`.
+          :type throw_on_timeout: bool
+          :param simulator_type:
+              Per-call simulator override. If omitted, use
+              `model.simulation_settings.simulator_type`.
+          :type simulator_type: sme.SimulatorType, optional
+          :param continue_existing_simulation:
+              If `True`, continue from existing results. If `False`, start a
+              new simulation and discard existing results. Default: `False`.
+          :type continue_existing_simulation: bool
+          :param return_results:
+              If `True`, return simulation results. If `False`, return an empty
+              `SimulationResultList`. Default: `True`.
+          :type return_results: bool
+          :param n_threads:
+              Per-call Pixel thread override. `0` means use all available
+              threads.
+          :type n_threads: int, optional
+          :param settings:
+              Per-call simulation settings override. If omitted, use
+              `model.simulation_settings`.
+          :type settings: sme.SimulationSettings, optional
+          :returns: simulation results.
+          :rtype: SimulationResultList
+          :raises RuntimeError: if the simulation times out or fails.
           )")
       .def("simulation_results", &Model::getSimulationResults,
            R"(

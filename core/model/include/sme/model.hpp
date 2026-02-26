@@ -39,6 +39,9 @@ class Mesh2d;
 
 namespace sme::model {
 
+/**
+ * @brief Geometry context needed for species analytic/image evaluation.
+ */
 struct SpeciesGeometry {
   const common::Volume &compartmentImageSize;
   const std::vector<common::Voxel> &compartmentVoxels;
@@ -47,6 +50,9 @@ struct SpeciesGeometry {
   const ModelUnits &modelUnits;
 };
 
+/**
+ * @brief High-level wrapper around SBML model, geometry, and simulation data.
+ */
 class Model {
 private:
   std::unique_ptr<libsbml::SBMLDocument> doc;
@@ -72,67 +78,235 @@ private:
   void updateSBMLDoc();
 
 public:
+  /**
+   * @brief Returns ``true`` if model loaded/constructed successfully.
+   * @returns ``true`` if model state is valid.
+   */
   [[nodiscard]] bool getIsValid() const;
+  /**
+   * @brief Error message from last load/parse failure.
+   * @returns Error message string.
+   */
   [[nodiscard]] const QString &getErrorMessage() const;
+  /**
+   * @brief Returns ``true`` if any contained model data is unsaved.
+   * @returns ``true`` if model has unsaved changes.
+   */
   [[nodiscard]] bool getHasUnsavedChanges() const;
+  /**
+   * @brief Current file path associated with model.
+   * @returns Current filename/path.
+   */
   [[nodiscard]] const QString &getCurrentFilename() const;
 
+  /**
+   * @brief Set model name.
+   * @param name New model name.
+   */
   void setName(const QString &name);
+  /**
+   * @brief Get model name.
+   * @returns Model name.
+   */
   [[nodiscard]] QString getName() const;
 
+  /**
+   * @brief Mutable access to compartment manager.
+   */
   ModelCompartments &getCompartments();
+  /**
+   * @brief Immutable access to compartment manager.
+   */
   [[nodiscard]] const ModelCompartments &getCompartments() const;
+  /**
+   * @brief Mutable access to geometry manager.
+   */
   ModelGeometry &getGeometry();
+  /**
+   * @brief Immutable access to geometry manager.
+   */
   [[nodiscard]] const ModelGeometry &getGeometry() const;
+  /**
+   * @brief Mutable access to membrane manager.
+   */
   ModelMembranes &getMembranes();
+  /**
+   * @brief Immutable access to membrane manager.
+   */
   [[nodiscard]] const ModelMembranes &getMembranes() const;
+  /**
+   * @brief Mutable access to species manager.
+   */
   ModelSpecies &getSpecies();
+  /**
+   * @brief Immutable access to species manager.
+   */
   [[nodiscard]] const ModelSpecies &getSpecies() const;
+  /**
+   * @brief Mutable access to reaction manager.
+   */
   ModelReactions &getReactions();
+  /**
+   * @brief Immutable access to reaction manager.
+   */
   [[nodiscard]] const ModelReactions &getReactions() const;
+  /**
+   * @brief Mutable access to function-definition manager.
+   */
   ModelFunctions &getFunctions();
+  /**
+   * @brief Immutable access to function-definition manager.
+   */
   [[nodiscard]] const ModelFunctions &getFunctions() const;
+  /**
+   * @brief Mutable access to parameter manager.
+   */
   ModelParameters &getParameters();
+  /**
+   * @brief Immutable access to parameter manager.
+   */
   [[nodiscard]] const ModelParameters &getParameters() const;
+  /**
+   * @brief Mutable access to event manager.
+   */
   ModelEvents &getEvents();
+  /**
+   * @brief Immutable access to event manager.
+   */
   [[nodiscard]] const ModelEvents &getEvents() const;
+  /**
+   * @brief Mutable access to units manager.
+   */
   ModelUnits &getUnits();
+  /**
+   * @brief Immutable access to units manager.
+   */
   [[nodiscard]] const ModelUnits &getUnits() const;
+  /**
+   * @brief Mutable access to math parser/evaluator.
+   */
   ModelMath &getMath();
+  /**
+   * @brief Immutable access to math parser/evaluator.
+   */
   [[nodiscard]] const ModelMath &getMath() const;
+  /**
+   * @brief Mutable simulation results storage.
+   */
   simulate::SimulationData &getSimulationData();
+  /**
+   * @brief Immutable simulation results storage.
+   */
   [[nodiscard]] const simulate::SimulationData &getSimulationData() const;
+  /**
+   * @brief Mutable simulation settings.
+   */
   SimulationSettings &getSimulationSettings();
+  /**
+   * @brief Immutable simulation settings.
+   */
   [[nodiscard]] const SimulationSettings &getSimulationSettings() const;
+  /**
+   * @brief Mutable mesh settings.
+   */
   MeshParameters &getMeshParameters();
+  /**
+   * @brief Immutable mesh settings.
+   */
   [[nodiscard]] const MeshParameters &getMeshParameters() const;
+  /**
+   * @brief Mutable optimization settings.
+   */
   simulate::OptimizeOptions &getOptimizeOptions();
+  /**
+   * @brief Immutable optimization settings.
+   */
   [[nodiscard]] const simulate::OptimizeOptions &getOptimizeOptions() const;
+  /**
+   * @brief Imported sampled-field colors.
+   * @returns Vector of sampled-field colors.
+   */
   [[nodiscard]] const std::vector<QRgb> &getSampledFieldColors() const;
 
+  /**
+   * @brief Construct empty model wrapper.
+   */
   explicit Model();
   Model(Model &&) noexcept = default;
   Model &operator=(Model &&) noexcept = default;
   Model &operator=(const Model &) = delete;
   Model(const Model &) = delete;
+  /**
+   * @brief Destructor.
+   */
   ~Model();
 
+  /**
+   * @brief Create a new spatial SBML model.
+   * @param name Model name.
+   */
   void createSBMLFile(const std::string &name);
+  /**
+   * @brief Import SBML from file.
+   * @param filename Path to SBML file.
+   */
   void importSBMLFile(const std::string &filename);
+  /**
+   * @brief Import SBML from XML string.
+   * @param xml SBML XML text.
+   * @param filename Optional source filename.
+   */
   void importSBMLString(const std::string &xml,
                         const std::string &filename = {});
+  /**
+   * @brief Export SBML to file.
+   * @param filename Output SBML filename.
+   */
   void exportSBMLFile(const std::string &filename);
+  /**
+   * @brief Import SBML/SME file by extension/probing.
+   * @param filename Input filename.
+   */
   void importFile(const std::string &filename);
+  /**
+   * @brief Export SME project file.
+   * @param filename Output SME filename.
+   */
   void exportSMEFile(const std::string &filename);
+  /**
+   * @brief Serialize current SBML XML.
+   * @returns SBML XML as text.
+   */
   QString getXml();
+  /**
+   * @brief Clear model state.
+   */
   void clear();
 
+  /**
+   * @brief Geometry context for given species id.
+   * @param speciesID Species id.
+   * @returns Geometry context for species.
+   */
   [[nodiscard]] SpeciesGeometry
   getSpeciesGeometry(const QString &speciesID) const;
 
+  /**
+   * @brief Inline functions/assignments in a math expression.
+   * @param mathExpression Expression to inline.
+   * @returns Inlined expression string.
+   */
   [[nodiscard]] std::string inlineExpr(const std::string &mathExpression) const;
 
+  /**
+   * @brief Current display options.
+   * @returns Display options.
+   */
   [[nodiscard]] DisplayOptions getDisplayOptions() const;
+  /**
+   * @brief Set display options.
+   * @param displayOptions New display options.
+   */
   void setDisplayOptions(const DisplayOptions &displayOptions);
 };
 

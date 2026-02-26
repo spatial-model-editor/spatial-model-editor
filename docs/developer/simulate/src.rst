@@ -6,10 +6,10 @@ BaseSim
 
 .. doxygenclass:: sme::simulate::BaseSim
 
-GridFunction
-------------
+SmeGridFunction
+---------------
 
-.. doxygenclass:: sme::simulate::GridFunction
+.. doxygenclass:: sme::simulate::SmeGridFunction
 
 IniFile
 -------

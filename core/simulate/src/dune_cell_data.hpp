@@ -17,6 +17,9 @@
 
 namespace sme::simulate {
 
+/**
+ * @brief Build element-to-voxel index mapping for a DUNE grid view.
+ */
 template <typename GridView>
 std::vector<std::size_t>
 makeElementToVoxel(const common::VoxelF &origin, const common::VolumeF &voxel,
@@ -42,6 +45,9 @@ makeElementToVoxel(const common::VoxelF &origin, const common::VolumeF &voxel,
   return elementToVoxel;
 }
 
+/**
+ * @brief Build diffusion-cell value arrays mapped to grid elements.
+ */
 template <typename GridView>
 std::unordered_map<std::string, std::vector<double>>
 makeDiffusionCellValuesForGridView(const DuneConverter &dc,
@@ -75,6 +81,9 @@ makeDiffusionCellValuesForGridView(const DuneConverter &dc,
   return valuesByName;
 }
 
+/**
+ * @brief Build DUNE ``CellData`` object for diffusion arrays.
+ */
 template <typename GridView>
 std::shared_ptr<Dune::Copasi::CellData<GridView, double>>
 makeDiffusionCellDataForGridView(const DuneConverter &dc,

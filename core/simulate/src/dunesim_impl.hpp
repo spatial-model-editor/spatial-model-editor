@@ -24,12 +24,21 @@
 
 namespace sme::simulate {
 
+/**
+ * @brief Pair of compartment-voxel index and element-local coordinate.
+ */
 template <int DuneDimensions>
 using VoxelLocalPair =
     std::pair<std::size_t, Dune::FieldVector<double, DuneDimensions>>;
 
+/**
+ * @brief Voxel pair used for bounding boxes.
+ */
 using VoxelPair = std::pair<sme::common::Voxel, sme::common::Voxel>;
 
+/**
+ * @brief Compute voxel-space bounding box for element vertices.
+ */
 template <std::size_t DuneDimensions>
 VoxelPair
 getBoundingBox(const std::vector<std::array<double, DuneDimensions>> &vertices,
@@ -66,6 +75,9 @@ getBoundingBox(const std::vector<std::array<double, DuneDimensions>> &vertices,
   return minMaxPair;
 }
 
+/**
+ * @brief Find nearest valid neighboring voxel index.
+ */
 static inline std::size_t getIxValidNeighbour(std::size_t ix,
                                               const std::vector<bool> &ixValid,
                                               const geometry::Compartment *g) {
@@ -88,8 +100,14 @@ static inline std::size_t getIxValidNeighbour(std::size_t ix,
   return 0;
 }
 
+/**
+ * @brief DUNE solver implementation specialized by spatial dimension.
+ */
 template <int DuneDimensions> class DuneImpl {
 public:
+  /**
+   * @brief Construct DUNE solver state from converted model.
+   */
   explicit DuneImpl(const DuneConverter &dc, const DuneOptions &options,
                     const model::Model &sbmlDoc,
                     const std::vector<std::string> &compartmentIds)
@@ -152,8 +170,14 @@ public:
     updateSpeciesConcentrations();
   }
 
+  /**
+   * @brief Destructor.
+   */
   ~DuneImpl() = default;
 
+  /**
+   * @brief Run simulation to ``time`` ahead and refresh concentrations.
+   */
   void run(double time) {
     stepper->evolve(*step_operator, *state, *state, dt, t0 + time).or_throw();
     if (!vtkFilename.empty()) {
@@ -163,6 +187,9 @@ public:
     updateSpeciesConcentrations();
   }
 
+  /**
+   * @brief Concentrations for a compartment.
+   */
   const std::vector<double> &
   getConcentrations(std::size_t compartmentIndex) const {
     return duneCompartments[compartmentIndex].concentration;

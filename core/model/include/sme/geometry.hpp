@@ -19,6 +19,9 @@
 
 namespace sme::geometry {
 
+/**
+ * @brief Geometry voxels and neighbor topology for one compartment.
+ */
 class Compartment {
 private:
   // indices of nearest neighbours
@@ -32,46 +35,95 @@ private:
   sme::common::ImageStack images;
 
 public:
+  /**
+   * @brief Construct empty compartment.
+   */
   Compartment() = default;
-  // create compartment geometry from all pixels in `img` of color `col`
+  /**
+   * @brief Construct compartment geometry from image voxels of ``col``.
+   */
   Compartment(std::string compId, const common::ImageStack &imgs, QRgb col);
+  /**
+   * @brief Compartment id.
+   */
   [[nodiscard]] const std::string &getId() const;
+  /**
+   * @brief Compartment display color.
+   */
   [[nodiscard]] QRgb getColor() const;
+  /**
+   * @brief Set compartment display color.
+   */
   void setColor(QRgb newColor);
+  /**
+   * @brief Voxels belonging to compartment.
+   */
   [[nodiscard]] inline const std::vector<common::Voxel> &getVoxels() const {
     return ix;
   }
+  /**
+   * @brief Voxel at linear compartment index ``i``.
+   */
   [[nodiscard]] inline const common::Voxel &getVoxel(std::size_t i) const {
     return ix[i];
   }
+  /**
+   * @brief Number of voxels in compartment.
+   */
   [[nodiscard]] inline std::size_t nVoxels() const { return ix.size(); }
-  // e.g. ix[up_x[i]] is the +x neighbour of point ix[i]
-  // a field stores the concentration at point ix[i] at index i
-  // zero flux Neumann bcs: outside neighbour of point on boundary is itself
+  /**
+   * @brief +x neighbor index for voxel ``i`` (Neumann boundary handling).
+   */
   [[nodiscard]] inline std::size_t up_x(std::size_t i) const {
     return nn[6 * i];
   }
+  /**
+   * @brief -x neighbor index for voxel ``i``.
+   */
   [[nodiscard]] inline std::size_t dn_x(std::size_t i) const {
     return nn[6 * i + 1];
   }
+  /**
+   * @brief +y neighbor index for voxel ``i``.
+   */
   [[nodiscard]] inline std::size_t up_y(std::size_t i) const {
     return nn[6 * i + 2];
   }
+  /**
+   * @brief -y neighbor index for voxel ``i``.
+   */
   [[nodiscard]] inline std::size_t dn_y(std::size_t i) const {
     return nn[6 * i + 3];
   }
+  /**
+   * @brief +z neighbor index for voxel ``i``.
+   */
   [[nodiscard]] inline std::size_t up_z(std::size_t i) const {
     return nn[6 * i + 4];
   }
+  /**
+   * @brief -z neighbor index for voxel ``i``.
+   */
   [[nodiscard]] inline std::size_t dn_z(std::size_t i) const {
     return nn[6 * i + 5];
   }
+  /**
+   * @brief Underlying geometry image dimensions.
+   */
   [[nodiscard]] const common::Volume &getImageSize() const;
-  // return a QImage of the compartment geometry
+  /**
+   * @brief Binary image stack for this compartment.
+   */
   [[nodiscard]] const sme::common::ImageStack &getCompartmentImages() const;
+  /**
+   * @brief Mapping from full-image voxels to compartment voxel indices.
+   */
   [[nodiscard]] const std::vector<std::size_t> &getArrayPoints() const;
 };
 
+/**
+ * @brief Membrane interface between two compartments.
+ */
 class Membrane {
 private:
   std::array<std::vector<std::pair<std::size_t, std::size_t>>, 3> indexPairs{};
@@ -81,20 +133,50 @@ private:
   sme::common::ImageStack images{};
 
 public:
+  /**
+   * @brief Flux direction axis.
+   */
   enum FLUX_DIRECTION { X = 0, Y = 1, Z = 2 };
+  /**
+   * @brief Construct empty membrane.
+   */
   Membrane() = default;
+  /**
+   * @brief Construct membrane from adjacent voxel pairs.
+   */
   Membrane(std::string membraneId, const Compartment *A, const Compartment *B,
            const std::vector<std::pair<common::Voxel, common::Voxel>>
                *membranePairs);
+  /**
+   * @brief Membrane id.
+   */
   [[nodiscard]] const std::string &getId() const;
+  /**
+   * @brief Set membrane id.
+   */
   void setId(const std::string &membraneId);
+  /**
+   * @brief First adjacent compartment.
+   */
   [[nodiscard]] const Compartment *getCompartmentA() const;
+  /**
+   * @brief Second adjacent compartment.
+   */
   [[nodiscard]] const Compartment *getCompartmentB() const;
+  /**
+   * @brief Index pairs for flux calculations along a direction.
+   */
   [[nodiscard]] const std::vector<std::pair<std::size_t, std::size_t>> &
   getIndexPairs(FLUX_DIRECTION fluxDirection) const;
+  /**
+   * @brief Membrane visualization image stack.
+   */
   [[nodiscard]] const sme::common::ImageStack &getImages() const;
 };
 
+/**
+ * @brief Species field values over a compartment.
+ */
 class Field {
 private:
   std::string id{};
@@ -111,34 +193,112 @@ private:
                 bool maskAndInvertY = false) const;
 
 public:
+  /**
+   * @brief Construct empty field.
+   */
   Field() = default;
+  /**
+   * @brief Construct field for a compartment/species.
+   */
   Field(const Compartment *compartment, std::string specID,
         double diffConst = 1.0, QRgb col = qRgb(255, 0, 0));
+  /**
+   * @brief Species id.
+   */
   [[nodiscard]] const std::string &getId() const;
+  /**
+   * @brief Field display color.
+   */
   [[nodiscard]] QRgb getColor() const;
+  /**
+   * @brief Set field display color.
+   */
   void setColor(QRgb col);
+  /**
+   * @brief Returns ``true`` if field is spatially resolved.
+   */
   [[nodiscard]] bool getIsSpatial() const;
+  /**
+   * @brief Set whether field is spatially resolved.
+   */
   void setIsSpatial(bool spatial);
+  /**
+   * @brief Returns ``true`` if concentration is uniform.
+   */
   [[nodiscard]] bool getIsUniformConcentration() const;
+  /**
+   * @brief Set whether concentration is uniform.
+   */
   void setIsUniformConcentration(bool uniform);
+  /**
+   * @brief Returns ``true`` if diffusion constant is uniform.
+   */
   [[nodiscard]] bool getIsUniformDiffusionConstant() const;
+  /**
+   * @brief Set whether diffusion constant is uniform.
+   */
   void setIsUniformDiffusionConstant(bool uniform);
+  /**
+   * @brief Diffusion constant values.
+   */
   [[nodiscard]] const std::vector<double> &getDiffusionConstant() const;
+  /**
+   * @brief Set diffusion constant at one voxel.
+   */
   void setDiffusionConstant(std::size_t index, double diffusionConstant);
+  /**
+   * @brief Set uniform diffusion constant.
+   */
   void setUniformDiffusionConstant(double diffConst);
+  /**
+   * @brief Set full diffusion-constant array.
+   */
   void setDiffusionConstant(const std::vector<double> &diffusionConstantArray);
+  /**
+   * @brief Import diffusion constants from SBML ordering.
+   */
   void importDiffusionConstant(const std::vector<double> &sbmlArray);
+  /**
+   * @brief Diffusion-constant array in image ordering.
+   */
   [[nodiscard]] std::vector<double>
   getDiffusionConstantImageArray(bool maskAndInvertY = false) const;
+  /**
+   * @brief Owning compartment.
+   */
   [[nodiscard]] const Compartment *getCompartment() const;
+  /**
+   * @brief Concentration values.
+   */
   [[nodiscard]] const std::vector<double> &getConcentration() const;
+  /**
+   * @brief Set concentration at one voxel.
+   */
   void setConcentration(std::size_t index, double concentration);
+  /**
+   * @brief Set uniform concentration.
+   */
   void setUniformConcentration(double concentration);
+  /**
+   * @brief Import concentrations from SBML ordering.
+   */
   void importConcentration(const std::vector<double> &sbmlConcentrationArray);
+  /**
+   * @brief Set full concentration array.
+   */
   void setConcentration(const std::vector<double> &concentration);
+  /**
+   * @brief Concentration visualization images.
+   */
   [[nodiscard]] common::ImageStack getConcentrationImages() const;
+  /**
+   * @brief Concentration array in image ordering.
+   */
   [[nodiscard]] std::vector<double>
   getConcentrationImageArray(bool maskAndInvertY = false) const;
+  /**
+   * @brief Reassign field to a different compartment.
+   */
   void setCompartment(const Compartment *comp);
 };
 

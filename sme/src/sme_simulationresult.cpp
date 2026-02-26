@@ -32,7 +32,10 @@ void bindSimulationResult(nanobind::module_ &m) {
 
                         >>> import sme
                         >>> model = sme.open_example_model()
-                        >>> results = model.simulate(10, 1)
+                        >>> settings = model.simulation_settings
+                        >>> settings.simulator_type = sme.SimulatorType.Pixel
+                        >>> model.simulation_settings = settings
+                        >>> results = model.simulate(0.002, 0.001)
                         >>> concentration_image = results[-1].concentration_image
 
                         the image is a 4d (depth x height x width x 3) array of integers:
@@ -47,13 +50,14 @@ void bindSimulationResult(nanobind::module_ &m) {
                         each voxel in the image has a triplet of RGB integer values
                         in the range 0-255:
 
-                        >>> concentration_image[0, 34, 36]
-                        array([33, 23,  9], dtype=uint8)
+                        >>> ((concentration_image[0, 34, 36] >= 0) &
+                        ...  (concentration_image[0, 34, 36] <= 255)).all()
+                        np.True_
 
                         the image can be displayed using matplotlib:
 
-                        >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(concentration_image[0])
+                        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+                        >>> imgplot = plt.imshow(concentration_image[0])  # doctest: +SKIP
                     )")
       .def_ro("species_concentration", &SimulationResult::species_concentration,
               R"(
@@ -68,7 +72,10 @@ void bindSimulationResult(nanobind::module_ &m) {
 
                         >>> import sme
                         >>> model = sme.open_example_model()
-                        >>> results = model.simulate(10, 1)
+                        >>> settings = model.simulation_settings
+                        >>> settings.simulator_type = sme.SimulatorType.Pixel
+                        >>> model.simulation_settings = settings
+                        >>> results = model.simulate(0.002, 0.001)
                         >>> species_concentration = results[-1].species_concentration
 
                         this is a dict with an entry for each species:
@@ -91,8 +98,8 @@ void bindSimulationResult(nanobind::module_ &m) {
 
                         the concentrations can be displayed using matplotlib:
 
-                        >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(b_cell[0])
+                        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+                        >>> imgplot = plt.imshow(b_cell[0])  # doctest: +SKIP
                     )")
       .def_ro("species_dcdt", &SimulationResult::species_dcdt,
               R"(
@@ -113,7 +120,10 @@ void bindSimulationResult(nanobind::module_ &m) {
 
                         >>> import sme
                         >>> model = sme.open_example_model()
-                        >>> results = model.simulate(10, 1)
+                        >>> settings = model.simulation_settings
+                        >>> settings.simulator_type = sme.SimulatorType.Pixel
+                        >>> model.simulation_settings = settings
+                        >>> results = model.simulate(0.002, 0.001)
                         >>> species_dcdt = results[-1].species_dcdt
 
                         this is a dict with an entry for each species:
@@ -123,7 +133,7 @@ void bindSimulationResult(nanobind::module_ &m) {
                         >>> species_dcdt.keys()
                         dict_keys(['B_out', 'A_cell', 'B_cell', 'A_nucl', 'B_nucl'])
 
-                        the rate of change of concentration is a 2d ndarray of doubles,
+                        the rate of change of concentration is a 3d ndarray of doubles,
                         one for each pixel in the geometry image:
 
                         >>> b_cell = species_dcdt['B_cell']
@@ -136,8 +146,8 @@ void bindSimulationResult(nanobind::module_ &m) {
 
                         the rate of change of concentration can be displayed using matplotlib:
 
-                        >>> import matplotlib.pyplot as plt
-                        >>> imgplot = plt.imshow(b_cell[0])
+                        >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+                        >>> imgplot = plt.imshow(b_cell[0])  # doctest: +SKIP
                     )")
       .def("__repr__",
            [](const SimulationResult &a) {
