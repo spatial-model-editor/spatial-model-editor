@@ -118,6 +118,7 @@ void TabGeometry::loadModelData(const QString &selection) {
   }
   lblGeometry->setImage(model.getGeometry().getImages());
   lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
+  lblGeometry->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
   voxGeometry->setImage(model.getGeometry().getImages());
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
@@ -361,6 +362,8 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
       model.getGeometry().getMesh2d()->getBoundariesImages(size,
                                                            boundaryIndex));
   ui->lblCompBoundary->setPhysicalUnits(model.getUnits().getLength().name);
+  ui->lblCompBoundary->setPhysicalOrigin(
+      model.getGeometry().getPhysicalOrigin());
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -374,6 +377,8 @@ void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
       model.getGeometry().getMesh2d()->getBoundariesImages(size,
                                                            boundaryIndex));
   ui->lblCompBoundary->setPhysicalUnits(model.getUnits().getLength().name);
+  ui->lblCompBoundary->setPhysicalOrigin(
+      model.getGeometry().getPhysicalOrigin());
   QGuiApplication::restoreOverrideCursor();
 }
 
@@ -462,6 +467,7 @@ void TabGeometry::updateMesh2d() {
   ui->lblCompMesh->setImages(
       mesh2d->getMeshImages(ui->lblCompMesh->size(), compIndex));
   ui->lblCompMesh->setPhysicalUnits(model.getUnits().getLength().name);
+  ui->lblCompMesh->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
 }
 
 void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
@@ -596,6 +602,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   const auto *m{model.getMembranes().getMembrane(membraneId)};
   ui->lblCompShape->setImage(m->getImages());
   ui->lblCompShape->setPhysicalUnits(model.getUnits().getLength().name);
+  ui->lblCompShape->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
   auto nVoxelPairs{m->getIndexPairs(sme::geometry::Membrane::X).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Y).size() +
                    m->getIndexPairs(sme::geometry::Membrane::Z).size()};
@@ -616,6 +623,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
         ui->lblCompMesh->size(),
         static_cast<std::size_t>(currentRow + ui->listCompartments->count())));
     ui->lblCompMesh->setPhysicalUnits(model.getUnits().getLength().name);
+    ui->lblCompMesh->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
   } else if (const auto *mesh3d{model.getGeometry().getMesh3d()};
              mesh3d != nullptr) {
     ui->mshCompMesh->setMembraneIndex(currentRow);

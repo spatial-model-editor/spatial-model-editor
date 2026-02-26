@@ -55,6 +55,7 @@ DialogAnalytic::DialogAnalytic(
   ui->lblImage->displayGrid(ui->chkGrid->isChecked());
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->setPhysicalUnits(lengthUnit);
+  ui->lblImage->setPhysicalOrigin(physicalOrigin);
   ui->lblImage->invertYAxis(invertYAxis);
   ui->lblImage->setZSlider(ui->slideZIndex);
 
@@ -93,14 +94,15 @@ bool DialogAnalytic::isExpressionValid() const { return expressionIsValid; }
 
 sme::common::VoxelF
 DialogAnalytic::physicalPoint(const sme::common::Voxel &voxel) const {
-  // position in pixels (with (0,0) in top-left of image)
-  // rescale to physical x,y point (with (0,0) in bottom-left)
+  // position of voxel centre in physical coordinates
   return {physicalOrigin.p.x() +
-              voxelSize.width() * static_cast<double>(voxel.p.x()),
+              voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5),
           physicalOrigin.p.y() +
-              voxelSize.height() *
-                  static_cast<double>(imgs.volume().height() - 1 - voxel.p.y()),
-          physicalOrigin.z + voxelSize.depth() * static_cast<double>(voxel.z)};
+              voxelSize.height() * (static_cast<double>(imgs.volume().height() -
+                                                        1 - voxel.p.y()) +
+                                    0.5),
+          physicalOrigin.z +
+              voxelSize.depth() * (static_cast<double>(voxel.z) + 0.5)};
 }
 
 void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,

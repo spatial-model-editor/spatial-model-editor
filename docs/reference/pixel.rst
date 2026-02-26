@@ -57,7 +57,9 @@ Spatial discretization
 Space is discretized using a linear grid with spacing :math:`\delta x`, :math:`\delta y`, :math:`\delta z`.
 The concentration is defined as a 3d array of values :math:`c_{i,j,k}`,
 where the value with index :math:`(i,j,k)` corresponds to the concentration
-at the spatial point :math:`(x = i \delta x, y = j \delta y, z = k \delta z)`.
+at the voxel-centre spatial point
+:math:`(x = x_0 + (i+\frac{1}{2}) \delta x, y = y_0 + (j+\frac{1}{2}) \delta y, z = z_0 + (k+\frac{1}{2}) \delta z)`,
+where :math:`(x_0,y_0,z_0)` is the model geometry origin.
 
 For spatially varying self-diffusion constants, the diffusion term is written in conservative form.
 With species storage coefficient :math:`S \geq 0`, the PDE for one species is
@@ -118,6 +120,7 @@ Space-dependent expressions
 
 For spatially dependent reactions and cross-diffusion expressions, Pixel provides all three
 spatial coordinates as local variables per voxel: :math:`x`, :math:`y`, :math:`z`.
+These coordinates are the physical voxel-centre coordinates (including the geometry origin).
 The internal state vector therefore includes three spatial padding values (plus optional time),
 and these values are held constant during time integration.
 

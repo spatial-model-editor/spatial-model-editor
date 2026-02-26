@@ -366,6 +366,7 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
 void MainWindow::enableTabs() {
   bool enable{model.getIsValid() && model.getGeometry().getIsValid()};
   ui->lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
+  ui->lblGeometry->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
   for (int i = 1; i < ui->tabMain->count(); ++i) {
     ui->tabMain->setTabEnabled(i, enable);
   }

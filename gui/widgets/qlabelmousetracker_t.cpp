@@ -363,3 +363,39 @@ TEST_CASE("QLabelMouseTracker: grid spacing aligns to pixel size", tags) {
     REQUIRE(gridSourceColumns[i] - gridSourceColumns[i - 1] == step);
   }
 }
+
+TEST_CASE("QLabelMouseTracker: scale labels include physical origin", tags) {
+  QLabelMouseTracker mouseTracker;
+  QImage img(16, 16, QImage::Format_RGB32);
+  img.fill(QColor(0, 0, 0).rgba());
+  auto imageStack = sme::common::ImageStack{{img}};
+
+  mouseTracker.show();
+  mouseTracker.resize(220, 220);
+  wait();
+  mouseTracker.setPhysicalUnits("m");
+  mouseTracker.setImage(imageStack);
+
+  mouseTracker.displayScale(false);
+  mouseTracker.setPhysicalOrigin({0.0, 0.0, 0.0});
+  wait();
+  auto renderedWithoutScaleZeroOrigin = mouseTracker.QLabel::pixmap().toImage();
+
+  mouseTracker.setPhysicalOrigin({7.5, 3.25, 0.0});
+  wait();
+  auto renderedWithoutScaleOffsetOrigin =
+      mouseTracker.QLabel::pixmap().toImage();
+
+  REQUIRE(renderedWithoutScaleZeroOrigin == renderedWithoutScaleOffsetOrigin);
+
+  mouseTracker.displayScale(true);
+  mouseTracker.setPhysicalOrigin({0.0, 0.0, 0.0});
+  wait();
+  auto renderedWithScaleZeroOrigin = mouseTracker.QLabel::pixmap().toImage();
+
+  mouseTracker.setPhysicalOrigin({7.5, 3.25, 0.0});
+  wait();
+  auto renderedWithScaleOffsetOrigin = mouseTracker.QLabel::pixmap().toImage();
+
+  REQUIRE(renderedWithScaleZeroOrigin != renderedWithScaleOffsetOrigin);
+}

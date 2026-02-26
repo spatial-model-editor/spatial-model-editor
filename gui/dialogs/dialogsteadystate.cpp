@@ -128,6 +128,7 @@ void DialogSteadystate::initConcPlot() {
   ui->valuesPlot->displayScale(m_model.getDisplayOptions().showGeometryScale);
   ui->valuesPlot->displayGrid(m_model.getDisplayOptions().showGeometryGrid);
   ui->valuesPlot->setPhysicalUnits(m_model.getUnits().getLength().name);
+  ui->valuesPlot->setPhysicalOrigin(m_model.getGeometry().getPhysicalOrigin());
 
   auto volume = m_model.getGeometry().getImages().volume();
   // manipulate UI to reduce clutter when solving 2D problem
