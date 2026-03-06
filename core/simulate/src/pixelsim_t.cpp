@@ -2,6 +2,7 @@
 #include "model_test_utils.hpp"
 #include "pixelsim.hpp"
 #include "sme/model.hpp"
+#include <cmath>
 
 using namespace sme;
 using namespace sme::test;
@@ -211,6 +212,48 @@ TEST_CASE("PixelSim", "[core/simulate/pixelsim][core/"
     REQUIRE(cSingle.size() == cParallel.size());
     for (std::size_t i = 0; i < cSingle.size(); ++i) {
       REQUIRE(cParallel[i] == Catch::Approx(cSingle[i]).epsilon(1e-7));
+    }
+  }
+  SECTION("Spatially-dependent reactions use voxel-centre coordinates") {
+    // With x-dependent cross-diffusion, the conc array contains spatial padding
+    // (x, y, z per voxel). Verify these are voxel-centre coordinates:
+    //   coord = origin + (pixel_index + 0.5) * voxel_size
+    auto m{getExampleModel(Mod::SingleCompartmentDiffusion)};
+    m.getSpecies().setCrossDiffusionConstant("slow", "fast", "1 + x");
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.enableMultiThreading = false;
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxTimestep = 1e-3;
+    std::vector<std::string> comps{"circle"};
+    std::vector<std::vector<std::string>> specs{{"slow", "fast"}};
+    simulate::PixelSim sim(m, comps, specs);
+    REQUIRE(sim.errorMessage().empty());
+    REQUIRE(sim.getConcentrationPadding() == 3);
+    const auto &conc = sim.getConcentrations(0);
+    const std::size_t nSpecies{2 + 3}; // 2 real species + 3 spatial coords
+    REQUIRE(conc.size() % nSpecies == 0);
+    const auto &origin{m.getGeometry().getPhysicalOrigin()};
+    const auto &voxelSize{m.getGeometry().getVoxelSize()};
+    const auto &vol{m.getGeometry().getImages().volume()};
+    const std::size_t nVoxels{conc.size() / nSpecies};
+    for (std::size_t ix = 0; ix < nVoxels; ++ix) {
+      double x{conc[ix * nSpecies + 2]};
+      double y{conc[ix * nSpecies + 3]};
+      double z{conc[ix * nSpecies + 4]};
+      // each coordinate should equal origin + (pixel_i + 0.5) * voxel_size
+      // for some integer pixel_i in [0, dim-1]
+      double xi{(x - origin.p.x()) / voxelSize.width() - 0.5};
+      double yi{(y - origin.p.y()) / voxelSize.height() - 0.5};
+      double zi{(z - origin.z) / voxelSize.depth() - 0.5};
+      REQUIRE(xi == Catch::Approx(std::round(xi)).epsilon(1e-9));
+      REQUIRE(xi >= 0.0);
+      REQUIRE(xi < vol.width());
+      REQUIRE(yi == Catch::Approx(std::round(yi)).epsilon(1e-9));
+      REQUIRE(yi >= 0.0);
+      REQUIRE(yi < vol.height());
+      REQUIRE(zi == Catch::Approx(std::round(zi)).epsilon(1e-9));
+      REQUIRE(zi >= 0.0);
+      REQUIRE(zi < vol.depth());
     }
   }
   SECTION("Cross-diffusion z-only dependence is supported in 3d") {

@@ -1,11 +1,13 @@
 #include "catch_wrapper.hpp"
 #include "dialogimagedata.hpp"
 #include "model_test_utils.hpp"
+#include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/model_units.hpp"
 #include <QCheckBox>
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSlider>
@@ -25,6 +27,8 @@ struct DialogImageDataWidgets {
     GET_DIALOG_WIDGET(QComboBox, cmbExampleImages);
     GET_DIALOG_WIDGET(QPushButton, btnSmoothImage);
     GET_DIALOG_WIDGET(QSlider, slideZIndex);
+    GET_DIALOG_WIDGET(QLabelMouseTracker, lblImage);
+    GET_DIALOG_WIDGET(QLabel, lblConcentration);
   }
   QLineEdit *txtMinConc;
   QLineEdit *txtMaxConc;
@@ -35,6 +39,8 @@ struct DialogImageDataWidgets {
   QComboBox *cmbExampleImages;
   QPushButton *btnSmoothImage;
   QSlider *slideZIndex;
+  QLabelMouseTracker *lblImage;
+  QLabel *lblConcentration;
 };
 
 TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
@@ -46,6 +52,22 @@ TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
   sme::model::ModelUnits units{};
   sme::model::SpeciesGeometry specGeom{
       {3, 3, 1}, compartmentVoxels, {0.0, 0.0, 0.0}, {1.0, 1.0, 1.0}, units};
+  SECTION("mouseover text uses origin and voxel centre coordinates") {
+    sme::model::SpeciesGeometry singleVoxelGeom{
+        {1, 1, 1}, {{0, 0, 0}}, {2.0, 3.0, 4.0}, {10.0, 20.0, 30.0}, units};
+    DialogImageData dia(std::vector<double>{0.5}, singleVoxelGeom);
+    dia.show();
+    wait();
+    DialogImageDataWidgets widgets(&dia);
+    sendMouseMove(widgets.lblImage, {1, 1});
+    wait();
+
+    const auto text{widgets.lblConcentration->text()};
+    const auto lengthUnit{units.getLength().name};
+    REQUIRE(text.contains(QString("x=7 %1").arg(lengthUnit)));
+    REQUIRE(text.contains(QString("y=13 %1").arg(lengthUnit)));
+    REQUIRE(text.contains(QString("z=19 %1").arg(lengthUnit)));
+  }
   SECTION("empty concentration array: set concentration to 0") {
     DialogImageData dia({}, specGeom);
     for (const auto &a : dia.getImageArray()) {

@@ -57,6 +57,7 @@ DialogImageData::DialogImageData(
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->invertYAxis(invertYAxis);
   ui->lblImage->setPhysicalUnits(lengthUnit);
+  ui->lblImage->setPhysicalOrigin(physicalOrigin);
   if (dataArray.empty()) {
     SPDLOG_DEBUG("empty initial array - "
                  "setting concentration to zero everywhere");
@@ -95,7 +96,12 @@ DialogImageData::DialogImageData(
   lblImage_mouseOver(voxels.front());
 }
 
-DialogImageData::~DialogImageData() = default;
+DialogImageData::~DialogImageData() {
+  // Hide explicitly so any focus-change signals (e.g. editingFinished on
+  // QLineEdit) fire while ui members are still alive, rather than being
+  // triggered by QDialog::~QDialog() after derived members are destroyed.
+  hide();
+}
 
 const std::vector<double> &DialogImageData::getData() const { return data; }
 
@@ -109,14 +115,15 @@ std::vector<double> DialogImageData::getImageArray() const {
 
 sme::common::VoxelF
 DialogImageData::physicalPoint(const sme::common::Voxel &voxel) const {
-  // position in pixels (with (0,0) in top-left of image)
-  // rescale to physical x,y point (with (0,0) in bottom-left)
+  // position of voxel centre in physical coordinates
   return {physicalOrigin.p.x() +
-              voxelSize.width() * static_cast<double>(voxel.p.x()),
+              voxelSize.width() * (static_cast<double>(voxel.p.x()) + 0.5),
           physicalOrigin.p.y() +
-              voxelSize.height() *
-                  static_cast<double>(imgs.volume().height() - 1 - voxel.p.y()),
-          physicalOrigin.z + voxelSize.depth() * static_cast<double>(voxel.z)};
+              voxelSize.height() * (static_cast<double>(imgs.volume().height() -
+                                                        1 - voxel.p.y()) +
+                                    0.5),
+          physicalOrigin.z +
+              voxelSize.depth() * (static_cast<double>(voxel.z) + 0.5)};
 }
 
 std::size_t

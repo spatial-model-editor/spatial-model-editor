@@ -334,15 +334,16 @@ SimCompartment::SimCompartment(
     if (spaceDependent) {
       auto voxel{compartment->getVoxel(ix)};
       int ny{compartment->getCompartmentImages()[0].height()};
-      *concIter = origin.p.x() +
-                  static_cast<double>(voxel.p.x()) * voxelSize.width(); // x
+      *concIter = origin.p.x() + (static_cast<double>(voxel.p.x()) + 0.5) *
+                                     voxelSize.width(); // x
       ++concIter;
       // pixels have y=0 in top-left, convert to bottom-left:
-      *concIter = origin.p.y() + static_cast<double>(ny - 1 - voxel.p.y()) *
-                                     voxelSize.height(); // y
-      ++concIter;
       *concIter =
-          origin.z + static_cast<double>(voxel.z) * voxelSize.depth(); // z
+          origin.p.y() + (static_cast<double>(ny - 1 - voxel.p.y()) + 0.5) *
+                             voxelSize.height(); // y
+      ++concIter;
+      *concIter = origin.z +
+                  (static_cast<double>(voxel.z) + 0.5) * voxelSize.depth(); // z
       ++concIter;
     }
   }

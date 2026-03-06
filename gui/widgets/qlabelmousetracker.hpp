@@ -39,6 +39,7 @@ public:
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
   void setPhysicalUnits(const QString &units);
+  void setPhysicalOrigin(const sme::common::VoxelF &origin);
   void displayGrid(bool enable);
   void displayScale(bool enable);
   void invertYAxis(bool enable);
@@ -75,6 +76,7 @@ private:
   bool drawGrid{false};
   bool drawScale{false};
   bool flipYAxis{false};
+  sme::common::VoxelF physicalOrigin{0.0, 0.0, 0.0};
   sme::common::VolumeF physicalSize{1.0, 1.0, 1.0};
   QString lengthUnits{};
   QRgb color{};

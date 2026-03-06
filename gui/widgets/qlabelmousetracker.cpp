@@ -1,7 +1,9 @@
 #include "qlabelmousetracker.hpp"
 #include "sme/logger.hpp"
 #include <QPainter>
+#include <algorithm>
 #include <cmath>
+#include <vector>
 
 QLabelMouseTracker::QLabelMouseTracker(QWidget *parent) : QLabel(parent) {
   setMouseTracking(true);
@@ -205,14 +207,30 @@ static GridSpacing getGridWidth(const sme::common::VolumeF &physicalSize,
   return {gridPhysicalWidth, pixelStep};
 }
 
-static QString getGridPointLabel(int i, double gridPhysicalWidth,
+static QString getGridPointLabel(double value, bool includeUnits,
                                  const QString &lengthUnits) {
-  double value{static_cast<double>(i) * gridPhysicalWidth};
   auto label{QString::number(value, 'g', 3)};
-  if (i == 0) {
+  if (includeUnits) {
     label.append(" ").append(lengthUnits);
   }
   return label;
+}
+
+// Returns pixel positions for scale tick marks, from 0 to nPixels (inclusive).
+// nPixels is one past the last valid pixel index: it represents the far edge
+// of the image and is always included so the full physical extent is labelled.
+static std::vector<int> getScaleEdgePixels(int nPixels, int pixelStep) {
+  std::vector<int> edgePixels;
+  if (nPixels <= 0 || pixelStep <= 0) {
+    return edgePixels;
+  }
+  for (int i = 0; i <= nPixels; i += pixelStep) {
+    edgePixels.push_back(i);
+  }
+  if (edgePixels.back() != nPixels) {
+    edgePixels.push_back(nPixels);
+  }
+  return edgePixels;
 }
 
 static QSize getPixmapSize(const QSize &displaySize,
@@ -287,12 +305,17 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
       }
       p.restore();
     }
-    for (int i = 0; i <= maxXIndex; ++i) {
-      int srcX{i * gridSpacing.pixelStep};
-      int x{static_cast<int>(std::lround(srcX * sx))};
+    auto xScaleEdgePixels{
+        getScaleEdgePixels(srcImage.width(), gridSpacing.pixelStep)};
+    double xPixelWidth{physicalSize.width() /
+                       static_cast<double>(srcImage.width())};
+    for (int srcX : xScaleEdgePixels) {
+      int x{std::clamp(static_cast<int>(std::lround(srcX * sx)), 0,
+                       pixmapImageSize.width() - 1)};
       if (drawScale && haveSpaceForScale) {
-        auto label{
-            getGridPointLabel(i, gridSpacing.physicalWidth, lengthUnits)};
+        auto label{getGridPointLabel(
+            physicalOrigin.p.x() + static_cast<double>(srcX) * xPixelWidth,
+            srcX == 0, lengthUnits)};
         // paint text label & extend tick mark if there is enough space
         if (int labelWidth{p.fontMetrics().horizontalAdvance(label)};
             prevTextEnd + (labelWidth + 1) / 2 + 4 < x &&
@@ -321,15 +344,24 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
       }
       p.restore();
     }
-    for (int i = 0; i <= maxYIndex; ++i) {
-      int srcY{i * gridSpacing.pixelStep};
-      auto y{static_cast<int>(std::lround(srcY * sy))};
-      if (!flipYAxis) {
-        y = pixmapImageSize.height() - 1 - y;
+    auto yScaleEdgePixels{
+        getScaleEdgePixels(srcImage.height(), gridSpacing.pixelStep)};
+    double yPixelWidth{physicalSize.height() /
+                       static_cast<double>(srcImage.height())};
+    for (int srcY : yScaleEdgePixels) {
+      int y;
+      if (flipYAxis) {
+        y = std::clamp(static_cast<int>(std::lround(srcY * sy)), 0,
+                       pixmapImageSize.height() - 1);
+      } else {
+        y = std::clamp(static_cast<int>(std::lround(
+                           static_cast<double>(srcImage.height() - srcY) * sy)),
+                       0, pixmapImageSize.height() - 1);
       }
       if (drawScale && haveSpaceForScale) {
-        auto label{
-            getGridPointLabel(i, gridSpacing.physicalWidth, lengthUnits)};
+        auto label{getGridPointLabel(
+            physicalOrigin.p.y() + static_cast<double>(srcY) * yPixelWidth,
+            srcY == 0, lengthUnits)};
         p.drawText(
             QRect(0, y - offset.y() / 2, offset.x() - tickLength, offset.y()),
             Qt::AlignVCenter | Qt::AlignRight, label);
@@ -353,6 +385,11 @@ void QLabelMouseTracker::setTransformationMode(Qt::TransformationMode mode) {
 
 void QLabelMouseTracker::setPhysicalUnits(const QString &units) {
   lengthUnits = units;
+}
+
+void QLabelMouseTracker::setPhysicalOrigin(const sme::common::VoxelF &origin) {
+  physicalOrigin = origin;
+  resizeImage(this->size());
 }
 
 void QLabelMouseTracker::displayGrid(bool enable) {
