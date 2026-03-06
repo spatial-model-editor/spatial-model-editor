@@ -985,6 +985,44 @@ TEST_CASE("SBML: load multi-compartment model, change volume of geometry",
   REQUIRE(interiorPoint.y() == dbl_approx(a * 83.5));
 }
 
+TEST_CASE("SBML: load model, change geometry origin",
+          "[core/model/model][core/model][core][model][mesh][origin]") {
+  auto s{getExampleModel(Mod::VerySimpleModel)};
+  REQUIRE(s.getGeometry().getPhysicalOrigin().p.x() == dbl_approx(0.0));
+  REQUIRE(s.getGeometry().getPhysicalOrigin().p.y() == dbl_approx(0.0));
+  REQUIRE(s.getGeometry().getPhysicalOrigin().z == dbl_approx(0.0));
+  auto p0{s.getGeometry().getPhysicalPoint({0, 0, 0})};
+  REQUIRE(p0.p.x() == dbl_approx(0.5));
+  REQUIRE(p0.p.y() == dbl_approx(99.5));
+  REQUIRE(p0.z == dbl_approx(0.5));
+  const auto c1Size{s.getCompartments().getSize("c1")};
+  const auto c2Size{s.getCompartments().getSize("c2")};
+  const auto c3Size{s.getCompartments().getSize("c3")};
+
+  s.getGeometry().setPhysicalOrigin({1.25, -2.5, 3.75});
+  REQUIRE(s.getGeometry().getPhysicalOrigin().p.x() == dbl_approx(1.25));
+  REQUIRE(s.getGeometry().getPhysicalOrigin().p.y() == dbl_approx(-2.5));
+  REQUIRE(s.getGeometry().getPhysicalOrigin().z == dbl_approx(3.75));
+  auto p1{s.getGeometry().getPhysicalPoint({0, 0, 0})};
+  REQUIRE(p1.p.x() == dbl_approx(1.75));
+  REQUIRE(p1.p.y() == dbl_approx(97.0));
+  REQUIRE(p1.z == dbl_approx(4.25));
+  REQUIRE(s.getCompartments().getSize("c1") == dbl_approx(c1Size));
+  REQUIRE(s.getCompartments().getSize("c2") == dbl_approx(c2Size));
+  REQUIRE(s.getCompartments().getSize("c3") == dbl_approx(c3Size));
+
+  auto xml = s.getXml();
+  model::Model s2;
+  s2.importSBMLString(xml.toStdString());
+  REQUIRE(s2.getGeometry().getPhysicalOrigin().p.x() == dbl_approx(1.25));
+  REQUIRE(s2.getGeometry().getPhysicalOrigin().p.y() == dbl_approx(-2.5));
+  REQUIRE(s2.getGeometry().getPhysicalOrigin().z == dbl_approx(3.75));
+  auto p2{s2.getGeometry().getPhysicalPoint({0, 0, 0})};
+  REQUIRE(p2.p.x() == dbl_approx(1.75));
+  REQUIRE(p2.p.y() == dbl_approx(97.0));
+  REQUIRE(p2.z == dbl_approx(4.25));
+}
+
 TEST_CASE("SBML: load .xml model, simulate, save as .sme, load .sme",
           "[core/model/model][core/model][core][model]") {
   auto s{getExampleModel(Mod::ABtoC)};

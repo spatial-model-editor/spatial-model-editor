@@ -486,12 +486,25 @@ void ModelGeometry::setVoxelSize(const common::VolumeF &newVoxelSize,
   SPDLOG_INFO("  - origin rescaled to ({},{},{})", physicalOrigin.p.x(),
               physicalOrigin.p.y(), physicalOrigin.z);
 
+  physicalSize = voxelSize * images.volume();
+  setPhysicalOrigin(physicalOrigin, updateSBML);
+}
+
+void ModelGeometry::setPhysicalOrigin(const common::VoxelF &newPhysicalOrigin,
+                                      bool updateSBML) {
+  SPDLOG_INFO("Setting physical origin to ({},{},{})", newPhysicalOrigin.p.x(),
+              newPhysicalOrigin.p.y(), newPhysicalOrigin.z);
+  hasUnsavedChanges = true;
+  physicalOrigin = newPhysicalOrigin;
+
   if (mesh != nullptr) {
     mesh->setPhysicalGeometry(voxelSize, physicalOrigin);
   }
-  // update xyz coordinates
+  if (mesh3d != nullptr) {
+    mesh3d->setPhysicalGeometry(voxelSize, physicalOrigin);
+  }
+
   auto *geom = getOrCreateGeometry(sbmlModel);
-  physicalSize = voxelSize * images.volume();
   auto *coord = geom->getCoordinateComponentByKind(
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   auto *min = coord->getBoundaryMin();
@@ -513,6 +526,7 @@ void ModelGeometry::setVoxelSize(const common::VolumeF &newVoxelSize,
   min->setValue(physicalOrigin.z);
   max->setValue(physicalOrigin.z + physicalSize.depth());
   SPDLOG_INFO("  - z now in range [{},{}]", min->getValue(), max->getValue());
+
   if (updateSBML) {
     updateCompartmentAndMembraneSizes();
   }

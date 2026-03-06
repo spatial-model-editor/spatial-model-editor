@@ -2045,6 +2045,106 @@ TEST_CASE("Reactions depend on x, y, t",
   }
 }
 
+TEST_CASE("Reactions with x,y,z-dependence respond to geometry origin",
+          "[core/simulate/simulate][core/"
+          "simulate][core][simulate][origin][origin-sim]") {
+  constexpr double dt{1e-3};
+  const common::VoxelF originShift{2.0, 1.0, 0.5};
+  auto makeModel = [dt]() {
+    auto s3d{getExampleModel(Mod::VerySimpleModel3D)};
+    s3d.getSpecies().setInitialConcentration("A_c3", 1.0);
+    s3d.getReactions().setRateExpression("A_uptake", "0");
+    s3d.getReactions().setRateExpression("A_transport", "0");
+    s3d.getReactions().setRateExpression("B_transport", "0");
+    s3d.getReactions().setRateExpression("B_excretion", "0");
+    s3d.getReactions().setRateExpression("A_B_conversion", "x + y + z");
+    auto &options{s3d.getSimulationSettings().options};
+    options.dune.dt = dt;
+    options.dune.minDt = dt;
+    options.dune.maxDt = dt;
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max()};
+    options.pixel.maxTimestep = dt;
+    return s3d;
+  };
+  auto getTotalAB = [](const simulate::Simulation &sim,
+                       std::size_t timeIndex) -> std::pair<double, double> {
+    double totalA{0.0};
+    double totalB{0.0};
+    for (std::size_t compartmentIndex = 0;
+         compartmentIndex < sim.getCompartmentIds().size();
+         ++compartmentIndex) {
+      const auto speciesIds{sim.getSpeciesIds(compartmentIndex)};
+      for (std::size_t speciesIndex = 0; speciesIndex < speciesIds.size();
+           ++speciesIndex) {
+        const auto sumConc{common::sum(
+            sim.getConc(timeIndex, compartmentIndex, speciesIndex))};
+        if (speciesIds[speciesIndex].starts_with("A_")) {
+          totalA += sumConc;
+        }
+        if (speciesIds[speciesIndex].starts_with("B_")) {
+          totalB += sumConc;
+        }
+      }
+    }
+    return {totalA, totalB};
+  };
+  auto getOriginShiftDeltas =
+      [&](simulate::SimulatorType simulatorType) -> std::pair<double, double> {
+    auto s0{makeModel()};
+    auto s1{makeModel()};
+    s0.getSimulationSettings().simulatorType = simulatorType;
+    s1.getSimulationSettings().simulatorType = simulatorType;
+    s1.getGeometry().setPhysicalOrigin(originShift);
+    REQUIRE(s1.getGeometry().getPhysicalOrigin().p.x() >
+            s0.getGeometry().getPhysicalOrigin().p.x());
+    REQUIRE(s1.getGeometry().getPhysicalOrigin().p.y() >
+            s0.getGeometry().getPhysicalOrigin().p.y());
+    REQUIRE(s1.getGeometry().getPhysicalOrigin().z >
+            s0.getGeometry().getPhysicalOrigin().z);
+
+    simulate::Simulation sim0{s0};
+    simulate::Simulation sim1{s1};
+    sim0.doTimesteps(dt, 1);
+    sim1.doTimesteps(dt, 1);
+    REQUIRE(sim0.errorMessage().empty());
+    REQUIRE(sim1.errorMessage().empty());
+    REQUIRE(sim0.getNCompletedTimesteps() == 2);
+    REQUIRE(sim1.getNCompletedTimesteps() == 2);
+
+    auto [a0, b0] = getTotalAB(sim0, 1);
+    auto [a1, b1] = getTotalAB(sim1, 1);
+    return {a1 - a0, b1 - b0};
+  };
+  auto relDeltaDiff = [](double deltaA, double deltaB) {
+    const auto scale{std::max(std::abs(deltaA), std::abs(deltaB))};
+    REQUIRE(scale > 0.0);
+    return std::abs(deltaA - deltaB) / scale;
+  };
+
+  const auto [deltaAPixel, deltaBPixel] =
+      getOriginShiftDeltas(simulate::SimulatorType::Pixel);
+  CAPTURE(deltaAPixel);
+  CAPTURE(deltaBPixel);
+  REQUIRE(deltaAPixel < 0.0);
+  REQUIRE(deltaBPixel > 0.0);
+  constexpr double maxAllowedABImbalance{0.01};
+  REQUIRE(relDeltaDiff(deltaAPixel, -deltaBPixel) < maxAllowedABImbalance);
+
+  const auto [deltaADune, deltaBDune] =
+      getOriginShiftDeltas(simulate::SimulatorType::DUNE);
+  CAPTURE(deltaADune);
+  CAPTURE(deltaBDune);
+  REQUIRE(deltaADune < 0.0);
+  REQUIRE(deltaBDune > 0.0);
+  REQUIRE(relDeltaDiff(deltaADune, -deltaBDune) < maxAllowedABImbalance);
+
+  constexpr double maxAllowedSolverMismatch{0.05};
+  REQUIRE(relDeltaDiff(deltaAPixel, deltaADune) < maxAllowedSolverMismatch);
+  REQUIRE(relDeltaDiff(deltaBPixel, deltaBDune) < maxAllowedSolverMismatch);
+}
+
 TEST_CASE("circle membrane reaction",
           "[core/simulate/simulate][core/"
           "simulate][core][simulate][dune][pixel]") {

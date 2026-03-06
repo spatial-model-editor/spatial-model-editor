@@ -251,6 +251,9 @@ TEST_CASE("MainWindow: tools menu", tags) {
   auto *actionSteady_state_analysis{
       w.findChild<QAction *>("actionSteady_state_analysis")};
   REQUIRE(actionSteady_state_analysis != nullptr);
+  auto *actionEdit_geometry_origin{
+      w.findChild<QAction *>("actionEdit_geometry_origin")};
+  REQUIRE(actionEdit_geometry_origin != nullptr);
   w.show();
   waitFor(&w);
   ModalWidgetTimer mwt;
@@ -274,6 +277,12 @@ TEST_CASE("MainWindow: tools menu", tags) {
       REQUIRE(mwt.getResult() ==
               "No compartment geometry image loaded - import one now?");
     }
+  }
+  SECTION("menu: Tools->Edit geometry origin (default SBML model)") {
+    mwt.addUserAction({"Esc"}, false);
+    mwt.start();
+    actionEdit_geometry_origin->trigger();
+    REQUIRE(mwt.getResult() == "Edit Geometry Origin");
   }
   SECTION("menu: Tools->Set simulation type") {
     REQUIRE(actionSimTypeDUNE->isChecked() == true);
