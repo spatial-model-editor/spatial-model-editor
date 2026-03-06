@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>469</width>
-    <height>92</height>
+    <height>128</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -57,6 +57,39 @@
        <item>
         <property name="text">
          <string>Topology preserving</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="lblMeshSourceType">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Mesh Source:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="cmbMeshSourceType">
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Generate from voxel geometry</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Keep imported mesh fixed</string>
         </property>
        </item>
       </widget>

@@ -47,6 +47,11 @@ const sme::common::ImageStack &DialogImportGeometryGmsh::getImage() const {
   return image;
 }
 
+const std::optional<sme::mesh::GMSHMesh> &
+DialogImportGeometryGmsh::getMesh() const {
+  return mesh;
+}
+
 void DialogImportGeometryGmsh::spinMaxDimension_valueChanged(
     [[maybe_unused]] int value) {
   voxelizeMesh();

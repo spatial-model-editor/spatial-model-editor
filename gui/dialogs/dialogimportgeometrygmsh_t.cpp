@@ -65,6 +65,7 @@ TEST_CASE(
     DialogImportGeometryGmshWidgets widgets(&dia);
 
     REQUIRE(dia.getImage().empty());
+    REQUIRE(dia.getMesh().has_value() == false);
     REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
             false);
 
@@ -97,6 +98,7 @@ $EndElements
     DialogImportGeometryGmshWidgets widgets(&dia);
 
     REQUIRE(!dia.getImage().empty());
+    REQUIRE(dia.getMesh().has_value() == true);
     REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
             true);
     REQUIRE(dia.getImage().volume().width() == 20);

@@ -56,8 +56,51 @@ static double matchingFraction(const common::ImageStack &imageStack,
 
 TEST_CASE("Mesh3d simple geometries",
           "[core/mesh/mesh3d][core/mesh][core][mesh3d]") {
+  SECTION("fixed imported gmsh topology") {
+    mesh::GMSHMesh gmshMesh;
+    gmshMesh.vertices = {{0.0, 0.0, 0.0},
+                         {1.0, 0.0, 0.0},
+                         {0.0, 1.0, 0.0},
+                         {0.0, 0.0, 1.0},
+                         {1.0, 1.0, 1.0}};
+    gmshMesh.tetrahedra = {{{0, 1, 2, 3}, 7}, {{1, 2, 3, 4}, 11}};
+
+    const auto compartmentColors = std::vector<QRgb>{
+        common::indexedColors()[0].rgb(), common::indexedColors()[1].rgb()};
+    const std::vector<std::pair<QRgb, int>> colorTagPairs{
+        {compartmentColors[0], 7}, {compartmentColors[1], 11}};
+    const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+        membraneIdColorPairs{
+            {"m0", {compartmentColors[0], compartmentColors[1]}}};
+
+    mesh::Mesh3d mesh3d(gmshMesh, colorTagPairs, {10, 10, 10}, {2.0, 3.0, 4.0},
+                        {5.0, 6.0, 7.0}, compartmentColors,
+                        membraneIdColorPairs);
+    REQUIRE(mesh3d.isValid());
+    REQUIRE(mesh3d.getTetrahedronIndices().size() == 2);
+    REQUIRE(mesh3d.getTetrahedronIndices()[0].size() == 1);
+    REQUIRE(mesh3d.getTetrahedronIndices()[1].size() == 1);
+    REQUIRE(mesh3d.getMembraneTriangleIndices().size() == 1);
+    REQUIRE(!mesh3d.getMembraneTriangleIndices()[0].empty());
+    REQUIRE(mesh3d.getVertices().size() == 5);
+    REQUIRE(mesh3d.getVertices()[0].p.x() == dbl_approx(5.0));
+    REQUIRE(mesh3d.getVertices()[0].p.y() == dbl_approx(6.0));
+    REQUIRE(mesh3d.getVertices()[0].z == dbl_approx(7.0));
+    REQUIRE(mesh3d.getVertices()[4].p.x() == dbl_approx(25.0));
+    REQUIRE(mesh3d.getVertices()[4].p.y() == dbl_approx(36.0));
+    REQUIRE(mesh3d.getVertices()[4].z == dbl_approx(47.0));
+
+    const auto nTets0 = mesh3d.getTetrahedronIndices()[0].size();
+    mesh3d.setCompartmentMaxCellVolume(0, 99);
+    REQUIRE(mesh3d.getCompartmentMaxCellVolume(0) == 99);
+    REQUIRE(mesh3d.getTetrahedronIndices()[0].size() == nTets0);
+    mesh3d.setPhysicalGeometry({1.0, 1.0, 1.0}, {0.0, 0.0, 0.0});
+    REQUIRE(mesh3d.getVertices()[4].p.x() == dbl_approx(10.0));
+    REQUIRE(mesh3d.getVertices()[4].p.y() == dbl_approx(10.0));
+    REQUIRE(mesh3d.getVertices()[4].z == dbl_approx(10.0));
+  }
   SECTION("empty imageStack") {
-    mesh::Mesh3d mesh3d({}, {}, {}, {}, {});
+    mesh::Mesh3d mesh3d(common::ImageStack{}, {}, {}, {}, {});
     REQUIRE(mesh3d.isValid() == false);
     REQUIRE_THAT(mesh3d.getErrorMessage(),
                  ContainsSubstring("geometry image missing"));

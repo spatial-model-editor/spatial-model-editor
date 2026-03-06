@@ -18,6 +18,7 @@ public:
   ~DialogImportGeometryGmsh() override;
 
   [[nodiscard]] const sme::common::ImageStack &getImage() const;
+  [[nodiscard]] const std::optional<sme::mesh::GMSHMesh> &getMesh() const;
 
 private:
   std::unique_ptr<Ui::DialogImportGeometryGmsh> ui;

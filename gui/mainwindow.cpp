@@ -367,6 +367,24 @@ void MainWindow::validateSBMLDoc(const QString &filename) {
       QString("Spatial Model Editor [%1]").arg(titlebarFilename));
 }
 
+void MainWindow::showFixedMeshImportDiagnostic() {
+  const auto &diagnostic{model.getGeometry().getFixedMeshImportDiagnostic()};
+  if (diagnostic.isEmpty()) {
+    return;
+  }
+  statusBar()->showMessage(diagnostic, 15000);
+  SPDLOG_WARN("{}", diagnostic.toStdString());
+}
+
+void MainWindow::showFixedMeshExportDiagnostic() {
+  const auto &diagnostic{model.getGeometry().getFixedMeshExportDiagnostic()};
+  if (diagnostic.isEmpty()) {
+    return;
+  }
+  statusBar()->showMessage(diagnostic, 15000);
+  SPDLOG_WARN("{}", diagnostic.toStdString());
+}
+
 void MainWindow::enableTabs() {
   bool enable{model.getIsValid() && model.getGeometry().getIsValid()};
   ui->lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
@@ -415,6 +433,7 @@ void MainWindow::action_Open_SBML_file_triggered() {
   model.importFile(filename.toStdString());
   QGuiApplication::restoreOverrideCursor();
   validateSBMLDoc(filename);
+  showFixedMeshImportDiagnostic();
   if (model.getReactions().getIsIncompleteODEImport()) {
     QMessageBox::information(
         this, "Non-spatial model import",
@@ -435,6 +454,7 @@ void MainWindow::menuOpen_example_SBML_file_triggered(const QAction *action) {
   model.importSBMLString(f.readAll().toStdString(), filename.toStdString());
   QGuiApplication::restoreOverrideCursor();
   validateSBMLDoc(filename);
+  showFixedMeshImportDiagnostic();
 }
 
 void MainWindow::action_Save_triggered() {
@@ -466,6 +486,7 @@ void MainWindow::action_Save_SBML_file_triggered() {
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
   model.exportSBMLFile(filename.toStdString()); // todo check for success here
   QGuiApplication::restoreOverrideCursor();
+  showFixedMeshExportDiagnostic();
 }
 
 void MainWindow::actionExport_Dune_ini_file_triggered() {
@@ -508,6 +529,7 @@ void MainWindow::actionGeometry_from_model_triggered() {
     analyticImageSize = dialog.getImageSize();
   }
   tabSimulate->reset();
+  model.getGeometry().clearImportedMesh();
   for (const auto &id : model.getCompartments().getIds()) {
     model.getCompartments().setColor(id, 0);
   }
@@ -517,6 +539,7 @@ void MainWindow::actionGeometry_from_model_triggered() {
   ui->tabMain->setCurrentIndex(0);
   tabMain_currentChanged(0);
   enableTabs();
+  showFixedMeshImportDiagnostic();
 }
 
 void MainWindow::actionGeometry_from_image_triggered() {
@@ -547,9 +570,41 @@ void MainWindow::actionGeometry_from_gmsh_triggered() {
         {volume.width(), volume.height(), static_cast<int>(volume.depth())});
   }
   DialogImportGeometryGmsh dialog(maxVoxelsPerDimension, filename, this);
-  if (dialog.exec() == QDialog::Accepted && !dialog.getImage().empty()) {
-    importGeometryImage(dialog.getImage());
+  if (dialog.exec() != QDialog::Accepted || dialog.getImage().empty()) {
+    return;
   }
+  if (const auto meshSourceType = model.getMeshParameters().meshSourceType;
+      meshSourceType == sme::model::MeshSourceType::FixedImportedMesh &&
+      dialog.getMesh().has_value()) {
+    // fixed mesh mode: preserve imported tetrahedra and map mesh coordinates
+    // onto the voxel geometry physical extents.
+    tabSimulate->reset();
+    model.getGeometry().importGeometryFromImages(dialog.getImage(), false);
+    model.getGeometry().setImportedGmshMesh(*dialog.getMesh());
+    const auto &importedMesh = *dialog.getMesh();
+    auto minPoint = importedMesh.vertices.front();
+    auto maxPoint = importedMesh.vertices.front();
+    for (const auto &vertex : importedMesh.vertices) {
+      minPoint.p.rx() = std::min(minPoint.p.x(), vertex.p.x());
+      minPoint.p.ry() = std::min(minPoint.p.y(), vertex.p.y());
+      minPoint.z = std::min(minPoint.z, vertex.z);
+      maxPoint.p.rx() = std::max(maxPoint.p.x(), vertex.p.x());
+      maxPoint.p.ry() = std::max(maxPoint.p.y(), vertex.p.y());
+      maxPoint.z = std::max(maxPoint.z, vertex.z);
+    }
+    const auto vol = dialog.getImage().volume();
+    model.getGeometry().setVoxelSize(
+        {(maxPoint.p.x() - minPoint.p.x()) / static_cast<double>(vol.width()),
+         (maxPoint.p.y() - minPoint.p.y()) / static_cast<double>(vol.height()),
+         (maxPoint.z - minPoint.z) / static_cast<double>(vol.depth())},
+        false);
+    model.getGeometry().setPhysicalOrigin(minPoint);
+    ui->tabMain->setCurrentIndex(0);
+    tabMain_currentChanged(0);
+    enableTabs();
+    return;
+  }
+  importGeometryImage(dialog.getImage());
 }
 
 void MainWindow::menuExample_geometry_image_triggered(const QAction *action) {
@@ -569,6 +624,10 @@ void MainWindow::importGeometryImage(const sme::common::ImageStack &image,
   if (dialog.exec() == QDialog::Accepted) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     tabSimulate->reset();
+    if (!is_model_image || dialog.imageSizeAltered() ||
+        dialog.imageColorsAltered()) {
+      model.getGeometry().clearImportedMesh();
+    }
     if (!is_model_image || dialog.imageSizeAltered() ||
         dialog.imageColorsAltered()) {
       SPDLOG_INFO("Importing altered geometry image");
@@ -726,13 +785,31 @@ void MainWindow::actionSimulation_options_triggered() {
 }
 
 void MainWindow::action_Meshing_options_triggered() {
-  DialogMeshingOptions dialog(model.getMeshParameters().boundarySimplifierType);
-  if (auto &boundarySimplifierType{
-          model.getMeshParameters().boundarySimplifierType};
-      dialog.exec() == QDialog::Accepted &&
-      boundarySimplifierType != dialog.getBoundarySimplificationType()) {
-    boundarySimplifierType = dialog.getBoundarySimplificationType();
-    model.getGeometry().updateMesh();
+  auto &meshParams{model.getMeshParameters()};
+  DialogMeshingOptions dialog(
+      meshParams.boundarySimplifierType,
+      static_cast<std::size_t>(meshParams.meshSourceType));
+  if (dialog.exec() == QDialog::Accepted) {
+    const auto boundarySimplifierTypeChanged =
+        meshParams.boundarySimplifierType !=
+        dialog.getBoundarySimplificationType();
+    const auto meshSourceTypeChanged =
+        meshParams.meshSourceType !=
+        static_cast<sme::model::MeshSourceType>(dialog.getMeshSourceType());
+    if (!boundarySimplifierTypeChanged && !meshSourceTypeChanged) {
+      return;
+    }
+    meshParams.boundarySimplifierType = dialog.getBoundarySimplificationType();
+    meshParams.meshSourceType =
+        static_cast<sme::model::MeshSourceType>(dialog.getMeshSourceType());
+    // fixed imported mesh mode currently disables mesh tuning controls in the
+    // UI; mesh regeneration from imported topology is added separately.
+    if (meshParams.meshSourceType ==
+        sme::model::MeshSourceType::VoxelGeometry) {
+      model.getGeometry().updateMesh();
+    } else {
+      model.getGeometry().setHasUnsavedChanges(true);
+    }
     tabMain_currentChanged(ui->tabMain->currentIndex());
   }
 }

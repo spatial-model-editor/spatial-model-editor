@@ -1,15 +1,20 @@
 #include "sme/model_geometry.hpp"
 #include "geometry_analytic.hpp"
+#include "geometry_parametric.hpp"
 #include "geometry_sampled_field.hpp"
 #include "sbml_utils.hpp"
+#include "sme/gmsh.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_membranes.hpp"
+#include "sme/model_settings.hpp"
 #include "sme/model_units.hpp"
 #include "sme/utils.hpp"
 #include "sme/xml_annotation.hpp"
+#include <algorithm>
+#include <map>
 #include <memory>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
@@ -239,6 +244,26 @@ static common::VolumeF calculateVoxelSize(const common::Volume &imageSize,
   return {x, y, z};
 }
 
+static std::vector<std::pair<QRgb, int>>
+getColorTagPairs(const mesh::GMSHMesh &gmshMesh) {
+  std::vector<int> sortedTags;
+  sortedTags.reserve(gmshMesh.tetrahedra.size());
+  for (const auto &tetrahedron : gmshMesh.tetrahedra) {
+    if (std::ranges::find(sortedTags, tetrahedron.physicalTag) ==
+        sortedTags.cend()) {
+      sortedTags.push_back(tetrahedron.physicalTag);
+    }
+  }
+  std::ranges::sort(sortedTags);
+
+  std::vector<std::pair<QRgb, int>> colorTagPairs;
+  colorTagPairs.reserve(sortedTags.size());
+  for (std::size_t i = 0; i < sortedTags.size(); ++i) {
+    colorTagPairs.emplace_back(common::indexedColors()[i].rgb(), sortedTags[i]);
+  }
+  return colorTagPairs;
+}
+
 std::optional<int>
 ModelGeometry::getAnalyticGeometryNumDimensions(const QString &filename) {
   std::unique_ptr<libsbml::SBMLDocument> doc{
@@ -311,8 +336,10 @@ void ModelGeometry::importSampledFieldGeometry(
     return;
   }
   importDimensions(model);
+  const auto compartmentIds = modelCompartments->getIds();
   auto gsf = importGeometryFromSampledField(getGeometry(model),
                                             sbmlAnnotation->sampledFieldColors);
+  std::optional<GeometryParametricImportResult> importedParametricResult;
   if (gsf.images.empty()) {
     SPDLOG_INFO(
         "No Sampled Field Geometry found - looking for Analytic Geometry...");
@@ -324,11 +351,123 @@ void ModelGeometry::importSampledFieldGeometry(
                                                physicalSize);
     }
     if (gsf.images.empty()) {
-      SPDLOG_INFO("No Analytic Geometry found");
-      return;
+      SPDLOG_INFO(
+          "No Analytic Geometry found - looking for Parametric Geometry...");
+      auto importColors = modelCompartments->getColors();
+      importColors.resize(compartmentIds.size());
+      for (int i = 0; i < importColors.size(); ++i) {
+        if (importColors[i] == 0) {
+          importColors[i] =
+              common::indexedColors()[static_cast<std::size_t>(i)].rgb();
+        }
+      }
+      importedParametricResult = importFixedMeshFromParametricGeometry(
+          model, compartmentIds, importColors, true);
+      if (!importedParametricResult->importedMesh.has_value()) {
+        SPDLOG_INFO("No compatible Parametric Geometry found");
+        if (!importedParametricResult->diagnostic.isEmpty() &&
+            sbmlAnnotation->meshParameters.meshSourceType ==
+                MeshSourceType::FixedImportedMesh) {
+          fixedMeshImportDiagnostic = importedParametricResult->diagnostic;
+        }
+        return;
+      }
+
+      auto voxelized =
+          mesh::voxelizeGMSHMesh(importedParametricResult->importedMesh->mesh);
+      if (voxelized.empty()) {
+        SPDLOG_WARN("Failed to voxelize imported Parametric Geometry mesh");
+        if (sbmlAnnotation->meshParameters.meshSourceType ==
+            MeshSourceType::FixedImportedMesh) {
+          fixedMeshImportDiagnostic =
+              "Failed to voxelize imported ParametricGeometry mesh";
+        }
+        return;
+      }
+
+      std::map<int, QRgb> tagToTargetColor;
+      std::vector<bool> mappedCompartments(
+          static_cast<std::size_t>(compartmentIds.size()), false);
+      for (const auto &[color, tag] :
+           importedParametricResult->importedMesh->colorTagPairs) {
+        const auto iComp = importColors.indexOf(color);
+        if (iComp < 0 ||
+            static_cast<std::size_t>(iComp) >= mappedCompartments.size()) {
+          continue;
+        }
+        mappedCompartments[static_cast<std::size_t>(iComp)] = true;
+        tagToTargetColor[tag] = color;
+        gsf.compartmentIdColorPairs.emplace_back(
+            compartmentIds[iComp].toStdString(), color);
+      }
+
+      std::vector<int> orderedTags;
+      orderedTags.reserve(
+          importedParametricResult->importedMesh->mesh.tetrahedra.size());
+      for (const auto &tet :
+           importedParametricResult->importedMesh->mesh.tetrahedra) {
+        if (std::find(orderedTags.cbegin(), orderedTags.cend(),
+                      tet.physicalTag) == orderedTags.cend()) {
+          orderedTags.push_back(tet.physicalTag);
+        }
+      }
+      std::sort(orderedTags.begin(), orderedTags.end());
+
+      std::map<QRgb, QRgb> remapColors;
+      for (std::size_t i = 0; i < orderedTags.size(); ++i) {
+        const auto sourceColor = common::indexedColors()[i].rgb();
+        if (const auto it = tagToTargetColor.find(orderedTags[i]);
+            it != tagToTargetColor.cend()) {
+          remapColors[sourceColor] = it->second;
+        }
+      }
+
+      if (!remapColors.empty()) {
+        const auto colorTable = voxelized.colorTable();
+        for (const auto &[sourceColor, targetColor] : remapColors) {
+          const auto iCol = colorTable.indexOf(sourceColor);
+          if (iCol >= 0) {
+            voxelized.setColor(iCol, targetColor);
+          }
+        }
+      }
+
+      const auto backgroundColor = qRgb(0, 0, 0);
+      bool hasBackgroundColor{false};
+      for (std::size_t z = 0;
+           z < voxelized.volume().depth() && !hasBackgroundColor; ++z) {
+        const auto &img = voxelized[z];
+        for (int y = 0; y < img.height() && !hasBackgroundColor; ++y) {
+          for (int x = 0; x < img.width(); ++x) {
+            if (img.pixel(x, y) == backgroundColor) {
+              hasBackgroundColor = true;
+              break;
+            }
+          }
+        }
+      }
+      if (hasBackgroundColor) {
+        bool assignedBackground{false};
+        for (int i = 0; i < compartmentIds.size(); ++i) {
+          if (mappedCompartments[static_cast<std::size_t>(i)]) {
+            continue;
+          }
+          if (!assignedBackground) {
+            gsf.compartmentIdColorPairs.emplace_back(
+                compartmentIds[i].toStdString(), backgroundColor);
+            assignedBackground = true;
+          }
+        }
+      }
+
+      gsf.images.reserve(voxelized.volume().depth());
+      for (std::size_t z = 0; z < voxelized.volume().depth(); ++z) {
+        gsf.images.push_back(voxelized[z]);
+      }
     }
   }
   hasUnsavedChanges = true;
+  clearImportedMesh();
   SPDLOG_INFO("  - found {}x{}x{} geometry image", gsf.images[0].width(),
               gsf.images[0].height(), gsf.images.size());
   images = common::ImageStack(std::move(gsf.images));
@@ -341,6 +480,32 @@ void ModelGeometry::importSampledFieldGeometry(
   for (const auto &[id, color] : gsf.compartmentIdColorPairs) {
     SPDLOG_INFO("setting compartment {} color to {:x}", id, color);
     modelCompartments->setColor(id.c_str(), color);
+  }
+  fixedMeshImportDiagnostic.clear();
+  const auto importedMeshResult = importedParametricResult.has_value()
+                                      ? std::move(*importedParametricResult)
+                                      : importFixedMeshFromParametricGeometry(
+                                            model, modelCompartments->getIds(),
+                                            modelCompartments->getColors());
+  if (importedMeshResult.importedMesh.has_value()) {
+    SPDLOG_INFO("Imported fixed 3d mesh topology from SBML ParametricGeometry");
+    setImportedGmshMesh(importedMeshResult.importedMesh->mesh,
+                        importedMeshResult.importedMesh->colorTagPairs);
+    sbmlAnnotation->meshParameters.meshSourceType =
+        MeshSourceType::FixedImportedMesh;
+  } else if (sbmlAnnotation->meshParameters.meshSourceType ==
+                 MeshSourceType::FixedImportedMesh &&
+             importedMeshResult.diagnostic.isEmpty()) {
+    fixedMeshImportDiagnostic =
+        "Fixed mesh mode is enabled, but no compatible ParametricGeometry "
+        "mesh was found. Using voxel-generated mesh.";
+  } else if (!importedMeshResult.diagnostic.isEmpty()) {
+    SPDLOG_WARN("Failed to import fixed mesh from ParametricGeometry: {}",
+                importedMeshResult.diagnostic.toStdString());
+    if (sbmlAnnotation->meshParameters.meshSourceType ==
+        MeshSourceType::FixedImportedMesh) {
+      fixedMeshImportDiagnostic = importedMeshResult.diagnostic;
+    }
   }
   auto *geom = getOrCreateGeometry(sbmlModel);
   exportSampledFieldGeometry(geom, images);
@@ -365,6 +530,7 @@ void ModelGeometry::importSampledFieldGeometry(
 void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
                                              bool keepColorAssignments) {
   hasUnsavedChanges = true;
+  clearImportedMesh();
   const auto &ids{modelCompartments->getIds()};
   auto oldColors{modelCompartments->getColors()};
   for (const auto &id : ids) {
@@ -385,6 +551,37 @@ void ModelGeometry::importGeometryFromImages(const common::ImageStack &imgs,
   hasImage = true;
 }
 
+void ModelGeometry::setImportedGmshMesh(
+    const mesh::GMSHMesh &gmshMesh,
+    const std::optional<std::vector<std::pair<QRgb, int>>> &colorTagPairs) {
+  importedGmshMesh = gmshMesh;
+  if (colorTagPairs.has_value()) {
+    importedMeshColorTagPairs = *colorTagPairs;
+  } else {
+    importedMeshColorTagPairs = getColorTagPairs(gmshMesh);
+  }
+  hasUnsavedChanges = true;
+}
+
+void ModelGeometry::clearImportedMesh() {
+  importedGmshMesh.reset();
+  importedMeshColorTagPairs.clear();
+  fixedMeshImportDiagnostic.clear();
+  fixedMeshExportDiagnostic.clear();
+}
+
+bool ModelGeometry::hasImportedMesh() const {
+  return importedGmshMesh.has_value();
+}
+
+const QString &ModelGeometry::getFixedMeshImportDiagnostic() const {
+  return fixedMeshImportDiagnostic;
+}
+
+const QString &ModelGeometry::getFixedMeshExportDiagnostic() const {
+  return fixedMeshExportDiagnostic;
+}
+
 void ModelGeometry::updateMesh() {
   // geometry only valid if all compartments have a color
   isValid = hasImage && !modelCompartments->getColors().empty() &&
@@ -399,12 +596,34 @@ void ModelGeometry::updateMesh() {
   const auto &colors{modelCompartments->getColors()};
   const auto &ids{modelCompartments->getIds()};
   const auto &meshParams{sbmlAnnotation->meshParameters};
+  const bool useFixedImportedMesh =
+      meshParams.meshSourceType == MeshSourceType::FixedImportedMesh &&
+      importedGmshMesh.has_value() && images.volume().depth() > 1;
+  if (meshParams.meshSourceType == MeshSourceType::FixedImportedMesh &&
+      !useFixedImportedMesh) {
+    SPDLOG_WARN(
+        "Fixed imported mesh mode selected, but no compatible imported mesh "
+        "is available - falling back to voxel-generated mesh");
+    if (fixedMeshImportDiagnostic.isEmpty()) {
+      fixedMeshImportDiagnostic =
+          "Fixed mesh mode is enabled, but no compatible fixed imported mesh "
+          "is currently available. Using voxel-generated mesh.";
+    }
+  }
   if (images.volume().depth() > 1) {
-    SPDLOG_INFO("Updating 3d mesh");
+    SPDLOG_INFO("Updating 3d mesh ({})",
+                useFixedImportedMesh ? "fixed imported" : "voxel-generated");
     mesh.reset();
-    mesh3d = std::make_unique<mesh::Mesh3d>(
-        images, std::vector<std::size_t>{}, voxelSize, physicalOrigin,
-        common::toStdVec(colors), modelMembranes->getIdColorPairs());
+    if (useFixedImportedMesh) {
+      mesh3d = std::make_unique<mesh::Mesh3d>(
+          *importedGmshMesh, importedMeshColorTagPairs, images.volume(),
+          voxelSize, physicalOrigin, common::toStdVec(colors),
+          modelMembranes->getIdColorPairs());
+    } else {
+      mesh3d = std::make_unique<mesh::Mesh3d>(
+          images, std::vector<std::size_t>{}, voxelSize, physicalOrigin,
+          common::toStdVec(colors), modelMembranes->getIdColorPairs());
+    }
     isMeshValid = mesh3d->isValid();
   } else {
     SPDLOG_INFO("Updating 2d mesh");
@@ -425,6 +644,7 @@ void ModelGeometry::updateMesh() {
 void ModelGeometry::clear() {
   mesh.reset();
   mesh3d.reset();
+  clearImportedMesh();
   hasImage = false;
   isValid = false;
   isMeshValid = false;
@@ -618,11 +838,29 @@ void ModelGeometry::updateGeometryImageColor(QRgb oldColor, QRgb newColor) {
 }
 
 void ModelGeometry::writeGeometryToSBML() const {
-  // todo: also export 3d mesh
+  fixedMeshExportDiagnostic.clear();
   if (mesh != nullptr && mesh->isValid()) {
-    sbmlAnnotation->meshParameters = {mesh->getBoundaryMaxPoints(),
-                                      mesh->getCompartmentMaxTriangleArea(),
-                                      mesh->getBoundarySimplificationType()};
+    auto &meshParams{sbmlAnnotation->meshParameters};
+    meshParams.maxPoints = mesh->getBoundaryMaxPoints();
+    meshParams.maxAreas = mesh->getCompartmentMaxTriangleArea();
+    meshParams.boundarySimplifierType = mesh->getBoundarySimplificationType();
+  }
+  if (mesh3d != nullptr && mesh3d->isValid() &&
+      sbmlAnnotation->meshParameters.meshSourceType ==
+          MeshSourceType::FixedImportedMesh &&
+      importedGmshMesh.has_value()) {
+    const auto exportResult = exportFixedMeshToParametricGeometry(
+        sbmlModel, *mesh3d, modelCompartments->getIds(),
+        modelCompartments->getColors());
+    if (!exportResult.exported) {
+      fixedMeshExportDiagnostic = exportResult.diagnostic;
+      SPDLOG_WARN("Failed to export fixed mesh to ParametricGeometry: {}",
+                  exportResult.diagnostic.toStdString());
+    } else if (!exportResult.diagnostic.isEmpty()) {
+      fixedMeshExportDiagnostic = exportResult.diagnostic;
+      SPDLOG_WARN("Fixed mesh ParametricGeometry export warning: {}",
+                  exportResult.diagnostic.toStdString());
+    }
   }
 }
 

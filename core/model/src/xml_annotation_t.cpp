@@ -30,6 +30,7 @@ TEST_CASE("XML Annotations",
     simulationSettings.options.dune.dt = 0.0123;
     auto &meshParameters{settings.meshParameters};
     meshParameters.boundarySimplifierType = 1;
+    meshParameters.meshSourceType = model::MeshSourceType::FixedImportedMesh;
     auto &optimizeOptions{settings.optimizeOptions};
     optimizeOptions.optAlgorithm.islands = 3;
     optimizeOptions.optAlgorithm.population = 7;
@@ -59,6 +60,8 @@ TEST_CASE("XML Annotations",
     REQUIRE(newSimulationSettings.options.dune.dt == dbl_approx(0.0123));
     auto &newMeshParameters{newSettings.meshParameters};
     REQUIRE(newMeshParameters.boundarySimplifierType == 1);
+    REQUIRE(newMeshParameters.meshSourceType ==
+            model::MeshSourceType::FixedImportedMesh);
     auto &newOptimizeOptions{newSettings.optimizeOptions};
     REQUIRE(optimizeOptions.optAlgorithm.islands == 3);
     REQUIRE(optimizeOptions.optAlgorithm.population == 7);
@@ -127,6 +130,8 @@ TEST_CASE("XML Annotations",
     // default-constructed Settings is returned if xml annotation is invalid
     REQUIRE(settings.meshParameters.maxPoints.empty());
     REQUIRE(settings.meshParameters.maxAreas.empty());
+    REQUIRE(settings.meshParameters.meshSourceType ==
+            model::MeshSourceType::VoxelGeometry);
     REQUIRE(settings.displayOptions.showSpecies.empty());
     REQUIRE(settings.simulationSettings.times.empty());
     REQUIRE(settings.optimizeOptions.optCosts.empty());

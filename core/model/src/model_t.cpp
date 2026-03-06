@@ -1,10 +1,13 @@
 #include "catch_wrapper.hpp"
 #include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
+#include "sme/gmsh.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
 #include "sme/version.hpp"
+#include <fstream>
+#include <map>
 #include <sbml/SBMLTypes.h>
 #include <sbml/extension/SBMLDocumentPlugin.h>
 #include <sbml/packages/spatial/common/SpatialExtensionTypes.h>
@@ -57,6 +60,123 @@ static void createSBMLlvl2doc(const std::string &filename) {
   reac->setKineticLaw(kin);
   // write SBML document to file
   libsbml::SBMLWriter().writeSBML(document.get(), filename);
+}
+
+[[nodiscard]] static bool
+writeParametricSurfaceTrianglesToGmsh(const QString &modelName,
+                                      const std::string &filename) {
+  auto doc = getTestSbmlDoc(modelName);
+  if (doc == nullptr || doc->getModel() == nullptr) {
+    return false;
+  }
+  const auto *model = doc->getModel();
+  const auto *plugin = dynamic_cast<const libsbml::SpatialModelPlugin *>(
+      model->getPlugin("spatial"));
+  if (plugin == nullptr || !plugin->isSetGeometry()) {
+    return false;
+  }
+  const auto *geom = plugin->getGeometry();
+  if (geom == nullptr) {
+    return false;
+  }
+
+  const libsbml::ParametricGeometry *pg{nullptr};
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (const auto *def = geom->getGeometryDefinition(i);
+        def != nullptr && def->getIsActive() && def->isParametricGeometry()) {
+      pg = dynamic_cast<const libsbml::ParametricGeometry *>(def);
+      break;
+    }
+  }
+  if (pg == nullptr || !pg->isSetSpatialPoints() ||
+      !pg->getSpatialPoints()->isSetArrayData()) {
+    return false;
+  }
+
+  std::vector<double> points;
+  pg->getSpatialPoints()->getArrayData(points);
+  if (points.size() < 3 || points.size() % 3 != 0) {
+    return false;
+  }
+  const auto nNodes = points.size() / 3;
+
+  std::map<std::string, int, std::less<>> domainTypeToTag;
+  struct Triangle {
+    int tag;
+    int n1;
+    int n2;
+    int n3;
+  };
+  std::vector<Triangle> triangles;
+  for (unsigned iObj = 0; iObj < pg->getNumParametricObjects(); ++iObj) {
+    const auto *obj = pg->getParametricObject(iObj);
+    if (obj == nullptr) {
+      continue;
+    }
+    if (obj->getPolygonType() !=
+        libsbml::PolygonKind_t::SPATIAL_POLYGONKIND_TRIANGLE) {
+      continue;
+    }
+    auto [it, inserted] = domainTypeToTag.try_emplace(
+        obj->getDomainType(), static_cast<int>(domainTypeToTag.size()) + 1);
+    (void)inserted;
+    const auto tag = it->second;
+
+    std::vector<int> pointIndex;
+    obj->getPointIndex(pointIndex);
+    if (pointIndex.size() % 3 != 0) {
+      return false;
+    }
+    for (std::size_t i = 0; i < pointIndex.size(); i += 3) {
+      const auto p0 = pointIndex[i];
+      const auto p1 = pointIndex[i + 1];
+      const auto p2 = pointIndex[i + 2];
+      if (p0 < 0 || p1 < 0 || p2 < 0 ||
+          static_cast<std::size_t>(p0) >= nNodes ||
+          static_cast<std::size_t>(p1) >= nNodes ||
+          static_cast<std::size_t>(p2) >= nNodes) {
+        return false;
+      }
+      triangles.push_back({tag, p0 + 1, p1 + 1, p2 + 1});
+    }
+  }
+  if (triangles.empty()) {
+    return false;
+  }
+
+  std::ofstream out(filename);
+  if (!out) {
+    return false;
+  }
+
+  out << "$MeshFormat\n";
+  out << "2.2 0 8\n";
+  out << "$EndMeshFormat\n";
+
+  out << "$PhysicalNames\n";
+  out << domainTypeToTag.size() << "\n";
+  for (const auto &[domainType, tag] : domainTypeToTag) {
+    out << "2 " << tag << " \"" << domainType << "\"\n";
+  }
+  out << "$EndPhysicalNames\n";
+
+  out << "$Nodes\n";
+  out << nNodes << "\n";
+  for (std::size_t i = 0; i < nNodes; ++i) {
+    out << (i + 1) << " " << points[3 * i] << " " << points[3 * i + 1] << " "
+        << points[3 * i + 2] << "\n";
+  }
+  out << "$EndNodes\n";
+
+  out << "$Elements\n";
+  out << triangles.size() << "\n";
+  for (std::size_t i = 0; i < triangles.size(); ++i) {
+    const auto &t = triangles[i];
+    out << (i + 1) << " 2 2 " << t.tag << " " << t.tag << " " << t.n1 << " "
+        << t.n2 << " " << t.n3 << "\n";
+  }
+  out << "$EndElements\n";
+  return true;
 }
 
 TEST_CASE("SBML: import SBML doc without geometry",
@@ -1167,4 +1287,286 @@ TEST_CASE("Import Combine archive",
   REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::X).size() == 48);
   REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Y).size() == 50);
   REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+}
+
+TEST_CASE("SBML: fixed mesh round-trip via ParametricGeometry",
+          "[core/model/model][core/model][core][model][geometry]") {
+  auto s{getExampleModel(Mod::VerySimpleModel3D)};
+  const auto &colors = s.getCompartments().getColors();
+  REQUIRE(colors.size() >= 2);
+  REQUIRE(colors[0] != 0);
+  REQUIRE(colors[1] != 0);
+
+  mesh::GMSHMesh gmshMesh;
+  gmshMesh.vertices = {{0.0, 0.0, 0.0},
+                       {1.0, 0.0, 0.0},
+                       {0.0, 1.0, 0.0},
+                       {0.0, 0.0, 1.0},
+                       {1.0, 1.0, 1.0}};
+  mesh::GMSHTetrahedron tet0{};
+  tet0.vertexIndices = {0, 1, 2, 3};
+  tet0.physicalTag = 1;
+  gmshMesh.tetrahedra.push_back(tet0);
+  mesh::GMSHTetrahedron tet1{};
+  tet1.vertexIndices = {1, 2, 3, 4};
+  tet1.physicalTag = 2;
+  gmshMesh.tetrahedra.push_back(tet1);
+  const std::vector<std::pair<QRgb, int>> colorTagPairs{{colors[0], 1},
+                                                        {colors[1], 2}};
+  s.getGeometry().setImportedGmshMesh(gmshMesh, colorTagPairs);
+  s.getMeshParameters().meshSourceType =
+      model::MeshSourceType::FixedImportedMesh;
+  s.getGeometry().updateMesh();
+  REQUIRE(s.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s.getGeometry().getMesh3d()->isValid());
+
+  auto doc = toSbmlDoc(s);
+  REQUIRE(doc != nullptr);
+  auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
+      doc->getModel()->getPlugin("spatial"));
+  REQUIRE(plugin != nullptr);
+  auto *geom = plugin->getGeometry();
+  REQUIRE(geom != nullptr);
+  const libsbml::ParametricGeometry *pg{nullptr};
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (const auto *def = geom->getGeometryDefinition(i);
+        def->isParametricGeometry() && def->getIsActive()) {
+      pg = dynamic_cast<const libsbml::ParametricGeometry *>(def);
+    }
+  }
+  REQUIRE(pg != nullptr);
+  REQUIRE(pg->isSetSpatialPoints());
+  REQUIRE(pg->getSpatialPoints()->getActualArrayDataLength() == 15);
+  REQUIRE(pg->getNumParametricObjects() == 2);
+  const auto *obj = pg->getParametricObject(0);
+  REQUIRE(obj != nullptr);
+  REQUIRE(obj->getPointIndexLength() == 12);
+  const auto *obj1 = pg->getParametricObject(1);
+  REQUIRE(obj1 != nullptr);
+  REQUIRE(obj1->getPointIndexLength() == 12);
+
+  model::Model s2;
+  s2.importSBMLString(s.getXml().toStdString(), "fixed-mesh.xml");
+  REQUIRE(s2.getGeometry().hasImportedMesh());
+  REQUIRE(s2.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+  s2.getGeometry().updateMesh();
+  REQUIRE(s2.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s2.getGeometry().getMesh3d()->isValid());
+  const auto &tetrahedra =
+      s2.getGeometry().getMesh3d()->getTetrahedronIndices();
+  REQUIRE(tetrahedra.size() >= 2);
+  REQUIRE(tetrahedra[0].size() == 1);
+  REQUIRE(tetrahedra[1].size() == 1);
+}
+
+TEST_CASE("SBML: incompatible fixed mesh ParametricGeometry falls back with "
+          "diagnostic",
+          "[core/model/model][core/model][core][model][geometry]") {
+  auto s{getExampleModel(Mod::VerySimpleModel3D)};
+  const auto &colors = s.getCompartments().getColors();
+  REQUIRE(!colors.empty());
+  REQUIRE(colors[0] != 0);
+
+  mesh::GMSHMesh gmshMesh;
+  gmshMesh.vertices = {
+      {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}};
+  mesh::GMSHTetrahedron tet{};
+  tet.vertexIndices = {0, 1, 2, 3};
+  tet.physicalTag = 1;
+  gmshMesh.tetrahedra.push_back(tet);
+  const std::vector<std::pair<QRgb, int>> colorTagPairs{{colors[0], 1}};
+  s.getGeometry().setImportedGmshMesh(gmshMesh, colorTagPairs);
+  s.getMeshParameters().meshSourceType =
+      model::MeshSourceType::FixedImportedMesh;
+  s.getGeometry().updateMesh();
+  auto doc = toSbmlDoc(s);
+  REQUIRE(doc != nullptr);
+
+  auto *plugin = dynamic_cast<libsbml::SpatialModelPlugin *>(
+      doc->getModel()->getPlugin("spatial"));
+  REQUIRE(plugin != nullptr);
+  auto *geom = plugin->getGeometry();
+  REQUIRE(geom != nullptr);
+  libsbml::ParametricGeometry *pg{nullptr};
+  for (unsigned i = 0; i < geom->getNumGeometryDefinitions(); ++i) {
+    if (auto *def = geom->getGeometryDefinition(i);
+        def->isParametricGeometry() && def->getIsActive()) {
+      pg = dynamic_cast<libsbml::ParametricGeometry *>(def);
+    }
+  }
+  REQUIRE(pg != nullptr);
+  auto *obj = pg->getParametricObject(0);
+  REQUIRE(obj != nullptr);
+  obj->setPointIndex(std::vector<int>{0, 1, 2});
+  obj->setPointIndexLength(3);
+
+  common::unique_C_ptr<char> xmlChar{libsbml::writeSBMLToString(doc.get())};
+  model::Model s2;
+  s2.importSBMLString(xmlChar.get(), "invalid-fixed-mesh.xml");
+  REQUIRE(s2.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+  REQUIRE_FALSE(s2.getGeometry().hasImportedMesh());
+  REQUIRE(!s2.getGeometry().getFixedMeshImportDiagnostic().isEmpty());
+  REQUIRE(
+      s2.getGeometry().getFixedMeshImportDiagnostic().contains("pointIndex"));
+  s2.getGeometry().updateMesh();
+  REQUIRE(s2.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s2.getGeometry().getMesh3d()->isValid());
+}
+
+TEST_CASE("SBML: parametric-two-compartments import and round-trip",
+          "[core/model/model][core/model][core][model][geometry]") {
+  auto s{getTestModel("parametric-two-compartments")};
+  REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().hasImportedMesh() == true);
+  REQUIRE(s.getGeometry().getFixedMeshImportDiagnostic().isEmpty());
+  REQUIRE(s.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+
+  const auto &ids = s.getCompartments().getIds();
+  REQUIRE(ids.size() == 2);
+  const auto iEC = ids.indexOf("EC");
+  const auto iCell = ids.indexOf("cell");
+  REQUIRE(iEC >= 0);
+  REQUIRE(iCell >= 0);
+
+  REQUIRE(s.getCompartments().getColor("EC") != 0);
+  REQUIRE(s.getCompartments().getColor("cell") != 0);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nVoxels() > 0);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nVoxels() > 0);
+
+  std::vector<std::size_t> voxelCounts(static_cast<std::size_t>(ids.size()), 0);
+  for (int i = 0; i < ids.size(); ++i) {
+    voxelCounts[static_cast<std::size_t>(i)] =
+        s.getCompartments().getCompartment(ids[i])->nVoxels();
+  }
+
+  s.getGeometry().updateMesh();
+  REQUIRE(s.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s.getGeometry().getMesh3d()->isValid());
+  const auto &tetrahedra = s.getGeometry().getMesh3d()->getTetrahedronIndices();
+  REQUIRE(tetrahedra.size() == static_cast<std::size_t>(ids.size()));
+  REQUIRE(tetrahedra[static_cast<std::size_t>(iCell)].size() > 0);
+  REQUIRE(tetrahedra[static_cast<std::size_t>(iEC)].empty());
+
+  std::vector<std::size_t> tetrahedronCounts;
+  tetrahedronCounts.reserve(tetrahedra.size());
+  for (const auto &compTetrahedra : tetrahedra) {
+    tetrahedronCounts.push_back(compTetrahedra.size());
+  }
+
+  model::Model s2;
+  s2.importSBMLString(s.getXml().toStdString(), "parametric-two-roundtrip.xml");
+  REQUIRE(s2.getIsValid() == true);
+  REQUIRE(s2.getGeometry().getHasImage() == true);
+  REQUIRE(s2.getGeometry().hasImportedMesh() == true);
+  REQUIRE(s2.getGeometry().getFixedMeshImportDiagnostic().isEmpty());
+  REQUIRE(s2.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+  REQUIRE(s2.getCompartments().getIds() == ids);
+  REQUIRE(s2.getGeometry().getImages().volume() ==
+          s.getGeometry().getImages().volume());
+  for (int i = 0; i < ids.size(); ++i) {
+    REQUIRE(s2.getCompartments().getColor(ids[i]) ==
+            s.getCompartments().getColor(ids[i]));
+    REQUIRE(s2.getCompartments().getCompartment(ids[i])->nVoxels() ==
+            voxelCounts[static_cast<std::size_t>(i)]);
+  }
+  s2.getGeometry().updateMesh();
+  REQUIRE(s2.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s2.getGeometry().getMesh3d()->isValid());
+  const auto &tetrahedra2 =
+      s2.getGeometry().getMesh3d()->getTetrahedronIndices();
+  REQUIRE(tetrahedra2.size() == tetrahedronCounts.size());
+  for (std::size_t i = 0; i < tetrahedronCounts.size(); ++i) {
+    REQUIRE(tetrahedra2[i].size() == tetrahedronCounts[i]);
+  }
+}
+
+TEST_CASE("SBML: parametric-three-compartments import and round-trip",
+          "[core/model/model][core/model][core][model][geometry]") {
+  auto s{getTestModel("parametric-three-compartments")};
+  REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getGeometry().getHasImage() == true);
+  REQUIRE(s.getGeometry().hasImportedMesh() == true);
+  REQUIRE(s.getGeometry().getFixedMeshImportDiagnostic().isEmpty());
+  REQUIRE(s.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+
+  const auto &ids = s.getCompartments().getIds();
+  REQUIRE(ids.size() == 3);
+  const auto iEC = ids.indexOf("EC");
+  const auto iCell = ids.indexOf("cell");
+  const auto iNuc = ids.indexOf("nuc");
+  REQUIRE(iEC >= 0);
+  REQUIRE(iCell >= 0);
+  REQUIRE(iNuc >= 0);
+
+  REQUIRE(s.getCompartments().getColor("EC") != 0);
+  REQUIRE(s.getCompartments().getColor("cell") != 0);
+  REQUIRE(s.getCompartments().getColor("nuc") != 0);
+  REQUIRE(s.getCompartments().getCompartment("EC")->nVoxels() > 0);
+  REQUIRE(s.getCompartments().getCompartment("cell")->nVoxels() > 0);
+  REQUIRE(s.getCompartments().getCompartment("nuc")->nVoxels() > 0);
+
+  std::vector<std::size_t> voxelCounts(static_cast<std::size_t>(ids.size()), 0);
+  for (int i = 0; i < ids.size(); ++i) {
+    voxelCounts[static_cast<std::size_t>(i)] =
+        s.getCompartments().getCompartment(ids[i])->nVoxels();
+  }
+
+  s.getGeometry().updateMesh();
+  REQUIRE(s.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s.getGeometry().getMesh3d()->isValid());
+  const auto &tetrahedra = s.getGeometry().getMesh3d()->getTetrahedronIndices();
+  REQUIRE(tetrahedra.size() == static_cast<std::size_t>(ids.size()));
+  REQUIRE(tetrahedra[static_cast<std::size_t>(iCell)].size() > 0);
+  REQUIRE(tetrahedra[static_cast<std::size_t>(iNuc)].size() > 0);
+  REQUIRE(tetrahedra[static_cast<std::size_t>(iEC)].empty());
+
+  std::vector<std::size_t> tetrahedronCounts;
+  tetrahedronCounts.reserve(tetrahedra.size());
+  for (const auto &compTetrahedra : tetrahedra) {
+    tetrahedronCounts.push_back(compTetrahedra.size());
+  }
+
+  model::Model s2;
+  s2.importSBMLString(s.getXml().toStdString(),
+                      "parametric-three-roundtrip.xml");
+  REQUIRE(s2.getIsValid() == true);
+  REQUIRE(s2.getGeometry().getHasImage() == true);
+  REQUIRE(s2.getGeometry().hasImportedMesh() == true);
+  REQUIRE(s2.getGeometry().getFixedMeshImportDiagnostic().isEmpty());
+  REQUIRE(s2.getMeshParameters().meshSourceType ==
+          model::MeshSourceType::FixedImportedMesh);
+  REQUIRE(s2.getCompartments().getIds() == ids);
+  REQUIRE(s2.getGeometry().getImages().volume() ==
+          s.getGeometry().getImages().volume());
+  for (int i = 0; i < ids.size(); ++i) {
+    REQUIRE(s2.getCompartments().getColor(ids[i]) ==
+            s.getCompartments().getColor(ids[i]));
+    REQUIRE(s2.getCompartments().getCompartment(ids[i])->nVoxels() ==
+            voxelCounts[static_cast<std::size_t>(i)]);
+  }
+  s2.getGeometry().updateMesh();
+  REQUIRE(s2.getGeometry().getMesh3d() != nullptr);
+  REQUIRE(s2.getGeometry().getMesh3d()->isValid());
+  const auto &tetrahedra2 =
+      s2.getGeometry().getMesh3d()->getTetrahedronIndices();
+  REQUIRE(tetrahedra2.size() == tetrahedronCounts.size());
+  for (std::size_t i = 0; i < tetrahedronCounts.size(); ++i) {
+    REQUIRE(tetrahedra2[i].size() == tetrahedronCounts[i]);
+  }
+}
+
+TEST_CASE("SBML: debug export parametric surface triangles to gmsh",
+          "[core/model/model][core/model][core][model][geometry][.]") {
+  REQUIRE(writeParametricSurfaceTrianglesToGmsh(
+      "parametric-two-compartments",
+      "parametric-two-compartments-triangles.msh"));
+  REQUIRE(writeParametricSurfaceTrianglesToGmsh(
+      "parametric-three-compartments",
+      "parametric-three-compartments-triangles.msh"));
 }

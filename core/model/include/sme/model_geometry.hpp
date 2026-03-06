@@ -4,12 +4,14 @@
 #pragma once
 
 #include "sme/geometry.hpp"
+#include "sme/gmsh.hpp"
 #include "sme/image_stack.hpp"
 #include <QImage>
 #include <QRgb>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace libsbml {
@@ -42,6 +44,10 @@ private:
   common::ImageStack images;
   std::unique_ptr<mesh::Mesh2d> mesh;
   std::unique_ptr<mesh::Mesh3d> mesh3d;
+  std::optional<mesh::GMSHMesh> importedGmshMesh;
+  std::vector<std::pair<QRgb, int>> importedMeshColorTagPairs;
+  QString fixedMeshImportDiagnostic;
+  mutable QString fixedMeshExportDiagnostic;
   bool isValid{false};
   bool isMeshValid{false};
   bool hasImage{false};
@@ -118,6 +124,35 @@ public:
    */
   void importGeometryFromImages(const common::ImageStack &imgs,
                                 bool keepColorAssignments);
+  /**
+   * @brief Store imported Gmsh mesh for fixed-topology meshing.
+   * @param gmshMesh Imported Gmsh mesh.
+   * @param colorTagPairs Optional explicit mapping from compartment color to
+   * Gmsh physical tag.
+   */
+  void setImportedGmshMesh(
+      const mesh::GMSHMesh &gmshMesh,
+      const std::optional<std::vector<std::pair<QRgb, int>>> &colorTagPairs =
+          std::nullopt);
+  /**
+   * @brief Clear any stored imported mesh topology.
+   */
+  void clearImportedMesh();
+  /**
+   * @brief Returns ``true`` if imported mesh topology is available.
+   * @returns ``true`` if imported mesh exists.
+   */
+  [[nodiscard]] bool hasImportedMesh() const;
+  /**
+   * @brief Diagnostic message from ParametricGeometry fixed-mesh import.
+   * @returns Empty string if no import diagnostic is available.
+   */
+  [[nodiscard]] const QString &getFixedMeshImportDiagnostic() const;
+  /**
+   * @brief Diagnostic message from ParametricGeometry fixed-mesh export.
+   * @returns Empty string if no export diagnostic is available.
+   */
+  [[nodiscard]] const QString &getFixedMeshExportDiagnostic() const;
   /**
    * @brief Rebuild mesh objects from current geometry.
    */
