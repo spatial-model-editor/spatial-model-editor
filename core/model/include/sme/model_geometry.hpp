@@ -144,6 +144,13 @@ public:
   void setVoxelSize(const common::VolumeF &newVoxelSize,
                     bool updateSBML = true);
   /**
+   * @brief Set physical origin and optionally write to SBML.
+   * @param newPhysicalOrigin New physical origin.
+   * @param updateSBML If ``true``, write updates back to SBML.
+   */
+  void setPhysicalOrigin(const common::VoxelF &newPhysicalOrigin,
+                         bool updateSBML = true);
+  /**
    * @brief Physical origin of voxel ``(0,0,0)``.
    * @returns Physical origin.
    */

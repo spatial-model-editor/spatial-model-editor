@@ -383,6 +383,7 @@
     </widget>
     <addaction name="actionSet_model_units"/>
     <addaction name="actionEdit_geometry_image"/>
+    <addaction name="actionEdit_geometry_origin"/>
     <addaction name="actionSet_spatial_coordinates"/>
     <addaction name="menuSimulation_type"/>
     <addaction name="action_Optimization"/>
@@ -604,6 +605,11 @@
   <action name="actionSet_spatial_coordinates">
    <property name="text">
     <string>Set &amp;spatial coordinates</string>
+   </property>
+  </action>
+  <action name="actionEdit_geometry_origin">
+   <property name="text">
+    <string>Edit Geometry O&amp;rigin</string>
    </property>
   </action>
   <action name="action_liver_cells_200x100">

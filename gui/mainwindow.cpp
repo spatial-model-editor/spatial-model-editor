@@ -2,6 +2,7 @@
 #include "dialogabout.hpp"
 #include "dialogcoordinates.hpp"
 #include "dialoggeometryimage.hpp"
+#include "dialoggeometryorigin.hpp"
 #include "dialogimportanalyticgeometry.hpp"
 #include "dialogimportgeometrygmsh.hpp"
 #include "dialogmeshingoptions.hpp"
@@ -205,6 +206,9 @@ void MainWindow::setupConnections() {
 
   connect(ui->actionEdit_geometry_image, &QAction::triggered, this,
           &MainWindow::actionEdit_geometry_image_triggered);
+
+  connect(ui->actionEdit_geometry_origin, &QAction::triggered, this,
+          &MainWindow::actionEdit_geometry_origin_triggered);
 
   connect(ui->actionSet_spatial_coordinates, &QAction::triggered, this,
           &MainWindow::actionSet_spatial_coordinates_triggered);
@@ -607,6 +611,19 @@ void MainWindow::actionEdit_geometry_image_triggered() {
     return;
   }
   importGeometryImage(model.getGeometry().getImages(), true);
+}
+
+void MainWindow::actionEdit_geometry_origin_triggered() {
+  if (!isValidModel()) {
+    return;
+  }
+  DialogGeometryOrigin dialog(model.getGeometry().getPhysicalOrigin(),
+                              model.getUnits().getLength().name, this);
+  if (dialog.exec() == QDialog::Accepted) {
+    model.getGeometry().setPhysicalOrigin(dialog.getOrigin());
+    tabMain_currentChanged(ui->tabMain->currentIndex());
+    enableTabs();
+  }
 }
 
 void MainWindow::actionSet_spatial_coordinates_triggered() {

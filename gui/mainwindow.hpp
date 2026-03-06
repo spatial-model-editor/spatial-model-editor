@@ -73,6 +73,7 @@ private:
   // Tools menu actions
   void actionSet_model_units_triggered();
   void actionEdit_geometry_image_triggered();
+  void actionEdit_geometry_origin_triggered();
   void actionSet_spatial_coordinates_triggered();
   void actionFinalize_non_spatial_import_triggered();
   void action_Optimization_triggered();
