@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
+#include "sme/gmsh.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/model_geometry.hpp"
@@ -7,6 +8,28 @@
 
 using namespace sme;
 using namespace sme::test;
+
+namespace {
+
+mesh::GMSHMesh makeSingleTetGmshMesh() {
+  mesh::GMSHMesh gmshMesh;
+  gmshMesh.vertices = {{10.0, 20.0, 30.0},
+                       {14.0, 20.0, 30.0},
+                       {10.0, 24.0, 30.0},
+                       {10.0, 20.0, 34.0}};
+  gmshMesh.tetrahedra = {{{{0, 1, 2, 3}}, 1}};
+  return gmshMesh;
+}
+
+mesh::GMSHMesh makeSingleTriangleGmshMesh() {
+  mesh::GMSHMesh gmshMesh;
+  gmshMesh.vertices = {
+      {5.0, 7.0, 100.0}, {9.0, 7.0, 100.0}, {5.0, 11.0, 100.0}};
+  gmshMesh.triangles = {{{{0, 1, 2}}, 1}};
+  return gmshMesh;
+}
+
+} // namespace
 
 TEST_CASE("Model geometry",
           "[core/model/geometry][core/model][core][model][geometry]") {
@@ -211,6 +234,42 @@ TEST_CASE("Model geometry",
       REQUIRE(cols2[0] == c0);
       REQUIRE(cols2[1] == 0);
       REQUIRE(cols2[2] == 0);
+    }
+    SECTION("import voxelized gmsh geometry in fixed mode uses mesh extents") {
+      auto gmshMesh = makeSingleTetGmshMesh();
+      auto image = mesh::voxelizeGMSHMesh(gmshMesh, 12, true);
+      REQUIRE(!image.empty());
+
+      m.getGeometry().importGeometryFromGmsh(image, gmshMesh, true);
+
+      REQUIRE(m.getGeometry().hasImportedMesh());
+      const auto voxelSize = m.getGeometry().getVoxelSize();
+      REQUIRE(voxelSize.width() == dbl_approx(image.voxelSize().width()));
+      REQUIRE(voxelSize.height() == dbl_approx(image.voxelSize().height()));
+      REQUIRE(voxelSize.depth() == dbl_approx(image.voxelSize().depth()));
+      const auto origin = m.getGeometry().getPhysicalOrigin();
+      REQUIRE(origin.p.x() == dbl_approx(10.0));
+      REQUIRE(origin.p.y() == dbl_approx(20.0));
+      REQUIRE(origin.z == dbl_approx(30.0));
+    }
+    SECTION("import voxelized 2d gmsh geometry preserves existing z settings") {
+      auto gmshMesh = makeSingleTriangleGmshMesh();
+      auto image = mesh::voxelizeGMSHMesh(gmshMesh, 12, true);
+      REQUIRE(!image.empty());
+      REQUIRE(image.volume().depth() == 1);
+
+      m.getGeometry().setVoxelSize({1.25, 1.25, 7.5});
+      m.getGeometry().setPhysicalOrigin({-1.0, -2.0, 42.0});
+      m.getGeometry().importGeometryFromGmsh(image, gmshMesh, true);
+
+      const auto voxelSize = m.getGeometry().getVoxelSize();
+      REQUIRE(voxelSize.width() == dbl_approx(image.voxelSize().width()));
+      REQUIRE(voxelSize.height() == dbl_approx(image.voxelSize().height()));
+      REQUIRE(voxelSize.depth() == dbl_approx(7.5));
+      const auto origin = m.getGeometry().getPhysicalOrigin();
+      REQUIRE(origin.p.x() == dbl_approx(5.0));
+      REQUIRE(origin.p.y() == dbl_approx(7.0));
+      REQUIRE(origin.z == dbl_approx(42.0));
     }
   }
 }

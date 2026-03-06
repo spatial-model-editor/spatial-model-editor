@@ -18,6 +18,11 @@ namespace sme::mesh {
 
 class Boundaries;
 
+struct FixedTopology2d {
+  std::vector<common::VoxelF> vertices;
+  std::vector<std::vector<TriangulateTriangleIndex>> triangleIndices;
+};
+
 /**
  * @brief Constructs a triangular mesh from a geometry image
  *
@@ -69,6 +74,21 @@ public:
    */
   explicit Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints = {},
                   std::vector<std::size_t> maxTriangleArea = {},
+                  const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
+                  const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
+                  const std::vector<QRgb> &compartmentColors = {},
+                  std::size_t boundarySimplificationType = 0);
+  /**
+   * @brief Construct a mesh from fixed triangle topology in physical units.
+   *
+   * @param[in] image segmented geometry image
+   * @param[in] fixedVertices physical vertex coordinates
+   * @param[in] fixedTriangleIndices triangles per compartment
+   * @param[in] voxelSize physical voxel size
+   * @param[in] originPoint physical origin
+   * @param[in] compartmentColors compartment colors in image
+   */
+  explicit Mesh2d(const QImage &image, const FixedTopology2d &fixedTopology,
                   const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
                   const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
                   const std::vector<QRgb> &compartmentColors = {},

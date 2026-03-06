@@ -66,4 +66,8 @@ Settings getSbmlAnnotation(libsbml::Model *model) {
   return {};
 }
 
+bool hasSbmlAnnotation(const libsbml::Model *model) {
+  return getAnnotation(model) != nullptr;
+}
+
 } // namespace sme::model

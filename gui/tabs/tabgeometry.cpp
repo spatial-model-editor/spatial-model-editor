@@ -126,13 +126,15 @@ void TabGeometry::loadModelData(const QString &selection) {
 }
 
 void TabGeometry::enableTabs() {
-  bool enableBoundaries = model.getGeometry().getIsValid();
-  bool enableMesh = model.getGeometry().getIsMeshValid();
+  const bool enableGeometryTabs = model.getGeometry().getIsValid();
+  const bool fixedMeshSource = usingFixedMeshSource();
   auto *tab = ui->tabCompartmentGeometry;
-  tab->setTabEnabled(1, enableBoundaries);
-  tab->setTabEnabled(2, enableBoundaries);
-  tab->setTabEnabled(3, enableMesh);
-  ui->listMembranes->setEnabled(enableBoundaries);
+  tab->setTabEnabled(1, enableGeometryTabs && !fixedMeshSource);
+  tab->setTabEnabled(2, enableGeometryTabs);
+  ui->listMembranes->setEnabled(enableGeometryTabs);
+  if (!tab->isTabEnabled(tab->currentIndex())) {
+    tab->setCurrentIndex(0);
+  }
 }
 
 void TabGeometry::invertYAxis(bool enable) {
@@ -305,9 +307,10 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
   } else if (index == TabIndex::MESH) {
     auto *mesh2d{model.getGeometry().getMesh2d()};
     const auto *mesh3d{model.getGeometry().getMesh3d()};
-    ui->spinMaxTriangleArea->setEnabled(mesh2d != nullptr);
+    const bool fixedMeshSource{usingFixedMeshSource()};
+    ui->spinMaxTriangleArea->setEnabled(mesh2d != nullptr && !fixedMeshSource);
     ui->spinMeshZoom->setEnabled(mesh2d != nullptr);
-    ui->spinMaxCellVolume->setEnabled(mesh3d != nullptr);
+    ui->spinMaxCellVolume->setEnabled(mesh3d != nullptr && !fixedMeshSource);
     ui->cmbRenderMode->setEnabled(mesh3d != nullptr);
     if (mesh2d == nullptr && mesh3d == nullptr) {
       return;
@@ -318,8 +321,10 @@ void TabGeometry::tabCompartmentGeometry_currentChanged(int index) {
       ui->stackCompMesh->setCurrentIndex(0);
       ui->spinMaxTriangleArea->setValue(
           static_cast<int>(mesh2d->getCompartmentMaxTriangleArea(compIndex)));
-      // reconstruct 2d mesh in case the boundary lines have changed
-      mesh2d->constructMesh();
+      if (!fixedMeshSource) {
+        // reconstruct 2d mesh in case the boundary lines have changed
+        mesh2d->constructMesh();
+      }
       updateMesh2d();
     } else if (mesh3d != nullptr) {
       ui->stackCompMesh->setCurrentIndex(1);
@@ -370,6 +375,9 @@ void TabGeometry::spinBoundaryIndex_valueChanged(int value) {
 }
 
 void TabGeometry::spinMaxBoundaryPoints_valueChanged(int value) {
+  if (usingFixedMeshSource()) {
+    return;
+  }
   const auto &size = ui->lblCompBoundary->size();
   auto boundaryIndex = static_cast<std::size_t>(ui->spinBoundaryIndex->value());
   QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -422,6 +430,9 @@ void TabGeometry::mshCompMesh_mouseClicked(int compartmentIndex) {
 }
 
 void TabGeometry::spinMaxTriangleArea_valueChanged(int value) {
+  if (usingFixedMeshSource()) {
+    return;
+  }
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   if (auto *mesh2d = model.getGeometry().getMesh2d(); mesh2d != nullptr) {
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -443,7 +454,7 @@ void TabGeometry::updateBoundaries() {
   ui->spinBoundaryIndex->setMaximum(static_cast<int>(mesh->getNumBoundaries()) -
                                     1);
   ui->spinBoundaryIndex->setEnabled(true);
-  ui->spinMaxBoundaryPoints->setEnabled(true);
+  ui->spinMaxBoundaryPoints->setEnabled(!usingFixedMeshSource());
   ui->spinBoundaryZoom->setEnabled(true);
   spinBoundaryIndex_valueChanged(ui->spinBoundaryIndex->value());
 }
@@ -473,6 +484,9 @@ void TabGeometry::updateMesh2d() {
 }
 
 void TabGeometry::spinMaxCellVolume_valueChanged(int value) {
+  if (usingFixedMeshSource()) {
+    return;
+  }
   auto compIndex = static_cast<std::size_t>(ui->listCompartments->currentRow());
   auto nCompartments = static_cast<std::size_t>(ui->listCompartments->count());
   auto membraneIndex =
@@ -518,6 +532,13 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   }
   ui->listMembranes->clearSelection();
   int currentRow{ui->listCompartments->row(items[0])};
+  if (currentRow < 0 || currentRow >= model.getCompartments().getIds().size()) {
+    return;
+  }
+  auto *currentItem{ui->listCompartments->currentItem()};
+  if (currentItem == nullptr) {
+    return;
+  }
   ui->txtCompartmentName->clear();
   ui->lblCompSize->clear();
   membraneSelected = false;
@@ -525,8 +546,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
   ui->btnChangeCompartment->setEnabled(true);
   ui->btnRemoveCompartment->setEnabled(true);
   SPDLOG_DEBUG("row {} selected", currentRow);
-  SPDLOG_DEBUG("  - Compartment Name: {}",
-               ui->listCompartments->currentItem()->text().toStdString());
+  SPDLOG_DEBUG("  - Compartment Name: {}", currentItem->text().toStdString());
   SPDLOG_DEBUG("  - Compartment Id: {}", compId.toStdString());
   ui->txtCompartmentName->setEnabled(true);
   ui->txtCompartmentName->setText(model.getCompartments().getName(compId));
@@ -564,6 +584,7 @@ void TabGeometry::listCompartments_itemSelectionChanged() {
         mesh3d != nullptr) {
       ui->spinMaxCellVolume->setValue(
           static_cast<int>(mesh3d->getCompartmentMaxCellVolume(currentRow)));
+      ui->spinMaxCellVolume->setEnabled(!usingFixedMeshSource());
       ui->mshCompMesh->setCompartmentIndex(currentRow);
     }
     // update compartment volume
@@ -590,16 +611,22 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
     return;
   }
   int currentRow{ui->listMembranes->row(items[0])};
+  if (currentRow < 0 || currentRow >= model.getMembranes().getIds().size()) {
+    return;
+  }
+  auto *currentItem{ui->listMembranes->currentItem()};
+  if (currentItem == nullptr) {
+    return;
+  }
   membraneSelected = true;
   ui->listCompartments->clearSelection();
   ui->txtCompartmentName->clear();
   ui->txtCompartmentName->setEnabled(true);
   const QString &membraneId{model.getMembranes().getIds()[currentRow]};
   SPDLOG_DEBUG("row {} selected", currentRow);
-  SPDLOG_DEBUG("  - Membrane Name: {}",
-               ui->listMembranes->currentItem()->text().toStdString());
+  SPDLOG_DEBUG("  - Membrane Name: {}", currentItem->text().toStdString());
   SPDLOG_DEBUG("  - Membrane Id: {}", membraneId.toStdString());
-  ui->txtCompartmentName->setText(ui->listMembranes->currentItem()->text());
+  ui->txtCompartmentName->setText(currentItem->text());
   // update image
   const auto *m{model.getMembranes().getMembrane(membraneId)};
   ui->lblCompShape->setImage(m->getImages());
@@ -630,4 +657,9 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
              mesh3d != nullptr) {
     ui->mshCompMesh->setMembraneIndex(currentRow);
   }
+}
+
+bool TabGeometry::usingFixedMeshSource() const {
+  return model.getMeshParameters().meshSourceType ==
+         sme::model::MeshSourceType::FixedImportedMesh;
 }

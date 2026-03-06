@@ -4,12 +4,16 @@
 #pragma once
 
 #include "sme/geometry.hpp"
+#include "sme/gmsh.hpp"
 #include "sme/image_stack.hpp"
+#include "sme/mesh2d.hpp"
+#include "sme/mesh_types.hpp"
 #include <QImage>
 #include <QRgb>
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace libsbml {
@@ -35,6 +39,10 @@ struct Settings;
  */
 class ModelGeometry {
 private:
+  struct TaggedFixedTopology2d {
+    mesh::GMSHMesh mesh{};
+    std::vector<std::pair<QRgb, int>> colorTagPairs{};
+  };
   common::VoxelF physicalOrigin{};
   common::VolumeF physicalSize{};
   common::VolumeF voxelSize{1.0, 1.0, 1.0};
@@ -42,6 +50,11 @@ private:
   common::ImageStack images;
   std::unique_ptr<mesh::Mesh2d> mesh;
   std::unique_ptr<mesh::Mesh3d> mesh3d;
+  std::optional<mesh::FixedTopology3d> importedMesh3d;
+  std::optional<mesh::FixedTopology2d> importedMesh2d;
+  std::optional<TaggedFixedTopology2d> importedTaggedMesh2d;
+  QString fixedMeshImportDiagnostic;
+  mutable QString fixedMeshExportDiagnostic;
   bool isValid{false};
   bool isMeshValid{false};
   bool hasImage{false};
@@ -118,6 +131,57 @@ public:
    */
   void importGeometryFromImages(const common::ImageStack &imgs,
                                 bool keepColorAssignments);
+  /**
+   * @brief Import geometry rasterized from a Gmsh mesh and align physical
+   * coordinates with the mesh bounds.
+   * @param imgs Voxelized geometry image stack.
+   * @param gmshMesh Source Gmsh mesh used for voxelization.
+   * @param importAsFixedTopology Store mesh as fixed topology if ``true``.
+   */
+  void importGeometryFromGmsh(const common::ImageStack &imgs,
+                              const mesh::GMSHMesh &gmshMesh,
+                              bool importAsFixedTopology);
+  /**
+   * @brief Store imported Gmsh mesh for fixed-topology meshing.
+   * @param gmshMesh Imported Gmsh mesh (tetrahedra for 3D or triangles for 2D).
+   * @param colorTagPairs Optional explicit mapping from compartment color to
+   * Gmsh physical tag.
+   */
+  void setImportedGmshMesh(
+      const mesh::GMSHMesh &gmshMesh,
+      const std::optional<std::vector<std::pair<QRgb, int>>> &colorTagPairs =
+          std::nullopt);
+  /**
+   * @brief Store imported fixed 2d mesh topology for fixed-topology meshing.
+   * @param fixedMesh2d Imported 2d fixed mesh.
+   */
+  void setImportedMesh2d(const mesh::FixedTopology2d &fixedMesh2d);
+  /**
+   * @brief Capture current active mesh as fixed-topology mesh.
+   *
+   * Captures current 2D or 3D mesh (if valid) and stores it as the fixed mesh
+   * topology source for subsequent remeshing.
+   */
+  void captureCurrentMeshAsFixedTopology();
+  /**
+   * @brief Clear any stored imported mesh topology.
+   */
+  void clearImportedMesh();
+  /**
+   * @brief Returns ``true`` if imported mesh topology is available.
+   * @returns ``true`` if imported mesh exists.
+   */
+  [[nodiscard]] bool hasImportedMesh() const;
+  /**
+   * @brief Diagnostic message from ParametricGeometry fixed-mesh import.
+   * @returns Empty string if no import diagnostic is available.
+   */
+  [[nodiscard]] const QString &getFixedMeshImportDiagnostic() const;
+  /**
+   * @brief Diagnostic message from ParametricGeometry fixed-mesh export.
+   * @returns Empty string if no export diagnostic is available.
+   */
+  [[nodiscard]] const QString &getFixedMeshExportDiagnostic() const;
   /**
    * @brief Rebuild mesh objects from current geometry.
    */

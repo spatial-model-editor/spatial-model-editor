@@ -69,4 +69,5 @@ private:
   void listCompartments_itemSelectionChanged();
   void listCompartments_itemDoubleClicked(QListWidgetItem *item);
   void listMembranes_itemSelectionChanged();
+  [[nodiscard]] bool usingFixedMeshSource() const;
 };
