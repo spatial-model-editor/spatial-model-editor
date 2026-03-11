@@ -3,6 +3,9 @@
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/image_stack.hpp"
+#include <QComboBox>
+#include <QSlider>
+#include <array>
 
 using namespace sme::test;
 
@@ -84,5 +87,40 @@ TEST_CASE("QVoxelRenderer",
       voxelRenderer.setImage(imageStack);
       wait(delay_ms);
     }
+  }
+  SECTION("clipping plane uses physical origin") {
+    auto model = sme::test::getExampleModel(Mod::SingleCompartmentDiffusion3D);
+    auto imageStack = model.getGeometry().getImages();
+    const auto &origin = model.getGeometry().getPhysicalOrigin();
+    REQUIRE(origin.p.x() == dbl_approx(-50.0));
+    REQUIRE(origin.p.y() == dbl_approx(-50.0));
+    REQUIRE(origin.z == dbl_approx(-50.0));
+    QSlider slider;
+    QComboBox comboBox;
+    voxelRenderer.setClippingPlaneOriginSlider(&slider);
+    voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+    voxelRenderer.setImage(imageStack, origin);
+    wait(delay_ms);
+    const double xPad = imageStack.voxelSize().width();
+    const double zPad = imageStack.voxelSize().depth();
+    std::array<double, 3> planeOrigin{};
+    voxelRenderer.getClippingPlane()->GetOrigin(planeOrigin.data());
+    REQUIRE(planeOrigin[2] == dbl_approx(origin.z - zPad));
+
+    slider.setValue(slider.maximum() / 2);
+    wait(delay_ms);
+    voxelRenderer.getClippingPlane()->GetOrigin(planeOrigin.data());
+    REQUIRE(planeOrigin[2] == dbl_approx(0.0));
+
+    comboBox.setCurrentText("x");
+    slider.setValue(0);
+    wait(delay_ms);
+    voxelRenderer.getClippingPlane()->GetOrigin(planeOrigin.data());
+    REQUIRE(planeOrigin[0] == dbl_approx(origin.p.x() - xPad));
+
+    slider.setValue(slider.maximum());
+    wait(delay_ms);
+    voxelRenderer.getClippingPlane()->GetOrigin(planeOrigin.data());
+    REQUIRE(planeOrigin[0] == dbl_approx(50.0 + xPad));
   }
 }

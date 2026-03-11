@@ -18,7 +18,8 @@ class QVoxelRenderer : public SmeVtkWidget {
   Q_OBJECT
 public:
   explicit QVoxelRenderer(QWidget *parent = nullptr);
-  void setImage(const sme::common::ImageStack &img);
+  void setImage(const sme::common::ImageStack &img,
+                const sme::common::VoxelF &origin = {0.0, 0.0, 0.0});
   void setClippingPlaneOriginSlider(QSlider *slider);
   void setClippingPlaneNormalCombobox(QComboBox *combobox);
   void renderOnClippingPaneChange(SmeVtkWidget *smeVtkWidget);
@@ -39,6 +40,7 @@ private:
   vtkNew<vtkPlane> clippingPlane;
   QString lengthUnits{};
   SmeVtkWidget *smeVtkWidgetToRenderOnClippingPlaneChange{nullptr};
+  double minClippingPlaneOrigin{0.0};
   double maxClippingPlaneOrigin{0.0};
   QSlider *slideClippingPlaneOrigin{nullptr};
   QComboBox *cmbClippingPlaneNormal{nullptr};

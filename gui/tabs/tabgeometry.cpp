@@ -119,7 +119,8 @@ void TabGeometry::loadModelData(const QString &selection) {
   lblGeometry->setImage(model.getGeometry().getImages());
   lblGeometry->setPhysicalUnits(model.getUnits().getLength().name);
   lblGeometry->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
-  voxGeometry->setImage(model.getGeometry().getImages());
+  voxGeometry->setImage(model.getGeometry().getImages(),
+                        model.getGeometry().getPhysicalOrigin());
   enableTabs();
   selectMatchingOrFirstItem(ui->listCompartments, selection);
 }
@@ -288,7 +289,8 @@ void TabGeometry::btnChangeCompartmentColor_clicked() {
       ui->mshCompMesh->setColors(mesh3d->getColors());
     }
     lblGeometry->setImage(model.getGeometry().getImages());
-    voxGeometry->setImage(model.getGeometry().getImages());
+    voxGeometry->setImage(model.getGeometry().getImages(),
+                          model.getGeometry().getPhysicalOrigin());
   }
 }
 
