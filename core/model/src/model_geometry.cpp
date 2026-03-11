@@ -1,6 +1,7 @@
 #include "sme/model_geometry.hpp"
 #include "geometry_analytic.hpp"
 #include "geometry_sampled_field.hpp"
+#include "id.hpp"
 #include "sbml_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
@@ -79,7 +80,7 @@ static void createZCoordinateComponent(libsbml::Model *model) {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
   coordZ->setId("zCoord");
   auto *paramZ = model->createParameter();
-  paramZ->setId("z");
+  paramZ->setId(nameToUniqueSId("z", model).toStdString());
   paramZ->setUnits(model->getLengthUnits());
   paramZ->setConstant(true);
   paramZ->setValue(0);
@@ -149,7 +150,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
   coordX->setId("xCoord");
   auto *paramX = sbmlModel->createParameter();
-  paramX->setId("x");
+  paramX->setId(nameToUniqueSId("x", sbmlModel).toStdString());
   paramX->setUnits(sbmlModel->getLengthUnits());
   paramX->setConstant(true);
   paramX->setValue(0);
@@ -173,7 +174,7 @@ void ModelGeometry::writeDefaultGeometryToSBML() {
       libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
   coordY->setId("yCoord");
   auto *paramY = sbmlModel->createParameter();
-  paramY->setId("y");
+  paramY->setId(nameToUniqueSId("y", sbmlModel).toStdString());
   paramY->setUnits(sbmlModel->getLengthUnits());
   paramY->setConstant(true);
   paramY->setValue(0);
