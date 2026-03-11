@@ -73,7 +73,8 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
   return array;
 }
 
-void QVoxelRenderer::setImage(const sme::common::ImageStack &img) {
+void QVoxelRenderer::setImage(const sme::common::ImageStack &img,
+                              const sme::common::VoxelF &origin) {
   std::array<int, 3> dims{};
   imageDataArray = imageStackToVtkArray(img, dims);
   imageData->SetDimensions(dims.data());
@@ -83,7 +84,7 @@ void QVoxelRenderer::setImage(const sme::common::ImageStack &img) {
   volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
   imageData->SetSpacing(img.voxelSize().width(), img.voxelSize().height(),
                         img.voxelSize().depth());
-  imageData->SetOrigin(0.0, 0.0, 0.0);
+  imageData->SetOrigin(origin.p.x(), origin.p.y(), origin.z);
   imageData->GetPointData()->SetScalars(imageDataArray);
   renderer->ResetCameraClippingRange();
   renderer->ResetCamera();
@@ -160,7 +161,9 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
 void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
   double fractionalValue =
       static_cast<double>(value) / slideClippingPlaneOrigin->maximum();
-  double origin = fractionalValue * maxClippingPlaneOrigin;
+  double origin =
+      minClippingPlaneOrigin +
+      fractionalValue * (maxClippingPlaneOrigin - minClippingPlaneOrigin);
   clippingPlane->SetOrigin(origin, origin, origin);
   clippingPlane->Modified();
   vtkRender();
@@ -188,7 +191,19 @@ void QVoxelRenderer::cmbClippingPlaneNormal_currentTextChanged(
   double dy;
   double dz;
   imageData->GetSpacing(dx, dy, dz);
-  maxClippingPlaneOrigin = x * dim[0] * dx + y * dim[1] * dy + z * dim[2] * dz;
+  double ox;
+  double oy;
+  double oz;
+  imageData->GetOrigin(ox, oy, oz);
+  // Expand the clipping range slightly so "no clipping" doesn't slice geometry
+  // that lies numerically on, or very close to, the image boundary.
+  const double axisSpacing = x * dx + y * dy + z * dz;
+  const double clipPadding = axisSpacing;
+  minClippingPlaneOrigin = x * ox + y * oy + z * oz;
+  maxClippingPlaneOrigin =
+      x * (ox + dim[0] * dx) + y * (oy + dim[1] * dy) + z * (oz + dim[2] * dz);
+  minClippingPlaneOrigin -= clipPadding;
+  maxClippingPlaneOrigin += clipPadding;
   if (slideClippingPlaneOrigin != nullptr) {
     slideClippingPlaneOrigin_valueChanged(slideClippingPlaneOrigin->value());
   }
