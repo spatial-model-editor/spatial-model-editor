@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
+#include "sbml_utils.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
@@ -298,6 +299,51 @@ TEST_CASE("SBML: import SBML doc without geometry",
           s.getGeometry().setVoxelSize(s.getGeometry().getVoxelSize()));
     }
   }
+}
+
+TEST_CASE("SBML: default geometry avoids xyz parameter id clashes",
+          "[core/model/model][core/model][core][model]") {
+  createSBMLlvl2doc("tmpmodel_xyz_param_clash.xml");
+  std::unique_ptr<libsbml::SBMLDocument> docIn(
+      libsbml::readSBMLFromFile("tmpmodel_xyz_param_clash.xml"));
+  REQUIRE(docIn != nullptr);
+  auto *modelIn = docIn->getModel();
+  REQUIRE(modelIn != nullptr);
+  for (const auto *id : {"x", "y", "z"}) {
+    auto *param = modelIn->createParameter();
+    param->setId(id);
+    param->setConstant(true);
+    param->setValue(0.0);
+  }
+  libsbml::SBMLWriter().writeSBML(docIn.get(), "tmpmodel_xyz_param_clash.xml");
+
+  model::Model s;
+  s.importSBMLFile("tmpmodel_xyz_param_clash.xml");
+  REQUIRE(s.getIsValid() == true);
+  REQUIRE(s.getErrorMessage().isEmpty());
+
+  auto doc{toSbmlDoc(s)};
+  auto *model = doc->getModel();
+  REQUIRE(model != nullptr);
+
+  // pre-existing non-spatial parameters keep their ids
+  REQUIRE(model->getParameter("x") != nullptr);
+  REQUIRE(model->getParameter("y") != nullptr);
+  REQUIRE(model->getParameter("z") != nullptr);
+
+  const auto *xParam = model::getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_X);
+  const auto *yParam = model::getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Y);
+  const auto *zParam = model::getSpatialCoordinateParam(
+      model, libsbml::CoordinateKind_t::SPATIAL_COORDINATEKIND_CARTESIAN_Z);
+  REQUIRE(xParam != nullptr);
+  REQUIRE(yParam != nullptr);
+  REQUIRE(zParam != nullptr);
+
+  REQUIRE(xParam->getId() == "x_");
+  REQUIRE(yParam->getId() == "y_");
+  REQUIRE(zParam->getId() == "z_");
 }
 
 TEST_CASE("SBML: name clashes", "[core/model/model][core/model][core][model]") {
