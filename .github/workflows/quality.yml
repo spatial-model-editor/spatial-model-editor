@@ -8,9 +8,6 @@ on:
 concurrency:
   group: quality-${{ github.ref }}
   cancel-in-progress: true
-defaults:
-  run:
-    shell: bash
 env:
   SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -26,9 +23,9 @@ jobs:
       matrix:
         script: [codecov, sonar, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2025.10.06
+      - uses: spatial-model-editor/setup-ci@2026.03.30
         with:
-          sme_deps: '2025.10.06'
+          sme_deps: '2026.03.29'
           cache_id: ${{ matrix.script }}
       - uses: actions/checkout@v6
         with:

@@ -5,6 +5,7 @@ target_sources(
   PRIVATE image_stack.cpp
           image_stack_impl.cpp
           logger.cpp
+          version_dependencies.cpp
           serialization.cpp
           simple_symbolic.cpp
           symbolic.cpp
@@ -12,6 +13,7 @@ target_sources(
           tiff.cpp
           utils.cpp
           ${PROJECT_BINARY_DIR}/src/core/common/src/version.cpp)
+
 if(BUILD_TESTING)
   target_sources(
     core_tests
@@ -24,6 +26,7 @@ if(BUILD_TESTING)
            system_memory_t.cpp
            tiff_t.cpp
            utils_t.cpp
+           version_t.cpp
            voxel_t.cpp)
 endif()
 if(SME_BUILD_BENCHMARKS)

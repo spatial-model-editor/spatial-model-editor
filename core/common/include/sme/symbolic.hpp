@@ -126,6 +126,14 @@ public:
    */
   [[nodiscard]] std::string inlinedExpr(std::size_t i = 0) const;
   /**
+   * @brief CUDA code string after substitutions/inlining.
+   * @param i Expression index.
+   * @param useFloat If ``true``, print single-precision CUDA code.
+   * @returns CUDA expression string.
+   */
+  [[nodiscard]] std::string cudaCode(std::size_t i = 0,
+                                     bool useFloat = false) const;
+  /**
    * @brief Derivative of expression ``i`` with respect to ``var``.
    * @param var Differentiation variable.
    * @param i Expression index.

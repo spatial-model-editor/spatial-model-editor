@@ -12,6 +12,7 @@
 #include <QImage>
 #include <QPoint>
 #include <QRgb>
+#include <array>
 #include <cstddef>
 #include <string>
 #include <utility>
@@ -126,7 +127,8 @@ public:
  */
 class Membrane {
 private:
-  std::array<std::vector<std::pair<std::size_t, std::size_t>>, 3> indexPairs{};
+  std::array<std::vector<std::pair<std::size_t, std::size_t>>, 6>
+      faceIndexPairs{};
   std::string id{};
   const Compartment *compA{};
   const Compartment *compB{};
@@ -134,9 +136,9 @@ private:
 
 public:
   /**
-   * @brief Flux direction axis.
+   * @brief Signed membrane face direction from compartment A to B.
    */
-  enum FLUX_DIRECTION { X = 0, Y = 1, Z = 2 };
+  enum FACE_DIRECTION { XP = 0, XM = 1, YP = 2, YM = 3, ZP = 4, ZM = 5 };
   /**
    * @brief Construct empty membrane.
    */
@@ -164,10 +166,14 @@ public:
    */
   [[nodiscard]] const Compartment *getCompartmentB() const;
   /**
-   * @brief Index pairs for flux calculations along a direction.
+   * @brief Number of adjacent voxel pairs in the membrane.
+   */
+  [[nodiscard]] std::size_t size() const;
+  /**
+   * @brief Index pairs for one signed membrane face direction.
    */
   [[nodiscard]] const std::vector<std::pair<std::size_t, std::size_t>> &
-  getIndexPairs(FLUX_DIRECTION fluxDirection) const;
+  getFaceIndexPairs(FACE_DIRECTION faceDirection) const;
   /**
    * @brief Membrane visualization image stack.
    */

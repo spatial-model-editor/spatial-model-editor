@@ -67,9 +67,13 @@ TEST_CASE("SBML membranes",
       REQUIRE(m.getCompartmentB()->getId() == "c0");
       REQUIRE(m.getImages().volume().depth() == 1);
       REQUIRE(m.getImages()[0].size() == img.size());
-      REQUIRE(m.getIndexPairs(sme::geometry::Membrane::X).size() == 2);
-      REQUIRE(m.getIndexPairs(sme::geometry::Membrane::Y).size() == 2);
-      REQUIRE(m.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+      REQUIRE(m.size() == 4);
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::XP).size() == 1);
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::XM).size() == 1);
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::YP).size() == 1);
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::YM).size() == 1);
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+      REQUIRE(m.getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
     }
   }
 }

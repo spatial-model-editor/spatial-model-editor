@@ -74,19 +74,21 @@ cleanup() {
 }
 trap cleanup EXIT
 
-check_cmd sudo
-check_cmd tar
-check_cmd cmake
-check_cmd ninja
-check_cmd clang
-check_cmd clang++
-check_cmd ccache
 check_cmd git
 if [ "$RUN_DEPS" -eq 1 ]; then
+    check_cmd sudo
+    check_cmd tar
     if ! command -v wget >/dev/null 2>&1 && ! command -v curl >/dev/null 2>&1; then
         echo "Error: required download tool not found (need wget or curl)"
         exit 1
     fi
+fi
+if [ "$RUN_BUILDS" -eq 1 ]; then
+    check_cmd cmake
+    check_cmd ninja
+    check_cmd clang
+    check_cmd clang++
+    check_cmd ccache
 fi
 
 repo_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
@@ -99,9 +101,27 @@ if [ ! -f "ci/local-linux-dev-setup.sh" ]; then
     exit 1
 fi
 
-log "WARNING: this script creates or overwrites: /opt/smelibs, build-sme-release, build-sme-asan"
-log "Refreshing sudo credentials"
-sudo -v
+warning_targets=""
+append_warning_target() {
+    if [ -n "$warning_targets" ]; then
+        warning_targets="$warning_targets, $1"
+    else
+        warning_targets="$1"
+    fi
+}
+if [ "$RUN_DEPS" -eq 1 ]; then
+    append_warning_target "/opt/smelibs"
+fi
+if [ "$RUN_BUILDS" -eq 1 ]; then
+    append_warning_target "build-sme-release"
+    append_warning_target "build-sme-asan"
+fi
+
+log "WARNING: this script creates or overwrites: $warning_targets"
+if [ "$RUN_DEPS" -eq 1 ]; then
+    log "Refreshing sudo credentials"
+    sudo -v
+fi
 
 download_deps() {
     if command -v wget >/dev/null 2>&1; then
@@ -138,6 +158,7 @@ if [ "$RUN_BUILDS" -eq 1 ]; then
         -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld" \
         -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden -DNQT_DEBUG" \
         -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+        -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
         -DCMAKE_INSTALL_PREFIX=/opt/smelibs \
         -DEXPAT_INCLUDE_DIR=/opt/smelibs/include \
         -DEXPAT_LIBRARY=/opt/smelibs/lib/libexpat.a \
@@ -161,6 +182,7 @@ if [ "$RUN_BUILDS" -eq 1 ]; then
         -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld -fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer" \
         -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden -DNQT_DEBUG -fsanitize=address -fsanitize-address-use-after-scope -fno-omit-frame-pointer -Wall" \
         -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+        -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
         -DCMAKE_INSTALL_PREFIX=/opt/smelibs \
         -DEXPAT_INCLUDE_DIR=/opt/smelibs/include \
         -DEXPAT_LIBRARY=/opt/smelibs/lib/libexpat.a \

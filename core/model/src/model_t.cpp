@@ -1367,9 +1367,14 @@ TEST_CASE("Import Combine archive",
   REQUIRE(s.getMembranes().getIds().size() == 1);
   const auto &membrane{
       s.getMembranes().getMembrane("cytoplasm_nucleus_membrane")};
-  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::X).size() == 48);
-  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Y).size() == 50);
-  REQUIRE(membrane->getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+  REQUIRE(membrane->getFaceIndexPairs(sme::geometry::Membrane::XP).size() +
+              membrane->getFaceIndexPairs(sme::geometry::Membrane::XM).size() ==
+          48);
+  REQUIRE(membrane->getFaceIndexPairs(sme::geometry::Membrane::YP).size() +
+              membrane->getFaceIndexPairs(sme::geometry::Membrane::YM).size() ==
+          50);
+  REQUIRE(membrane->getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+  REQUIRE(membrane->getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
 }
 
 TEST_CASE("SBML: fixed mesh round-trip via ParametricGeometry",

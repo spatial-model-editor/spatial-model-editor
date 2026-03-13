@@ -14,6 +14,7 @@ class TabReactions;
 class TabSimulate;
 class TabSpecies;
 class MemoryUsageBarWidget;
+class GpuMemoryUsageBarWidget;
 
 namespace Ui {
 class MainWindow;
@@ -30,6 +31,7 @@ private:
   std::unique_ptr<Ui::MainWindow> ui;
   QLabel *statusBarPermanentMessage{};
   MemoryUsageBarWidget *statusBarMemoryUsageBar{};
+  GpuMemoryUsageBarWidget *statusBarGpuMemoryUsageBar{};
   sme::model::Model model;
   bool haveCopasiSE{false};
 

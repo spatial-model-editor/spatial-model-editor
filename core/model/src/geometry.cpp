@@ -13,6 +13,30 @@ using sme::common::Voxel;
 
 namespace sme::geometry {
 
+namespace {
+
+[[nodiscard]] auto getFaceDirection(const Voxel &a, const Voxel &b)
+    -> Membrane::FACE_DIRECTION {
+  if (b.p.x() > a.p.x()) {
+    return Membrane::FACE_DIRECTION::XP;
+  }
+  if (b.p.x() < a.p.x()) {
+    return Membrane::FACE_DIRECTION::XM;
+  }
+  if (b.p.y() > a.p.y()) {
+    return Membrane::FACE_DIRECTION::YP;
+  }
+  if (b.p.y() < a.p.y()) {
+    return Membrane::FACE_DIRECTION::YM;
+  }
+  if (b.z > a.z) {
+    return Membrane::FACE_DIRECTION::ZP;
+  }
+  return Membrane::FACE_DIRECTION::ZM;
+}
+
+} // namespace
+
 Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
                          QRgb col)
     : compartmentId{std::move(compId)}, color{col} {
@@ -131,19 +155,10 @@ Membrane::Membrane(std::string membraneId, const Compartment *A,
   VoxelIndexer Aindexer(A->getImageSize(), A->getVoxels());
   VoxelIndexer Bindexer(B->getImageSize(), B->getVoxels());
   for (const auto &[pA, pB] : *voxelPairs) {
-    // get the flux direction between the pair of voxels
-    auto fluxDirection = [](const Voxel &a, const Voxel &b) {
-      auto dir{a - b};
-      if (dir.z != 0) {
-        return FLUX_DIRECTION::Z;
-      } else if (dir.p.y() != 0) {
-        return FLUX_DIRECTION::Y;
-      }
-      return FLUX_DIRECTION::X;
-    }(pA, pB);
+    const auto faceDirection{getFaceDirection(pA, pB)};
     auto iA{Aindexer.getIndex(pA)};
     auto iB{Bindexer.getIndex(pB)};
-    indexPairs[fluxDirection].emplace_back(iA.value(), iB.value());
+    faceIndexPairs[faceDirection].emplace_back(iA.value(), iB.value());
   }
   images.fill(0);
   for (const auto &[vA, vB] : *voxelPairs) {
@@ -160,9 +175,17 @@ const Compartment *Membrane::getCompartmentA() const { return compA; }
 
 const Compartment *Membrane::getCompartmentB() const { return compB; }
 
+std::size_t Membrane::size() const {
+  std::size_t nPairs{0};
+  for (const auto &pairs : faceIndexPairs) {
+    nPairs += pairs.size();
+  }
+  return nPairs;
+}
+
 const std::vector<std::pair<std::size_t, std::size_t>> &
-Membrane::getIndexPairs(FLUX_DIRECTION fluxDirection) const {
-  return indexPairs[fluxDirection];
+Membrane::getFaceIndexPairs(FACE_DIRECTION faceDirection) const {
+  return faceIndexPairs[faceDirection];
 }
 
 const common::ImageStack &Membrane::getImages() const { return images; }

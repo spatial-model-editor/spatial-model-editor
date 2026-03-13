@@ -3,6 +3,7 @@
 #include <map>
 #include <ranges>
 #include <stack>
+#include <symengine/printers.h>
 
 namespace sme::common {
 
@@ -241,6 +242,12 @@ std::string Symbolic::expr(std::size_t i) const {
 
 std::string Symbolic::inlinedExpr(std::size_t i) const {
   return sbml(*exprInlined[i]);
+}
+
+std::string Symbolic::cudaCode(std::size_t i, bool useFloat) const {
+  const auto precision = useFloat ? SymEngine::CodePrinterPrecision::Float
+                                  : SymEngine::CodePrinterPrecision::Double;
+  return SymEngine::cudacode(*exprInlined.at(i), precision);
 }
 
 std::string Symbolic::diff(const std::string &var, std::size_t i) const {

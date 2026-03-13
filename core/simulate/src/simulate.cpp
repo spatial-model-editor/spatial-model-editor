@@ -1,4 +1,5 @@
 #include "sme/simulate.hpp"
+#include "cudapixelsim.hpp"
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/geometry.hpp"
@@ -17,6 +18,44 @@
 #include <utility>
 
 namespace sme::simulate {
+
+namespace {
+
+struct PixelDcdtView {
+  const std::vector<double> *values{nullptr};
+  std::size_t stride{0};
+};
+
+[[nodiscard]] PixelDcdtView
+getPixelDcdtView(const BaseSim *simulator, std::size_t compartmentIndex,
+                 const std::vector<std::size_t> &concPadding,
+                 std::size_t nSpecies) {
+  if (const auto *pixelSim = dynamic_cast<const PixelSim *>(simulator);
+      pixelSim != nullptr) {
+    if (concPadding.empty()) {
+      return {};
+    }
+    return {&pixelSim->getDcdt(compartmentIndex),
+            nSpecies + concPadding.back()};
+  }
+  if (const auto *cudaPixelSim = dynamic_cast<const CudaPixelSim *>(simulator);
+      cudaPixelSim != nullptr) {
+    return {&cudaPixelSim->getDcdt(compartmentIndex), nSpecies};
+  }
+  return {};
+}
+
+template <typename Fn>
+void forEachCompartmentSpeciesValue(const geometry::Compartment &compartment,
+                                    const std::vector<double> &values,
+                                    std::size_t stride,
+                                    std::size_t speciesIndex, Fn &&fn) {
+  for (std::size_t ix = 0; ix < compartment.nVoxels(); ++ix) {
+    fn(compartment.getVoxel(ix), values[ix * stride + speciesIndex]);
+  }
+}
+
+} // namespace
 
 void Simulation::initModel() {
   // get compartments with interacting species, name & color of each species
@@ -45,6 +84,22 @@ void Simulation::initModel() {
       compartmentSpeciesColors.push_back(std::move(cols));
       compartments.push_back(comp);
     }
+  }
+}
+
+void Simulation::initSimulator() {
+  if (settings->simulatorType == SimulatorType::DUNE &&
+      model.getGeometry().getIsMeshValid()) {
+    simulator =
+        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
+    return;
+  }
+  if (settings->options.pixel.backend == PixelBackendType::GPU) {
+    simulator = std::make_unique<CudaPixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+  } else {
+    simulator = std::make_unique<PixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
   }
 }
 
@@ -132,14 +187,7 @@ void Simulation::applyNextEvent() {
   }
   // re-init simulator
   simulator.reset();
-  if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getIsMeshValid()) {
-    simulator =
-        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
-  } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
-  }
+  initSimulator();
   // remove applied simEvent
   simEvents.pop();
 }
@@ -210,14 +258,7 @@ Simulation::Simulation(model::Model &smeModel)
   initModel();
   initEvents();
   // init simulator
-  if (settings->simulatorType == SimulatorType::DUNE &&
-      model.getGeometry().getIsMeshValid()) {
-    simulator =
-        std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
-  } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
-  }
+  initSimulator();
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
     if (data->timePoints.empty()) {
@@ -431,17 +472,16 @@ void Simulation::applyConcsToModel(model::Model &m,
 std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
                                         std::size_t speciesIndex) const {
   std::vector<double> c;
-  if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
-      s != nullptr) {
-    std::shared_lock lock{dataMutex};
-    const auto &compDcdt = s->getDcdt(compartmentIndex);
-    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
-    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
-    std::size_t stride{nSpecies + data->concPadding.back()};
-    c.reserve(nPixels);
-    for (std::size_t ix = 0; ix < nPixels; ++ix) {
-      c.push_back(compDcdt[ix * stride + speciesIndex]);
-    }
+  std::shared_lock lock{dataMutex};
+  const auto *comp = compartments[compartmentIndex];
+  const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
+  const auto dcdt{getPixelDcdtView(simulator.get(), compartmentIndex,
+                                   data->concPadding, nSpecies)};
+  if (dcdt.values != nullptr) {
+    c.reserve(comp->nVoxels());
+    forEachCompartmentSpeciesValue(
+        *comp, *dcdt.values, dcdt.stride, speciesIndex,
+        [&c](const auto &, double value) { c.push_back(value); });
   }
   return c;
 }
@@ -450,20 +490,19 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
                                              std::size_t speciesIndex) const {
   std::vector<double> c(
       static_cast<std::size_t>(imageSize.width() * imageSize.height()), 0.0);
-  if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
-      s != nullptr) {
-    std::shared_lock lock{dataMutex};
-    const auto &compDcdt = s->getDcdt(compartmentIndex);
-    const auto &comp = compartments[compartmentIndex];
-    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
-    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
-    std::size_t stride{nSpecies + data->concPadding.back()};
-    for (std::size_t ix = 0; ix < nPixels; ++ix) {
-      const auto &point = comp->getVoxel(ix);
-      auto arrayIndex{common::voxelArrayIndex(imageSize, point.p.x(),
-                                              point.p.y(), 0, true)};
-      c[arrayIndex] = compDcdt[ix * stride + speciesIndex];
-    }
+  std::shared_lock lock{dataMutex};
+  const auto *comp = compartments[compartmentIndex];
+  const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
+  const auto dcdt{getPixelDcdtView(simulator.get(), compartmentIndex,
+                                   data->concPadding, nSpecies)};
+  if (dcdt.values != nullptr) {
+    forEachCompartmentSpeciesValue(
+        *comp, *dcdt.values, dcdt.stride, speciesIndex,
+        [&](const auto &point, double value) {
+          auto arrayIndex{common::voxelArrayIndex(imageSize, point.p.x(),
+                                                  point.p.y(), 0, true)};
+          c[arrayIndex] = value;
+        });
   }
   return c;
 }
@@ -472,6 +511,11 @@ double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
                                      std::size_t speciesIndex,
                                      std::size_t pixelIndex) const {
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
+      s != nullptr) {
+    return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
+                                         pixelIndex);
+  }
+  if (const auto *s = dynamic_cast<const CudaPixelSim *>(simulator.get());
       s != nullptr) {
     return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
                                          pixelIndex);
@@ -587,26 +631,23 @@ Simulation::getPyConcs(std::size_t timeIndex,
 
 [[nodiscard]] std::vector<std::vector<double>>
 Simulation::getPyDcdts(std::size_t compartmentIndex) const {
-  // dcdt is only available from pixel sim, and only for the last timestep
-  const PixelSim *pixelSim{dynamic_cast<const PixelSim *>(simulator.get())};
-  if (pixelSim == nullptr) {
-    return {};
-  }
   std::shared_lock lock{dataMutex};
   if (data->concPadding.empty()) {
     return {};
   }
-  std::vector<std::vector<double>> pyDcdts(
-      compartmentSpeciesIds[compartmentIndex].size(),
-      std::vector<double>(imageSize.nVoxels(), 0.0));
-  const auto &pixels{compartments[compartmentIndex]->getVoxels()};
-  const auto &dcdt{pixelSim->getDcdt(compartmentIndex)};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
-  const std::size_t stride{nSpecies + data->concPadding.back()};
+  const auto dcdt{getPixelDcdtView(simulator.get(), compartmentIndex,
+                                   data->concPadding, nSpecies)};
+  if (dcdt.values == nullptr) {
+    return {};
+  }
+  std::vector<std::vector<double>> pyDcdts(
+      nSpecies, std::vector<double>(imageSize.nVoxels(), 0.0));
+  const auto &pixels{compartments[compartmentIndex]->getVoxels()};
   for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
     const auto pyIndex{voxelToPyIndex(pixels[ix], imageSize)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {
-      pyDcdts[is][pyIndex] = dcdt[ix * stride + is];
+      pyDcdts[is][pyIndex] = (*dcdt.values)[ix * dcdt.stride + is];
     }
   }
   return pyDcdts;

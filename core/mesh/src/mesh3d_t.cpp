@@ -609,8 +609,8 @@ TEST_CASE("Mesh3d more complex geometries",
     REQUIRE(colorTable.size() == 2);
     QRgb colOutside = 0xffffe119;
     QRgb colInside = compartment->getColor();
-    REQUIRE(colorTable[0] == colOutside);
-    REQUIRE(colorTable[1] == colInside);
+    REQUIRE(colorTable.contains(colOutside));
+    REQUIRE(colorTable.contains(colInside));
     REQUIRE(geometry.getIsMeshValid() == true);
     auto mesh3d = geometry.getMesh3d();
     REQUIRE(mesh3d != nullptr);

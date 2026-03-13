@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16...4.2)
+cmake_minimum_required(VERSION 3.24...4.2)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
@@ -8,7 +8,7 @@ project(
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES C CXX)
 
-# workaround for mingw gcc-14 c++20 issue:
+# workaround for a CMake/GCC c++20 module-scanning issue:
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25974
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
@@ -64,6 +64,19 @@ option(
 if(SME_USE_STATIC_LIBS)
   set(CGAL_Boost_USE_STATIC_LIBS ON)
   set(OpenCV_STATIC ON)
+endif()
+
+set(SME_WITH_CUDA OFF)
+if(NOT APPLE
+   AND NOT
+       (WIN32
+        AND CMAKE_SYSTEM_PROCESSOR
+            MATCHES
+            "^(ARM64|arm64|aarch64)$"))
+  set(SME_WITH_CUDA ON)
+endif()
+if(SME_WITH_CUDA)
+  add_compile_definitions(SME_WITH_CUDA=1)
 endif()
 
 set(SME_LOG_LEVEL
@@ -147,12 +160,22 @@ if(SME_BUILD_PYTHON_LIBRARY)
   add_subdirectory(sme)
 endif()
 
+if(MSVC
+   AND CMAKE_GENERATOR
+       MATCHES
+       "Ninja")
+  set_property(GLOBAL PROPERTY JOB_POOLS windows_link_pool=1)
+  set(CMAKE_JOB_POOL_LINK windows_link_pool)
+endif()
+
 # display sme configuration options
 message(STATUS "SME_BUILD_CORE: ${SME_BUILD_CORE}")
 message(STATUS "SME_BUILD_GUI: ${SME_BUILD_GUI}")
 message(STATUS "SME_BUILD_CLI: ${SME_BUILD_CLI}")
 message(STATUS "SME_BUILD_PYTHON_LIBRARY: ${SME_BUILD_PYTHON_LIBRARY}")
 message(STATUS "SME_BUILD_BENCHMARKS: ${SME_BUILD_BENCHMARKS}")
+message(STATUS "SME_WITH_CUDA: ${SME_WITH_CUDA}")
+
 message(STATUS "SME_LOG_LEVEL: ${SME_LOG_LEVEL}")
 message(STATUS "SME_EXTRA_CORE_DEFS: ${SME_EXTRA_CORE_DEFS}")
 message(STATUS "SME_EXTRA_GUI_LIBS: ${SME_EXTRA_GUI_LIBS}")

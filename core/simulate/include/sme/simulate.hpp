@@ -67,6 +67,7 @@ private:
   std::queue<SimEvent> simEvents;
   void initModel();
   void initEvents();
+  void initSimulator();
   void applyNextEvent();
   void updateConcentrations(double t);
 

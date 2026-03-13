@@ -632,9 +632,7 @@ void TabGeometry::listMembranes_itemSelectionChanged() {
   ui->lblCompShape->setImage(m->getImages());
   ui->lblCompShape->setPhysicalUnits(model.getUnits().getLength().name);
   ui->lblCompShape->setPhysicalOrigin(model.getGeometry().getPhysicalOrigin());
-  auto nVoxelPairs{m->getIndexPairs(sme::geometry::Membrane::X).size() +
-                   m->getIndexPairs(sme::geometry::Membrane::Y).size() +
-                   m->getIndexPairs(sme::geometry::Membrane::Z).size()};
+  auto nVoxelPairs{m->size()};
   // update color box
   QImage img(1, 2, QImage::Format_RGB32);
   img.setPixel(0, 0, m->getCompartmentA()->getColor());

@@ -9,6 +9,11 @@ target_include_directories(gui PUBLIC .)
 find_package(qcustomplot)
 target_link_libraries(gui PUBLIC qcustomplot::qcustomplot)
 
+if(SME_WITH_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  target_include_directories(gui SYSTEM PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+endif()
+
 find_package(
   VTK REQUIRED
   COMPONENTS RenderingQt

@@ -120,6 +120,16 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     sym.eval(res, {0.05});
     REQUIRE(res[0] == dbl_approx(6.1324));
   }
+  SECTION("pi + A: CUDA code with relabeled variable") {
+    std::string expr{"pi + A"};
+    common::Symbolic sym(expr, {"A"}, {});
+    CAPTURE(expr);
+    REQUIRE(sym.isValid() == true);
+    sym.relabel({"sme_var_0"});
+    const auto cudaExpr = sym.cudaCode();
+    REQUIRE(cudaExpr != expr);
+    REQUIRE(cudaExpr.find("sme_var_0") != std::string::npos);
+  }
   SECTION("0.324*x + 2*3: one var, no constants") {
     std::string expr{"0.324 * x + 2*3"};
     common::Symbolic sym(expr, {"x"}, {});

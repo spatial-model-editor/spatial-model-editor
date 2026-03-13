@@ -40,6 +40,86 @@ static void tbbParallelFor(std::size_t n, const Body &body) {
       partitioner);
 }
 
+struct MembraneEvalState {
+  std::size_t nSpeciesA{0};
+  const std::vector<double> *concA{nullptr};
+  std::vector<double> *dcdtA{nullptr};
+  std::size_t nSpeciesB{0};
+  const std::vector<double> *concB{nullptr};
+  std::vector<double> *dcdtB{nullptr};
+  std::size_t nExtraVars{0};
+};
+
+[[nodiscard]] static MembraneEvalState
+makeMembraneEvalState(SimCompartment *compA, SimCompartment *compB,
+                      std::size_t nExtraVars) {
+  MembraneEvalState state;
+  state.nExtraVars = nExtraVars;
+  if (compA != nullptr) {
+    state.nSpeciesA = compA->getSpeciesIds().size() - nExtraVars;
+    state.concA = &compA->getConcentrations();
+    state.dcdtA = &compA->getDcdt();
+  }
+  if (compB != nullptr) {
+    state.nSpeciesB = compB->getSpeciesIds().size() - nExtraVars;
+    state.concB = &compB->getConcentrations();
+    state.dcdtB = &compB->getDcdt();
+  }
+  return state;
+}
+
+[[nodiscard]] static double
+getMembraneFluxLength(geometry::Membrane::FACE_DIRECTION faceDirection,
+                      const common::VolumeF &voxelSize) {
+  switch (faceDirection) {
+  case geometry::Membrane::FACE_DIRECTION::XP:
+  case geometry::Membrane::FACE_DIRECTION::XM:
+    return voxelSize.width();
+  case geometry::Membrane::FACE_DIRECTION::YP:
+  case geometry::Membrane::FACE_DIRECTION::YM:
+    return voxelSize.height();
+  case geometry::Membrane::FACE_DIRECTION::ZP:
+  case geometry::Membrane::FACE_DIRECTION::ZM:
+    return voxelSize.depth();
+  }
+  return voxelSize.width();
+}
+
+static void evaluateMembranePairRange(
+    const common::Symbolic &sym, const MembraneEvalState &state,
+    const std::vector<std::pair<std::size_t, std::size_t>> &indexPairs,
+    double fluxLength, std::size_t begin, std::size_t end) {
+  const auto strideA{state.nSpeciesA + state.nExtraVars};
+  const auto strideB{state.nSpeciesB + state.nExtraVars};
+  std::vector<double> species(
+      state.nSpeciesA + state.nSpeciesB + state.nExtraVars, 0.0);
+  std::vector<double> result(species.size(), 0.0);
+  for (std::size_t i = begin; i < end; ++i) {
+    const auto &[ixA, ixB]{indexPairs[i]};
+    if (state.concA != nullptr) {
+      std::copy_n(&((*state.concA)[ixA * strideA]), state.nSpeciesA,
+                  &species[0]);
+    }
+    if (state.concB != nullptr) {
+      std::copy_n(&((*state.concB)[ixB * strideB]), strideB,
+                  &species[state.nSpeciesA]);
+    } else if (state.concA != nullptr) {
+      std::copy_n(&((*state.concA)[ixA * strideA + state.nSpeciesA]),
+                  state.nExtraVars, &species[state.nSpeciesA]);
+    }
+
+    sym.eval(result.data(), species.data());
+
+    for (std::size_t is = 0; is < state.nSpeciesA; ++is) {
+      (*state.dcdtA)[ixA * strideA + is] += result[is] / fluxLength;
+    }
+    for (std::size_t is = 0; is < state.nSpeciesB; ++is) {
+      (*state.dcdtB)[ixB * strideB + is] +=
+          result[is + state.nSpeciesA] / fluxLength;
+    }
+  }
+}
+
 ReacExpr::ReacExpr(
     const model::Model &doc, const std::vector<std::string> &speciesIDs,
     const std::vector<std::string> &reactionIDs, double reactionScaleFactor,
@@ -944,57 +1024,39 @@ SimMembrane::SimMembrane(
 }
 
 void SimMembrane::evaluateReactions() {
-  std::size_t nSpeciesA{0};
-  const std::vector<double> *concA{nullptr};
-  std::vector<double> *dcdtA{nullptr};
-  if (compA != nullptr) {
-    nSpeciesA = compA->getSpeciesIds().size() - nExtraVars;
-    concA = &compA->getConcentrations();
-    dcdtA = &compA->getDcdt();
+  const auto state{makeMembraneEvalState(compA, compB, nExtraVars)};
+  for (const auto faceDirection : {geometry::Membrane::FACE_DIRECTION::XP,
+                                   geometry::Membrane::FACE_DIRECTION::XM,
+                                   geometry::Membrane::FACE_DIRECTION::YP,
+                                   geometry::Membrane::FACE_DIRECTION::YM,
+                                   geometry::Membrane::FACE_DIRECTION::ZP,
+                                   geometry::Membrane::FACE_DIRECTION::ZM}) {
+    const auto &indexPairs{membrane->getFaceIndexPairs(faceDirection)};
+    evaluateMembranePairRange(sym, state, indexPairs,
+                              getMembraneFluxLength(faceDirection, voxelSize),
+                              0, indexPairs.size());
   }
-  std::size_t nSpeciesB{0};
-  const std::vector<double> *concB{nullptr};
-  std::vector<double> *dcdtB{nullptr};
-  if (compB != nullptr) {
-    nSpeciesB = compB->getSpeciesIds().size() - nExtraVars;
-    concB = &compB->getConcentrations();
-    dcdtB = &compB->getDcdt();
-  }
-  std::vector<double> species(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  std::vector<double> result(nSpeciesA + nSpeciesB + nExtraVars, 0);
-  for (const auto &[fluxDir, fluxLength] :
-       std::array<std::pair<geometry::Membrane::FLUX_DIRECTION, double>, 3>{
-           {{geometry::Membrane::FLUX_DIRECTION::X, voxelSize.width()},
-            {geometry::Membrane::FLUX_DIRECTION::Y, voxelSize.height()},
-            {geometry::Membrane::FLUX_DIRECTION::Z, voxelSize.depth()}}}) {
-    for (const auto &[ixA, ixB] : membrane->getIndexPairs(fluxDir)) {
-      // populate species concentrations: first A, then B, then t,x,y,z
-      if (concA != nullptr) {
-        std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars)]), nSpeciesA,
-                    &species[0]);
-      }
-      if (concB != nullptr) {
-        std::copy_n(&((*concB)[ixB * (nSpeciesB + nExtraVars)]),
-                    nSpeciesB + nExtraVars, &species[nSpeciesA]);
-      } else if (concA != nullptr) {
-        std::copy_n(&((*concA)[ixA * (nSpeciesA + nExtraVars) + nSpeciesA]),
-                    nExtraVars, &species[nSpeciesA]);
-      }
+}
 
-      // evaluate reaction terms
-      sym.eval(result.data(), species.data());
-
-      // add results to dc/dt: first A, then B. divide by fluxLength to get
-      // change in concentration for this voxel
-      for (std::size_t is = 0; is < nSpeciesA; ++is) {
-        (*dcdtA)[ixA * (nSpeciesA + nExtraVars) + is] +=
-            result[is] / fluxLength;
-      }
-      for (std::size_t is = 0; is < nSpeciesB; ++is) {
-        (*dcdtB)[ixB * (nSpeciesB + nExtraVars) + is] +=
-            result[is + nSpeciesA] / fluxLength;
-      }
+void SimMembrane::evaluateReactions_tbb() {
+  const auto state{makeMembraneEvalState(compA, compB, nExtraVars)};
+  for (const auto faceDirection : {geometry::Membrane::FACE_DIRECTION::XP,
+                                   geometry::Membrane::FACE_DIRECTION::XM,
+                                   geometry::Membrane::FACE_DIRECTION::YP,
+                                   geometry::Membrane::FACE_DIRECTION::YM,
+                                   geometry::Membrane::FACE_DIRECTION::ZP,
+                                   geometry::Membrane::FACE_DIRECTION::ZM}) {
+    const auto &indexPairs{membrane->getFaceIndexPairs(faceDirection)};
+    if (indexPairs.empty()) {
+      continue;
     }
+    const auto fluxLength{getMembraneFluxLength(faceDirection, voxelSize)};
+    tbbParallelFor(indexPairs.size(),
+                   [this, &state, &indexPairs, fluxLength](
+                       const oneapi::tbb::blocked_range<std::size_t> &r) {
+                     evaluateMembranePairRange(sym, state, indexPairs,
+                                               fluxLength, r.begin(), r.end());
+                   });
   }
 }
 

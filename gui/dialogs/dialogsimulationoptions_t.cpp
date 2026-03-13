@@ -30,6 +30,7 @@ struct DialogSimulationOptionsWidgets {
     GET_DIALOG_WIDGET(QSpinBox, spnDuneThreads);
     GET_DIALOG_WIDGET(QPushButton, btnDuneReset);
     // Pixel tab
+    GET_DIALOG_WIDGET(QComboBox, cmbPixelBackend);
     GET_DIALOG_WIDGET(QComboBox, cmbPixelIntegrator);
     GET_DIALOG_WIDGET(QLineEdit, txtPixelRelErr);
     GET_DIALOG_WIDGET(QLineEdit, txtPixelAbsErr);
@@ -56,6 +57,7 @@ struct DialogSimulationOptionsWidgets {
   QSpinBox *spnDuneThreads;
   QComboBox *cmbDuneLinearSolver;
   // Pixel tab
+  QComboBox *cmbPixelBackend;
   QComboBox *cmbPixelIntegrator;
   QLineEdit *txtPixelRelErr;
   QLineEdit *txtPixelAbsErr;
@@ -109,6 +111,8 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.linearSolver == "BiCGSTAB");
     // higher than available -> automatically set to 0 (unlimited):
     REQUIRE(opt.dune.maxThreads == 0);
+    REQUIRE(widgets.cmbPixelBackend->count() == 2);
+    REQUIRE(opt.pixel.backend == sme::simulate::PixelBackendType::CPU);
     REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(0.01));
@@ -164,7 +168,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.maxThreads == defaultOpts.maxThreads);
   }
   SECTION("user changes Pixel values, then resets to defaults") {
-    widgets.tabSimulator->setCurrentIndex(0);
+    widgets.tabSimulator->setCurrentIndex(1);
     widgets.cmbPixelIntegrator->setCurrentIndex(2);
     widgets.txtPixelRelErr->clear();
     sendKeyEvents(widgets.txtPixelRelErr, {"0", ".", "4", "Enter"});
@@ -188,6 +192,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     sendMouseClick(widgets.btnPixelReset);
     sme::simulate::PixelOptions defaultOpts{};
     opt = dia.getOptions();
+    REQUIRE(opt.pixel.backend == defaultOpts.backend);
     REQUIRE(opt.pixel.integrator == defaultOpts.integrator);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(defaultOpts.maxErr.rel));
     REQUIRE(opt.pixel.maxErr.abs == dbl_approx(defaultOpts.maxErr.abs));
@@ -196,5 +201,36 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.pixel.maxThreads == defaultOpts.maxThreads);
     REQUIRE(opt.pixel.doCSE == defaultOpts.doCSE);
     REQUIRE(opt.pixel.optLevel == defaultOpts.optLevel);
+  }
+  SECTION("user selects GPU pixel backend") {
+    widgets.tabSimulator->setCurrentIndex(1);
+    widgets.cmbPixelIntegrator->setCurrentIndex(3);
+    widgets.chkPixelMultithread->setChecked(true);
+    widgets.cmbPixelBackend->setCurrentIndex(1);
+    auto opt = dia.getOptions();
+    REQUIRE(opt.pixel.backend == sme::simulate::PixelBackendType::GPU);
+    // RK435 (index 3) is supported on GPU
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
+    REQUIRE(widgets.cmbPixelIntegrator->isEnabled() == true);
+    REQUIRE(widgets.chkPixelMultithread->isEnabled() == false);
+    REQUIRE(widgets.spnPixelThreads->isEnabled() == false);
+
+    widgets.cmbPixelIntegrator->setCurrentIndex(0);
+    opt = dia.getOptions();
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK101);
+
+    widgets.cmbPixelIntegrator->setCurrentIndex(2);
+    opt = dia.getOptions();
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK323);
+
+    widgets.cmbPixelIntegrator->setCurrentIndex(3);
+    opt = dia.getOptions();
+    REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
+
+    widgets.cmbPixelBackend->setCurrentIndex(0);
+    opt = dia.getOptions();
+    REQUIRE(opt.pixel.backend == sme::simulate::PixelBackendType::CPU);
+    REQUIRE(widgets.cmbPixelIntegrator->isEnabled() == true);
+    REQUIRE(widgets.chkPixelMultithread->isEnabled() == true);
   }
 }

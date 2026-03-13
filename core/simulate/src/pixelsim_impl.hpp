@@ -347,6 +347,10 @@ public:
    * @brief Evaluate membrane reactions and update attached compartments.
    */
   void evaluateReactions();
+  /**
+   * @brief Evaluate membrane reactions using conflict-free signed-face batches.
+   */
+  void evaluateReactions_tbb();
 };
 
 } // namespace simulate

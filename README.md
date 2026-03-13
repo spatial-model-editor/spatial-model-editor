@@ -22,6 +22,8 @@ To get started, download and run the GUI for your operating system
 | :-----: | :-----: | :------- |
 | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![macOS arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
 
+Windows Arm64: [spatial-model-editor-ARM64.exe](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.exe)
+
 Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
 
 ## Pre-release binaries
@@ -31,6 +33,7 @@ Pre-release preview binaries are also available which are built from the main br
 - [Linux pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor)
 - [MacOS Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64.dmg)
 - [Windows pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.exe)
+- [Windows Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64.exe)
 
 *Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
 
@@ -110,3 +113,7 @@ The source code in this repository is released under the MIT license, which is a
 The open source libraries that it uses are either also released under a permissive GPL-compatible license, or
 under a GPL license. As described in the [gpl-faq](https://www.gnu.org/licenses/gpl-faq.html#IfLibraryIsGPL),
 this means that the work as a whole is then licensed under the GPL.
+
+The Linux and Windows binaries also statically link the CUDA redistributable libraries,
+which are redistributed in accordance with the
+[NVIDIA CUDA Toolkit End User License Agreement (EULA)](https://docs.nvidia.com/cuda/eula/index.html)

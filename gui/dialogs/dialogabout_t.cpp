@@ -10,4 +10,9 @@ TEST_CASE("DialogAbout", "[gui/dialogs/about][gui/dialogs][gui][about]") {
   REQUIRE(lblLibraries != nullptr);
   REQUIRE(lblLibraries->text().contains("dune-copasi"));
   REQUIRE(lblLibraries->text().contains("libSBML"));
+  REQUIRE(lblLibraries->text().contains("libCombine"));
+  REQUIRE(lblLibraries->text().contains("QCustomPlot"));
+#ifdef SME_WITH_CUDA
+  REQUIRE(lblLibraries->text().contains("CUDA"));
+#endif
 }

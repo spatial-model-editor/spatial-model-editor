@@ -211,15 +211,19 @@ void ModelMembranes::exportToSBML(const common::VolumeF &voxelSize) {
       comp->unsetUnits();
     }
     const auto &membrane{membranes[static_cast<std::size_t>(i)]};
-    double area{(static_cast<double>(
-                     membrane.getIndexPairs(geometry::Membrane::X).size()) *
-                 voxelSize.height() * voxelSize.depth()) +
-                (static_cast<double>(
-                     membrane.getIndexPairs(geometry::Membrane::Y).size()) *
-                 voxelSize.width() * voxelSize.depth()) +
-                (static_cast<double>(
-                     membrane.getIndexPairs(geometry::Membrane::Z).size()) *
-                 voxelSize.width() * voxelSize.height())};
+    const auto xPairs =
+        membrane.getFaceIndexPairs(geometry::Membrane::XP).size() +
+        membrane.getFaceIndexPairs(geometry::Membrane::XM).size();
+    const auto yPairs =
+        membrane.getFaceIndexPairs(geometry::Membrane::YP).size() +
+        membrane.getFaceIndexPairs(geometry::Membrane::YM).size();
+    const auto zPairs =
+        membrane.getFaceIndexPairs(geometry::Membrane::ZP).size() +
+        membrane.getFaceIndexPairs(geometry::Membrane::ZM).size();
+    double area{
+        static_cast<double>(xPairs) * voxelSize.height() * voxelSize.depth() +
+        static_cast<double>(yPairs) * voxelSize.width() * voxelSize.depth() +
+        static_cast<double>(zPairs) * voxelSize.width() * voxelSize.height()};
     SPDLOG_INFO("  - size: {}", area);
     comp->setSize(area);
     auto *scp = dynamic_cast<libsbml::SpatialCompartmentPlugin *>(

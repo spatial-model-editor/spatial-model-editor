@@ -30,10 +30,12 @@ cmake .. \
     -DSME_BUILD_PYTHON_LIBRARY=off \
     -DCMAKE_CXX_FLAGS="-fPIC -fvisibility=hidden" \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib64/cmake" \
+    -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
 ninja core tests
-ctest -j4 --output-on-failure
+time ./test/tests -as ~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+tail -n 100 tests.txt
 ninja install
 ccache --show-stats
 cd ..

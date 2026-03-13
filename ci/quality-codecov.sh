@@ -30,6 +30,7 @@ cmake .. \
     -GNinja \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+    -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" \
     -DCMAKE_CXX_FLAGS="--coverage -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
@@ -67,13 +68,13 @@ test_to_codecov() {
     popd
 }
 
-test_to_codecov "core" "~[expensive][core]"
+test_to_codecov "core" "~[expensive]~[requires-cuda-gpu][core]"
 
-test_to_codecov "gui" "~[expensive]~[mainwindow][gui]"
+test_to_codecov "gui" "~[expensive]~[requires-cuda-gpu]~[mainwindow][gui]"
 
-test_to_codecov "mainwindow" "~[expensive][mainwindow][gui]"
+test_to_codecov "mainwindow" "~[expensive]~[requires-cuda-gpu][mainwindow][gui]"
 
-test_to_codecov "cli" "~[expensive][cli]"
+test_to_codecov "cli" "~[expensive]~[requires-cuda-gpu][cli]"
 
 # python tests
 rm -f gcov/*

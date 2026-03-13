@@ -11,6 +11,7 @@
 #include "dialogsimulationoptions.hpp"
 #include "dialogsteadystate.hpp"
 #include "dialogunits.hpp"
+#include "gpumemoryusagebarwidget.hpp"
 #include "guiutils.hpp"
 #include "memoryusagebarwidget.hpp"
 #include "ode_import_wizard.hpp"
@@ -116,6 +117,8 @@ MainWindow::MainWindow(const QString &filename, QWidget *parent)
   statusBarPermanentMessage->hide();
   statusBarMemoryUsageBar = new MemoryUsageBarWidget(this);
   ui->statusBar->addPermanentWidget(statusBarMemoryUsageBar);
+  statusBarGpuMemoryUsageBar = new GpuMemoryUsageBarWidget(this);
+  ui->statusBar->addPermanentWidget(statusBarGpuMemoryUsageBar);
 
   setupTabs();
   setupConnections();
