@@ -60,6 +60,8 @@ TEST_CASE("XML Legacy Annotations",
   REQUIRE(settings.meshParameters.maxAreas[0] == dbl_approx(999));
   REQUIRE(settings.meshParameters.maxPoints.size() == 1);
   REQUIRE(settings.meshParameters.maxPoints[0] == dbl_approx(4));
+  REQUIRE(settings.meshParameters.meshSourceType ==
+          model::MeshSourceType::VoxelGeometry);
   REQUIRE(settings.speciesColors.size() == 3);
   REQUIRE(settings.speciesColors["A"] == 4290373201);
   REQUIRE(settings.speciesColors["B"] == 4287244468);

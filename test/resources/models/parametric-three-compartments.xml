@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="utf-8"?>
+<sbml xmlns="http://www.sbml.org/sbml/level3/version1/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" spatial:required="true" version="1">
+   <model areaUnits="um2" id="CellOrganizer2_7" lengthUnits="um" name="CellOrganizer2_7" substanceUnits="molecules" timeUnits="s" volumeUnits="um3">
+      <spatial:geometry spatial:coordinateSystem="cartesian">
+         <spatial:listOfAdjacentDomains>
+            <spatial:adjacentDomains spatial:domain1="EC0" spatial:domain2="cell1" spatial:id="EC0_cell1"/>
+            <spatial:adjacentDomains spatial:domain1="cell1" spatial:domain2="nuc1" spatial:id="cell1_nuc1"/>
+         </spatial:listOfAdjacentDomains>
+         <spatial:listOfCoordinateComponents>
+            <spatial:coordinateComponent spatial:id="x" spatial:type="cartesianX" spatial:unit="um">
+               <spatial:boundaryMin spatial:id="Xmin" spatial:value="-10"/>
+               <spatial:boundaryMax spatial:id="Xmax" spatial:value="10"/>
+            </spatial:coordinateComponent>
+            <spatial:coordinateComponent spatial:id="y" spatial:type="cartesianY" spatial:unit="um">
+               <spatial:boundaryMin spatial:id="Ymin" spatial:value="-10"/>
+               <spatial:boundaryMax spatial:id="Ymax" spatial:value="10"/>
+            </spatial:coordinateComponent>
+            <spatial:coordinateComponent spatial:id="z" spatial:type="cartesianZ" spatial:unit="um">
+               <spatial:boundaryMin spatial:id="Zmin" spatial:value="-10"/>
+               <spatial:boundaryMax spatial:id="Zmax" spatial:value="10"/>
+            </spatial:coordinateComponent>
+         </spatial:listOfCoordinateComponents>
+         <spatial:listOfDomains>
+            <spatial:domain spatial:domainType="EC" spatial:id="EC0">
+               <spatial:listOfInteriorPoints>
+                  <spatial:interiorPoint spatial:coord1="2.7848" spatial:coord2="2.1074" spatial:coord3="0.8107"/>
+               </spatial:listOfInteriorPoints>
+            </spatial:domain>
+            <spatial:domain spatial:domainType="nuc" spatial:id="nuc1"/>
+            <spatial:domain spatial:domainType="cell" spatial:id="cell1"/>
+         </spatial:listOfDomains>
+         <spatial:listOfDomainTypes>
+            <spatial:domainType spatial:id="EC" spatial:spatialDimensions="3"/>
+            <spatial:domainType spatial:id="nuc" spatial:spatialDimensions="3"/>
+            <spatial:domainType spatial:id="cell" spatial:spatialDimensions="3"/>
+         </spatial:listOfDomainTypes>
+         <spatial:listOfGeometryDefinitions>
+                  <spatial:parametricGeometry spatial:id="id057101043048054" spatial:isActive="true">
+                     <spatial:spatialPoints spatial:arrayDataLength="102" spatial:compression="uncompressed">
+82.6532 62.53968 -0.0379750000000001
+82.6532 62.622 0.43022
+82.6532 62.70432 0.270725
+82.6532 63.52752 -0.0379750000000001
+82.6532 63.52752 0.219275
+83.39408 61.7988 -0.0379750000000001
+83.39408 61.7988 0.425075
+83.39408 63.4452 1.042475
+84.21728 61.7988 0.476525
+84.21728 61.7988 1.042475
+84.21728 63.4452 1.556975
+84.21728 64.2684 1.248275
+84.2996 64.35072 0.682325
+84.38192 61.7988 0.888125
+84.38192 61.7988 1.042475
+85.1228 62.53968 1.299725
+85.20512 61.7988 -0.0379750000000001
+85.20512 61.7988 0.836675
+85.86368 65.0916 -0.0379750000000001
+85.86368 65.0916 0.630875
+85.946 62.53968 -0.0379750000000001
+86.68688 65.0916 0.682325
+86.68688 65.0916 0.836675
+86.7692 62.53968 1.556975
+86.7692 64.35072 1.556975
+86.85152 65.0916 0.270725
+86.85152 65.0916 0.836675
+87.5924 63.36288 -0.0379750000000001
+87.5924 63.52752 1.093925
+87.5924 63.52752 1.556975
+87.5924 64.35072 0.270725
+87.5924 64.35072 0.888125
+87.5924 65.0916 -0.0431200000000001
+87.5924 65.0916 0.22442
+</spatial:spatialPoints>
+                     <spatial:listOfParametricObjects>
+                        <spatial:parametricObject spatial:compression="uncompressed" spatial:domainType="nuc" spatial:id="nuc1_mesh" spatial:pointIndexLength="48" spatial:polygonType="triangle">
+3 8 1
+1 8 12
+1 12 4
+4 12 9
+3 1 6
+1 4 2
+12 8 11
+9 12 10
+6 1 2
+12 11 10
+10 11 7
+2 4 5
+7 11 5
+5 11 2
+2 11 6
+8 6 11
+</spatial:parametricObject>
+                        <spatial:parametricObject spatial:compression="uncompressed" spatial:domainType="cell" spatial:id="cell1_mesh" spatial:pointIndexLength="132" spatial:polygonType="triangle">
+1 6 4
+6 17 21
+6 21 4
+4 21 19
+21 28 19
+19 28 33
+19 13 4
+6 1 7
+21 24 28
+0 31 26
+3 5 7
+5 4 13
+7 1 2
+3 7 2
+17 18 21
+9 7 10
+7 5 13
+26 31 27
+19 20 13
+13 20 22
+7 13 8
+13 22 32
+24 21 18
+10 7 8
+22 23 32
+31 32 27
+27 32 23
+18 14 15
+24 18 15
+10 8 15
+15 8 12
+8 13 12
+29 30 32
+32 25 13
+32 30 25
+16 15 12
+24 15 16
+16 12 11
+13 25 12
+24 16 11
+12 25 11
+28 24 30
+24 11 30
+30 11 25
+</spatial:parametricObject>
+                     </spatial:listOfParametricObjects>
+                  </spatial:parametricGeometry>
+         </spatial:listOfGeometryDefinitions>
+      </spatial:geometry>
+      <listOfUnitDefinitions>
+         <unitDefinition id="molecules">
+            <listOfUnits>
+               <unit exponent="1" kind="item" multiplier="1" scale="0"/>
+            </listOfUnits>
+         </unitDefinition>
+         <unitDefinition id="um3">
+            <listOfUnits>
+               <unit exponent="3" kind="metre" multiplier="1" scale="-6"/>
+            </listOfUnits>
+         </unitDefinition>
+         <unitDefinition id="um2">
+            <listOfUnits>
+               <unit exponent="2" kind="metre" multiplier="1" scale="-6"/>
+            </listOfUnits>
+         </unitDefinition>
+         <unitDefinition id="um">
+            <listOfUnits>
+               <unit exponent="1" kind="metre" multiplier="1" scale="-6"/>
+            </listOfUnits>
+         </unitDefinition>
+         <unitDefinition id="s">
+            <listOfUnits>
+               <unit exponent="1" kind="second" multiplier="1" scale="0"/>
+            </listOfUnits>
+         </unitDefinition>
+      </listOfUnitDefinitions>
+      <listOfCompartments>
+         <compartment constant="true" id="EC" name="EC" size="50000" spatialDimensions="3" units="um3">
+            <spatial:compartmentMapping spatial:domainType="EC" spatial:id="ECEC" spatial:unitSize="1"/>
+            <annotation>
+               <cellorganizer/>
+            </annotation>
+         </compartment>
+         <compartment constant="true" id="cell" name="cell" size="50000" spatialDimensions="3" units="um3">
+            <spatial:compartmentMapping spatial:domainType="cell" spatial:id="cellcell" spatial:unitSize="1"/>
+            <annotation>
+               <cellorganizer/>
+            </annotation>
+         </compartment>
+         <compartment constant="true" id="nuc" name="nuc" size="50000" spatialDimensions="3" units="um3">
+            <spatial:compartmentMapping spatial:domainType="nuc" spatial:id="nucnuc" spatial:unitSize="1"/>
+            <annotation>
+               <cellorganizer/>
+            </annotation>
+         </compartment>
+      </listOfCompartments>
+      <listOfParameters>
+         <parameter constant="true" id="vol_nuc" value="5.8716"/>
+         <parameter constant="true" id="sa_nuc" value="11.3988"/>
+         <parameter constant="true" id="vol_cell" value="19.645"/>
+         <parameter constant="true" id="sa_cell" value="36.915"/>
+      </listOfParameters>
+   </model>
+</sbml>

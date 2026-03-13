@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sme/gmsh.hpp"
+#include "sme/model_settings.hpp"
 #include <QDialog>
 #include <memory>
 
@@ -12,12 +13,16 @@ class DialogImportGeometryGmsh : public QDialog {
   Q_OBJECT
 
 public:
-  explicit DialogImportGeometryGmsh(int maxVoxelsPerDimension = 50,
-                                    const QString &filename = {},
-                                    QWidget *parent = nullptr);
+  explicit DialogImportGeometryGmsh(
+      int maxVoxelsPerDimension = 50, const QString &filename = {},
+      sme::model::MeshSourceType meshSourceType =
+          sme::model::MeshSourceType::VoxelGeometry,
+      QWidget *parent = nullptr);
   ~DialogImportGeometryGmsh() override;
 
   [[nodiscard]] const sme::common::ImageStack &getImage() const;
+  [[nodiscard]] const std::optional<sme::mesh::GMSHMesh> &getMesh() const;
+  [[nodiscard]] sme::model::MeshSourceType getMeshSourceType() const;
 
 private:
   std::unique_ptr<Ui::DialogImportGeometryGmsh> ui;

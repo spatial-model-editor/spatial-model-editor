@@ -53,6 +53,8 @@ private:
 
   QString getConvertedFilename(const QString &cpsFilename);
   void validateSBMLDoc(const QString &filename = {});
+  void showFixedMeshImportDiagnostic();
+  void showFixedMeshExportDiagnostic();
   // if SBML model and geometry are both valid, enable all tabs
   void enableTabs();
 

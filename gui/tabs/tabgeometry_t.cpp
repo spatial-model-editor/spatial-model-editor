@@ -117,7 +117,11 @@ TEST_CASE("TabGeometry",
       REQUIRE(txtCompartmentName->text() == "Cell");
       // select first membrane
       listMembranes->setFocus();
+      if (listMembranes->currentRow() < 0) {
+        listMembranes->setCurrentRow(0);
+      }
       sendKeyEvents(listMembranes, {" "});
+      REQUIRE(listMembranes->currentItem() != nullptr);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
       REQUIRE(lblCompSize->text() == "Area: 338 m^2 (338 voxel faces)");
@@ -339,6 +343,30 @@ TEST_CASE("TabGeometry",
     sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
     REQUIRE(lblCompMesh->text().isEmpty());
   }
+  SECTION("fixed mesh source disables mesh edits") {
+    model = getExampleModel(Mod::VerySimpleModel);
+    model.getMeshParameters().meshSourceType =
+        sme::model::MeshSourceType::FixedImportedMesh;
+    tab.loadModelData();
+    REQUIRE(tabCompartmentGeometry->isTabEnabled(1) == false);
+    REQUIRE(tabCompartmentGeometry->isTabEnabled(2) == true);
+    tabCompartmentGeometry->setFocus();
+    sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+    REQUIRE(spinMaxTriangleArea->isEnabled() == false);
+    REQUIRE(spinMeshZoom->isEnabled() == true);
+  }
+  SECTION("fixed 3d mesh source disables boundary and meshing edits") {
+    model = getExampleModel(Mod::VerySimpleModel3D);
+    model.getMeshParameters().meshSourceType =
+        sme::model::MeshSourceType::FixedImportedMesh;
+    tab.loadModelData();
+    REQUIRE(tabCompartmentGeometry->isTabEnabled(1) == false);
+    REQUIRE(tabCompartmentGeometry->isTabEnabled(2) == true);
+    tabCompartmentGeometry->setCurrentIndex(2);
+    REQUIRE(tabCompartmentGeometry->currentIndex() == 2);
+    REQUIRE(spinMaxCellVolume->isEnabled() == false);
+  }
   SECTION("very-simple-model-3d loaded") {
     model = getExampleModel(Mod::VerySimpleModel3D);
     tab.loadModelData();
@@ -368,7 +396,11 @@ TEST_CASE("TabGeometry",
       REQUIRE(txtCompartmentName->text() == "Cell");
       // select first membrane
       listMembranes->setFocus();
+      if (listMembranes->currentRow() < 0) {
+        listMembranes->setCurrentRow(0);
+      }
       sendKeyEvents(listMembranes, {" "});
+      REQUIRE(listMembranes->currentItem() != nullptr);
       REQUIRE(txtCompartmentName->isEnabled() == true);
       REQUIRE(listMembranes->currentItem()->text() == "Outside <-> Cell");
       REQUIRE(txtCompartmentName->text() == "Outside <-> Cell");

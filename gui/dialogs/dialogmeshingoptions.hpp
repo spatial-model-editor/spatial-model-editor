@@ -11,9 +11,11 @@ class DialogMeshingOptions : public QDialog {
 
 public:
   explicit DialogMeshingOptions(std::size_t boundarySimplificationType,
+                                std::size_t meshSourceType,
                                 QWidget *parent = nullptr);
   ~DialogMeshingOptions() override;
   std::size_t getBoundarySimplificationType() const;
+  std::size_t getMeshSourceType() const;
 
 private:
   std::unique_ptr<Ui::DialogMeshingOptions> ui;

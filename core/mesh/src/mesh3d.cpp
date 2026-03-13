@@ -10,6 +10,8 @@
 #include <QtCore>
 #include <algorithm>
 #include <exception>
+#include <map>
+#include <string>
 #include <utility>
 
 // https://doc.cgal.org/latest/Mesh_3/Mesh_3_2mesh_3D_image_8cpp-example.html
@@ -68,6 +70,16 @@ static sme::common::VoxelF toVoxelF(CGALC3t3::Vertex_handle vertexHandle) {
 
 static constexpr auto NullCompartmentIndex =
     std::numeric_limits<std::uint8_t>::max();
+
+static constexpr std::array<TriangleVertexIndices, 4> tetrahedronFaces{
+    TriangleVertexIndices{1, 2, 3}, TriangleVertexIndices{0, 2, 3},
+    TriangleVertexIndices{0, 1, 3}, TriangleVertexIndices{0, 1, 2}};
+
+[[nodiscard]] static TriangleVertexIndices
+sortedFace(TriangleVertexIndices face) {
+  std::sort(face.begin(), face.end());
+  return face;
+}
 
 void Mesh3d::constructMesh() {
   vertices_.clear();
@@ -294,6 +306,124 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   setPhysicalGeometry(voxelSize, originPoint);
 }
 
+Mesh3d::Mesh3d(const GMSHMesh &gmshMesh,
+               const std::vector<std::pair<QRgb, int>> &colorTagPairs,
+               const common::Volume &imageSize,
+               const common::VolumeF &voxelSize,
+               const common::VoxelF &originPoint,
+               const std::vector<QRgb> &compartmentColors,
+               const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+                   &membraneIdColorPairs)
+    : hasFixedTopology_{true}, imageSize_{imageSize} {
+  if (gmshMesh.vertices.empty() || gmshMesh.tetrahedra.empty()) {
+    errorMessage_ = "Imported mesh is empty";
+    return;
+  }
+
+  setColors(compartmentColors, membraneIdColorPairs);
+
+  tetrahedronVertexIndices_.resize(compartmentColors.size());
+  tetrahedra_.resize(compartmentColors.size());
+  membraneTriangleVertexIndices_.resize(membraneIdColorPairs.size());
+  compartmentMaxCellVolume_.assign(compartmentColors.size(), 1);
+
+  std::map<QRgb, int> colorToTag;
+  for (const auto &[color, tag] : colorTagPairs) {
+    colorToTag[color] = tag;
+  }
+  std::map<int, std::size_t> tagToCompartmentIndex;
+  for (std::size_t i = 0; i < compartmentColors.size(); ++i) {
+    if (const auto it = colorToTag.find(compartmentColors[i]);
+        it != colorToTag.end()) {
+      tagToCompartmentIndex[it->second] = i;
+    }
+  }
+  if (tagToCompartmentIndex.empty()) {
+    errorMessage_ =
+        "Imported fixed mesh has no matching compartment color/tag mapping";
+    return;
+  }
+
+  compartmentsToMembraneIndex_.assign(compartmentColors.size() *
+                                          compartmentColors.size(),
+                                      NullCompartmentIndex);
+  constexpr auto invalidIndex = std::numeric_limits<std::size_t>::max();
+  for (std::uint8_t i = 0; const auto &[id, colors] : membraneIdColorPairs) {
+    const auto c1 =
+        common::element_index(compartmentColors, colors.first, invalidIndex);
+    const auto c2 =
+        common::element_index(compartmentColors, colors.second, invalidIndex);
+    if (c1 == invalidIndex || c2 == invalidIndex) {
+      errorMessage_ = "Membrane color is not present in imported mesh colors";
+      return;
+    }
+    compartmentsToMembraneIndex_[c1 * compartmentColors.size() + c2] = i;
+    compartmentsToMembraneIndex_[c2 * compartmentColors.size() + c1] = i;
+    ++i;
+  }
+
+  sourceVertices_ = gmshMesh.vertices;
+  if (sourceVertices_.empty()) {
+    errorMessage_ = "Imported mesh has no vertices";
+    return;
+  }
+  sourceMin_ = sourceVertices_.front();
+  auto sourceMax = sourceVertices_.front();
+  for (const auto &vertex : sourceVertices_) {
+    sourceMin_.p.rx() = std::min(sourceMin_.p.x(), vertex.p.x());
+    sourceMin_.p.ry() = std::min(sourceMin_.p.y(), vertex.p.y());
+    sourceMin_.z = std::min(sourceMin_.z, vertex.z);
+    sourceMax.p.rx() = std::max(sourceMax.p.x(), vertex.p.x());
+    sourceMax.p.ry() = std::max(sourceMax.p.y(), vertex.p.y());
+    sourceMax.z = std::max(sourceMax.z, vertex.z);
+  }
+  sourceSize_ = {sourceMax.p.x() - sourceMin_.p.x(),
+                 sourceMax.p.y() - sourceMin_.p.y(),
+                 sourceMax.z - sourceMin_.z};
+
+  std::map<TriangleVertexIndices, std::pair<std::size_t, TriangleVertexIndices>>
+      faceToCompartment;
+  for (const auto &tet : gmshMesh.tetrahedra) {
+    const auto compIt = tagToCompartmentIndex.find(tet.physicalTag);
+    if (compIt == tagToCompartmentIndex.end()) {
+      errorMessage_ = "Imported fixed mesh contains unmapped physical tag " +
+                      std::to_string(tet.physicalTag);
+      return;
+    }
+    auto compartmentIndex = compIt->second;
+    auto &tetrahedron =
+        tetrahedronVertexIndices_[compartmentIndex].emplace_back();
+    tetrahedron = tet.vertexIndices;
+    for (const auto &faceIndices : tetrahedronFaces) {
+      TriangleVertexIndices face{tetrahedron[faceIndices[0]],
+                                 tetrahedron[faceIndices[1]],
+                                 tetrahedron[faceIndices[2]]};
+      const auto key = sortedFace(face);
+      if (const auto faceIt = faceToCompartment.find(key);
+          faceIt == faceToCompartment.end()) {
+        faceToCompartment[key] = {compartmentIndex, face};
+      } else {
+        const auto otherCompartmentIndex = faceIt->second.first;
+        if (otherCompartmentIndex != compartmentIndex) {
+          const auto membraneIndex =
+              compartmentsToMembraneIndex_[otherCompartmentIndex *
+                                               compartmentColors.size() +
+                                           compartmentIndex];
+          if (membraneIndex != NullCompartmentIndex) {
+            membraneTriangleVertexIndices_[membraneIndex].push_back(face);
+          }
+        }
+        faceToCompartment.erase(faceIt);
+      }
+    }
+  }
+
+  setPhysicalGeometry(voxelSize, originPoint);
+  if (validMesh_) {
+    errorMessage_.clear();
+  }
+}
+
 Mesh3d::~Mesh3d() = default;
 
 bool Mesh3d::isValid() const { return validMesh_; }
@@ -315,6 +445,10 @@ void Mesh3d::setCompartmentMaxCellVolume(std::size_t compartmentIndex,
     SPDLOG_INFO("  -> max cell volume unchanged");
     return;
   }
+  if (hasFixedTopology_) {
+    currentMaxCellVolume = maxCellVolume;
+    return;
+  }
   // for now enforce that all compartments have the same max cell volume to
   // avoid CGAL segfaulting for some combinations of max cell volumes (see
   // #1037)
@@ -334,8 +468,70 @@ const std::vector<std::size_t> &Mesh3d::getCompartmentMaxCellVolume() const {
   return compartmentMaxCellVolume_;
 }
 
+void Mesh3d::updateFixedMeshVertices(const common::VolumeF &voxelSize,
+                                     const common::VoxelF &originPoint) {
+  if (sourceVertices_.empty()) {
+    validMesh_ = false;
+    errorMessage_ = "Imported fixed mesh has no vertices";
+    return;
+  }
+
+  const common::VolumeF targetSize{
+      voxelSize.width() * static_cast<double>(imageSize_.width()),
+      voxelSize.height() * static_cast<double>(imageSize_.height()),
+      voxelSize.depth() * static_cast<double>(imageSize_.depth())};
+
+  auto normalized = [](double value, double minValue, double extent) {
+    if (extent <= 0.0) {
+      return 0.5;
+    }
+    return (value - minValue) / extent;
+  };
+
+  vertices_.resize(sourceVertices_.size());
+  for (std::size_t i = 0; i < sourceVertices_.size(); ++i) {
+    const auto &source = sourceVertices_[i];
+    vertices_[i].p.rx() =
+        originPoint.p.x() +
+        targetSize.width() *
+            normalized(source.p.x(), sourceMin_.p.x(), sourceSize_.width());
+    vertices_[i].p.ry() =
+        originPoint.p.y() +
+        targetSize.height() *
+            normalized(source.p.y(), sourceMin_.p.y(), sourceSize_.height());
+    vertices_[i].z =
+        originPoint.z + targetSize.depth() * normalized(source.z, sourceMin_.z,
+                                                        sourceSize_.depth());
+  }
+
+  for (std::size_t compartmentIndex = 0;
+       compartmentIndex < tetrahedronVertexIndices_.size();
+       ++compartmentIndex) {
+    const auto &vertexIndices = tetrahedronVertexIndices_[compartmentIndex];
+    auto &tetrahedra = tetrahedra_[compartmentIndex];
+    tetrahedra.resize(vertexIndices.size());
+    for (std::size_t i = 0; i < vertexIndices.size(); ++i) {
+      for (std::size_t j = 0; j < 4; ++j) {
+        tetrahedra[i][j] = vertices_[vertexIndices[i][j]];
+      }
+    }
+  }
+  validMesh_ = std::ranges::all_of(tetrahedronVertexIndices_,
+                                   [](const auto &t) { return !t.empty(); });
+  if (!validMesh_) {
+    errorMessage_ = "Imported fixed mesh has no tetrahedra for one or more "
+                    "current compartments";
+    return;
+  }
+  errorMessage_.clear();
+}
+
 void Mesh3d::setPhysicalGeometry(const common::VolumeF &voxelSize,
                                  const common::VoxelF &originPoint) {
+  if (hasFixedTopology_) {
+    updateFixedMeshVertices(voxelSize, originPoint);
+    return;
+  }
   image3_->image()->vx = voxelSize.width();
   image3_->image()->vy = voxelSize.height();
   image3_->image()->vz = voxelSize.depth();

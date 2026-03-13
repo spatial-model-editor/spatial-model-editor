@@ -4,9 +4,9 @@
 #include <QPushButton>
 #include <algorithm>
 
-DialogImportGeometryGmsh::DialogImportGeometryGmsh(int maxVoxelsPerDimension,
-                                                   const QString &filename,
-                                                   QWidget *parent)
+DialogImportGeometryGmsh::DialogImportGeometryGmsh(
+    int maxVoxelsPerDimension, const QString &filename,
+    sme::model::MeshSourceType meshSourceType, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogImportGeometryGmsh>()} {
   ui->setupUi(this);
 
@@ -15,6 +15,7 @@ DialogImportGeometryGmsh::DialogImportGeometryGmsh(int maxVoxelsPerDimension,
   ui->lblImage->displayScale(ui->chkScale->isChecked());
   ui->lblImage->setAspectRatioMode(Qt::AspectRatioMode::KeepAspectRatio);
   ui->spinMaxDimension->setValue(std::max(1, maxVoxelsPerDimension));
+  ui->cmbMeshType->setCurrentIndex(static_cast<int>(meshSourceType));
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImportGeometryGmsh::accept);
@@ -36,6 +37,7 @@ DialogImportGeometryGmsh::DialogImportGeometryGmsh(int maxVoxelsPerDimension,
 DialogImportGeometryGmsh::~DialogImportGeometryGmsh() {
   if (ui != nullptr) {
     disconnect(ui->spinMaxDimension, nullptr, this, nullptr);
+    disconnect(ui->cmbMeshType, nullptr, this, nullptr);
     disconnect(ui->chkIncludeBackground, nullptr, this, nullptr);
     disconnect(ui->chkGrid, nullptr, this, nullptr);
     disconnect(ui->chkScale, nullptr, this, nullptr);
@@ -45,6 +47,16 @@ DialogImportGeometryGmsh::~DialogImportGeometryGmsh() {
 
 const sme::common::ImageStack &DialogImportGeometryGmsh::getImage() const {
   return image;
+}
+
+const std::optional<sme::mesh::GMSHMesh> &
+DialogImportGeometryGmsh::getMesh() const {
+  return mesh;
+}
+
+sme::model::MeshSourceType DialogImportGeometryGmsh::getMeshSourceType() const {
+  return static_cast<sme::model::MeshSourceType>(
+      ui->cmbMeshType->currentIndex());
 }
 
 void DialogImportGeometryGmsh::spinMaxDimension_valueChanged(

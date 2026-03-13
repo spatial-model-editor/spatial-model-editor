@@ -18,5 +18,9 @@ void setSbmlAnnotation(libsbml::Model *model, const Settings &sbmlAnnotation);
  * @brief Read SME settings from model annotation XML.
  */
 Settings getSbmlAnnotation(libsbml::Model *model);
+/**
+ * @brief Return true if model contains SME annotation XML.
+ */
+[[nodiscard]] bool hasSbmlAnnotation(const libsbml::Model *model);
 
 } // namespace sme::model
