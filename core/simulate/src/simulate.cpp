@@ -1,4 +1,5 @@
 #include "sme/simulate.hpp"
+#include "cudapixelsim.hpp"
 #include "dunesim.hpp"
 #include "pixelsim.hpp"
 #include "sme/geometry.hpp"
@@ -137,8 +138,13 @@ void Simulation::applyNextEvent() {
     simulator =
         std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    if (settings->options.pixel.backend == PixelBackendType::CUDA) {
+      simulator = std::make_unique<CudaPixelSim>(
+          model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    } else {
+      simulator = std::make_unique<PixelSim>(
+          model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    }
   }
   // remove applied simEvent
   simEvents.pop();
@@ -215,8 +221,13 @@ Simulation::Simulation(model::Model &smeModel)
     simulator =
         std::make_unique<DuneSim>(model, compartmentIds, eventSubstitutions);
   } else {
-    simulator = std::make_unique<PixelSim>(
-        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    if (settings->options.pixel.backend == PixelBackendType::CUDA) {
+      simulator = std::make_unique<CudaPixelSim>(
+          model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    } else {
+      simulator = std::make_unique<PixelSim>(
+          model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+    }
   }
   if (simulator->errorMessage().empty()) {
     nCompletedTimesteps.store(data->timePoints.size());
@@ -443,6 +454,17 @@ std::vector<double> Simulation::getDcdt(std::size_t compartmentIndex,
       c.push_back(compDcdt[ix * stride + speciesIndex]);
     }
   }
+  if (const auto *s = dynamic_cast<const CudaPixelSim *>(simulator.get());
+      s != nullptr) {
+    std::shared_lock lock{dataMutex};
+    const auto &compDcdt = s->getDcdt(compartmentIndex);
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
+    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+    c.reserve(nPixels);
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      c.push_back(compDcdt[ix * nSpecies + speciesIndex]);
+    }
+  }
   return c;
 }
 
@@ -465,6 +487,20 @@ std::vector<double> Simulation::getDcdtArray(std::size_t compartmentIndex,
       c[arrayIndex] = compDcdt[ix * stride + speciesIndex];
     }
   }
+  if (const auto *s = dynamic_cast<const CudaPixelSim *>(simulator.get());
+      s != nullptr) {
+    std::shared_lock lock{dataMutex};
+    const auto &compDcdt = s->getDcdt(compartmentIndex);
+    const auto &comp = compartments[compartmentIndex];
+    std::size_t nPixels = compartments[compartmentIndex]->nVoxels();
+    std::size_t nSpecies = compartmentSpeciesIds[compartmentIndex].size();
+    for (std::size_t ix = 0; ix < nPixels; ++ix) {
+      const auto &point = comp->getVoxel(ix);
+      auto arrayIndex{common::voxelArrayIndex(imageSize, point.p.x(),
+                                              point.p.y(), 0, true)};
+      c[arrayIndex] = compDcdt[ix * nSpecies + speciesIndex];
+    }
+  }
   return c;
 }
 
@@ -472,6 +508,11 @@ double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
                                      std::size_t speciesIndex,
                                      std::size_t pixelIndex) const {
   if (const auto *s = dynamic_cast<const PixelSim *>(simulator.get());
+      s != nullptr) {
+    return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
+                                         pixelIndex);
+  }
+  if (const auto *s = dynamic_cast<const CudaPixelSim *>(simulator.get());
       s != nullptr) {
     return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
                                          pixelIndex);
@@ -589,7 +630,9 @@ Simulation::getPyConcs(std::size_t timeIndex,
 Simulation::getPyDcdts(std::size_t compartmentIndex) const {
   // dcdt is only available from pixel sim, and only for the last timestep
   const PixelSim *pixelSim{dynamic_cast<const PixelSim *>(simulator.get())};
-  if (pixelSim == nullptr) {
+  const CudaPixelSim *cudaPixelSim{
+      dynamic_cast<const CudaPixelSim *>(simulator.get())};
+  if (pixelSim == nullptr && cudaPixelSim == nullptr) {
     return {};
   }
   std::shared_lock lock{dataMutex};
@@ -600,9 +643,12 @@ Simulation::getPyDcdts(std::size_t compartmentIndex) const {
       compartmentSpeciesIds[compartmentIndex].size(),
       std::vector<double>(imageSize.nVoxels(), 0.0));
   const auto &pixels{compartments[compartmentIndex]->getVoxels()};
-  const auto &dcdt{pixelSim->getDcdt(compartmentIndex)};
+  const auto &dcdt{pixelSim != nullptr
+                       ? pixelSim->getDcdt(compartmentIndex)
+                       : cudaPixelSim->getDcdt(compartmentIndex)};
   const std::size_t nSpecies{compartmentSpeciesIds[compartmentIndex].size()};
-  const std::size_t stride{nSpecies + data->concPadding.back()};
+  const std::size_t stride{
+      pixelSim != nullptr ? (nSpecies + data->concPadding.back()) : nSpecies};
   for (std::size_t ix = 0; ix < pixels.size(); ++ix) {
     const auto pyIndex{voxelToPyIndex(pixels[ix], imageSize)};
     for (std::size_t is : compartmentSpeciesIndices[compartmentIndex]) {

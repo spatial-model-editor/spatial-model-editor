@@ -123,10 +123,16 @@ find_package(
   REQUIRED
   CONFIGS
   Combine-static-config.cmake)
+if(SME_ENABLE_CUDA_PIXEL)
+  find_package(CUDAToolkit REQUIRED)
+endif()
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
   core PUBLIC SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_${SME_LOG_LEVEL})
+if(SME_ENABLE_CUDA_PIXEL)
+  target_compile_definitions(core PUBLIC SME_HAS_CUDA_PIXEL=1)
+endif()
 
 find_package(dune-copasi REQUIRED)
 target_link_libraries(
@@ -139,6 +145,9 @@ target_link_libraries(
           cereal::cereal
           TBB::tbb
           $<$<PLATFORM_ID:Windows>:psapi>)
+if(SME_ENABLE_CUDA_PIXEL)
+  target_link_libraries(core PRIVATE CUDA::cuda_driver CUDA::nvrtc)
+endif()
 target_link_libraries(
   core
   PUBLIC opencv_core

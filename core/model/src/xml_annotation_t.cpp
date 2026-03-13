@@ -26,6 +26,7 @@ TEST_CASE("XML Annotations",
     simulationSettings.times.clear();
     simulationSettings.times.push_back({1, 0.2});
     simulationSettings.times.push_back({5, 0.25});
+    simulationSettings.options.pixel.backend = simulate::PixelBackendType::CUDA;
     simulationSettings.options.pixel.maxThreads = 4;
     simulationSettings.options.dune.dt = 0.0123;
     auto &meshParameters{settings.meshParameters};
@@ -57,6 +58,8 @@ TEST_CASE("XML Annotations",
             displayOptions.normaliseOverAllTimepoints);
     auto &newSimulationSettings{newSettings.simulationSettings};
     REQUIRE(newSimulationSettings.times.size() == 2);
+    REQUIRE(newSimulationSettings.options.pixel.backend ==
+            simulate::PixelBackendType::CUDA);
     REQUIRE(newSimulationSettings.options.pixel.maxThreads == 4);
     REQUIRE(newSimulationSettings.options.dune.dt == dbl_approx(0.0123));
     auto &newMeshParameters{newSettings.meshParameters};
@@ -82,6 +85,8 @@ TEST_CASE("XML Annotations",
 
     // change options, save & write to file
     newSimulationSettings.times.push_back({7, 0.33});
+    newSimulationSettings.options.pixel.backend =
+        simulate::PixelBackendType::CPU;
     newSimulationSettings.options.pixel.maxThreads = 16;
     newOptimizeOptions.optAlgorithm.islands = 2;
     newOptimizeOptions.optAlgorithm.population = 4;
@@ -107,6 +112,8 @@ TEST_CASE("XML Annotations",
             displayOptions.normaliseOverAllTimepoints);
     auto &simulationSettings2{settings2.simulationSettings};
     REQUIRE(simulationSettings2.times.size() == 3);
+    REQUIRE(simulationSettings2.options.pixel.backend ==
+            simulate::PixelBackendType::CPU);
     REQUIRE(simulationSettings2.options.pixel.maxThreads == 16);
     REQUIRE(simulationSettings2.options.dune.dt == dbl_approx(0.0123));
     auto &optimizeOptions2{settings2.optimizeOptions};

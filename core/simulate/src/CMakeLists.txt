@@ -2,6 +2,7 @@ target_sources(
   core
   PRIVATE basesim.cpp
           dune_cell_data.cpp
+          cudapixelsim.cpp
           duneconverter.cpp
           duneconverter_impl.cpp
           dunefunction.cpp
@@ -26,6 +27,7 @@ if(BUILD_TESTING)
     PUBLIC duneconverter_t.cpp
            duneconverter_impl_t.cpp
            dune_cell_data_t.cpp
+           cudapixelsim_t.cpp
            dunefunction_t.cpp
            dunegrid_t.cpp
            duneini_t.cpp

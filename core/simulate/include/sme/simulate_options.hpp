@@ -113,6 +113,11 @@ struct DuneOptions {
 enum class PixelIntegratorType { RK101, RK212, RK323, RK435 };
 
 /**
+ * @brief Pixel execution backend selection.
+ */
+enum class PixelBackendType { CPU, CUDA };
+
+/**
  * @brief Error tolerances for pixel adaptive integration.
  */
 struct PixelIntegratorError {
@@ -137,6 +142,10 @@ struct PixelIntegratorError {
  * @brief Pixel solver options.
  */
 struct PixelOptions {
+  /**
+   * @brief Execution backend for the pixel solver.
+   */
+  PixelBackendType backend{PixelBackendType::CPU};
   /**
    * @brief RK integrator scheme.
    */
@@ -172,6 +181,10 @@ struct PixelOptions {
       ar(CEREAL_NVP(integrator), CEREAL_NVP(maxErr), CEREAL_NVP(maxTimestep),
          CEREAL_NVP(enableMultiThreading), CEREAL_NVP(maxThreads),
          CEREAL_NVP(doCSE), CEREAL_NVP(optLevel));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(backend), CEREAL_NVP(integrator), CEREAL_NVP(maxErr),
+         CEREAL_NVP(maxTimestep), CEREAL_NVP(enableMultiThreading),
+         CEREAL_NVP(maxThreads), CEREAL_NVP(doCSE), CEREAL_NVP(optLevel));
     }
   }
 };
@@ -231,5 +244,5 @@ struct AvgMinMax {
 CEREAL_CLASS_VERSION(sme::simulate::Options, 0);
 CEREAL_CLASS_VERSION(sme::simulate::DuneOptions, 2);
 CEREAL_CLASS_VERSION(sme::simulate::PixelIntegratorError, 0);
-CEREAL_CLASS_VERSION(sme::simulate::PixelOptions, 0);
+CEREAL_CLASS_VERSION(sme::simulate::PixelOptions, 1);
 CEREAL_CLASS_VERSION(sme::simulate::AvgMinMax, 0);

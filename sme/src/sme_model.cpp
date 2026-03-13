@@ -33,6 +33,9 @@ void bindModel(nanobind::module_ &m) {
       .value("RK212", ::sme::simulate::PixelIntegratorType::RK212)
       .value("RK323", ::sme::simulate::PixelIntegratorType::RK323)
       .value("RK435", ::sme::simulate::PixelIntegratorType::RK435);
+  nanobind::enum_<::sme::simulate::PixelBackendType>(m, "PixelBackendType")
+      .value("CPU", ::sme::simulate::PixelBackendType::CPU)
+      .value("CUDA", ::sme::simulate::PixelBackendType::CUDA);
   nanobind::class_<::sme::simulate::PixelIntegratorError>(
       m, "PixelIntegratorError")
       .def(nanobind::init<>())
@@ -54,6 +57,7 @@ void bindModel(nanobind::module_ &m) {
       .def_rw("max_threads", &::sme::simulate::DuneOptions::maxThreads);
   nanobind::class_<::sme::simulate::PixelOptions>(m, "PixelOptions")
       .def(nanobind::init<>())
+      .def_rw("backend", &::sme::simulate::PixelOptions::backend)
       .def_rw("integrator", &::sme::simulate::PixelOptions::integrator)
       .def_rw("max_err", &::sme::simulate::PixelOptions::maxErr)
       .def_rw("max_timestep", &::sme::simulate::PixelOptions::maxTimestep)
