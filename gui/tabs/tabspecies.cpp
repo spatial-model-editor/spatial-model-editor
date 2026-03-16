@@ -181,6 +181,10 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   ui->chkSpeciesIsConstant->setChecked(isConstant);
   if (isConstant) {
     ui->radDiffusionConstantUniform->setEnabled(false);
+    ui->radDiffusionConstantAnalytic->setEnabled(false);
+    ui->btnEditAnalyticDiffusionConstant->setEnabled(false);
+    ui->radDiffusionConstantImage->setEnabled(false);
+    ui->btnEditImageDiffusionConstant->setEnabled(false);
     ui->txtDiffusionConstant->setEnabled(false);
     ui->lblDiffusionConstantUnits->setText("");
   }
@@ -298,8 +302,7 @@ void TabSpecies::chkSpeciesIsSpatial_toggled(bool enabled) {
     SPDLOG_INFO("setting species {} isSpatial: {}",
                 currentSpeciesId.toStdString(), enabled);
     model.getSpecies().setIsSpatial(currentSpeciesId, enabled);
-    // update displayed info for this species
-    txtInitialConcentration_editingFinished();
+    listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }
 }
 
@@ -310,8 +313,7 @@ void TabSpecies::chkSpeciesIsConstant_toggled(bool enabled) {
     SPDLOG_INFO("setting species {} isConstant: {}", speciesID.toStdString(),
                 enabled);
     model.getSpecies().setIsConstant(speciesID, enabled);
-    // update displayed info for this species
-    txtInitialConcentration_editingFinished();
+    listSpecies_currentItemChanged(ui->listSpecies->currentItem(), nullptr);
   }
 }
 

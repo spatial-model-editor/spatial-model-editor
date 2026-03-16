@@ -295,27 +295,26 @@ private:
       auto nPixels{comp->getVoxels().size()};
       SPDLOG_INFO("  - {} pixels", nPixels);
       const auto &compartmentSpeciesNames{speciesNames[comp->getId()]};
-      std::size_t nNonConstantSpecies{0};
+      std::size_t nSimulatedSpecies{0};
       for (const auto &speciesName : compartmentSpeciesNames) {
         if (!speciesName.empty()) {
-          ++nNonConstantSpecies;
+          ++nSimulatedSpecies;
         }
       }
       auto nSpecies{compartmentSpeciesNames.size()};
       SPDLOG_INFO("  - {} species", nSpecies);
-      SPDLOG_INFO("    - of which {} non-constant species",
-                  nNonConstantSpecies);
-      if (nNonConstantSpecies > 0) {
+      SPDLOG_INFO("    - of which {} are simulated", nSimulatedSpecies);
+      if (nSimulatedSpecies > 0) {
         duneCompartments.push_back(
             {comp->getId(),
              compIndex,
-             nNonConstantSpecies,
+             nSimulatedSpecies,
              compartmentSpeciesNames,
              geometry::VoxelIndexer(imgVolume, comp->getVoxels()),
              comp.get(),
              {},
              {},
-             std::vector<double>(nPixels * nNonConstantSpecies, 0.0)});
+             std::vector<double>(nPixels * nSimulatedSpecies, 0.0)});
       }
       ++compIndex;
     }

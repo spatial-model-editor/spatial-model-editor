@@ -1328,6 +1328,97 @@ TEST_CASE(
 }
 
 TEST_CASE(
+    "Simulate: spatial constant species remain fixed and drive reactions",
+    "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
+  auto makeModel = []() {
+    auto m{getExampleModel(Mod::ABtoC)};
+    const auto &vol = m.getGeometry().getImages().volume();
+    const auto mid = static_cast<std::size_t>(vol.width()) / 2;
+    auto *comp = m.getCompartments().getCompartment("comp");
+    std::vector<double> aConc(static_cast<std::size_t>(vol.nVoxels()), 0.0);
+    for (const auto &voxel : comp->getVoxels()) {
+      const auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
+      aConc[arrayIndex] =
+          static_cast<std::size_t>(voxel.p.x()) < mid ? 2.0 : 0.5;
+    }
+    m.getSpecies().setSampledFieldConcentration("A", aConc);
+    m.getSpecies().setIsSpatial("A", true);
+    m.getSpecies().setIsConstant("A", true);
+    m.getSpecies().setInitialConcentration("B", 1.0);
+    m.getSpecies().setInitialConcentration("C", 0.0);
+    m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, 3);
+    auto &options{m.getSimulationSettings().options};
+    options.pixel.maxErr = {std::numeric_limits<double>::max(), 0.001};
+    options.pixel.maxThreads = 2;
+    options.dune.dt = 0.1;
+    options.dune.maxDt = 0.1;
+    return m;
+  };
+
+  for (auto simulator :
+       {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
+    auto m = makeModel();
+    m.getSimulationSettings().simulatorType = simulator;
+    simulate::Simulation sim(m);
+    REQUIRE(sim.errorMessage().empty());
+
+    const auto &speciesIds = sim.getSpeciesIds(0);
+    const auto aIt = std::find(speciesIds.cbegin(), speciesIds.cend(), "A");
+    const auto bIt = std::find(speciesIds.cbegin(), speciesIds.cend(), "B");
+    REQUIRE(aIt != speciesIds.cend());
+    REQUIRE(bIt != speciesIds.cend());
+    const auto aIndex =
+        static_cast<std::size_t>(std::distance(speciesIds.cbegin(), aIt));
+    const auto bIndex =
+        static_cast<std::size_t>(std::distance(speciesIds.cbegin(), bIt));
+
+    const auto a0 = sim.getConcArray(0, 0, aIndex);
+    sim.doTimesteps(1.0);
+    REQUIRE(sim.errorMessage().empty());
+    const auto timeIndex = sim.getTimePoints().size() - 1;
+    const auto a1 = sim.getConcArray(timeIndex, 0, aIndex);
+    const auto b1 = sim.getConcArray(timeIndex, 0, bIndex);
+
+    double maxADelta{0.0};
+    for (std::size_t i = 0; i < a0.size(); ++i) {
+      maxADelta = std::max(maxADelta, std::abs(a1[i] - a0[i]));
+    }
+    const auto &vol = m.getGeometry().getImages().volume();
+    const auto mid = static_cast<std::size_t>(vol.width()) / 2;
+    auto *comp = m.getCompartments().getCompartment("comp");
+    double leftMean{0.0};
+    double rightMean{0.0};
+    std::size_t leftCount{0};
+    std::size_t rightCount{0};
+    for (const auto &voxel : comp->getVoxels()) {
+      const auto arrayIndex = common::voxelArrayIndex(vol, voxel, true);
+      if (static_cast<std::size_t>(voxel.p.x()) < mid) {
+        leftMean += b1[arrayIndex];
+        ++leftCount;
+      } else {
+        rightMean += b1[arrayIndex];
+        ++rightCount;
+      }
+    }
+    REQUIRE(leftCount > 0);
+    REQUIRE(rightCount > 0);
+    leftMean /= static_cast<double>(leftCount);
+    rightMean /= static_cast<double>(rightCount);
+
+    CAPTURE(simulator);
+    CAPTURE(maxADelta);
+    CAPTURE(leftMean);
+    CAPTURE(rightMean);
+    const double maxATolerance =
+        (simulator == simulate::SimulatorType::Pixel) ? 1e-12 : 1e-2;
+    const double meanGap =
+        (simulator == simulate::SimulatorType::Pixel) ? 1e-3 : 5e-3;
+    REQUIRE(maxADelta < maxATolerance);
+    REQUIRE(leftMean + meanGap < rightMean);
+  }
+}
+
+TEST_CASE(
     "Simulate: smooth spatially varying diffusion, dune vs pixel",
     "[core/simulate/simulate][core/simulate][core][simulate][dune][pixel]") {
   auto configureModel = [](model::Model &m) {

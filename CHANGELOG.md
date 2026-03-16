@@ -2,10 +2,8 @@
 
 ## [Unreleased]
 ### Added
-- dialog for importing analytic geometry where users can set voxel resolution and preview the converted sampled image before import
-- aligned simulation option exposure and naming across GUI, CLI and Python interfaces by adding DUNE/Pixel solver option overrides to CLI and exposing Python `model.simulation_settings` (including simulation times) plus optional `simulate(...)` time arguments
-- meshing source option in `Advanced -> Meshing options...` to either generate meshes from voxel geometry or keep imported Gmsh 3D mesh topology fixed while still maintaining the voxelized representation for pixel simulation and image workflows
-- fixed imported 3D mesh topology is now persisted through SBML ParametricGeometry export/import when mesh source is set to fixed
+- allow constant species to have spatially varying concentrations [#1133](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
+- support for importing and exporting 2d and 3d Parametric geometry [#1132](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
 
 ## [1.11.0] - 2026-02-04
 ### Added

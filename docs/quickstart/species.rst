@@ -7,7 +7,7 @@ To create a new species, click the `Add` button, select a suitable name, and hit
 
 On the right hand side, you see the Species Settings menu. Here you can define all relevant properties of the species.
 
-At the top, you can rename the species or assign it to a different compartment. You can also select whether it should be constant for the whole simulation or be variable. Constancy may be a useful simplifying assumption in some models if, for example, the species is produces far more quickly than the characteristic simulation timescale.
+At the top, you can rename the species or assign it to a different compartment. You can also select whether it should be constant for the whole simulation or be variable. A constant species is fixed in time, but it can still be spatially varying if the `Spatial` option is enabled and the initial concentration is defined analytically or from an image. Constancy may be a useful simplifying assumption in some models if, for example, the species is produced far more quickly than the characteristic simulation timescale.
 
 .. figure:: img/species-definition.apng
    :alt: video showing species settings

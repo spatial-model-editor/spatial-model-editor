@@ -354,6 +354,9 @@ PixelSim::PixelSim(
     const bool allUniformDiffusion = [this, &compartmentSpeciesIds]() {
       for (const auto &speciesIds : compartmentSpeciesIds) {
         for (const auto &speciesId : speciesIds) {
+          if (doc.getSpecies().getIsConstant(speciesId.c_str())) {
+            continue;
+          }
           const auto *field = doc.getSpecies().getField(speciesId.c_str());
           if (field == nullptr || !field->getIsUniformDiffusionConstant()) {
             return false;

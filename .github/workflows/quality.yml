@@ -30,7 +30,7 @@ jobs:
         with:
           sme_deps: '2025.10.06'
           cache_id: ${{ matrix.script }}
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
           fetch-depth: 0

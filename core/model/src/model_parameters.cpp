@@ -386,13 +386,22 @@ static bool isConstantParameter(const libsbml::Parameter *param) {
   return true;
 }
 
+static bool isSpatialSpecies(const libsbml::Species *spec) {
+  if (const auto *ssp = static_cast<const libsbml::SpatialSpeciesPlugin *>(
+          spec->getPlugin("spatial"));
+      ssp != nullptr) {
+    return ssp->getIsSpatial();
+  }
+  return false;
+}
+
 std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
   std::vector<IdNameValue> constants;
-  // add all *constant* species as constants
+  // add all scalar constant species as constants
   for (unsigned k = 0; k < sbmlModel->getNumSpecies(); ++k) {
     const auto *spec = sbmlModel->getSpecies(k);
-    if (getIsSpeciesConstant(spec)) {
-      SPDLOG_TRACE("found constant species {}", spec->getId());
+    if (getIsSpeciesConstant(spec) && !isSpatialSpecies(spec)) {
+      SPDLOG_TRACE("found scalar constant species {}", spec->getId());
       double init_conc = spec->getInitialConcentration();
       constants.push_back({spec->getId(), spec->getName(), init_conc});
       SPDLOG_TRACE("parameter {} = {}", spec->getId(), init_conc);

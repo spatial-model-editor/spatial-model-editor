@@ -356,6 +356,18 @@ public:
    */
   [[nodiscard]] bool getIsConstant(const QString &id) const;
   /**
+   * @brief Returns whether species is a scalar constant.
+   * @param id Species id.
+   * @returns ``true`` if species is constant and non-spatial.
+   */
+  [[nodiscard]] bool isScalarConstantSpecies(const QString &id) const;
+  /**
+   * @brief Returns whether species should be present in simulation fields.
+   * @param id Species id.
+   * @returns ``true`` if species should appear in simulation state/results.
+   */
+  [[nodiscard]] bool isSimulatedSpecies(const QString &id) const;
+  /**
    * @brief Returns whether species participates in any reaction.
    * @param id Species id.
    * @returns ``true`` if species is reactive.
