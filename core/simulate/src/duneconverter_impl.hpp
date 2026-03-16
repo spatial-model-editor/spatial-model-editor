@@ -17,15 +17,15 @@ std::vector<std::string>
 makeValidDuneSpeciesNames(const std::vector<std::string> &names);
 
 /**
- * @brief Returns whether compartment has any non-constant species.
+ * @brief Returns whether compartment has any simulated species.
  */
-bool compartmentContainsNonConstantSpecies(const model::Model &model,
-                                           const QString &compId);
+bool compartmentContainsSimulatedSpecies(const model::Model &model,
+                                         const QString &compId);
 
 /**
- * @brief Non-constant species ids in compartment.
+ * @brief Simulated species ids in compartment.
  */
-std::vector<std::string> getNonConstantSpecies(const model::Model &model,
-                                               const QString &compId);
+std::vector<std::string> getSimulatedSpecies(const model::Model &model,
+                                             const QString &compId);
 
 } // namespace sme::simulate

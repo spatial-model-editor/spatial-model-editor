@@ -114,12 +114,12 @@ getDefaultOptCosts(const sme::model::Model &model) {
   }
   for (const auto &compartmentId : model.getCompartments().getIds()) {
     // note: compartment/species indices here are constructed to match those in
-    // the simulation data (i.e. constant species are ignored). todo: refactor
-    // this logic which is duplicated in the simulation setup
+    // the simulation data (i.e. scalar constant species are ignored). todo:
+    // refactor this logic which is duplicated in the simulation setup
     bool compartmentHasSpecies{false};
     std::size_t speciesIndex{0};
     for (const auto &speciesId : model.getSpecies().getIds(compartmentId)) {
-      if (!model.getSpecies().getIsConstant(speciesId)) {
+      if (model.getSpecies().isSimulatedSpecies(speciesId)) {
         optCosts.push_back(
             {sme::simulate::OptCostType::Concentration,
              sme::simulate::OptCostDiffType::Absolute,

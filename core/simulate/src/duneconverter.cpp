@@ -159,23 +159,24 @@ static void addCompartment(
 
   SPDLOG_TRACE("compartment {}", compartmentId.toStdString());
 
-  auto nonConstantSpecies = getNonConstantSpecies(model, compartmentId);
-  auto duneSpeciesNames = makeValidDuneSpeciesNames(nonConstantSpecies);
+  auto simulatedSpecies = getSimulatedSpecies(model, compartmentId);
+  auto duneSpeciesNames = makeValidDuneSpeciesNames(simulatedSpecies);
 
   speciesNames[compartmentId.toStdString()] = [&model, &compartmentId,
                                                &duneSpeciesNames]() {
     std::vector<std::string> duneSpeciesNamesSmeIndices;
     std::size_t duneNameIndex{0};
     for (const auto &s : model.getSpecies().getIds(compartmentId)) {
-      if (!model.getSpecies().getIsConstant(s)) {
+      if (model.getSpecies().isSimulatedSpecies(s)) {
         duneSpeciesNamesSmeIndices.push_back(duneSpeciesNames[duneNameIndex++]);
         SPDLOG_INFO("  - SME species {} -> DUNE species {}", s.toStdString(),
                     duneSpeciesNamesSmeIndices.back());
       } else {
-        // if SME species is not in dune sim dune species name is empty string
+        // if SME species is not simulated its DUNE species name is empty string
         duneSpeciesNamesSmeIndices.emplace_back();
         SPDLOG_INFO(
-            "  - SME species {} is constant -> not present in DUNE simulation",
+            "  - SME species {} is scalar constant -> not present in DUNE "
+            "simulation",
             s.toStdString());
       }
     }
@@ -192,11 +193,11 @@ static void addCompartment(
   SPDLOG_INFO("  - multiplying reactions by [length]^3/[vol] = {}",
               scaleFactors.reaction);
 
-  Pde pde(&model, nonConstantSpecies, reacs, duneSpeciesNames, scaleFactors,
+  Pde pde(&model, simulatedSpecies, reacs, duneSpeciesNames, scaleFactors,
           extraReactionVars, relabelledExtraReactionVars, substitutions);
 
   std::vector<QString> tiffs;
-  std::size_t nSpecies{nonConstantSpecies.size()};
+  std::size_t nSpecies{simulatedSpecies.size()};
   if (nSpecies == 0) {
     // dummy species with no reactions if compartment is empty
     auto dummySpeciesName{QString("%1_dummy_species").arg(compartmentId)};
@@ -211,7 +212,7 @@ static void addCompartment(
     return;
   }
   for (std::size_t i = 0; i < nSpecies; ++i) {
-    QString name{nonConstantSpecies[i].c_str()};
+    QString name{simulatedSpecies[i].c_str()};
     QString duneName{duneSpeciesNames[i].c_str()};
     ini.addSection("model", "scalar_field", duneName);
     ini.addValue("compartment", compartmentId);
@@ -255,7 +256,7 @@ static void addCompartment(
         auto simField{*f};
         const std::size_t nPixels{f->getCompartment()->nVoxels()};
         const std::size_t padding{model.getSimulationData().concPadding.back()};
-        const std::size_t stride{padding + nonConstantSpecies.size()};
+        const std::size_t stride{padding + simulatedSpecies.size()};
         std::vector<double> c(nPixels, 0.0);
         SPDLOG_INFO("using simulation concentration data for species {}",
                     name.toStdString());
@@ -291,9 +292,12 @@ static void addCompartment(
     }
 
     // diffusion constant
-    QString sId{nonConstantSpecies[i].c_str()};
-    if (model.getSpecies().getDiffusionConstantType(sId) !=
-        model::SpatialDataType::Uniform) {
+    QString sId{simulatedSpecies[i].c_str()};
+    if (model.getSpecies().getIsConstant(sId)) {
+      ini.addValue(QString("cross_diffusion.%1.expression").arg(duneName), 0.0,
+                   doublePrecision);
+    } else if (model.getSpecies().getDiffusionConstantType(sId) !=
+               model::SpatialDataType::Uniform) {
       std::string diffusionName =
           "__diffusion_constant_cell_data_" + duneSpeciesNames[i];
       diffusionConstantArrays[diffusionName] =
@@ -309,7 +313,10 @@ static void addCompartment(
       if (j == i) {
         continue;
       }
-      const QString sourceSpeciesId{nonConstantSpecies[j].c_str()};
+      if (model.getSpecies().getIsConstant(sId)) {
+        continue;
+      }
+      const QString sourceSpeciesId{simulatedSpecies[j].c_str()};
       const auto crossDiffusionExpression{
           model.getSpecies().getCrossDiffusionConstant(sId, sourceSpeciesId)};
       if (crossDiffusionExpression.isEmpty()) {
@@ -317,7 +324,7 @@ static void addCompartment(
       }
       auto [crossExpression, crossJacobian] =
           getCrossDiffusionExpressionAndJacobian(
-              model, crossDiffusionExpression.toStdString(), nonConstantSpecies,
+              model, crossDiffusionExpression.toStdString(), simulatedSpecies,
               duneSpeciesNames, extraReactionVars, relabelledExtraReactionVars,
               volOverL3, substitutions);
       ini.addValue(QString("cross_diffusion.%1.expression")
@@ -346,13 +353,12 @@ static void addCompartment(
         QString membraneID = membrane.getId().c_str();
         auto mReacs =
             common::toStdString(model.getReactions().getIds(membraneID));
-        auto nonConstantSpeciesOther =
-            getNonConstantSpecies(model, otherCompId);
+        auto simulatedSpeciesOther = getSimulatedSpecies(model, otherCompId);
         auto duneSpeciesNamesOther =
-            makeValidDuneSpeciesNames(nonConstantSpeciesOther);
+            makeValidDuneSpeciesNames(simulatedSpeciesOther);
 
-        auto mSpecies = nonConstantSpecies;
-        for (const auto &s : nonConstantSpeciesOther) {
+        auto mSpecies = simulatedSpecies;
+        for (const auto &s : simulatedSpeciesOther) {
           mSpecies.push_back(s);
         }
         auto mDuneSpecies = duneSpeciesNames;
@@ -381,7 +387,7 @@ static void addCompartment(
       }
     }
   }
-  if (!nonConstantSpecies.empty()) {
+  if (!simulatedSpecies.empty()) {
     ++simDataCompartmentIndex;
   }
   if (forExternalUse && !tiffs.empty()) {

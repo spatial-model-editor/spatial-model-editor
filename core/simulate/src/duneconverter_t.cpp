@@ -41,6 +41,26 @@ TEST_CASE("DUNE: DuneConverter",
     REQUIRE(symEq(*line++, "reaction.jacobian.C.expression = 0"));
     REQUIRE(symEq(*line++, "cross_diffusion.C.expression = 25"));
   }
+  SECTION("ABtoC model with spatial constant species") {
+    auto s{getExampleModel(Mod::ABtoC)};
+    s.getSpecies().setIsConstant("A", true);
+    s.getSpecies().setIsSpatial("A", true);
+    simulate::DuneConverter dc(s, {}, true, {}, 14);
+    QStringList ini = dc.getIniFile().split("\n");
+    auto line = find_line("[model.scalar_field.A]", ini);
+    REQUIRE(line != ini.cend());
+    REQUIRE(*line++ == "[model.scalar_field.A]");
+    REQUIRE(*line++ == "compartment = comp");
+    REQUIRE(line->startsWith("initial.expression = "));
+    REQUIRE(line->contains("A_initialConcentration(position_x,position_y)"));
+    ++line;
+    REQUIRE(*line++ == "storage.expression = 1");
+    REQUIRE(symEq(*line++, "reaction.expression = 0"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.A.expression = 0"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.B.expression = 0"));
+    REQUIRE(symEq(*line++, "reaction.jacobian.C.expression = 0"));
+    REQUIRE(symEq(*line++, "cross_diffusion.A.expression = 0"));
+  }
   SECTION("ABtoC model with non-default storage") {
     auto s{getExampleModel(Mod::ABtoC)};
     s.getSpecies().setStorage("C", 2.5);

@@ -239,17 +239,17 @@
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>if &quot;Constant&quot; is checked: the species has a fixed concentration during the simulation</string>
-           </property>
-           <property name="statusTip">
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+            <string>if &quot;Constant&quot; is checked: the species concentration is fixed in time during the simulation</string>
+          </property>
+          <property name="statusTip">
             <string>'Constant': species concentration cannot be altered by the simulation</string>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-           </property>
+          </property>
+          <property name="whatsThis">
+            <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a concentration that is fixed in time. If the species is also spatial, this fixed concentration may still vary with position within the compartment.&lt;/p&gt;</string>
+          </property>
            <property name="text">
             <string>species concentration is fixed throughout the whole simulation</string>
            </property>
@@ -444,17 +444,17 @@
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="toolTip">
-            <string>A constant species has a fixed concentration</string>
-           </property>
-           <property name="statusTip">
-            <string>A constant species has a fixed concentration</string>
-           </property>
-           <property name="whatsThis">
-            <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a fixed concentration. It keeps its initial concentration for the whole simulation.&lt;/p&gt;</string>
-           </property>
+           </sizepolicy>
+          </property>
+          <property name="toolTip">
+            <string>A constant species has a concentration that is fixed in time</string>
+          </property>
+          <property name="statusTip">
+            <string>A constant species has a concentration that is fixed in time</string>
+          </property>
+          <property name="whatsThis">
+            <string>&lt;h4&gt;Constant&lt;/h4&gt;&lt;p&gt;A constant species has a concentration that is fixed in time. If the species is also spatial, this fixed concentration may still vary with position within the compartment.&lt;/p&gt;</string>
+          </property>
            <property name="text">
             <string>Constant:</string>
            </property>

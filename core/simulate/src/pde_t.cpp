@@ -3,6 +3,7 @@
 #include "model_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/pde.hpp"
+#include <algorithm>
 
 using namespace sme;
 using namespace sme::test;
@@ -29,6 +30,22 @@ TEST_CASE("PDE", "[core/simulate/pde][core/simulate][core][pde]") {
     REQUIRE(reac.getMatrixElement(0, 2) == dbl_approx(+1.0));
     REQUIRE_THROWS(reac.getMatrixElement(0, 3));
     REQUIRE_THROWS(reac.getMatrixElement(1, 0));
+  }
+  SECTION("ABtoC model with spatial constant species") {
+    auto s{getExampleModel(Mod::ABtoC)};
+    s.getSpecies().setIsConstant("A", true);
+    s.getSpecies().setIsSpatial("A", true);
+
+    simulate::Reaction reac(&s, {"A", "B", "C"}, {"r1"});
+    REQUIRE(reac.size() == 1);
+    REQUIRE(std::none_of(reac.getConstants(0).cbegin(),
+                         reac.getConstants(0).cend(),
+                         [](const auto &c) { return c.first == "A"; }));
+
+    simulate::Pde pde(&s, {"A", "B", "C"}, {"r1"});
+    REQUIRE(symEq(pde.getRHS()[0], "0"));
+    REQUIRE(pde.getRHS()[1].find("A") != std::string::npos);
+    REQUIRE(pde.getRHS()[2].find("A") != std::string::npos);
   }
   SECTION("ABtoC model with invalid reaction rate expression") {
     auto s{getExampleModel(Mod::ABtoC)};

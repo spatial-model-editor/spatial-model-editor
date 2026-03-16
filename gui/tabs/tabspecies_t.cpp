@@ -117,17 +117,17 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     // toggle is spatial checkbox
     sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
-    REQUIRE(chkSpeciesIsConstant->isChecked() == false);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == true);
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == true);
     REQUIRE(radInitialConcentrationImage->isEnabled() == true);
-    REQUIRE(radDiffusionConstantUniform->isEnabled() == true);
-    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == true);
-    REQUIRE(radDiffusionConstantImage->isEnabled() == true);
-    REQUIRE(txtDiffusionConstant->isEnabled() == true);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == false);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == false);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == false);
+    REQUIRE(txtDiffusionConstant->isEnabled() == false);
     sendKeyEvents(chkSpeciesIsSpatial, {" "});
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
-    REQUIRE(chkSpeciesIsConstant->isChecked() == false);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == true);
     REQUIRE(radInitialConcentrationUniform->isEnabled() == true);
     REQUIRE(radInitialConcentrationAnalytic->isEnabled() == false);
     REQUIRE(radInitialConcentrationImage->isEnabled() == false);
@@ -137,10 +137,10 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(txtDiffusionConstant->isEnabled() == false);
     // toggle is constant checkbox
     sendMouseClick(chkSpeciesIsConstant);
-    REQUIRE(chkSpeciesIsConstant->isChecked() == true);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == false);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
     sendMouseClick(chkSpeciesIsConstant);
-    REQUIRE(chkSpeciesIsConstant->isChecked() == false);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == true);
     REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
 
     // select second item in listSpecies: Outside / B [spatial species]
@@ -168,6 +168,33 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     mwt.addUserAction({"1", "+", "2"});
     mwt.start();
     sendMouseClick(btnEditAnalyticConcentration);
+    sendMouseClick(chkSpeciesIsConstant);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == true);
+    REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
+    REQUIRE(radInitialConcentrationAnalytic->isChecked() == true);
+    REQUIRE(btnEditAnalyticConcentration->isEnabled() == true);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == false);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == false);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == false);
+    REQUIRE(txtDiffusionConstant->isEnabled() == false);
+    sendMouseClick(chkSpeciesIsConstant);
+    REQUIRE(chkSpeciesIsConstant->isChecked() == false);
+    REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
+    REQUIRE(radInitialConcentrationAnalytic->isChecked() == true);
+    REQUIRE(radDiffusionConstantUniform->isEnabled() == true);
+    REQUIRE(radDiffusionConstantAnalytic->isEnabled() == true);
+    REQUIRE(radDiffusionConstantImage->isEnabled() == true);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
+    REQUIRE(chkSpeciesIsSpatial->isChecked() == false);
+    REQUIRE(radInitialConcentrationUniform->isChecked() == true);
+    REQUIRE(radInitialConcentrationAnalytic->isEnabled() == false);
+    REQUIRE(radInitialConcentrationImage->isEnabled() == false);
+    REQUIRE(txtInitialConcentration->isEnabled() == true);
+    sendKeyEvents(chkSpeciesIsSpatial, {" "});
+    REQUIRE(chkSpeciesIsSpatial->isChecked() == true);
+    REQUIRE(radInitialConcentrationUniform->isChecked() == true);
+    REQUIRE(radInitialConcentrationAnalytic->isEnabled() == true);
+    REQUIRE(radInitialConcentrationImage->isEnabled() == true);
     // enable and edit image initial concentration
     REQUIRE(btnEditImageConcentration->isEnabled() == false);
     radInitialConcentrationImage->setChecked(true);
