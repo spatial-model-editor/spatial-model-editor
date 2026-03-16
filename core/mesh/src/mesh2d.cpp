@@ -84,6 +84,84 @@ Mesh2d::Mesh2d(const QImage &image, std::vector<std::size_t> maxPoints,
   constructMesh();
 }
 
+Mesh2d::Mesh2d(const QImage &image, const FixedTopology2d &fixedTopology,
+               const common::VolumeF &voxelSize,
+               const common::VoxelF &originPoint,
+               const std::vector<QRgb> &compartmentColors,
+               std::size_t boundarySimplificationType)
+    : img(image), origin(originPoint.p),
+      pixel(voxelSize.width(), voxelSize.height()),
+      boundaries{std::make_unique<Boundaries>(image, compartmentColors,
+                                              boundarySimplificationType)},
+      compartmentInteriorPoints{getInteriorPoints(image, compartmentColors)},
+      triangleIndices(fixedTopology.triangleIndices) {
+  boundaryMaxPoints = boundaries->getMaxPoints();
+  compartmentMaxTriangleArea.resize(compartmentColors.size(), 0);
+  if (triangleIndices.size() != compartmentColors.size()) {
+    validMesh = false;
+    errorMessage =
+        "Imported fixed mesh topology does not match current compartments";
+    return;
+  }
+  if (pixel.width() <= 0.0 || pixel.height() <= 0.0) {
+    validMesh = false;
+    errorMessage = "invalid physical voxel size";
+    return;
+  }
+
+  vertices.reserve(fixedTopology.vertices.size());
+  for (const auto &vertex : fixedTopology.vertices) {
+    vertices.emplace_back((vertex.p.x() - origin.x()) / pixel.width(),
+                          (vertex.p.y() - origin.y()) / pixel.height());
+  }
+
+  bool validFixedTopology{true};
+  for (const auto &compartmentTriangles : triangleIndices) {
+    for (const auto &triangle : compartmentTriangles) {
+      if (triangle[0] >= vertices.size() || triangle[1] >= vertices.size() ||
+          triangle[2] >= vertices.size() || triangle[0] == triangle[1] ||
+          triangle[1] == triangle[2] || triangle[0] == triangle[2]) {
+        validFixedTopology = false;
+        break;
+      }
+    }
+    if (!validFixedTopology) {
+      break;
+    }
+  }
+  if (!validFixedTopology) {
+    validMesh = false;
+    errorMessage = "invalid fixed triangle topology";
+    vertices.clear();
+    triangleIndices.clear();
+    triangles.clear();
+    return;
+  }
+
+  nTriangles = 0;
+  triangles.clear();
+  triangles.reserve(triangleIndices.size());
+  for (const auto &compartmentTriangleIndices : triangleIndices) {
+    auto &compTriangles = triangles.emplace_back();
+    compTriangles.reserve(compartmentTriangleIndices.size());
+    nTriangles += compartmentTriangleIndices.size();
+    for (const auto &t : compartmentTriangleIndices) {
+      compTriangles.push_back(
+          {{vertices[t[0]], vertices[t[1]], vertices[t[2]]}});
+    }
+  }
+  if (std::ranges::any_of(triangleIndices, [](const auto &compTriangles) {
+        return compTriangles.empty();
+      })) {
+    validMesh = false;
+    errorMessage = "Imported fixed mesh has no triangles for one or more "
+                   "current compartments";
+    return;
+  }
+  validMesh = true;
+  errorMessage.clear();
+}
+
 Mesh2d::~Mesh2d() = default;
 
 bool Mesh2d::isValid() const { return validMesh; }

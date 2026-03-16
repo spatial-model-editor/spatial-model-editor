@@ -13,6 +13,20 @@
 namespace sme::model {
 
 /**
+ * @brief Mesh source selection mode.
+ */
+enum class MeshSourceType : std::size_t {
+  /**
+   * @brief Generate mesh from voxel geometry.
+   */
+  VoxelGeometry = 0,
+  /**
+   * @brief Keep imported mesh topology fixed.
+   */
+  FixedImportedMesh = 1
+};
+
+/**
  * @brief Mesh generation options stored in model annotation.
  */
 struct MeshParameters {
@@ -29,6 +43,14 @@ struct MeshParameters {
    * @brief Boundary simplification algorithm selection.
    */
   std::size_t boundarySimplifierType{0};
+  /**
+   * @brief Maximum tetrahedron cell volume per compartment (3D voxel mesh).
+   */
+  std::vector<std::size_t> maxCellVolumes{};
+  /**
+   * @brief Mesh source mode.
+   */
+  MeshSourceType meshSourceType{MeshSourceType::VoxelGeometry};
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
     if (version == 0) {
@@ -36,6 +58,10 @@ struct MeshParameters {
     } else if (version == 1) {
       ar(CEREAL_NVP(maxPoints), CEREAL_NVP(maxAreas),
          CEREAL_NVP(boundarySimplifierType));
+    } else if (version == 2) {
+      ar(CEREAL_NVP(maxPoints), CEREAL_NVP(maxAreas),
+         CEREAL_NVP(boundarySimplifierType), CEREAL_NVP(maxCellVolumes),
+         CEREAL_NVP(meshSourceType));
     }
   }
 };
@@ -203,7 +229,7 @@ struct Settings {
 
 } // namespace sme::model
 
-CEREAL_CLASS_VERSION(sme::model::MeshParameters, 1);
+CEREAL_CLASS_VERSION(sme::model::MeshParameters, 2);
 CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
 CEREAL_CLASS_VERSION(sme::model::Settings, 5);

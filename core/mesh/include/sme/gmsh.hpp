@@ -1,9 +1,11 @@
 #pragma once
 
 #include "sme/image_stack.hpp"
+#include <QRgb>
 #include <QString>
 #include <array>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace sme::mesh {
@@ -13,9 +15,20 @@ struct GMSHTetrahedron {
   int physicalTag{1};
 };
 
+struct GMSHTriangle {
+  std::array<std::size_t, 3> vertexIndices{};
+  int physicalTag{1};
+};
+
 struct GMSHMesh {
   std::vector<common::VoxelF> vertices{};
   std::vector<GMSHTetrahedron> tetrahedra{};
+  std::vector<GMSHTriangle> triangles{};
+};
+
+struct FixedTopology3d {
+  GMSHMesh mesh{};
+  std::vector<std::pair<QRgb, int>> colorTagPairs{};
 };
 
 /**
@@ -29,8 +42,9 @@ struct GMSHMesh {
 /**
  * @brief Voxelize an in-memory GMSHMesh into an ImageStack
  *
- * Tetrahedra are grouped by physical tag and each compartment is assigned a
- * default color from common::indexedColors() in ascending physical-tag order.
+ * Tetrahedra/triangles are grouped by physical tag and each compartment is
+ * assigned a default color from common::indexedColors() in ascending
+ * physical-tag order.
  *
  * @param[in] mesh mesh object from readGMSHMesh
  * @param[in] maxVoxelsPerDimension max voxels for the largest image dimension

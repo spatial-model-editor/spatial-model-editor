@@ -1,6 +1,7 @@
 #include "sme/gmsh.hpp"
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
+#include <QStringList>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -15,6 +16,7 @@
 #include <limits>
 #include <map>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace sme::mesh {
@@ -208,10 +210,38 @@ void fillRemainingNullVoxels(common::ImageStack &images, QRgb nullColor,
   }
 }
 
-} // namespace
+[[nodiscard]] bool pointInsideTriangle2d(double x, double y,
+                                         const std::array<Point3d, 3> &v) {
+  const double det = (v[1].y - v[2].y) * (v[0].x - v[2].x) +
+                     (v[2].x - v[1].x) * (v[0].y - v[2].y);
+  constexpr double minAbsDet{1e-18};
+  if (std::abs(det) < minAbsDet) {
+    return false;
+  }
+  const double l1 =
+      ((v[1].y - v[2].y) * (x - v[2].x) + (v[2].x - v[1].x) * (y - v[2].y)) /
+      det;
+  const double l2 =
+      ((v[2].y - v[0].y) * (x - v[2].x) + (v[0].x - v[2].x) * (y - v[2].y)) /
+      det;
+  const double l3 = 1.0 - l1 - l2;
+  constexpr double tol = 1e-10;
+  return l1 >= -tol && l2 >= -tol && l3 >= -tol && l1 <= 1.0 + tol &&
+         l2 <= 1.0 + tol && l3 <= 1.0 + tol;
+}
 
-std::optional<GMSHMesh> readGMSHMesh(const QString &filename) {
-  using Grid = Dune::UGGrid<3>;
+struct GMSHReadResult {
+  std::optional<GMSHMesh> mesh{};
+  std::string error{};
+};
+
+template <int dim>
+[[nodiscard]] GMSHReadResult readGMSHMeshDim(const QString &filename) {
+  static_assert(dim == 2 || dim == 3);
+  using Grid = Dune::UGGrid<dim>;
+  constexpr const char *dimName = dim == 3 ? "3d" : "2d";
+  constexpr int simplexCorners = dim == 3 ? 4 : 3;
+  // dune assumes C locale for reading gmsh files
   common::ScopedCLocale scopedCLocale;
   std::vector<int> boundaryToPhysicalEntity;
   std::vector<int> elementToPhysicalEntity;
@@ -224,20 +254,17 @@ std::optional<GMSHMesh> readGMSHMesh(const QString &filename) {
                                         false  // insertBoundarySegments
     );
   } catch (const Dune::Exception &e) {
-    SPDLOG_ERROR("Failed to parse gmsh file '{}': {}", filename.toStdString(),
-                 e.what());
-    return std::nullopt;
+    return {.mesh = std::nullopt, .error = e.what()};
   }
   if (grid == nullptr || elementToPhysicalEntity.empty()) {
-    SPDLOG_ERROR("No 3d elements found in gmsh file '{}'",
-                 filename.toStdString());
-    return std::nullopt;
+    return {.mesh = std::nullopt,
+            .error = std::string("no ") + dimName + " elements"};
   }
 
   auto gridView = grid->leafGridView();
   if (gridView.size(0) == 0) {
-    SPDLOG_ERROR("Empty grid in gmsh file '{}'", filename.toStdString());
-    return std::nullopt;
+    return {.mesh = std::nullopt,
+            .error = std::string("empty ") + dimName + " grid"};
   }
 
   using GridView = decltype(gridView);
@@ -251,54 +278,110 @@ std::optional<GMSHMesh> readGMSHMesh(const QString &filename) {
   for (const auto &vertex : vertices(gridView)) {
     auto i = vertexMapper.index(vertex);
     auto p = vertex.geometry().corner(0);
-    mesh.vertices[i] = {p[0], p[1], p[2]};
+    if constexpr (dim == 3) {
+      mesh.vertices[i] = {p[0], p[1], p[2]};
+    } else {
+      mesh.vertices[i] = {p[0], p[1], 0.0};
+    }
   }
 
-  mesh.tetrahedra.reserve(gridView.size(0));
+  if constexpr (dim == 3) {
+    mesh.tetrahedra.reserve(gridView.size(0));
+  } else {
+    mesh.triangles.reserve(gridView.size(0));
+  }
   for (const auto &element : elements(gridView)) {
     const auto iElement =
         static_cast<std::size_t>(elementMapper.index(element));
     if (iElement >= elementToPhysicalEntity.size()) {
-      SPDLOG_ERROR("Element index mismatch while reading '{}'",
-                   filename.toStdString());
-      return std::nullopt;
+      return {.mesh = std::nullopt,
+              .error = std::string(dimName) + " element index mismatch"};
     }
     const auto &geo = element.geometry();
-    if (geo.type().isSimplex() && geo.corners() == 4) {
+    if (!(geo.type().isSimplex() && geo.corners() == simplexCorners)) {
+      continue;
+    }
+    if constexpr (dim == 3) {
       GMSHTetrahedron tet;
       tet.physicalTag = elementToPhysicalEntity[iElement];
       for (int i = 0; i < 4; ++i) {
         tet.vertexIndices[static_cast<std::size_t>(i)] =
-            vertexMapper.subIndex(element, i, 3);
+            vertexMapper.subIndex(element, i, dim);
       }
       mesh.tetrahedra.push_back(tet);
+    } else {
+      GMSHTriangle tri;
+      tri.physicalTag = elementToPhysicalEntity[iElement];
+      for (int i = 0; i < 3; ++i) {
+        tri.vertexIndices[static_cast<std::size_t>(i)] =
+            vertexMapper.subIndex(element, i, dim);
+      }
+      mesh.triangles.push_back(tri);
     }
   }
 
-  if (mesh.vertices.empty() || mesh.tetrahedra.empty()) {
-    SPDLOG_ERROR("No tetrahedra found in gmsh file '{}'",
-                 filename.toStdString());
-    return std::nullopt;
+  const bool hasNoElements =
+      dim == 3 ? mesh.tetrahedra.empty() : mesh.triangles.empty();
+  if (mesh.vertices.empty() || hasNoElements) {
+    return {.mesh = std::nullopt,
+            .error =
+                std::string("no ") + (dim == 3 ? "tetrahedra" : "triangles")};
   }
-  return mesh;
+  return {.mesh = mesh, .error = {}};
+}
+
+[[nodiscard]] std::vector<int> getSortedPhysicalTags(const GMSHMesh &mesh) {
+  std::vector<int> sortedTags;
+  sortedTags.reserve(mesh.tetrahedra.size() + mesh.triangles.size());
+  for (const auto &tet : mesh.tetrahedra) {
+    if (std::ranges::find(sortedTags, tet.physicalTag) == sortedTags.cend()) {
+      sortedTags.push_back(tet.physicalTag);
+    }
+  }
+  for (const auto &tri : mesh.triangles) {
+    if (std::ranges::find(sortedTags, tri.physicalTag) == sortedTags.cend()) {
+      sortedTags.push_back(tri.physicalTag);
+    }
+  }
+  std::ranges::sort(sortedTags);
+  return sortedTags;
+}
+
+} // namespace
+
+std::optional<GMSHMesh> readGMSHMesh(const QString &filename) {
+  common::ScopedCLocale scopedCLocale;
+  const auto read3d = readGMSHMeshDim<3>(filename);
+  if (read3d.mesh.has_value()) {
+    return read3d.mesh;
+  }
+  const auto read2d = readGMSHMeshDim<2>(filename);
+  if (read2d.mesh.has_value()) {
+    return read2d.mesh;
+  }
+  QStringList details;
+  if (!read3d.error.empty()) {
+    details.push_back(QString("3d: %1").arg(read3d.error.c_str()));
+  }
+  if (!read2d.error.empty()) {
+    details.push_back(QString("2d: %1").arg(read2d.error.c_str()));
+  }
+  SPDLOG_ERROR("Failed to parse gmsh file '{}'", filename.toStdString());
+  if (!details.empty()) {
+    SPDLOG_ERROR("{}", details.join("; ").toStdString());
+  }
+  return std::nullopt;
 }
 
 common::ImageStack voxelizeGMSHMesh(const GMSHMesh &mesh,
                                     int maxVoxelsPerDimension,
                                     bool includeBackground) {
-  if (mesh.vertices.empty() || mesh.tetrahedra.empty()) {
+  if (mesh.vertices.empty() ||
+      (mesh.tetrahedra.empty() && mesh.triangles.empty())) {
     return {};
   }
 
-  std::vector<int> compartmentTags;
-  compartmentTags.reserve(mesh.tetrahedra.size());
-  for (const auto &tet : mesh.tetrahedra) {
-    if (std::ranges::find(compartmentTags, tet.physicalTag) ==
-        std::end(compartmentTags)) {
-      compartmentTags.push_back(tet.physicalTag);
-    }
-  }
-  std::ranges::sort(compartmentTags);
+  const auto compartmentTags = getSortedPhysicalTags(mesh);
   if (compartmentTags.empty()) {
     return {};
   }
@@ -327,11 +410,14 @@ common::ImageStack voxelizeGMSHMesh(const GMSHMesh &mesh,
   const double width = std::max(0.0, meshMax.x - meshMin.x);
   const double height = std::max(0.0, meshMax.y - meshMin.y);
   const double depth = std::max(0.0, meshMax.z - meshMin.z);
-  const double maxExtent = std::max({width, height, depth});
+  const double maxExtent = mesh.tetrahedra.empty()
+                               ? std::max(width, height)
+                               : std::max({width, height, depth});
   const int nMax = std::max(maxVoxelsPerDimension, 1);
   const int nx = getImageDimension(width, maxExtent, nMax);
   const int ny = getImageDimension(height, maxExtent, nMax);
-  const int nz = getImageDimension(depth, maxExtent, nMax);
+  const int nz =
+      mesh.tetrahedra.empty() ? 1 : getImageDimension(depth, maxExtent, nMax);
 
   common::ImageStack images({nx, ny, static_cast<std::size_t>(nz)},
                             QImage::Format_RGB32);
@@ -341,34 +427,38 @@ common::ImageStack voxelizeGMSHMesh(const GMSHMesh &mesh,
       {voxelSize(width, nx), voxelSize(height, ny), voxelSize(depth, nz)});
 
   for (const auto &tet : mesh.tetrahedra) {
-    std::array<Point3d, 4> vertices;
-    for (std::size_t i = 0; i < vertices.size(); ++i) {
+    std::array<Point3d, 4> tetVertices;
+    for (std::size_t i = 0; i < tetVertices.size(); ++i) {
       if (tet.vertexIndices[i] >= mesh.vertices.size()) {
         SPDLOG_ERROR("Invalid tetrahedron vertex index {}",
                      tet.vertexIndices[i]);
         return {};
       }
-      vertices[i] = toPoint3d(mesh.vertices[tet.vertexIndices[i]]);
+      tetVertices[i] = toPoint3d(mesh.vertices[tet.vertexIndices[i]]);
     }
-    Point3d bboxMin = vertices[0];
-    Point3d bboxMax = vertices[0];
-    for (std::size_t i = 1; i < vertices.size(); ++i) {
-      bboxMin.x = std::min(bboxMin.x, vertices[i].x);
-      bboxMin.y = std::min(bboxMin.y, vertices[i].y);
-      bboxMin.z = std::min(bboxMin.z, vertices[i].z);
-      bboxMax.x = std::max(bboxMax.x, vertices[i].x);
-      bboxMax.y = std::max(bboxMax.y, vertices[i].y);
-      bboxMax.z = std::max(bboxMax.z, vertices[i].z);
+    Point3d bboxMin = tetVertices[0];
+    Point3d bboxMax = tetVertices[0];
+    for (std::size_t i = 1; i < tetVertices.size(); ++i) {
+      bboxMin.x = std::min(bboxMin.x, tetVertices[i].x);
+      bboxMin.y = std::min(bboxMin.y, tetVertices[i].y);
+      bboxMin.z = std::min(bboxMin.z, tetVertices[i].z);
+      bboxMax.x = std::max(bboxMax.x, tetVertices[i].x);
+      bboxMax.y = std::max(bboxMax.y, tetVertices[i].y);
+      bboxMax.z = std::max(bboxMax.z, tetVertices[i].z);
     }
-    const std::array<double, 9> m{
-        vertices[1].x - vertices[0].x, vertices[2].x - vertices[0].x,
-        vertices[3].x - vertices[0].x, vertices[1].y - vertices[0].y,
-        vertices[2].y - vertices[0].y, vertices[3].y - vertices[0].y,
-        vertices[1].z - vertices[0].z, vertices[2].z - vertices[0].z,
-        vertices[3].z - vertices[0].z};
+    const std::array<double, 9> m{tetVertices[1].x - tetVertices[0].x,
+                                  tetVertices[2].x - tetVertices[0].x,
+                                  tetVertices[3].x - tetVertices[0].x,
+                                  tetVertices[1].y - tetVertices[0].y,
+                                  tetVertices[2].y - tetVertices[0].y,
+                                  tetVertices[3].y - tetVertices[0].y,
+                                  tetVertices[1].z - tetVertices[0].z,
+                                  tetVertices[2].z - tetVertices[0].z,
+                                  tetVertices[3].z - tetVertices[0].z};
     const auto invM = inverse3x3(m);
     if (!invM.has_value()) {
-      continue;
+      SPDLOG_ERROR("Degenerate tetrahedron encountered during voxelization");
+      return {};
     }
     auto [xMin, xMax] =
         voxelIndexRange(bboxMin.x, bboxMax.x, meshMin.x, width, nx);
@@ -391,7 +481,50 @@ common::ImageStack voxelizeGMSHMesh(const GMSHMesh &mesh,
         const int py = ny - 1 - iy;
         for (int ix = xMin; ix <= xMax; ++ix) {
           const double x = voxelCenterCoordinate(ix, meshMin.x, width, nx);
-          if (pointInsideTetrahedron({x, y, z}, vertices, *invM)) {
+          if (pointInsideTetrahedron({x, y, z}, tetVertices, *invM)) {
+            img.setPixel(ix, py, colorIter->second);
+          }
+        }
+      }
+    }
+  }
+  if (!mesh.triangles.empty()) {
+    auto &img = images[0];
+    for (const auto &tri : mesh.triangles) {
+      std::array<Point3d, 3> triVertices;
+      for (std::size_t i = 0; i < triVertices.size(); ++i) {
+        if (tri.vertexIndices[i] >= mesh.vertices.size()) {
+          SPDLOG_ERROR("Invalid triangle vertex index {}",
+                       tri.vertexIndices[i]);
+          return {};
+        }
+        triVertices[i] = toPoint3d(mesh.vertices[tri.vertexIndices[i]]);
+      }
+      Point3d bboxMin = triVertices[0];
+      Point3d bboxMax = triVertices[0];
+      for (std::size_t i = 1; i < triVertices.size(); ++i) {
+        bboxMin.x = std::min(bboxMin.x, triVertices[i].x);
+        bboxMin.y = std::min(bboxMin.y, triVertices[i].y);
+        bboxMax.x = std::max(bboxMax.x, triVertices[i].x);
+        bboxMax.y = std::max(bboxMax.y, triVertices[i].y);
+      }
+      auto [xMin, xMax] =
+          voxelIndexRange(bboxMin.x, bboxMax.x, meshMin.x, width, nx);
+      auto [yMin, yMax] =
+          voxelIndexRange(bboxMin.y, bboxMax.y, meshMin.y, height, ny);
+      auto colorIter = tagToColor.find(tri.physicalTag);
+      if (colorIter == tagToColor.cend()) {
+        return {};
+      }
+      if (xMin > xMax || yMin > yMax) {
+        continue;
+      }
+      for (int iy = yMin; iy <= yMax; ++iy) {
+        const double y = voxelCenterCoordinate(iy, meshMin.y, height, ny);
+        const int py = ny - 1 - iy;
+        for (int ix = xMin; ix <= xMax; ++ix) {
+          const double x = voxelCenterCoordinate(ix, meshMin.x, width, nx);
+          if (pointInsideTriangle2d(x, y, triVertices)) {
             img.setPixel(ix, py, colorIter->second);
           }
         }

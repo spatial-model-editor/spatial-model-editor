@@ -2,6 +2,7 @@
 #include "dialogimportgeometrygmsh.hpp"
 #include "qt_test_utils.hpp"
 #include <QCheckBox>
+#include <QComboBox>
 #include <QDialogButtonBox>
 #include <QFile>
 #include <QPushButton>
@@ -16,11 +17,13 @@ struct DialogImportGeometryGmshWidgets {
   explicit DialogImportGeometryGmshWidgets(
       const DialogImportGeometryGmsh *dialog) {
     GET_DIALOG_WIDGET(QSpinBox, spinMaxDimension);
+    GET_DIALOG_WIDGET(QComboBox, cmbMeshType);
     GET_DIALOG_WIDGET(QCheckBox, chkIncludeBackground);
     GET_DIALOG_WIDGET(QDialogButtonBox, buttonBox);
   }
 
   QSpinBox *spinMaxDimension{};
+  QComboBox *cmbMeshType{};
   QCheckBox *chkIncludeBackground{};
   QDialogButtonBox *buttonBox{};
 };
@@ -65,6 +68,9 @@ TEST_CASE(
     DialogImportGeometryGmshWidgets widgets(&dia);
 
     REQUIRE(dia.getImage().empty());
+    REQUIRE(dia.getMesh().has_value() == false);
+    REQUIRE(dia.getMeshSourceType() ==
+            sme::model::MeshSourceType::VoxelGeometry);
     REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
             false);
 
@@ -97,6 +103,14 @@ $EndElements
     DialogImportGeometryGmshWidgets widgets(&dia);
 
     REQUIRE(!dia.getImage().empty());
+    REQUIRE(dia.getMesh().has_value() == true);
+    REQUIRE(widgets.cmbMeshType->count() == 2);
+    REQUIRE(dia.getMeshSourceType() ==
+            sme::model::MeshSourceType::VoxelGeometry);
+    widgets.cmbMeshType->setCurrentIndex(
+        static_cast<int>(sme::model::MeshSourceType::FixedImportedMesh));
+    REQUIRE(dia.getMeshSourceType() ==
+            sme::model::MeshSourceType::FixedImportedMesh);
     REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
             true);
     REQUIRE(dia.getImage().volume().width() == 20);
@@ -110,6 +124,55 @@ $EndElements
     REQUIRE(dia.getImage().volume().width() == 10);
     REQUIRE(dia.getImage().volume().height() == 10);
     REQUIRE(dia.getImage().volume().depth() == 10);
+
+    QFile::remove(filename);
+  }
+
+  SECTION("valid 2d triangle mesh imports as single-slice geometry") {
+    const QString gmsh = R"($MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+4
+1 0 0 0
+2 1 0 0
+3 0 1 0
+4 1 1 0
+$EndNodes
+$Elements
+2
+1 2 2 3 3 1 2 3
+2 2 2 5 5 2 4 3
+$EndElements
+)";
+    auto filename = writeTmpFile("tmp_two_triangles_for_dialog.msh", gmsh);
+    REQUIRE(QFile::exists(filename));
+
+    DialogImportGeometryGmsh dia(20, filename);
+    dia.show();
+    waitFor(&dia);
+    DialogImportGeometryGmshWidgets widgets(&dia);
+
+    REQUIRE(!dia.getImage().empty());
+    REQUIRE(dia.getMesh().has_value() == true);
+    REQUIRE(dia.getMesh()->tetrahedra.empty());
+    REQUIRE(dia.getMesh()->triangles.size() == 2);
+    REQUIRE(dia.getMeshSourceType() ==
+            sme::model::MeshSourceType::VoxelGeometry);
+    widgets.cmbMeshType->setCurrentIndex(
+        static_cast<int>(sme::model::MeshSourceType::FixedImportedMesh));
+    REQUIRE(dia.getMeshSourceType() ==
+            sme::model::MeshSourceType::FixedImportedMesh);
+    REQUIRE(widgets.buttonBox->button(QDialogButtonBox::Ok)->isEnabled() ==
+            true);
+    REQUIRE(dia.getImage().volume().width() == 20);
+    REQUIRE(dia.getImage().volume().height() == 20);
+    REQUIRE(dia.getImage().volume().depth() == 1);
+
+    widgets.spinMaxDimension->setValue(10);
+    REQUIRE(dia.getImage().volume().width() == 10);
+    REQUIRE(dia.getImage().volume().height() == 10);
+    REQUIRE(dia.getImage().volume().depth() == 1);
 
     QFile::remove(filename);
   }

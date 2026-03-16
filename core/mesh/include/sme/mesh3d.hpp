@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sme/gmsh.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/mesh_types.hpp"
 #include <QImage>
@@ -11,6 +12,7 @@
 #include <array>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,10 +40,17 @@ private:
       membraneTriangleVertexIndices_;
   std::vector<std::uint8_t> labelToCompartmentIndex_;
   std::vector<std::uint8_t> compartmentsToMembraneIndex_;
+  bool hasFixedTopology_{false};
+  common::Volume imageSize_{};
+  std::vector<sme::common::VoxelF> sourceVertices_;
+  common::VoxelF sourceMin_{};
+  common::VolumeF sourceSize_{};
   bool validMesh_{false};
   std::vector<QRgb> colors_;
   std::string errorMessage_{};
   void constructMesh();
+  void updateFixedMeshVertices(const common::VolumeF &voxelSize,
+                               const common::VoxelF &originPoint);
 
 public:
   Mesh3d();
@@ -60,6 +69,26 @@ public:
   explicit Mesh3d(
       const sme::common::ImageStack &imageStack,
       std::vector<std::size_t> maxCellVolume = {},
+      const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
+      const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
+      const std::vector<QRgb> &compartmentColors = {},
+      const std::vector<std::pair<std::string, std::pair<QRgb, QRgb>>>
+          &membraneIdColorPairs = {});
+  /**
+   * @brief Construct a fixed 3d mesh from imported Gmsh tetrahedra.
+   *
+   * @param[in] gmshMesh imported Gmsh tetrahedral mesh
+   * @param[in] colorTagPairs mapping from compartment color to Gmsh tag
+   * @param[in] imageSize voxel image dimensions used for physical scaling
+   * @param[in] voxelSize physical size of a voxel
+   * @param[in] originPoint physical location of voxel ``(0,0,0)``
+   * @param[in] compartmentColors model compartment colors
+   * @param[in] membraneIdColorPairs model membrane color pairs
+   */
+  explicit Mesh3d(
+      const GMSHMesh &gmshMesh,
+      const std::vector<std::pair<QRgb, int>> &colorTagPairs,
+      const common::Volume &imageSize,
       const common::VolumeF &voxelSize = {1.0, 1.0, 1.0},
       const common::VoxelF &originPoint = {0.0, 0.0, 0.0},
       const std::vector<QRgb> &compartmentColors = {},

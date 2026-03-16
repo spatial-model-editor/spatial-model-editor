@@ -149,6 +149,61 @@ $EndElements
     REQUIRE(gmshMesh.has_value());
   }
 
+  SECTION("degenerate tetrahedron fails voxelization") {
+    mesh::GMSHMesh gmshMesh;
+    gmshMesh.vertices = {
+        {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 1.0, 0.0}};
+    gmshMesh.tetrahedra = {{{0, 1, 2, 3}, 1}};
+
+    auto img = mesh::voxelizeGMSHMesh(gmshMesh, 20, true);
+    REQUIRE(img.empty());
+  }
+
+  SECTION("2d triangles parse and rasterize to depth-1 image") {
+    const QString gmsh = R"($MeshFormat
+2.2 0 8
+$EndMeshFormat
+$Nodes
+4
+1 0 0 0
+2 1 0 0
+3 0 1 0
+4 1 1 0
+$EndNodes
+$Elements
+2
+1 2 2 3 3 1 2 3
+2 2 2 5 5 2 4 3
+$EndElements
+)";
+    auto filename = writeTmpFile("tmp_two_triangles.msh", gmsh);
+    REQUIRE(QFile::exists(filename));
+    auto gmshMesh = mesh::readGMSHMesh(filename);
+    REQUIRE(gmshMesh.has_value());
+    REQUIRE(gmshMesh->vertices.size() == 4);
+    REQUIRE(gmshMesh->tetrahedra.empty());
+    REQUIRE(gmshMesh->triangles.size() == 2);
+
+    auto img = mesh::voxelizeGMSHMesh(*gmshMesh, 20, true);
+    REQUIRE(!img.empty());
+    REQUIRE(img.volume().width() == 20);
+    REQUIRE(img.volume().height() == 20);
+    REQUIRE(img.volume().depth() == 1);
+
+    std::set<QRgb> nonBackgroundColors;
+    for (int y = 0; y < img.volume().height(); ++y) {
+      for (int x = 0; x < img.volume().width(); ++x) {
+        const auto px = img[0].pixel(x, y);
+        if (px != qRgb(0, 0, 0)) {
+          nonBackgroundColors.insert(px);
+        }
+      }
+    }
+    REQUIRE(nonBackgroundColors.size() == 2);
+    REQUIRE(nonBackgroundColors.contains(common::indexedColors()[0].rgb()));
+    REQUIRE(nonBackgroundColors.contains(common::indexedColors()[1].rgb()));
+  }
+
   SECTION("multiple compartments use indexed colors in ascending tag order") {
     const QString gmsh = R"($MeshFormat
 2.2 0 8
