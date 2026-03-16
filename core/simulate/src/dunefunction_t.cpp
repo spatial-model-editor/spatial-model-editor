@@ -51,7 +51,7 @@ static void setAnalyticInitialConc(sme::model::Model &m) {
   // set initial concentration from analytic expression
   for (const auto &compId : m.getCompartments().getIds()) {
     for (const auto &id : m.getSpecies().getIds(compId)) {
-      if (!m.getSpecies().getIsConstant(id)) {
+      if (m.getSpecies().isSimulatedSpecies(id)) {
         m.getSpecies().setAnalyticConcentration(id,
                                                 "sqrt(1.0 + x*x + y*y + z*z)");
       }

@@ -39,16 +39,104 @@ TEST_CASE("SBML species",
     // also make it constant
     s.setIsConstant("B_c3", true);
     REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
-    // making a species constant also implies making it non-spatial
+    // constant spatial species are allowed
     REQUIRE(s.getIsSpatial("B_c2") == true);
     s.setIsConstant("B_c2", true);
     REQUIRE(s.getIsConstant("B_c2") == true);
-    REQUIRE(s.getIsSpatial("B_c2") == false);
+    REQUIRE(s.getIsSpatial("B_c2") == true);
     REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
     s.setIsConstant("B_c2", false);
     REQUIRE(s.getIsConstant("B_c2") == false);
-    REQUIRE(s.getIsSpatial("B_c2") == false);
-    REQUIRE(s.containsNonSpatialReactiveSpecies() == true);
+    REQUIRE(s.getIsSpatial("B_c2") == true);
+    REQUIRE(s.containsNonSpatialReactiveSpecies() == false);
+  }
+  SECTION("Constant spatial species preserve spatial initial conditions") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    const auto nVoxels{static_cast<std::size_t>(
+        m.getGeometry().getImages().volume().nVoxels())};
+
+    s.setIsConstant("A_c1", true);
+    s.setIsSpatial("A_c1", true);
+    REQUIRE(s.getIsConstant("A_c1") == true);
+    REQUIRE(s.getIsSpatial("A_c1") == true);
+
+    std::vector<double> sampledField(nVoxels, 0.0);
+    const auto *comp = m.getCompartments().getCompartment("c1");
+    std::size_t i{0};
+    for (const auto &voxel : comp->getVoxels()) {
+      const auto arrayIndex = common::voxelArrayIndex(
+          m.getGeometry().getImages().volume(), voxel, true);
+      sampledField[arrayIndex] = static_cast<double>(i++ % 7);
+    }
+    s.setSampledFieldConcentration("A_c1", sampledField);
+    s.setIsConstant("A_c1", true);
+    const auto storedSampledField{s.getSampledFieldConcentration("A_c1")};
+    REQUIRE(s.getIsConstant("A_c1") == true);
+    REQUIRE(s.getIsSpatial("A_c1") == true);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Image);
+    REQUIRE(storedSampledField != std::vector<double>(nVoxels, 0.0));
+
+    model::Model mImageRoundTrip;
+    mImageRoundTrip.importSBMLString(m.getXml().toStdString());
+    REQUIRE(mImageRoundTrip.getSpecies().getIsConstant("A_c1") == true);
+    REQUIRE(mImageRoundTrip.getSpecies().getIsSpatial("A_c1") == true);
+    REQUIRE(mImageRoundTrip.getSpecies().getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Image);
+    REQUIRE(mImageRoundTrip.getSpecies().getSampledFieldConcentration("A_c1") ==
+            storedSampledField);
+
+    s.setAnalyticConcentration("A_c1", "x");
+    s.setIsConstant("A_c1", true);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Analytic);
+    REQUIRE(symEq(s.getAnalyticConcentration("A_c1"), "x"));
+
+    model::Model mAnalyticRoundTrip;
+    mAnalyticRoundTrip.importSBMLString(m.getXml().toStdString());
+    REQUIRE(mAnalyticRoundTrip.getSpecies().getIsConstant("A_c1") == true);
+    REQUIRE(mAnalyticRoundTrip.getSpecies().getIsSpatial("A_c1") == true);
+    REQUIRE(mAnalyticRoundTrip.getSpecies().getInitialConcentrationType(
+                "A_c1") == model::SpatialDataType::Analytic);
+    REQUIRE(symEq(
+        mAnalyticRoundTrip.getSpecies().getAnalyticConcentration("A_c1"), "x"));
+  }
+  SECTION(
+      "Switching a species to non-spatial resets initial concentration type") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+
+    s.setAnalyticConcentration("A_c1", "x");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Analytic);
+    s.setIsSpatial("A_c1", false);
+    REQUIRE(s.getIsSpatial("A_c1") == false);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Uniform);
+    REQUIRE(s.getField("A_c1")->getIsUniformConcentration() == true);
+    REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
+
+    s.setIsSpatial("A_c1", true);
+    const auto nVoxels{static_cast<std::size_t>(
+        m.getGeometry().getImages().volume().nVoxels())};
+    std::vector<double> sampledField(nVoxels, 0.0);
+    const auto *comp = m.getCompartments().getCompartment("c1");
+    std::size_t i{0};
+    for (const auto &voxel : comp->getVoxels()) {
+      const auto arrayIndex = common::voxelArrayIndex(
+          m.getGeometry().getImages().volume(), voxel, true);
+      sampledField[arrayIndex] = static_cast<double>(i++ % 5);
+    }
+    s.setSampledFieldConcentration("A_c1", sampledField);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Image);
+    s.setIsSpatial("A_c1", false);
+    REQUIRE(s.getIsSpatial("A_c1") == false);
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Uniform);
+    REQUIRE(s.getField("A_c1")->getIsUniformConcentration() == true);
+    REQUIRE(s.getInitialConcentration("A_c1") == dbl_approx(1.0));
   }
   SECTION("Remove species also removes dependents") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
@@ -115,8 +203,7 @@ TEST_CASE("SBML species",
     REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.1));
 
     // make species B_c3 constant
-    // this resets any existing simulation data (as non-constant species number
-    // has changed, invalidating existing simulation data)
+    // this resets any existing simulation data
     REQUIRE(r.getHasUnsavedChanges() == false);
     REQUIRE(s.getHasUnsavedChanges() == false);
     s.setIsConstant("B_c3", true);

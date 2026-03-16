@@ -52,7 +52,7 @@ void SteadyStateSimulation::initModel() {
     std::vector<QRgb> cols;
     const geometry::Compartment *comp = nullptr;
     for (const auto &s : m_model.getSpecies().getIds(compartmentId)) {
-      if (!m_model.getSpecies().getIsConstant(s)) {
+      if (m_model.getSpecies().isSimulatedSpecies(s)) {
         sIds.push_back(s.toStdString());
         const auto &field = m_model.getSpecies().getField(s);
         cols.push_back(field->getColor());

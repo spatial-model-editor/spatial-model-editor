@@ -144,6 +144,7 @@ SimCompartment::SimCompartment(
   dz2 = voxelSize.depth() * voxelSize.depth();
   for (const auto &s : speciesIds) {
     const auto *field = doc.getSpecies().getField(s.c_str());
+    const bool speciesIsConstant = doc.getSpecies().getIsConstant(s.c_str());
     double storageValue = doc.getSpecies().getStorage(s.c_str());
     if (storageValue < 0.0) {
       throw PixelSimImplError("Invalid negative storage value for species '" +
@@ -164,7 +165,8 @@ SimCompartment::SimCompartment(
     }
     if (useUniformDiffusionOperator) {
       const auto &diffArray = field->getDiffusionConstant();
-      double d = diffArray.empty() ? 0.0 : diffArray.front();
+      double d =
+          speciesIsConstant || diffArray.empty() ? 0.0 : diffArray.front();
       diffConstantsUniform.push_back(
           {d / dx2, d / dy2, d / dz2}); // dimensionless diffusion
       if (storageValue == 0.0) {
@@ -190,7 +192,11 @@ SimCompartment::SimCompartment(
       maxPrimaryDiagonalDiffusion.push_back(d);
     } else {
       // store diffusion constant per voxel
-      diffConstants.push_back(field->getDiffusionConstant());
+      if (speciesIsConstant) {
+        diffConstants.emplace_back(nPixels, 0.0);
+      } else {
+        diffConstants.push_back(field->getDiffusionConstant());
+      }
       if (diffConstants.back().empty()) {
         diffConstants.back().assign(nPixels, 0.0);
       }
@@ -279,6 +285,9 @@ SimCompartment::SimCompartment(
   std::vector<std::string> crossDiffusionExpressions;
   for (std::size_t iTarget = 0; iTarget < nPrimarySpecies; ++iTarget) {
     const QString targetSpeciesId{speciesIds[iTarget].c_str()};
+    if (doc.getSpecies().getIsConstant(targetSpeciesId)) {
+      continue;
+    }
     for (std::size_t iSource = 0; iSource < nPrimarySpecies; ++iSource) {
       if (iSource == iTarget) {
         continue;

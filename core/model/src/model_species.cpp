@@ -534,11 +534,10 @@ void ModelSpecies::setIsSpatial(const QString &id, bool isSpatial) {
   }
   hasUnsavedChanges = true;
   ssp->setIsSpatial(isSpatial);
-  if (isSpatial) {
-    // for now spatial species cannot be constant
-    setIsConstant(id, false);
-  } else {
+  if (!isSpatial) {
     removeInitialAssignment(id);
+    fields[static_cast<std::size_t>(i)].setUniformConcentration(
+        spec->getInitialConcentration());
     setDiffusionConstant(id, 0.0);
   }
 }
@@ -1033,9 +1032,8 @@ void ModelSpecies::setIsConstant(const QString &id, bool constant) {
   species->setConstant(constant);
   SPDLOG_INFO("Clearing simulation data");
   simulationData->clear();
-  if (constant) {
-    // for now: constant species must be non-spatial
-    setIsSpatial(id, false);
+  if (constant && sbmlAnnotation != nullptr) {
+    sbmlAnnotation->speciesCrossDiffusionConstants.erase(id.toStdString());
   }
   // todo: think about how to deal with boundaryCondition properly
   // for now, just set it to false here
@@ -1046,6 +1044,14 @@ void ModelSpecies::setIsConstant(const QString &id, bool constant) {
 bool ModelSpecies::getIsConstant(const QString &id) const {
   const auto *spec = sbmlModel->getSpecies(id.toStdString());
   return getIsSpeciesConstant(spec);
+}
+
+bool ModelSpecies::isScalarConstantSpecies(const QString &id) const {
+  return getIsConstant(id) && !getIsSpatial(id);
+}
+
+bool ModelSpecies::isSimulatedSpecies(const QString &id) const {
+  return !isScalarConstantSpecies(id);
 }
 
 bool ModelSpecies::isReactive(const QString &id) const {

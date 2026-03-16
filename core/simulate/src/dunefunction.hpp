@@ -75,7 +75,7 @@ private:
 };
 
 /**
- * @brief Build DUNE grid functions for each non-constant species.
+ * @brief Build DUNE grid functions for each simulated species.
  */
 template <typename Grid, typename GridFunction>
 std::unordered_map<std::string, GridFunction>

@@ -25,7 +25,7 @@ void Simulation::initModel() {
     std::vector<QRgb> cols;
     const geometry::Compartment *comp = nullptr;
     for (const auto &s : model.getSpecies().getIds(compartmentId)) {
-      if (!model.getSpecies().getIsConstant(s)) {
+      if (model.getSpecies().isSimulatedSpecies(s)) {
         sIds.push_back(s.toStdString());
         const auto &field = model.getSpecies().getField(s);
         cols.push_back(field->getColor());

@@ -59,19 +59,19 @@ makeValidDuneSpeciesNames(const std::vector<std::string> &names) {
   return duneNames;
 }
 
-bool compartmentContainsNonConstantSpecies(const model::Model &model,
-                                           const QString &compId) {
+bool compartmentContainsSimulatedSpecies(const model::Model &model,
+                                         const QString &compId) {
   const auto &specs = model.getSpecies().getIds(compId);
   return std::ranges::any_of(specs, [m = &model](const auto &s) {
-    return !m->getSpecies().getIsConstant(s);
+    return m->getSpecies().isSimulatedSpecies(s);
   });
 }
 
-std::vector<std::string> getNonConstantSpecies(const model::Model &model,
-                                               const QString &compId) {
+std::vector<std::string> getSimulatedSpecies(const model::Model &model,
+                                             const QString &compId) {
   std::vector<std::string> v;
   for (const auto &s : model.getSpecies().getIds(compId)) {
-    if (!model.getSpecies().getIsConstant(s)) {
+    if (model.getSpecies().isSimulatedSpecies(s)) {
       v.push_back(s.toStdString());
     }
   }
