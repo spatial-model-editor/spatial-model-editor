@@ -4,6 +4,7 @@
 ### Added
 - allow constant species to have spatially varying concentrations [#1133](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
 - support for importing and exporting 2d and 3d Parametric geometry [#1132](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
+- add species concentration plot to the image slice dialog [#1134](https://github.com/spatial-model-editor/spatial-model-editor/issues/1134)
 
 ## [1.11.0] - 2026-02-04
 ### Added

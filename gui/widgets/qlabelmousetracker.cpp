@@ -233,19 +233,23 @@ static std::vector<int> getScaleEdgePixels(int nPixels, int pixelStep) {
   return edgePixels;
 }
 
-static QSize getPixmapSize(const QSize &displaySize,
-                           double physicalAspectRatio) {
+static QSize getPixmapSize(const QSize &displaySize, double physicalAspectRatio,
+                           Qt::AspectRatioMode aspectRatioMode) {
+  int width{std::max(1, displaySize.width())};
+  int height{std::max(1, displaySize.height())};
+  if (aspectRatioMode == Qt::IgnoreAspectRatio ||
+      !std::isfinite(physicalAspectRatio) || physicalAspectRatio <= 0.0) {
+    return {width, height};
+  }
   double displayAspectRatio{static_cast<double>(displaySize.width()) /
                             static_cast<double>(displaySize.height())};
   if (displayAspectRatio > physicalAspectRatio) {
     return {std::max(1, static_cast<int>(displaySize.height() *
                                          physicalAspectRatio)),
-            displaySize.height()};
+            height};
   }
-  return {
-      displaySize.width(),
-      std::max(1, static_cast<int>(displaySize.width() / physicalAspectRatio)),
-  };
+  return {width, std::max(1, static_cast<int>(displaySize.width() /
+                                              physicalAspectRatio))};
 }
 
 void QLabelMouseTracker::resizeImage(const QSize &size) {
@@ -270,8 +274,9 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
   QSize availableSize{size};
   availableSize.rwidth() -= offset.x();
   availableSize.rheight() -= offset.y();
-  pixmapImageSize = getPixmapSize(availableSize,
-                                  physicalSize.width() / physicalSize.height());
+  pixmapImageSize =
+      getPixmapSize(availableSize, physicalSize.width() / physicalSize.height(),
+                    aspectRatioMode);
   const auto &srcImage{image[currentVoxel.z]};
   double sx{static_cast<double>(pixmapImageSize.width()) /
             static_cast<double>(srcImage.width())};
@@ -369,6 +374,19 @@ void QLabelMouseTracker::resizeImage(const QSize &size) {
       }
     }
   }
+  if (verticalIndicatorSourceX >= 0 &&
+      verticalIndicatorSourceX < srcImage.width()) {
+    QPen indicatorPen(Qt::black);
+    indicatorPen.setCosmetic(true);
+    p.setPen(indicatorPen);
+    int x{std::clamp(static_cast<int>(std::lround(
+                         (static_cast<double>(verticalIndicatorSourceX) + 0.5) *
+                         static_cast<double>(pixmapImageSize.width()) /
+                         static_cast<double>(srcImage.width()))) -
+                         1,
+                     0, pixmapImageSize.width() - 1)};
+    p.drawLine(offset.x() + x, 0, offset.x() + x, pixmapImageSize.height() - 1);
+  }
   p.end();
   this->setPixmap(pixmap);
 }
@@ -380,6 +398,14 @@ void QLabelMouseTracker::setAspectRatioMode(Qt::AspectRatioMode mode) {
 
 void QLabelMouseTracker::setTransformationMode(Qt::TransformationMode mode) {
   transformationMode = mode;
+  resizeImage(size());
+}
+
+void QLabelMouseTracker::setVerticalIndicatorSourceX(int sourceX) {
+  if (verticalIndicatorSourceX == sourceX) {
+    return;
+  }
+  verticalIndicatorSourceX = sourceX;
   resizeImage(size());
 }
 

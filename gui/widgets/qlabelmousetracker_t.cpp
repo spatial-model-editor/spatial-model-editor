@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include <algorithm>
 #include <cmath>
 
 using namespace sme::test;
@@ -68,6 +69,7 @@ TEST_CASE("QLabelMouseTracker: 3x3 pixel, 4 color image", tags) {
   img.setPixel(0, 2, col3);
   img.setPixel(1, 1, col4);
   auto imageStack = sme::common::ImageStack{{img}};
+  mouseTracker.setAspectRatioMode(Qt::KeepAspectRatio);
   mouseTracker.setImage(imageStack);
   mouseTracker.show();
   mouseTracker.resize(100, 100);
@@ -362,6 +364,83 @@ TEST_CASE("QLabelMouseTracker: grid spacing aligns to pixel size", tags) {
   for (std::size_t i = 2; i < gridSourceColumns.size(); ++i) {
     REQUIRE(gridSourceColumns[i] - gridSourceColumns[i - 1] == step);
   }
+}
+
+TEST_CASE("QLabelMouseTracker: aspect ratio mode changes displayed image size",
+          tags) {
+  QLabelMouseTracker mouseTracker;
+  QImage img(3, 3, QImage::Format_RGB32);
+  QRgb col{qRgb(12, 243, 154)};
+  img.fill(col);
+  auto imageStack = sme::common::ImageStack{{img}};
+  imageStack.setVoxelSize({1.0, 1.0, 1.0});
+  mouseTracker.show();
+  mouseTracker.resize(200, 100);
+  wait();
+  mouseTracker.setAspectRatioMode(Qt::KeepAspectRatio);
+  mouseTracker.setImage(imageStack);
+
+  std::vector<QRgb> clicks;
+  QObject::connect(&mouseTracker, &QLabelMouseTracker::mouseClicked,
+                   [&clicks](QRgb c) { clicks.push_back(c); });
+
+  sendMouseClick(&mouseTracker, {150, 50});
+  REQUIRE(clicks.empty());
+
+  mouseTracker.setAspectRatioMode(Qt::IgnoreAspectRatio);
+  wait();
+  sendMouseClick(&mouseTracker, {150, 50});
+  REQUIRE(clicks.size() == 1);
+  REQUIRE(clicks.back() == col);
+
+  mouseTracker.setAspectRatioMode(Qt::KeepAspectRatio);
+  wait();
+  sendMouseClick(&mouseTracker, {150, 50});
+  REQUIRE(clicks.size() == 1);
+}
+
+TEST_CASE("QLabelMouseTracker: vertical indicator is a single pixel overlay",
+          tags) {
+  QLabelMouseTracker mouseTracker;
+  QImage img(4, 3, QImage::Format_RGB32);
+  img.fill(Qt::white);
+  auto imageStack = sme::common::ImageStack{{img}};
+
+  auto getBlackColumns = [](const QImage &rendered) {
+    std::vector<int> cols;
+    int y{rendered.height() / 2};
+    for (int x = 0; x < rendered.width(); ++x) {
+      if (rendered.pixelColor(x, y) == QColor(Qt::black)) {
+        cols.push_back(x);
+      }
+    }
+    return cols;
+  };
+
+  mouseTracker.show();
+  mouseTracker.resize(120, 40);
+  wait();
+  mouseTracker.setAspectRatioMode(Qt::IgnoreAspectRatio);
+  mouseTracker.setImage(imageStack);
+
+  auto renderedWithoutIndicator = mouseTracker.QLabel::pixmap().toImage();
+  REQUIRE(getBlackColumns(renderedWithoutIndicator).empty());
+
+  mouseTracker.setVerticalIndicatorSourceX(1);
+  auto renderedWithIndicator = mouseTracker.QLabel::pixmap().toImage();
+  auto blackColumns = getBlackColumns(renderedWithIndicator);
+  REQUIRE(blackColumns.size() == 1);
+  int expectedX{
+      std::clamp(static_cast<int>(std::lround(
+                     1.5 * static_cast<double>(renderedWithIndicator.width()) /
+                     static_cast<double>(img.width()))) -
+                     1,
+                 0, renderedWithIndicator.width() - 1)};
+  REQUIRE(blackColumns[0] == expectedX);
+
+  mouseTracker.setVerticalIndicatorSourceX(-1);
+  auto renderedWithoutIndicatorAgain = mouseTracker.QLabel::pixmap().toImage();
+  REQUIRE(getBlackColumns(renderedWithoutIndicatorAgain).empty());
 }
 
 TEST_CASE("QLabelMouseTracker: scale labels include physical origin", tags) {

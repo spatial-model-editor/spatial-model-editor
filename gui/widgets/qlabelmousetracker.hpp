@@ -38,6 +38,7 @@ public:
   [[nodiscard]] QPointF getRelativePosition() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
+  void setVerticalIndicatorSourceX(int sourceX);
   void setPhysicalUnits(const QString &units);
   void setPhysicalOrigin(const sme::common::VoxelF &origin);
   void displayGrid(bool enable);
@@ -76,6 +77,7 @@ private:
   bool drawGrid{false};
   bool drawScale{false};
   bool flipYAxis{false};
+  int verticalIndicatorSourceX{-1};
   sme::common::VoxelF physicalOrigin{0.0, 0.0, 0.0};
   sme::common::VolumeF physicalSize{1.0, 1.0, 1.0};
   QString lengthUnits{};

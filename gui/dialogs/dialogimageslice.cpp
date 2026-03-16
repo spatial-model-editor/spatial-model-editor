@@ -1,22 +1,49 @@
 #include "dialogimageslice.hpp"
 #include "sme/logger.hpp"
+#include "sme/simulate.hpp"
 #include "ui_dialogimageslice.h"
 #include <QFileDialog>
 #include <algorithm>
+#include <cmath>
+#include <numeric>
+#include <qcustomplot.h>
+#include <utility>
+
+namespace {
+
+void setAxisRange(QCPAxis *axis, double minValue, double maxValue) {
+  if (!std::isfinite(minValue) || !std::isfinite(maxValue)) {
+    axis->setRange(0.0, 1.0);
+    return;
+  }
+  if (minValue > maxValue) {
+    std::swap(minValue, maxValue);
+  }
+  if (minValue == maxValue) {
+    const double padding{minValue == 0.0 ? 1.0 : 0.05 * std::abs(minValue)};
+    axis->setRange(minValue - padding, maxValue + padding);
+    return;
+  }
+  axis->setRange(minValue, maxValue);
+}
+
+} // namespace
 
 DialogImageSlice::DialogImageSlice(
     const sme::common::ImageStack &geometryImage,
     const QVector<sme::common::ImageStack> &images,
-    const QVector<double> &timepoints, bool invertYAxis, QWidget *parent)
+    const QVector<double> &timepoints, bool invertYAxis,
+    DialogImageSlicePlotData plotData, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogImageSlice>()},
-      imgs{images}, time{timepoints},
+      imgs{images}, time{timepoints}, plotData{std::move(plotData)},
       startPoint{0, geometryImage.volume().height() - 1},
       endPoint{geometryImage.volume().width() - 1, 0} {
   ui->setupUi(this);
 
   ui->lblImage->setAspectRatioMode(Qt::IgnoreAspectRatio);
-  ui->lblImage->setTransformationMode(Qt::SmoothTransformation);
+  ui->lblImage->setTransformationMode(Qt::FastTransformation);
   ui->lblSlice->setImage(geometryImage[z_index], invertYAxis);
+  initConcentrationPlot();
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
           &DialogImageSlice::saveSlicedImage);
@@ -51,6 +78,17 @@ DialogImageSlice::DialogImageSlice(
   connect(ui->lblImage, &QLabelMouseTracker::mouseOver, this,
           &DialogImageSlice::lblImage_mouseOver);
 
+  if (!time.isEmpty()) {
+    selectedTimepointIndex = plotData.timepointIndex;
+    if (selectedTimepointIndex < 0 ||
+        selectedTimepointIndex >= static_cast<int>(time.size())) {
+      selectedTimepointIndex = static_cast<int>(time.size()) - 1;
+    }
+    ui->slideTimepoint->setMaximum(static_cast<int>(time.size()) - 1);
+    ui->slideTimepoint->setValue(selectedTimepointIndex);
+  }
+  updateSelectedTimepointText();
+
   // initial slice type: vertical
   ui->cmbSliceType->setCurrentIndex(1);
   cmbSliceType_activated(ui->cmbSliceType->currentIndex());
@@ -59,6 +97,105 @@ DialogImageSlice::DialogImageSlice(
 DialogImageSlice::~DialogImageSlice() = default;
 
 QImage DialogImageSlice::getSlicedImage() const { return slice[0]; }
+
+void DialogImageSlice::initConcentrationPlot() {
+  ui->gridLayout->setRowStretch(2, 1);
+  ui->gridLayoutImagePane->setRowStretch(2, 1);
+  ui->gridLayoutPlotPane->setRowStretch(3, 1);
+  ui->splitter->setStretchFactor(0, 1);
+  ui->splitter->setStretchFactor(1, 2);
+  ui->splitter->setSizes({300, 600});
+  ui->slideTimepoint->setMinimum(0);
+  ui->slideTimepoint->setMaximum(0);
+  ui->slideTimepoint->setEnabled(!time.isEmpty());
+  ui->concentrationPlot->setInteraction(QCP::iRangeDrag, true);
+  ui->concentrationPlot->setInteraction(QCP::iRangeZoom, true);
+  ui->concentrationPlot->setInteraction(QCP::iSelectPlottables, false);
+  ui->concentrationPlot->legend->setVisible(true);
+  ui->splitterImagePlot->setStretchFactor(0, 1);
+  ui->splitterImagePlot->setStretchFactor(1, 0);
+  ui->splitterImagePlot->setSizes({360, 220});
+
+  connect(ui->slideTimepoint, &QSlider::valueChanged, this,
+          &DialogImageSlice::slideTimepoint_valueChanged);
+  connect(ui->chkAutoscaleYAxis, &QCheckBox::toggled, this,
+          [this](bool) { updateConcentrationPlot(); });
+}
+
+void DialogImageSlice::updateSlicePlotData() {
+  const auto &pixels = ui->lblSlice->getSlicePixels();
+  distanceAlongSlice.clear();
+  sliceArrayIndices.clear();
+  distanceAlongSlice.reserve(static_cast<int>(pixels.size()));
+  sliceArrayIndices.reserve(pixels.size());
+  if (pixels.empty()) {
+    fixedAxisRangesValid = false;
+    return;
+  }
+  const auto &voxelSize{imgs[0].voxelSize()};
+  const auto &volume{imgs[0].volume()};
+  double distance{0.0};
+  distanceAlongSlice.push_back(0.0);
+  sliceArrayIndices.push_back(sme::common::voxelArrayIndex(
+      volume, pixels.front().x(), pixels.front().y(), z_index));
+  for (std::size_t i = 1; i < pixels.size(); ++i) {
+    const auto dx{static_cast<double>(pixels[i].x() - pixels[i - 1].x()) *
+                  voxelSize.width()};
+    const auto dy{static_cast<double>(pixels[i].y() - pixels[i - 1].y()) *
+                  voxelSize.height()};
+    distance += std::hypot(dx, dy);
+    distanceAlongSlice.push_back(distance);
+    sliceArrayIndices.push_back(sme::common::voxelArrayIndex(
+        volume, pixels[i].x(), pixels[i].y(), z_index));
+  }
+  fixedAxisRangesValid = false;
+}
+
+void DialogImageSlice::updateFixedAxisRanges() {
+  fixedAxisRangesValid = false;
+  if (plotData.simulation == nullptr || distanceAlongSlice.isEmpty() ||
+      sliceArrayIndices.empty() || time.isEmpty()) {
+    return;
+  }
+
+  fixedXAxisMin = distanceAlongSlice.front();
+  fixedXAxisMax = distanceAlongSlice.back();
+
+  const auto &sim{*plotData.simulation};
+  const bool showAllSpecies{plotData.speciesToDraw.empty()};
+  bool haveYRange{false};
+  for (std::size_t ic = 0; ic < sim.getCompartmentIds().size(); ++ic) {
+    std::vector<std::size_t> speciesIndices;
+    if (showAllSpecies) {
+      speciesIndices.resize(sim.getSpeciesIds(ic).size());
+      std::iota(speciesIndices.begin(), speciesIndices.end(), 0);
+    } else if (ic < plotData.speciesToDraw.size()) {
+      speciesIndices = plotData.speciesToDraw[ic];
+    }
+    for (std::size_t is : speciesIndices) {
+      for (int it = 0; it < time.size(); ++it) {
+        const auto concArray{
+            sim.getConcArray(static_cast<std::size_t>(it), ic, is)};
+        for (std::size_t arrayIndex : sliceArrayIndices) {
+          const double concentration{concArray[arrayIndex]};
+          if (!haveYRange) {
+            fixedYAxisMin = concentration;
+            fixedYAxisMax = concentration;
+            haveYRange = true;
+            continue;
+          }
+          fixedYAxisMin = std::min(fixedYAxisMin, concentration);
+          fixedYAxisMax = std::max(fixedYAxisMax, concentration);
+        }
+      }
+    }
+  }
+  if (!haveYRange) {
+    fixedYAxisMin = 0.0;
+    fixedYAxisMax = 1.0;
+  }
+  fixedAxisRangesValid = true;
+}
 
 void DialogImageSlice::updateSlicedImage() {
   const auto &pixels = ui->lblSlice->getSlicePixels();
@@ -75,7 +212,109 @@ void DialogImageSlice::updateSlicedImage() {
     }
     ++t;
   }
+  updateSlicePlotData();
+  updateDisplayedSlicedImage();
+  updateConcentrationPlot();
+}
+
+void DialogImageSlice::updateDisplayedSlicedImage() {
+  ui->lblImage->setVerticalIndicatorSourceX(
+      time.isEmpty() ? -1 : selectedTimepointIndex);
   ui->lblImage->setImage(slice);
+}
+
+void DialogImageSlice::updateSelectedTimepointText() {
+  QString text;
+  if (!time.isEmpty()) {
+    text = QString("Displayed timepoint: %1").arg(time[selectedTimepointIndex]);
+    if (!plotData.timeUnit.isEmpty()) {
+      text.append(QString(" %1").arg(plotData.timeUnit));
+    }
+  }
+  ui->lblSelectedTimepoint->setText(text);
+}
+
+void DialogImageSlice::updateConcentrationPlot() {
+  ui->concentrationPlot->clearGraphs();
+  ui->concentrationPlot->xAxis->setLabel(
+      plotData.lengthUnit.isEmpty()
+          ? "distance along slice"
+          : QString("distance along slice (%1)").arg(plotData.lengthUnit));
+  ui->concentrationPlot->yAxis->setLabel(
+      plotData.concentrationUnit.isEmpty()
+          ? "concentration"
+          : QString("concentration (%1)").arg(plotData.concentrationUnit));
+  ui->concentrationPlot->legend->setVisible(false);
+  if (plotData.simulation == nullptr || slice.empty() ||
+      ui->lblSlice->getSlicePixels().empty() || time.isEmpty()) {
+    ui->concentrationPlot->replot();
+    return;
+  }
+
+  const auto &sim{*plotData.simulation};
+  const bool showAllSpecies{plotData.speciesToDraw.empty()};
+  const bool multipleCompartments{sim.getCompartmentIds().size() > 1};
+  bool haveCurrentYRange{false};
+  double currentYAxisMin{0.0};
+  double currentYAxisMax{0.0};
+  for (std::size_t ic = 0; ic < sim.getCompartmentIds().size(); ++ic) {
+    std::vector<std::size_t> speciesIndices;
+    if (showAllSpecies) {
+      speciesIndices.resize(sim.getSpeciesIds(ic).size());
+      std::iota(speciesIndices.begin(), speciesIndices.end(), 0);
+    } else if (ic < plotData.speciesToDraw.size()) {
+      speciesIndices = plotData.speciesToDraw[ic];
+    }
+    const auto &speciesNames{sim.getPyNames(ic)};
+    const auto &speciesColors{sim.getSpeciesColors(ic)};
+    for (std::size_t is : speciesIndices) {
+      QVector<double> concentration;
+      concentration.reserve(static_cast<int>(sliceArrayIndices.size()));
+      const auto concArray{sim.getConcArray(
+          static_cast<std::size_t>(selectedTimepointIndex), ic, is)};
+      for (std::size_t arrayIndex : sliceArrayIndices) {
+        const double value{concArray[arrayIndex]};
+        concentration.push_back(value);
+        if (!haveCurrentYRange) {
+          currentYAxisMin = value;
+          currentYAxisMax = value;
+          haveCurrentYRange = true;
+        } else {
+          currentYAxisMin = std::min(currentYAxisMin, value);
+          currentYAxisMax = std::max(currentYAxisMax, value);
+        }
+      }
+      auto *graph{ui->concentrationPlot->addGraph()};
+      graph->setPen(QColor(speciesColors[is]));
+      QString name{QString::fromStdString(speciesNames[is])};
+      if (multipleCompartments) {
+        QString compartmentName{
+            ic < static_cast<std::size_t>(plotData.compartmentNames.size())
+                ? plotData.compartmentNames[static_cast<int>(ic)]
+                : QString::fromStdString(sim.getCompartmentIds()[ic])};
+        name = QString("%1 (%2)").arg(name, compartmentName);
+      }
+      graph->setName(name);
+      graph->setData(distanceAlongSlice, concentration, true);
+    }
+  }
+
+  ui->concentrationPlot->legend->setVisible(
+      ui->concentrationPlot->graphCount() > 0);
+  if (ui->concentrationPlot->graphCount() > 0) {
+    setAxisRange(ui->concentrationPlot->xAxis, distanceAlongSlice.front(),
+                 distanceAlongSlice.back());
+    if (ui->chkAutoscaleYAxis->isChecked()) {
+      setAxisRange(ui->concentrationPlot->yAxis, currentYAxisMin,
+                   currentYAxisMax);
+    } else {
+      if (!fixedAxisRangesValid) {
+        updateFixedAxisRanges();
+      }
+      setAxisRange(ui->concentrationPlot->yAxis, fixedYAxisMin, fixedYAxisMax);
+    }
+  }
+  ui->concentrationPlot->replot();
 }
 
 void DialogImageSlice::saveSlicedImage() {
@@ -139,6 +378,10 @@ void DialogImageSlice::lblSlice_mouseOver(QPoint point) {
 }
 
 void DialogImageSlice::lblImage_mouseOver(const sme::common::Voxel &voxel) {
+  if (time.isEmpty() || slice.empty() ||
+      ui->lblSlice->getSlicePixels().empty()) {
+    return;
+  }
   double t = time[voxel.p.x()];
   auto i{static_cast<std::size_t>(slice[0].height() - 1 - voxel.p.y())};
   const auto &p = ui->lblSlice->getSlicePixels()[i];
@@ -146,4 +389,11 @@ void DialogImageSlice::lblImage_mouseOver(const sme::common::Voxel &voxel) {
                                     .arg(p.x())
                                     .arg(p.y())
                                     .arg(t));
+}
+
+void DialogImageSlice::slideTimepoint_valueChanged(int value) {
+  selectedTimepointIndex = value;
+  updateSelectedTimepointText();
+  ui->lblImage->setVerticalIndicatorSourceX(selectedTimepointIndex);
+  updateConcentrationPlot();
 }
