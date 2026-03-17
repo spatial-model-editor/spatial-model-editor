@@ -81,58 +81,113 @@
       </layout>
      </widget>
      <widget class="QWidget" name="gridLayoutWidget">
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="0">
-        <widget class="QCheckBox" name="chkAspectRatio">
-         <property name="text">
-          <string>Maintain &amp;aspect ratio</string>
+      <layout class="QVBoxLayout" name="verticalLayoutRightPane">
+       <item>
+        <widget class="QSplitter" name="splitterImagePlot">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QCheckBox" name="chkSmoothInterpolation">
-         <property name="text">
-          <string>Smooth &amp;interpolation</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="0" colspan="2">
-        <widget class="QLabel" name="lblSlicedImage">
-         <property name="text">
-          <string>Species concentrations along slice vs time:</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0" colspan="2">
-        <widget class="QLabelMouseTracker" name="lblImage" native="true">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="whatsThis">
-          <string>&lt;h4&gt;Species concentrations along slice vs time&lt;/h4&gt;</string>
-         </property>
-         <property name="text" stdset="0">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="0" colspan="2">
-        <widget class="QLabel" name="lblMouseLocation">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>mouse location: (x=., y=., t=.)</string>
-         </property>
+         <widget class="QWidget" name="imagePaneWidget">
+          <layout class="QGridLayout" name="gridLayoutImagePane">
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="chkAspectRatio">
+             <property name="text">
+              <string>Maintain &amp;aspect ratio</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QCheckBox" name="chkSmoothInterpolation">
+             <property name="text">
+              <string>Smooth &amp;interpolation</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0" colspan="2">
+            <widget class="QLabel" name="lblSlicedImage">
+             <property name="text">
+              <string>Species concentrations along slice vs time:</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0" colspan="2">
+            <widget class="QLabelMouseTracker" name="lblImage" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="whatsThis">
+              <string>&lt;h4&gt;Species concentrations along slice vs time&lt;/h4&gt;</string>
+             </property>
+             <property name="text" stdset="0">
+              <string/>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0" colspan="2">
+            <widget class="QLabel" name="lblMouseLocation">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>mouse location: (x=., y=., t=.)</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <widget class="QWidget" name="plotPaneWidget">
+          <layout class="QGridLayout" name="gridLayoutPlotPane">
+           <item row="2" column="0">
+            <widget class="QCustomPlot" name="concentrationPlot" native="true">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>220</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QSlider" name="slideTimepoint">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLabel" name="lblSelectedTimepoint">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Displayed timepoint: n/a</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="0">
+            <widget class="QCheckBox" name="chkAutoscaleYAxis">
+             <property name="text">
+              <string>Autoscale y-axis</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -161,6 +216,11 @@
    <class>QLabelSlice</class>
    <extends>QWidget</extends>
    <header>qlabelslice.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
   </customwidget>
  </customwidgets>
  <resources/>
