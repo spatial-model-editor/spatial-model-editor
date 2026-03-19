@@ -60,7 +60,7 @@ protected:
 
 private:
   QSlider *zSlider{nullptr};
-  Qt::AspectRatioMode aspectRatioMode = Qt::IgnoreAspectRatio;
+  Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool setCurrentPixel(const QPoint &pos);
   void resizeImage(const QSize &size);
