@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Created by Spatial Model Editor version 1.11.0 on Wed Apr 22 09:46:40 2026 -->
 <sbml xmlns="http://www.sbml.org/sbml/level3/version2/core" xmlns:spatial="http://www.sbml.org/sbml/level3/version1/spatial/version1" level="3" version="2" spatial:required="true">
   <model id="very_simple_model" name="Very Simple Model" substanceUnits="substance" timeUnits="unit_of_time" volumeUnits="unit_of_volume" areaUnits="area" lengthUnits="unit_of_length" extentUnits="substance">
     <annotation>
       <spatialModelEditor xmlns="https://github.com/spatial-model-editor">
         <settings>
-          <cereal_class_version>2</cereal_class_version>
+          <cereal_class_version>6</cereal_class_version>
           <simulationSettings>
             <cereal_class_version>1</cereal_class_version>
             <times size="dynamic">
@@ -16,7 +17,7 @@
             <options>
               <cereal_class_version>0</cereal_class_version>
               <dune>
-                <cereal_class_version>0</cereal_class_version>
+                <cereal_class_version>2</cereal_class_version>
                 <discretization>0</discretization>
                 <integrator>Alexander2</integrator>
                 <dt>0.10000000000000001</dt>
@@ -26,10 +27,14 @@
                 <decrease>0.5</decrease>
                 <writeVTKfiles>false</writeVTKfiles>
                 <newtonRelErr>1e-08</newtonRelErr>
-                <newtonAbsErr>0.0</newtonAbsErr>
+                <newtonAbsErr>0</newtonAbsErr>
+                <linearSolver>RestartedGMRes</linearSolver>
+                <maxThreads>0</maxThreads>
               </dune>
               <pixel>
-                <cereal_class_version>0</cereal_class_version>
+                <cereal_class_version>1</cereal_class_version>
+                <backend>0</backend>
+                <gpuFloatPrecision>0</gpuFloatPrecision>
                 <integrator>1</integrator>
                 <maxErr>
                   <cereal_class_version>0</cereal_class_version>
@@ -46,7 +51,7 @@
             <simulatorType>0</simulatorType>
           </simulationSettings>
           <displayOptions>
-            <cereal_class_version>1</cereal_class_version>
+            <cereal_class_version>2</cereal_class_version>
             <showSpecies size="dynamic"/>
             <showMinMax>true</showMinMax>
             <normaliseOverAllTimepoints>true</normaliseOverAllTimepoints>
@@ -54,9 +59,10 @@
             <showGeometryGrid>false</showGeometryGrid>
             <showGeometryScale>false</showGeometryScale>
             <invertYAxis>false</invertYAxis>
+            <showFeatures size="dynamic"/>
           </displayOptions>
           <meshParameters>
-            <cereal_class_version>1</cereal_class_version>
+            <cereal_class_version>2</cereal_class_version>
             <maxPoints size="dynamic">
               <value0>12</value0>
               <value1>31</value1>
@@ -68,8 +74,10 @@
               <value2>30</value2>
             </maxAreas>
             <boundarySimplifierType>0</boundarySimplifierType>
+            <maxCellVolumes size="dynamic"/>
+            <meshSourceType>0</meshSourceType>
           </meshParameters>
-          <speciesColours size="dynamic">
+          <speciesColors size="dynamic">
             <value0>
               <key>A_c1</key>
               <value>4293269835</value>
@@ -94,7 +102,7 @@
               <key>B_c3</key>
               <value>4278223560</value>
             </value5>
-          </speciesColours>
+          </speciesColors>
           <optimizeOptions>
             <cereal_class_version>0</cereal_class_version>
             <optAlgorithm>
@@ -106,11 +114,72 @@
             <optParams size="dynamic"/>
             <optCosts size="dynamic"/>
           </optimizeOptions>
-          <sampledFieldColours size="dynamic">
+          <sampledFieldColors size="dynamic">
             <value0>4278190592</value0>
             <value1>4287652289</value1>
             <value2>4291134816</value2>
-          </sampledFieldColours>
+          </sampledFieldColors>
+          <speciesDiffusionConstantArrays size="dynamic"/>
+          <speciesAnalyticDiffusionConstants size="dynamic"/>
+          <speciesStorageValues size="dynamic">
+            <value0>
+              <key>A_c1</key>
+              <value>1</value>
+            </value0>
+            <value1>
+              <key>A_c2</key>
+              <value>1</value>
+            </value1>
+            <value2>
+              <key>A_c3</key>
+              <value>1</value>
+            </value2>
+            <value3>
+              <key>B_c1</key>
+              <value>1</value>
+            </value3>
+            <value4>
+              <key>B_c2</key>
+              <value>1</value>
+            </value4>
+            <value5>
+              <key>B_c3</key>
+              <value>1</value>
+            </value5>
+          </speciesStorageValues>
+          <speciesCrossDiffusionConstants size="dynamic"/>
+          <features size="dynamic">
+            <value0>
+              <cereal_class_version>0</cereal_class_version>
+              <id>depth</id>
+              <name>depth</name>
+              <compartmentId>c2</compartmentId>
+              <speciesId>A_c2</speciesId>
+              <roi>
+                <cereal_class_version>0</cereal_class_version>
+                <roiType>2</roiType>
+                <expression>1</expression>
+                <numRegions>4</numRegions>
+                <regionImage size="dynamic"/>
+                <parameters size="dynamic"/>
+              </roi>
+              <reduction>0</reduction>
+            </value0>
+            <value1>
+              <id>analytic</id>
+              <name>analytic</name>
+              <compartmentId>c2</compartmentId>
+              <speciesId>A_c2</speciesId>
+              <roi>
+                <roiType>0</roiType>
+                <expression>1 + sin((1/3)*x) + cos((1/5)*y) + cos((1/6)*x + (1/4)*y)</expression>
+                <numRegions>3</numRegions>
+                <regionImage size="dynamic"/>
+                <parameters size="dynamic"/>
+              </roi>
+              <reduction>0</reduction>
+            </value1>
+          </features>
         </settings>
       </spatialModelEditor>
     </annotation>

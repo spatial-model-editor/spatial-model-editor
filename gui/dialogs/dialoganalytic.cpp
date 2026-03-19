@@ -10,15 +10,16 @@
 #include <QPushButton>
 
 DialogAnalytic::DialogAnalytic(
-    const QString &analyticExpression, DialogAnalyticDataType dataType,
+    const QString &analyticExpression, DialogAnalyticDataType analyticDataType,
     const sme::model::SpeciesGeometry &speciesGeometry,
     const sme::model::ModelParameters &modelParameters,
     const sme::model::ModelFunctions &modelFunctions, bool invertYAxis,
-    QWidget *parent)
+    std::size_t maxNumRegions, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogAnalytic>()},
       voxelSize(speciesGeometry.voxelSize),
       voxels(speciesGeometry.compartmentVoxels),
       physicalOrigin(speciesGeometry.physicalOrigin),
+      dataType(analyticDataType), numRegions(maxNumRegions),
       imgs{speciesGeometry.compartmentImageSize,
            QImage::Format_ARGB32_Premultiplied},
       qpi(speciesGeometry.compartmentImageSize,
@@ -35,10 +36,18 @@ DialogAnalytic::DialogAnalytic(
     setWindowTitle("Diffusion constant");
     valueLabel = "diffusion constant";
     valueUnit = units.getDiffusion();
+  } else if (dataType == DialogAnalyticDataType::RoiRegion) {
+    setWindowTitle("ROI regions");
+    valueLabel = "ROI region";
+    ui->lblImage->setWhatsThis(
+        "<h4>ROI regions</h4>"
+        "<p>A preview of the ROI regions resulting from the supplied analytic "
+        "expression.</p>");
   }
   imgs.setVoxelSize(speciesGeometry.voxelSize);
   imgs.fill(0);
   values.resize(voxels.size(), 0.0);
+  roiRegions.resize(voxels.size(), 0);
   // add x,y,z variables
   const auto &spatialCoordinates{modelParameters.getSpatialCoordinates()};
   ui->txtExpression->addVariable(spatialCoordinates.x.id,
@@ -145,7 +154,7 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   if (std::ranges::find_if(std::as_const(values), [](auto c) {
         return std::isnan(c) || std::isinf(c);
       }) != values.cend()) {
-    // if concentration contains NaN or inf, show error message
+    // if the expression contains NaN or inf, show error message
     ui->lblExpressionStatus->setText(
         QString("%1 contains inf (infinity) or NaN (Not a Number)")
             .arg(valueLabel));
@@ -155,8 +164,10 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
     ui->lblImage->setImage(imgs);
     return;
   }
-  if (*std::ranges::min_element(std::as_const(values)) < 0) {
-    // if concentration contains negative values, show error message
+  if ((dataType == DialogAnalyticDataType::Concentration ||
+       dataType == DialogAnalyticDataType::DiffusionConstant) &&
+      *std::ranges::min_element(std::as_const(values)) < 0) {
+    // concentration-like quantities cannot contain negative values
     ui->lblExpressionStatus->setText(
         QString("%1 cannot be negative").arg(valueLabel));
     ui->buttonBox->button(QDialogButtonBox::Ok)->setEnabled(false);
@@ -171,12 +182,31 @@ void DialogAnalytic::txtExpression_mathChanged(const QString &math, bool valid,
   ui->btnExportImage->setEnabled(true);
   displayExpression = math.toStdString();
   variableExpression = ui->txtExpression->getVariableMath();
-  // normalise displayed pixel intensity to max concentration
-  double maxConc{sme::common::max(values)};
-  for (std::size_t i = 0; i < voxels.size(); ++i) {
-    int intensity = static_cast<int>(255 * values[i] / maxConc);
-    imgs[voxels[i].z].setPixel(voxels[i].p,
-                               qRgb(intensity, intensity, intensity));
+  if (dataType == DialogAnalyticDataType::RoiRegion) {
+    imgs.fill(0);
+    sme::common::indexedColors indexedColors;
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      const auto region = static_cast<int>(values[i]);
+      if (region > 0 && static_cast<std::size_t>(region) <= numRegions) {
+        roiRegions[i] = static_cast<std::size_t>(region);
+        imgs[voxels[i].z].setPixel(voxels[i].p,
+                                   indexedColors[roiRegions[i] - 1].rgb());
+      } else {
+        roiRegions[i] = 0;
+        imgs[voxels[i].z].setPixel(voxels[i].p, qRgb(0, 0, 0));
+      }
+    }
+  } else {
+    // normalise displayed pixel intensity to max scalar value
+    const double maxValue{sme::common::max(values)};
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      int intensity = 0;
+      if (maxValue > 0) {
+        intensity = static_cast<int>(255 * values[i] / maxValue);
+      }
+      imgs[voxels[i].z].setPixel(voxels[i].p,
+                                 qRgb(intensity, intensity, intensity));
+    }
   }
   ui->lblImage->setImage(imgs);
 }
@@ -191,21 +221,37 @@ void DialogAnalytic::lblImage_mouseOver(const sme::common::Voxel &voxel) {
     return;
   }
   auto physical = physicalPoint(voxel);
-  ui->lblConcentration->setText(
-      QString("x: %1 %4, y: %2 %4, z: %3 %4, %5: %6 %7")
-          .arg(physical.p.x())
-          .arg(physical.p.y())
-          .arg(physical.z)
-          .arg(lengthUnit)
-          .arg(valueLabel)
-          .arg(values[*index])
-          .arg(valueUnit));
+  if (dataType == DialogAnalyticDataType::RoiRegion) {
+    ui->lblConcentration->setText(
+        QString(
+            "x: %1 %4, y: %2 %4, z: %3 %4, expression value: %5, region: %6")
+            .arg(physical.p.x())
+            .arg(physical.p.y())
+            .arg(physical.z)
+            .arg(lengthUnit)
+            .arg(values[*index])
+            .arg(roiRegions[*index]));
+  } else {
+    ui->lblConcentration->setText(
+        QString("x: %1 %4, y: %2 %4, z: %3 %4, %5: %6 %7")
+            .arg(physical.p.x())
+            .arg(physical.p.y())
+            .arg(physical.z)
+            .arg(lengthUnit)
+            .arg(valueLabel)
+            .arg(values[*index])
+            .arg(valueUnit));
+  }
 }
 
 void DialogAnalytic::btnExportImage_clicked() {
+  QString exportLabel{valueLabel};
+  if (dataType == DialogAnalyticDataType::RoiRegion) {
+    exportLabel = "roi-regions";
+  }
   QString filename = QFileDialog::getSaveFileName(
-      this, QString("Export %1 slice as image").arg(valueLabel),
-      QString("%1.png").arg(valueLabel), "PNG (*.png)");
+      this, QString("Export %1 slice as image").arg(exportLabel),
+      QString("%1.png").arg(exportLabel), "PNG (*.png)");
   if (filename.isEmpty()) {
     return;
   }

@@ -18,6 +18,8 @@ using Catch::Matchers::ContainsSubstring;
 
 struct DialogImageDataWidgets {
   explicit DialogImageDataWidgets(const DialogImageData *dialog) {
+    GET_DIALOG_WIDGET(QLabel, lblMinConcLabel);
+    GET_DIALOG_WIDGET(QLabel, lblMaxConcLabel);
     GET_DIALOG_WIDGET(QLineEdit, txtMinConc);
     GET_DIALOG_WIDGET(QLineEdit, txtMaxConc);
     GET_DIALOG_WIDGET(QCheckBox, chkGrid);
@@ -30,6 +32,8 @@ struct DialogImageDataWidgets {
     GET_DIALOG_WIDGET(QLabelMouseTracker, lblImage);
     GET_DIALOG_WIDGET(QLabel, lblConcentration);
   }
+  QLabel *lblMinConcLabel;
+  QLabel *lblMaxConcLabel;
   QLineEdit *txtMinConc;
   QLineEdit *txtMaxConc;
   QCheckBox *chkGrid;
@@ -64,6 +68,8 @@ TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
 
     const auto text{widgets.lblConcentration->text()};
     const auto lengthUnit{units.getLength().name};
+    REQUIRE(widgets.lblMinConcLabel->text() == "Minimum concentration");
+    REQUIRE(widgets.lblMaxConcLabel->text() == "Maximum concentration");
     REQUIRE(text.contains(QString("x=7 %1").arg(lengthUnit)));
     REQUIRE(text.contains(QString("y=13 %1").arg(lengthUnit)));
     REQUIRE(text.contains(QString("z=19 %1").arg(lengthUnit)));
@@ -83,21 +89,28 @@ TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
   SECTION("rate of change of concentration array of 0's") {
     DialogImageData dia(std::vector<double>(9, 0.0), specGeom, false,
                         DialogImageDataDataType::ConcentrationRateOfChange);
+    DialogImageDataWidgets widgets(&dia);
     for (const auto &a : dia.getImageArray()) {
       REQUIRE(a == dbl_approx(0));
     }
-    REQUIRE_THAT(dia.windowTitle().toStdString(),
-                 ContainsSubstring("rate of change", Catch::CaseSensitive::No));
+    REQUIRE(dia.windowTitle() == "Rate of change of concentration image data");
+    REQUIRE(widgets.lblMinConcLabel->text() ==
+            "Minimum rate of change of concentration");
+    REQUIRE(widgets.lblMaxConcLabel->text() ==
+            "Maximum rate of change of concentration");
   }
-  SECTION("rate of change of concentration array of 0's") {
+  SECTION("diffusion constant array of 0's") {
     DialogImageData dia(std::vector<double>(9, 0.0), specGeom, false,
                         DialogImageDataDataType::DiffusionConstant);
+    DialogImageDataWidgets widgets(&dia);
     for (const auto &a : dia.getImageArray()) {
       REQUIRE(a == dbl_approx(0));
     }
     REQUIRE_THAT(
         dia.windowTitle().toStdString(),
         ContainsSubstring("diffusion constant", Catch::CaseSensitive::No));
+    REQUIRE(widgets.lblMinConcLabel->text() == "Minimum diffusion constant");
+    REQUIRE(widgets.lblMaxConcLabel->text() == "Maximum diffusion constant");
   }
   SECTION("concentration array of 1's") {
     DialogImageData dia(std::vector<double>(9, 1.0), specGeom);

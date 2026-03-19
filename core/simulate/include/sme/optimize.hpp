@@ -30,12 +30,22 @@ struct OptTimestep {
   std::vector<std::size_t> optCostIndices;
 };
 
+struct FeatureOptCost {
+  bool valid{false};
+  std::string errorMessage{};
+  FeatureDefinition feature{};
+  std::vector<std::size_t> voxelRegions{};
+  std::vector<std::size_t> imageIndices{};
+  std::vector<double> targetFeatureValues{};
+};
+
 struct OptConstData {
   std::string xmlModel{};
   OptimizeOptions optimizeOptions{};
   std::vector<OptTimestep> optTimesteps{};
   common::Volume imageSize{};
   std::vector<double> maxTargetValues{};
+  std::vector<FeatureOptCost> featureOptCosts{};
 };
 
 /**

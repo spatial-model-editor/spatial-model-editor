@@ -21,7 +21,6 @@ Implementation, test, and benchmark code for a component are co-located: `X.hpp`
 ## Building and testing
 
 You can assume the script `ci/local-dev-setup.sh` has been run.
-
 All commands run from `build-release/`:
 
 ```bash
@@ -31,8 +30,6 @@ ninja test                                      # run all non-gui tests in paral
 xvfb-run -a bash -c 'jwm & sleep 1 && ./test/tests "[gui]"'   # run GUI tests headlessly on Linux
 xvfb-run -a bash -c 'jwm & sleep 1 && ./test/tests "TestName"' # run a specific GUI test
 ```
-
-If running in a strict sandbox, ask for permission to run commands starting with `xvfb-run -a bash -c`.
 
 Python tests from `build-release/sme`:
 ```bash

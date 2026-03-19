@@ -225,6 +225,8 @@ TEST_CASE("MainWindow: tabs", tags) {
     sendKeyEvents(tabMain, {"Ctrl+Tab"});
     REQUIRE(tabMain->currentIndex() == 6);
     sendKeyEvents(tabMain, {"Ctrl+Tab"});
+    REQUIRE(tabMain->currentIndex() == 7);
+    sendKeyEvents(tabMain, {"Ctrl+Tab"});
     REQUIRE(tabMain->currentIndex() == 0);
     sendKeyEvents(tabMain, {"Ctrl+Tab"});
     REQUIRE(tabMain->currentIndex() == 1);
@@ -235,7 +237,7 @@ TEST_CASE("MainWindow: tabs", tags) {
     sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
     REQUIRE(tabMain->currentIndex() == 0);
     sendKeyEvents(tabMain, {"Ctrl+Shift+Tab"});
-    REQUIRE(tabMain->currentIndex() == 6);
+    REQUIRE(tabMain->currentIndex() == 7);
   }
 }
 

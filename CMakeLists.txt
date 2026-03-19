@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.24...4.2)
+cmake_minimum_required(VERSION 3.24...4.3)
 message(STATUS "CMake version ${CMAKE_VERSION}")
 
 # version number here is embedded in compiled executable
 project(
   SpatialModelEditor
-  VERSION 1.11.0
+  VERSION 1.12.0
   DESCRIPTION "Spatial Model Editor"
   LANGUAGES C CXX)
 
@@ -99,6 +99,14 @@ option(
   "Build python library"
   ON)
 
+if(MSVC
+   AND CMAKE_GENERATOR
+       MATCHES
+       "Ninja")
+  set_property(GLOBAL PROPERTY JOB_POOLS windows_link_pool=1)
+  set(CMAKE_JOB_POOL_LINK windows_link_pool)
+endif()
+
 # "make test" excludes gui tests & uses all cores
 include(ProcessorCount)
 ProcessorCount(NPROC)
@@ -174,14 +182,6 @@ endif()
 if(SME_BUILD_PYTHON_LIBRARY)
   add_subdirectory(ext/nanobind)
   add_subdirectory(sme)
-endif()
-
-if(MSVC
-   AND CMAKE_GENERATOR
-       MATCHES
-       "Ninja")
-  set_property(GLOBAL PROPERTY JOB_POOLS windows_link_pool=1)
-  set(CMAKE_JOB_POOL_LINK windows_link_pool)
 endif()
 
 # display sme configuration options

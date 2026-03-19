@@ -101,6 +101,13 @@ void bindSimulationResult(nanobind::module_ &m) {
                         >>> import matplotlib.pyplot as plt  # doctest: +SKIP
                         >>> imgplot = plt.imshow(b_cell[0])  # doctest: +SKIP
                     )")
+      .def_ro("feature_values", &SimulationResult::feature_values,
+              R"(
+                    Dict[str, numpy.ndarray]: calculated feature values at this timepoint
+
+                    for each feature, the values are provided as a 1d array
+                    with one value per feature region.
+                    )")
       .def_ro("species_dcdt", &SimulationResult::species_dcdt,
               R"(
                     Dict[str, numpy.ndarray]: the species concentration rate of change at this timepoint

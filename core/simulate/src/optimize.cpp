@@ -3,6 +3,7 @@
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
+#include <fmt/core.h>
 #include <iostream>
 #include <pagmo/algorithms/bee_colony.hpp>
 #include <pagmo/algorithms/de.hpp>
@@ -73,6 +74,73 @@ getOptTimesteps(const OptimizeOptions &options) {
     }
   }
   return optTimesteps;
+}
+
+static FeatureOptCost resolveFeatureOptCost(const sme::model::Model &model,
+                                            const OptCost &optCost,
+                                            const common::Volume &imageSize) {
+  FeatureOptCost featureOptCost;
+  if (optCost.featureId.empty()) {
+    featureOptCost.errorMessage =
+        "Optimization: Feature target is missing a feature id";
+    return featureOptCost;
+  }
+  const auto featureIndex =
+      model.getFeatures().getIndexFromId(optCost.featureId);
+  if (featureIndex >= model.getFeatures().size()) {
+    featureOptCost.errorMessage =
+        fmt::format("Optimization: Feature '{}' not found", optCost.featureId);
+    return featureOptCost;
+  }
+  if (!model.getFeatures().isValid(featureIndex)) {
+    featureOptCost.errorMessage = fmt::format(
+        "Optimization: Feature '{}' is not valid", optCost.featureId);
+    return featureOptCost;
+  }
+  featureOptCost.feature = model.getFeatures().getFeatures()[featureIndex];
+  if (featureOptCost.feature.speciesId != optCost.id) {
+    featureOptCost.errorMessage =
+        fmt::format("Optimization: Feature '{}' does not match species '{}'",
+                    optCost.featureId, optCost.id);
+    return featureOptCost;
+  }
+  const auto *comp = model.getCompartments().getCompartment(
+      featureOptCost.feature.compartmentId.c_str());
+  if (comp == nullptr) {
+    featureOptCost.errorMessage =
+        fmt::format("Optimization: Feature '{}' compartment '{}' not found",
+                    optCost.featureId, featureOptCost.feature.compartmentId);
+    return featureOptCost;
+  }
+  featureOptCost.voxelRegions =
+      model.getFeatures().getVoxelRegions(featureIndex);
+  featureOptCost.imageIndices.reserve(comp->nVoxels());
+  std::vector<double> targetConcentrations(comp->nVoxels(), 0.0);
+  const auto &voxels = comp->getVoxels();
+  if (!optCost.targetValues.empty()) {
+    if (optCost.targetValues.size() != imageSize.nVoxels()) {
+      featureOptCost.errorMessage = fmt::format(
+          "Optimization: Target values size {} does not match image size {}",
+          optCost.targetValues.size(), imageSize.nVoxels());
+      return featureOptCost;
+    }
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      const auto imageIndex =
+          common::voxelArrayIndex(imageSize, voxels[i], true);
+      featureOptCost.imageIndices.push_back(imageIndex);
+      targetConcentrations[i] = optCost.targetValues[imageIndex];
+    }
+  } else {
+    for (const auto &voxel : voxels) {
+      featureOptCost.imageIndices.push_back(
+          common::voxelArrayIndex(imageSize, voxel, true));
+    }
+  }
+  featureOptCost.targetFeatureValues =
+      evaluateFeature(featureOptCost.feature, targetConcentrations,
+                      featureOptCost.voxelRegions);
+  featureOptCost.valid = true;
+  return featureOptCost;
 }
 
 static std::unique_ptr<pagmo::algorithm>
@@ -181,6 +249,8 @@ Optimization::Optimization(sme::model::Model &model) {
   optConstData->xmlModel = model.getXml().toStdString();
   optConstData->optimizeOptions = model.getOptimizeOptions();
   optConstData->optTimesteps = getOptTimesteps(options);
+  optConstData->featureOptCosts.resize(
+      optConstData->optimizeOptions.optCosts.size());
   for (const auto &cost : model.getOptimizeOptions().optCosts) {
     if (cost.targetValues.empty()) {
       // empty vector is implicitly zero everywhere,
@@ -190,6 +260,19 @@ Optimization::Optimization(sme::model::Model &model) {
     } else {
       optConstData->maxTargetValues.push_back(
           sme::common::max(cost.targetValues));
+    }
+  }
+  for (std::size_t i = 0; i < optConstData->optimizeOptions.optCosts.size();
+       ++i) {
+    const auto &optCost = optConstData->optimizeOptions.optCosts[i];
+    if (optCost.optCostType != OptCostType::Feature) {
+      continue;
+    }
+    optConstData->featureOptCosts[i] =
+        resolveFeatureOptCost(model, optCost, optConstData->imageSize);
+    if (!optConstData->featureOptCosts[i].valid) {
+      errorMessage = optConstData->featureOptCosts[i].errorMessage;
+      return;
     }
   }
   modelQueue = std::make_unique<sme::simulate::ThreadsafeModelQueue>();

@@ -144,6 +144,13 @@ void TabSpecies::listSpecies_currentItemChanged(QTreeWidgetItem *current,
   if ((current == nullptr) || (current->parent() == nullptr)) {
     // user selection is not a species
     enableWidgets(false);
+    currentSpeciesId.clear();
+    if (lblGeometry != nullptr) {
+      lblGeometry->setImage(model.getGeometry().getImages());
+    }
+    if (voxGeometry != nullptr) {
+      voxGeometry->setImage(model.getGeometry().getImages());
+    }
     return;
   }
   SPDLOG_DEBUG("item {} / {} selected",

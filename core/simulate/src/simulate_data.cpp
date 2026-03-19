@@ -46,6 +46,7 @@ void SimulationData::clear() {
   concentrationMax.clear();
   concPadding.clear();
   xmlModel.clear();
+  featureResults.clear();
 }
 
 std::size_t SimulationData::size() const { return timePoints.size(); }
@@ -89,6 +90,9 @@ void SimulationData::reserve(std::size_t n) {
   avgMinMax.reserve(n);
   concentrationMax.reserve(n);
   concPadding.reserve(n);
+  for (auto &fr : featureResults) {
+    fr.values.reserve(n);
+  }
 }
 
 void SimulationData::pop_back() {
@@ -97,6 +101,11 @@ void SimulationData::pop_back() {
   avgMinMax.pop_back();
   concentrationMax.pop_back();
   concPadding.pop_back();
+  for (auto &fr : featureResults) {
+    if (!fr.values.empty()) {
+      fr.values.pop_back();
+    }
+  }
 }
 
 } // namespace sme::simulate

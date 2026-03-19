@@ -21,6 +21,7 @@
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "tabevents.hpp"
+#include "tabfeatures.hpp"
 #include "tabfunctions.hpp"
 #include "tabgeometry.hpp"
 #include "tabparameters.hpp"
@@ -164,6 +165,10 @@ void MainWindow::setupTabs() {
   tabEvents = new TabEvents(model, ui->tabEvents);
   ui->tabEvents->layout()->addWidget(tabEvents);
 
+  tabFeatures =
+      new TabFeatures(model, ui->lblGeometry, ui->voxGeometry, ui->tabFeatures);
+  ui->tabFeatures->layout()->addWidget(tabFeatures);
+
   tabSimulate =
       new TabSimulate(model, ui->lblGeometry, ui->voxGeometry, ui->tabSimulate);
   ui->tabSimulate->layout()->addWidget(tabSimulate);
@@ -301,7 +306,8 @@ void MainWindow::tabMain_currentChanged(int index) {
     FUNCTIONS = 3,
     PARAMETERS = 4,
     EVENTS = 5,
-    SIMULATE = 6
+    FEATURES = 6,
+    SIMULATE = 7
   };
   ui->tabMain->setWhatsThis(ui->tabMain->tabWhatsThis(index));
   SPDLOG_DEBUG("Tab changed to {} [{}]", index,
@@ -324,6 +330,9 @@ void MainWindow::tabMain_currentChanged(int index) {
     break;
   case TabIndex::EVENTS:
     tabEvents->loadModelData();
+    break;
+  case TabIndex::FEATURES:
+    tabFeatures->loadModelData();
     break;
   case TabIndex::SIMULATE:
     tabSimulate->loadModelData();

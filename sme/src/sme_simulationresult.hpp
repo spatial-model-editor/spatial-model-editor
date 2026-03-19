@@ -15,6 +15,7 @@ struct SimulationResult {
   double timePoint{0.0};
   nanobind::ndarray<nanobind::numpy, std::uint8_t> concentration_image{};
   nanobind::dict species_concentration{};
+  nanobind::dict feature_values{};
   nanobind::dict species_dcdt{};
   [[nodiscard]] std::string getStr() const;
   [[nodiscard]] std::string getName() const;

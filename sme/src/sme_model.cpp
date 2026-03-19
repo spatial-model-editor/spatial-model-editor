@@ -406,9 +406,11 @@ void bindModel(nanobind::module_ &m) {
 
 static std::vector<SimulationResult>
 constructSimulationResults(const ::sme::simulate::Simulation *sim,
-                           bool getDcdt) {
+                           const ::sme::model::Model &model, bool getDcdt) {
   std::vector<SimulationResult> results;
   const auto timePoints{sim->getTimePoints()};
+  const auto &features{model.getFeatures().getFeatures()};
+  const auto &featureResults{sim->getSimulationData().featureResults};
   results.reserve(timePoints.size());
   for (std::size_t i = 0; i < timePoints.size(); ++i) {
     auto &result = results.emplace_back();
@@ -432,6 +434,18 @@ constructSimulationResults(const ::sme::simulate::Simulation *sim,
                 as_ndarray(std::move(dcdts[si]), shape);
           }
         }
+      }
+    }
+    for (std::size_t fi = 0; fi < features.size() && fi < featureResults.size();
+         ++fi) {
+      const auto &values{featureResults[fi].values};
+      if (i < values.size()) {
+        auto featureValues{values[i]};
+        auto nFeatureValues{featureValues.size()};
+        const auto &featureName{features[fi].name};
+        result.feature_values[nanobind::str(featureName.data(),
+                                            featureName.size())] =
+            as_ndarray(std::move(featureValues), {nFeatureValues});
       }
     }
   }
@@ -597,7 +611,7 @@ std::vector<SimulationResult> Model::simulateString(
     throw std::runtime_error(fmt::format("Error during simulation: {}", e));
   }
   if (returnResults) {
-    return constructSimulationResults(sim.get(), true);
+    return constructSimulationResults(sim.get(), *s, true);
   }
   return {};
 }
@@ -633,7 +647,7 @@ std::vector<SimulationResult> Model::getSimulationResults() {
   if (const auto &e{sim->errorMessage()}; !e.empty()) {
     throw std::runtime_error(fmt::format("Error in simulation setup: {}", e));
   }
-  return constructSimulationResults(sim.get(), false);
+  return constructSimulationResults(sim.get(), *s, false);
 }
 
 std::string Model::getStr() const {

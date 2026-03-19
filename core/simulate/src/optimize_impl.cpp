@@ -3,6 +3,61 @@
 
 namespace sme::simulate {
 
+namespace {
+
+double calculateFieldCost(const OptCost &optCost,
+                          const std::vector<double> &values) {
+  double cost{0.0};
+  if (optCost.targetValues.empty()) {
+    for (auto value : values) {
+      cost += value * value;
+    }
+    return cost;
+  }
+  if (values.size() != optCost.targetValues.size()) {
+    SPDLOG_ERROR("Mismatch between size of values ({}) and target values ({})",
+                 values.size(), optCost.targetValues.size());
+    throw std::invalid_argument("Optimization: Target values size mismatch");
+  }
+  for (std::size_t i = 0; i < values.size(); ++i) {
+    double diff{values[i] - optCost.targetValues[i]};
+    if (optCost.optCostDiffType == OptCostDiffType::Relative) {
+      diff /= (std::abs(optCost.targetValues[i]) + optCost.epsilon);
+    }
+    cost += diff * diff;
+  }
+  return cost;
+}
+
+double calculateFeatureCost(const OptCost &optCost,
+                            const FeatureOptCost &featureOptCost,
+                            const std::vector<double> &currentConcentrations) {
+  if (!featureOptCost.valid) {
+    throw std::invalid_argument(featureOptCost.errorMessage.empty()
+                                    ? "Optimization: Invalid feature target"
+                                    : featureOptCost.errorMessage);
+  }
+  const auto featureValues =
+      evaluateFeature(featureOptCost.feature, currentConcentrations,
+                      featureOptCost.voxelRegions);
+  if (featureValues.size() != featureOptCost.targetFeatureValues.size()) {
+    throw std::invalid_argument(
+        "Optimization: Feature target values size mismatch");
+  }
+  double cost{0.0};
+  for (std::size_t i = 0; i < featureValues.size(); ++i) {
+    double diff{featureValues[i] - featureOptCost.targetFeatureValues[i]};
+    if (optCost.optCostDiffType == OptCostDiffType::Relative) {
+      diff /=
+          (std::abs(featureOptCost.targetFeatureValues[i]) + optCost.epsilon);
+    }
+    cost += diff * diff;
+  }
+  return cost;
+}
+
+} // namespace
+
 void applyParameters(const pagmo::vector_double &values,
                      sme::model::Model *model) {
   const auto &optParams{model->getOptimizeOptions().optParams};
@@ -32,51 +87,59 @@ void applyParameters(const pagmo::vector_double &values,
   }
 }
 
-double calculateCosts(const std::vector<OptCost> &optCosts,
+double calculateCosts(const OptConstData &optConstData,
                       const std::vector<std::size_t> &optCostIndices,
                       const sme::simulate::Simulation &sim,
                       std::vector<std::vector<double>> &currentTargets) {
   double cost{0};
   for (const auto &optCostIndex : optCostIndices) {
-    const auto &optCost{optCosts[optCostIndex]};
+    const auto &optCost{optConstData.optimizeOptions.optCosts[optCostIndex]};
     auto &values{currentTargets[optCostIndex]};
     auto compIndex{optCost.compartmentIndex};
     auto specIndex{optCost.speciesIndex};
+    double optCostValue{0.0};
     switch (optCost.optCostType) {
     case OptCostType::Concentration:
       values = sim.getConcArray(sim.getTimePoints().size() - 1, compIndex,
                                 specIndex);
+      optCostValue = calculateFieldCost(optCost, values);
       break;
     case OptCostType::ConcentrationDcdt:
       values = sim.getDcdtArray(compIndex, specIndex);
+      optCostValue = calculateFieldCost(optCost, values);
       break;
-    default:
-      throw std::invalid_argument("Optimization: Invalid OptCostType");
-    }
-    if (optCost.targetValues.empty()) {
-      // default target is zero if not specified
-      for (auto value : values) {
-        cost += value * value;
-      }
-    } else {
-      if (values.size() != optCost.targetValues.size()) {
+    case OptCostType::Feature:
+      values = sim.getConcArray(sim.getTimePoints().size() - 1, compIndex,
+                                specIndex);
+      if (!optCost.targetValues.empty() &&
+          values.size() != optCost.targetValues.size()) {
         SPDLOG_ERROR(
             "Mismatch between size of values ({}) and target values ({})",
             values.size(), optCost.targetValues.size());
         throw std::invalid_argument(
             "Optimization: Target values size mismatch");
       }
-      for (std::size_t i = 0; i < values.size(); ++i) {
-        double diff{values[i] - optCost.targetValues[i]};
-        if (optCost.optCostDiffType == OptCostDiffType::Relative) {
-          diff /= (std::abs(optCost.targetValues[i]) + optCost.epsilon);
-        }
-        cost += diff * diff;
-      }
+      optCostValue = calculateFeatureCost(
+          optCost, optConstData.featureOptCosts[optCostIndex],
+          sim.getConc(sim.getTimePoints().size() - 1, compIndex, specIndex));
+      break;
+    default:
+      throw std::invalid_argument("Optimization: Invalid OptCostType");
     }
+    cost += optCostValue;
     cost *= optCost.weight;
   }
   return cost;
+}
+
+double calculateCosts(const std::vector<OptCost> &optCosts,
+                      const std::vector<std::size_t> &optCostIndices,
+                      const sme::simulate::Simulation &sim,
+                      std::vector<std::vector<double>> &currentTargets) {
+  OptConstData optConstData;
+  optConstData.optimizeOptions.optCosts = optCosts;
+  optConstData.featureOptCosts.resize(optCosts.size());
+  return calculateCosts(optConstData, optCostIndices, sim, currentTargets);
 }
 
 PagmoUDP::PagmoUDP(const OptConstData *optConstData,
@@ -109,8 +172,8 @@ PagmoUDP::fitness(const pagmo::vector_double &dv) const {
     if (m_optimization->getIsStopping()) {
       return {std::numeric_limits<double>::max()};
     }
-    cost += calculateCosts(m_optConstData->optimizeOptions.optCosts,
-                           optTimestep.optCostIndices, sim, currentTargets);
+    cost += calculateCosts(*m_optConstData, optTimestep.optCostIndices, sim,
+                           currentTargets);
   }
   if (m_optimization->setBestResults(cost, std::move(currentTargets))) {
     SPDLOG_INFO("Updated current best results with cost {}", cost);

@@ -19,7 +19,11 @@ class ModelParameters;
 class ModelFunctions;
 } // namespace sme::model
 
-enum class DialogAnalyticDataType { Concentration, DiffusionConstant };
+enum class DialogAnalyticDataType {
+  Concentration,
+  DiffusionConstant,
+  RoiRegion
+};
 
 class DialogAnalytic : public QDialog {
   Q_OBJECT
@@ -30,7 +34,8 @@ public:
                           const sme::model::SpeciesGeometry &speciesGeometry,
                           const sme::model::ModelParameters &modelParameters,
                           const sme::model::ModelFunctions &modelFunctions,
-                          bool invertYAxis, QWidget *parent = nullptr);
+                          bool invertYAxis, std::size_t numRegions = 1,
+                          QWidget *parent = nullptr);
   ~DialogAnalytic() override;
   const std::string &getExpression() const;
   const QImage &getImage() const;
@@ -45,10 +50,13 @@ private:
   QString lengthUnit;
   QString valueUnit;
   QString valueLabel;
+  DialogAnalyticDataType dataType;
+  std::size_t numRegions;
 
   sme::common::ImageStack imgs;
   sme::geometry::VoxelIndexer qpi;
   std::vector<double> values;
+  std::vector<std::size_t> roiRegions;
   std::string displayExpression;
   std::string variableExpression;
   bool expressionIsValid = false;

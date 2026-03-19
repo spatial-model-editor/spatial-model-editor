@@ -1,4 +1,5 @@
 #pragma once
+#include "sme/feature_options.hpp"
 #include "sme/optimize_options.hpp"
 #include "sme/simulate_options.hpp"
 #include <QRgb>
@@ -98,6 +99,10 @@ struct DisplayOptions {
    * @brief Invert vertical image axis in views/export.
    */
   bool invertYAxis{false};
+  /**
+   * @brief Per-feature visibility flags.
+   */
+  std::vector<bool> showFeatures{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -111,6 +116,12 @@ struct DisplayOptions {
          CEREAL_NVP(normaliseOverAllTimepoints),
          CEREAL_NVP(normaliseOverAllSpecies), CEREAL_NVP(showGeometryGrid),
          CEREAL_NVP(showGeometryScale), CEREAL_NVP(invertYAxis));
+    } else if (version == 2) {
+      ar(CEREAL_NVP(showSpecies), CEREAL_NVP(showMinMax),
+         CEREAL_NVP(normaliseOverAllTimepoints),
+         CEREAL_NVP(normaliseOverAllSpecies), CEREAL_NVP(showGeometryGrid),
+         CEREAL_NVP(showGeometryScale), CEREAL_NVP(invertYAxis),
+         CEREAL_NVP(showFeatures));
     }
   }
 };
@@ -187,6 +198,10 @@ struct Settings {
    * @brief Optional species storage coefficients.
    */
   std::map<std::string, double> speciesStorageValues{};
+  /**
+   * @brief Feature definitions for extracting scalar time-series from ROIs.
+   */
+  std::vector<simulate::FeatureDefinition> features{};
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -223,6 +238,14 @@ struct Settings {
          CEREAL_NVP(speciesAnalyticDiffusionConstants),
          CEREAL_NVP(speciesStorageValues),
          CEREAL_NVP(speciesCrossDiffusionConstants));
+    } else if (version == 6) {
+      ar(CEREAL_NVP(simulationSettings), CEREAL_NVP(displayOptions),
+         CEREAL_NVP(meshParameters), CEREAL_NVP(speciesColors),
+         CEREAL_NVP(optimizeOptions), CEREAL_NVP(sampledFieldColors),
+         CEREAL_NVP(speciesDiffusionConstantArrays),
+         CEREAL_NVP(speciesAnalyticDiffusionConstants),
+         CEREAL_NVP(speciesStorageValues),
+         CEREAL_NVP(speciesCrossDiffusionConstants), CEREAL_NVP(features));
     }
   }
 };
@@ -230,6 +253,6 @@ struct Settings {
 } // namespace sme::model
 
 CEREAL_CLASS_VERSION(sme::model::MeshParameters, 2);
-CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 1);
+CEREAL_CLASS_VERSION(sme::model::DisplayOptions, 2);
 CEREAL_CLASS_VERSION(sme::model::SimulationSettings, 1);
-CEREAL_CLASS_VERSION(sme::model::Settings, 5);
+CEREAL_CLASS_VERSION(sme::model::Settings, 6);

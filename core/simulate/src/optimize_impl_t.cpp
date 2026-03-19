@@ -27,6 +27,50 @@ static double sum_of_square_differences(const std::vector<double> &a,
   return sum;
 }
 
+static simulate::OptConstData
+makeOptConstData(const model::Model &model,
+                 const std::vector<simulate::OptCost> &optCosts) {
+  simulate::OptConstData optConstData;
+  optConstData.imageSize = model.getGeometry().getImages().volume();
+  optConstData.optimizeOptions.optCosts = optCosts;
+  optConstData.featureOptCosts.resize(optCosts.size());
+  for (std::size_t i = 0; i < optCosts.size(); ++i) {
+    const auto &optCost = optCosts[i];
+    if (optCost.optCostType != simulate::OptCostType::Feature) {
+      continue;
+    }
+    const auto featureIndex =
+        model.getFeatures().getIndexFromId(optCost.featureId);
+    if (featureIndex >= model.getFeatures().size()) {
+      continue;
+    }
+    auto &featureOptCost = optConstData.featureOptCosts[i];
+    featureOptCost.feature = model.getFeatures().getFeatures()[featureIndex];
+    featureOptCost.voxelRegions =
+        model.getFeatures().getVoxelRegions(featureIndex);
+    const auto *comp = model.getCompartments().getCompartment(
+        featureOptCost.feature.compartmentId.c_str());
+    if (comp == nullptr) {
+      continue;
+    }
+    std::vector<double> targetConcentrations(comp->nVoxels(), 0.0);
+    const auto &voxels = comp->getVoxels();
+    for (std::size_t j = 0; j < voxels.size(); ++j) {
+      const auto imageIndex =
+          common::voxelArrayIndex(optConstData.imageSize, voxels[j], true);
+      featureOptCost.imageIndices.push_back(imageIndex);
+      if (!optCost.targetValues.empty()) {
+        targetConcentrations[j] = optCost.targetValues[imageIndex];
+      }
+    }
+    featureOptCost.targetFeatureValues =
+        simulate::evaluateFeature(featureOptCost.feature, targetConcentrations,
+                                  featureOptCost.voxelRegions);
+    featureOptCost.valid = true;
+  }
+  return optConstData;
+}
+
 TEST_CASE("Optimize applyParameters: parameters",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::VerySimpleModel)};
@@ -97,8 +141,8 @@ TEST_CASE("Optimize calculateCosts: zero or no target values",
   std::vector<std::vector<double>> currentTargets(1, std::vector<double>{});
 
   // costs are zero if no OptCost supplied:
-  REQUIRE(simulate::calculateCosts({}, {}, sim, currentTargets) ==
-          dbl_approx(0.0));
+  REQUIRE(simulate::calculateCosts(std::vector<simulate::OptCost>{}, {}, sim,
+                                   currentTargets) == dbl_approx(0.0));
 
   // sum over initial concentration of A to get costConc vs 0
   auto conc{model.getSpecies().getField("A")->getConcentration()};
@@ -358,4 +402,53 @@ TEST_CASE("Optimize calculateCosts: invalid target values",
   optCostInvalid.targetValues = std::vector<double>(correctSize + 1, 1.5);
   REQUIRE_THROWS(
       simulate::calculateCosts({optCostInvalid}, {0}, sim, currentTargets));
+}
+
+TEST_CASE("Optimize calculateCosts: feature target values",
+          "[core/simulate/optimize][core/simulate][core][optimize]") {
+  auto model{getExampleModel(Mod::ABtoC)};
+  model.getSimulationSettings().simulatorType =
+      sme::simulate::SimulatorType::Pixel;
+  model.getSpecies().setInitialConcentration("A", 0.73);
+  const auto *comp{model.getSpecies().getField("A")->getCompartment()};
+  simulate::RoiSettings roi;
+  roi.roiType = simulate::RoiType::Analytic;
+  roi.expression = "1";
+  auto featureIndex = model.getFeatures().add("mean_A", comp->getId(), "A", roi,
+                                              simulate::ReductionOp::Average);
+  simulate::Simulation sim(model);
+  const auto compImgWidth{comp->getCompartmentImages()[0].width()};
+  const auto compImgHeight{comp->getCompartmentImages()[0].height()};
+  std::vector<double> target(
+      static_cast<std::size_t>(compImgWidth * compImgHeight), 0.0);
+  constexpr double targetPixel{2.0};
+  for (const auto &voxel : comp->getVoxels()) {
+    target[static_cast<std::size_t>(voxel.p.x()) +
+           static_cast<std::size_t>(compImgWidth) *
+               static_cast<std::size_t>(compImgHeight - 1 - voxel.p.y())] =
+        targetPixel;
+  }
+
+  simulate::OptCost optCostFeature{};
+  optCostFeature.optCostType = simulate::OptCostType::Feature;
+  optCostFeature.optCostDiffType = simulate::OptCostDiffType::Absolute;
+  optCostFeature.name = "name";
+  optCostFeature.id = "A";
+  optCostFeature.compartmentIndex = 0;
+  optCostFeature.speciesIndex = 0;
+  optCostFeature.targetValues = target;
+  optCostFeature.featureId = model.getFeatures().getFeatures()[featureIndex].id;
+
+  auto optConstData = makeOptConstData(model, {optCostFeature});
+  std::vector<std::vector<double>> currentTargets(1, std::vector<double>{});
+  REQUIRE(
+      simulate::calculateCosts(optConstData, {0}, sim, currentTargets) ==
+      Catch::Approx((targetPixel - 0.73) * (targetPixel - 0.73)).margin(1e-12));
+  REQUIRE(currentTargets[0] ==
+          sim.getConcArray(sim.getTimePoints().size() - 1, 0, 0));
+
+  optCostFeature.featureId = "missing_feature";
+  auto invalidOptConstData = makeOptConstData(model, {optCostFeature});
+  REQUIRE_THROWS(
+      simulate::calculateCosts(invalidOptConstData, {0}, sim, currentTargets));
 }

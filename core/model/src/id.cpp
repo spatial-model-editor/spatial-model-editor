@@ -1,6 +1,6 @@
 #include "id.hpp"
+#include "sme/id.hpp"
 #include "sme/logger.hpp"
-#include "sme/utils.hpp"
 #include <QString>
 #include <QStringList>
 #include <memory>
@@ -21,36 +21,27 @@ bool isSpatialIdAvailable(const std::string &id, libsbml::Geometry *geom) {
 
 QString nameToUniqueSId(const QString &name, libsbml::Model *model) {
   SPDLOG_DEBUG("name: '{}'", name.toStdString());
-  const std::string charsToConvertToUnderscore = " -_/";
-  std::string id;
-  // remove any non-alphanumeric chars, convert spaces etc to underscores
-  for (auto c : name.toStdString()) {
-    if (sme::common::isalnum(c)) {
-      id.push_back(c);
-    } else if (charsToConvertToUnderscore.find(c) != std::string::npos) {
-      id.push_back('_');
-    }
-  }
-  // first char must be a letter or underscore
-  if (!sme::common::isalpha(id.front()) && id.front() != '_') {
-    id = "_" + id;
-  }
+  auto id{sme::common::nameToSId(name.toStdString())};
   SPDLOG_DEBUG("  -> '{}'", id);
   // ensure it is unique, i.e. doesn't clash with any other SId in model
-  while (!isSIdAvailable(id, model)) {
-    id.append("_");
-    SPDLOG_DEBUG("  -> '{}'", id);
+  auto uniqueId = sme::common::makeUnique(id, [model](const auto &candidate) {
+    return isSIdAvailable(candidate, model);
+  });
+  if (uniqueId != id) {
+    SPDLOG_DEBUG("  -> '{}'", uniqueId);
   }
-  return id.c_str();
+  return uniqueId.c_str();
 }
 
 QString makeUnique(const QString &name, const QStringList &names,
                    const QString &postfix) {
-  QString uniqueName{name};
-  while (names.contains(uniqueName)) {
-    uniqueName.append(postfix);
-  }
-  return uniqueName;
+  const auto uniqueName = sme::common::makeUnique(
+      name.toStdString(),
+      [&names](const auto &candidate) {
+        return !names.contains(candidate.c_str());
+      },
+      postfix.toStdString());
+  return uniqueName.c_str();
 }
 
 } // namespace sme::model

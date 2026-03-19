@@ -9,6 +9,7 @@ target_sources(
           id.cpp
           model.cpp
           model_compartments.cpp
+          model_features.cpp
           model_events.cpp
           model_functions.cpp
           model_geometry.cpp
@@ -28,7 +29,8 @@ target_sources(
 if(BUILD_TESTING)
   target_sources(
     core_tests
-    PUBLIC geometry_t.cpp
+    PUBLIC model_features_t.cpp
+           geometry_t.cpp
            geometry_analytic_t.cpp
            geometry_impl_t.cpp
            geometry_parametric_t.cpp

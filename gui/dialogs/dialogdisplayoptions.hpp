@@ -22,9 +22,10 @@ public:
       const std::vector<QStringList> &speciesNames,
       const sme::model::DisplayOptions &displayOptions,
       const std::vector<PlotWrapperObservable> &plotWrapperObservables,
-      QWidget *parent = nullptr);
+      const QStringList &featureLineNames = {}, QWidget *parent = nullptr);
   ~DialogDisplayOptions();
   std::vector<bool> getShowSpecies() const;
+  std::vector<bool> getShowFeatures() const;
   bool getShowMinMax() const;
   bool getNormaliseOverAllTimepoints() const;
   bool getNormaliseOverAllSpecies() const;

@@ -104,6 +104,9 @@ void Model::initModelData(bool emptySpatialModel) {
         isNonSpatialModel);
     modelCompartments->setReactionsPtr(modelReactions.get());
     modelSpecies->setReactionsPtr(modelReactions.get());
+    modelFeatures = std::make_unique<ModelFeatures>(
+        settings.get(), modelCompartments.get(), modelSpecies.get(),
+        modelGeometry.get(), smeFileContents->simulationData.get());
   } catch (const std::runtime_error &e) {
     errorMessage = e.what();
     isValid = false;
@@ -121,6 +124,7 @@ void Model::setHasUnsavedChanges(bool unsavedChanges) {
   modelSpecies->setHasUnsavedChanges(unsavedChanges);
   modelReactions->setHasUnsavedChanges(unsavedChanges);
   modelEvents->setHasUnsavedChanges(unsavedChanges);
+  modelFeatures->setHasUnsavedChanges(unsavedChanges);
 }
 
 bool Model::getIsValid() const { return isValid; }
@@ -136,7 +140,8 @@ bool Model::getHasUnsavedChanges() const {
          modelParameters->getHasUnsavedChanges() ||
          modelSpecies->getHasUnsavedChanges() ||
          modelReactions->getHasUnsavedChanges() ||
-         modelEvents->getHasUnsavedChanges();
+         modelEvents->getHasUnsavedChanges() ||
+         modelFeatures->getHasUnsavedChanges();
 }
 
 const QString &Model::getCurrentFilename() const { return currentFilename; }
@@ -198,6 +203,7 @@ void Model::importFile(const std::string &filename) {
     modelCompartments->setSimulationDataPtr(
         smeFileContents->simulationData.get());
     modelSpecies->setSimulationDataPtr(smeFileContents->simulationData.get());
+    modelFeatures->setSimulationDataPtr(smeFileContents->simulationData.get());
   }
   setHasUnsavedChanges(false);
 }
@@ -321,6 +327,10 @@ Model::getOptimizeOptions() const {
   return settings->sampledFieldColors;
 }
 
+ModelFeatures &Model::getFeatures() { return *modelFeatures; }
+
+const ModelFeatures &Model::getFeatures() const { return *modelFeatures; }
+
 void Model::clear() {
   doc.reset();
   isValid = false;
@@ -336,6 +346,7 @@ void Model::clear() {
   modelEvents = std::make_unique<ModelEvents>();
   modelUnits = std::make_unique<ModelUnits>();
   modelMath = std::make_unique<ModelMath>();
+  modelFeatures = std::make_unique<ModelFeatures>();
   smeFileContents = std::make_unique<common::SmeFileContents>();
   smeFileContents->simulationData =
       std::make_unique<simulate::SimulationData>();
