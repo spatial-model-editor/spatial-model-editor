@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
-#include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/optimize.hpp"
+#include <QTest>
 #include <catch2/catch_test_macros.hpp>
 
 using namespace sme;
@@ -580,7 +580,7 @@ TEST_CASE("Start long optimization in another thread & stop early",
       std::function<void(double, const std::vector<double> &)>{});
   // wait until it starts running
   while (!optimization.getIsRunning()) {
-    sme::test::wait(10);
+    QTest::qWait(10);
   }
   // request it to stop early
   optimization.requestStop();
