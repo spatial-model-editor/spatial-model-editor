@@ -24,4 +24,8 @@ qt_import_plugins(
   EXCLUDE_BY_TYPE
   printsupport
   EXCLUDE_BY_TYPE
-  sqldrivers)
+  sqldrivers
+  EXCLUDE_BY_TYPE
+  egldeviceintegrations
+  EXCLUDE_BY_TYPE
+  xcbglintegrations)

@@ -32,8 +32,8 @@ jobs:
         shell: ${{ matrix.platform.shell }}
     env:
       CIBUILDWHEEL_VERSION: "3.4"
-      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2025.10.06"
-      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2025.10.06"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.03.31"
+      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2026.03.31"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}

@@ -1,5 +1,4 @@
 #include "catch_wrapper.hpp"
-#include "qt_test_utils.hpp"
 #include "sme/tiff.hpp"
 #include "sme/utils.hpp"
 #include <QDir>

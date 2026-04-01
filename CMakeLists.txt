@@ -31,32 +31,6 @@ endif()
 
 set(CMAKE_SKIP_INSTALL_ALL_DEPENDENCY true)
 
-# "make test" excludes gui tests & uses all cores
-include(ProcessorCount)
-ProcessorCount(NPROC)
-set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;--output-on-failure;-E;gui")
-
-# find required Qt modules
-find_package(
-  Qt6
-  CONFIG
-  REQUIRED
-  COMPONENTS Core
-             Gui
-             Widgets
-             OpenGLWidgets
-             OpenGL)
-get_target_property(
-  QtCore_location
-  Qt6::Core
-  LOCATION)
-message(STATUS "Found QtCore: ${QtCore_location}")
-
-# enable Qt utils: moc, uic, rcc
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTORCC ON)
-
 option(
   SME_USE_STATIC_LIBS
   "Use static versions of dependencies"
@@ -103,6 +77,40 @@ option(
   SME_BUILD_PYTHON_LIBRARY
   "Build python library"
   ON)
+
+# "make test" excludes gui tests & uses all cores
+include(ProcessorCount)
+ProcessorCount(NPROC)
+set(CMAKE_CTEST_ARGUMENTS "-j${NPROC};--progress;--output-on-failure;-E;gui")
+
+# find required Qt modules
+if(SME_BUILD_GUI)
+  find_package(
+    Qt6
+    CONFIG
+    REQUIRED
+    COMPONENTS Core
+               Gui
+               Widgets
+               OpenGLWidgets
+               OpenGL)
+else()
+  find_package(
+    Qt6
+    CONFIG
+    REQUIRED
+    COMPONENTS Core Gui)
+endif()
+get_target_property(
+  QtCore_location
+  Qt6::Core
+  LOCATION)
+message(STATUS "Found QtCore: ${QtCore_location}")
+
+# enable Qt utils: moc, uic, rcc
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 
 if(NOT SME_BUILD_CORE)
   find_package(

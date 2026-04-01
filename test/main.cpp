@@ -1,7 +1,9 @@
 #include "catch_wrapper.hpp"
 #include "sme/logger.hpp"
-#include <QApplication>
 #include <catch2/catch_session.hpp>
+#ifdef SME_ENABLE_GUI_TESTS
+#include <QApplication>
+#endif
 #include <oneapi/tbb/global_control.h>
 
 int main(int argc, char *argv[]) {

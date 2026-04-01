@@ -1,10 +1,11 @@
 add_executable(tests main.cpp)
-target_link_libraries(
-  tests
-  PRIVATE core_tests
-          $<$<BOOL:${SME_BUILD_GUI}>:gui_tests>
-          $<$<BOOL:${SME_BUILD_CLI}>:cli_tests>
-          ${SME_EXTRA_EXE_LIBS})
+target_link_libraries(tests PRIVATE core_tests ${SME_EXTRA_EXE_LIBS})
+if(SME_BUILD_GUI)
+  target_link_libraries(tests PRIVATE gui_tests)
+endif()
+if(SME_BUILD_CLI)
+  target_link_libraries(tests PRIVATE cli_tests)
+endif()
 if(SME_BUILD_GUI)
   target_compile_definitions(tests PRIVATE SME_ENABLE_GUI_TESTS)
 endif()
@@ -20,10 +21,12 @@ target_link_libraries(
   testlib
   PUBLIC Catch2::Catch2
          sme::core
-         Qt::Widgets
          Qt::Gui
          Qt::Core
          Qt::Test)
+if(SME_BUILD_GUI)
+  target_link_libraries(testlib PUBLIC Qt::Widgets)
+endif()
 add_subdirectory(test_utils)
 
 if(CMAKE_CXX_COMPILER_ID

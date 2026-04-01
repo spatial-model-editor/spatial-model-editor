@@ -1,6 +1,5 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
-#include "qt_test_utils.hpp"
 #include "sme/model.hpp"
 #include "sme/serialization.hpp"
 #include "sme/utils.hpp"
