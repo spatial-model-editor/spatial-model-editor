@@ -4,12 +4,34 @@
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/model.hpp"
+#include "sme/simulate.hpp"
 #include "tabsimulate.hpp"
 #include <QLineEdit>
 #include <QPushButton>
 #include <QSlider>
+#include <algorithm>
+#include <array>
+#include <ranges>
+#include <string_view>
 
 using namespace sme::test;
+
+namespace {
+
+bool isCudaRuntimeUnavailable(const std::string &msg) {
+  constexpr std::array<std::string_view, 6> unavailableMessages{
+      "Failed to initialize the CUDA driver",
+      "Failed to query CUDA devices",
+      "No CUDA devices were found",
+      "Failed to get the primary CUDA device",
+      "Failed to create the CUDA context",
+      "Failed to create the CUDA stream"};
+  return std::ranges::any_of(unavailableMessages, [&msg](std::string_view s) {
+    return msg.find(s) != std::string::npos;
+  });
+}
+
+} // namespace
 
 TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   QLabelMouseTracker mouseTracker;
@@ -174,4 +196,67 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
                         "use the Pixel simulator instead?"};
     REQUIRE(mwt.getResult() == invalidDune);
   }
+
+  SECTION("GPU pixel setup failure offers CPU pixel fallback") {
+    auto model{getExampleModel(Mod::ABtoC)};
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+    model.getSimulationSettings().options.pixel.backend =
+        sme::simulate::PixelBackendType::GPU;
+    model.getSimulationSettings().options.pixel.integrator =
+        sme::simulate::PixelIntegratorType::RK101;
+    model.getSpecies().setIsSpatial("A", false);
+
+    ModalWidgetTimer mwt;
+    mwt.addUserAction({"Enter"});
+    mwt.start();
+
+    TabSimulate tab(model, &mouseTracker, &voxelRenderer);
+    tab.show();
+    waitFor(&tab);
+
+    REQUIRE(mwt.getResult().contains("Simulation setup failed."));
+    REQUIRE(mwt.getResult().contains("CPU Pixel"));
+    REQUIRE(model.getSimulationSettings().simulatorType ==
+            sme::simulate::SimulatorType::Pixel);
+    REQUIRE(model.getSimulationSettings().options.pixel.backend ==
+            sme::simulate::PixelBackendType::CPU);
+
+    auto *btnSimulate{tab.findChild<QPushButton *>("btnSimulate")};
+    REQUIRE(btnSimulate != nullptr);
+    REQUIRE(btnSimulate->isEnabled());
+  }
+}
+
+TEST_CASE("TabSimulate can load CUDA pixel simulations",
+          "[gui/tabs/simulate/cuda][gui/tabs][gui][simulate]"
+          "[requires-cuda-gpu]") {
+  QLabelMouseTracker mouseTracker;
+  QVoxelRenderer voxelRenderer;
+  auto model{getExampleModel(Mod::ABtoC)};
+  model.getSimulationSettings().simulatorType =
+      sme::simulate::SimulatorType::Pixel;
+  model.getSimulationSettings().options.pixel.backend =
+      sme::simulate::PixelBackendType::GPU;
+  model.getSimulationSettings().options.pixel.integrator =
+      sme::simulate::PixelIntegratorType::RK101;
+  model.getSimulationSettings().options.pixel.maxTimestep = 1e-6;
+  model.getSimulationSettings().times = {{1, 1e-6}};
+
+  {
+    sme::simulate::Simulation sim(model);
+    if (isCudaRuntimeUnavailable(sim.errorMessage())) {
+      WARN("Skipping GUI CUDA simulate test: " << sim.errorMessage());
+      return;
+    }
+    REQUIRE(sim.errorMessage().empty());
+  }
+
+  TabSimulate tab(model, &mouseTracker, &voxelRenderer);
+  tab.show();
+  waitFor(&tab);
+
+  auto *btnSimulate{tab.findChild<QPushButton *>("btnSimulate")};
+  REQUIRE(btnSimulate != nullptr);
+  REQUIRE(btnSimulate->isEnabled() == true);
 }

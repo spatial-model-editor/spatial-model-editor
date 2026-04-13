@@ -46,6 +46,9 @@ Constructing the simplified boundary lines and triangular mesh approximation to 
 
 Simulating the model, either with Pixel or dune-copasi.
 
+For a hand-written overview of the Pixel backend internals, see
+:doc:`pixel-solver`.
+
 .. toctree::
 
    simulate/inc

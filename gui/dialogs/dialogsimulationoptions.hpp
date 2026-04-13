@@ -30,7 +30,10 @@ private:
   void txtDuneNewtonAbs_editingFinished();
   void cmbDuneLinearSolver_currentIndexChanged(int index);
   void resetDuneToDefaults();
+  void populatePixelBackendChoices();
   void loadPixelOpts();
+  void updatePixelBackendUi();
+  void cmbPixelBackend_currentIndexChanged(int index);
   void cmbPixelIntegrator_currentIndexChanged(int index);
   void txtPixelAbsErr_editingFinished();
   void txtPixelRelErr_editingFinished();
@@ -40,6 +43,7 @@ private:
   void spnDuneThreads_valueChanged(int value);
   void chkPixelCSE_stateChanged();
   void spnPixelOptLevel_valueChanged(int value);
+  void cmbPixelGpuPrecision_currentIndexChanged(int index);
   void resetPixelToDefaults();
   std::unique_ptr<Ui::DialogSimulationOptions> ui;
   sme::simulate::Options opt;

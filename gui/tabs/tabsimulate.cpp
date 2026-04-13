@@ -61,7 +61,7 @@ TabSimulate::TabSimulate(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   });
   connect(&simWatcher, &QFutureWatcherBase::finished, this,
           &TabSimulate::onSimulationFinished);
-  useDune(true);
+  loadModelData();
   ui->hslideTime->setEnabled(false);
   ui->btnResetSimulation->setEnabled(false);
 }
@@ -213,10 +213,16 @@ void TabSimulate::loadModelData() {
   sim = std::make_unique<sme::simulate::Simulation>(model);
   if (!sim->errorMessage().empty()) {
     ui->btnSimulate->setEnabled(false);
-    QString alternativeSim{model.getSimulationSettings().simulatorType ==
-                                   sme::simulate::SimulatorType::DUNE
-                               ? "Pixel"
-                               : "DUNE"};
+    const auto simulatorType{model.getSimulationSettings().simulatorType};
+    const bool gpuPixelFailed{
+        simulatorType == sme::simulate::SimulatorType::Pixel &&
+        model.getSimulationSettings().options.pixel.backend ==
+            sme::simulate::PixelBackendType::GPU};
+    QString alternativeSim{
+        gpuPixelFailed
+            ? "CPU Pixel"
+            : (simulatorType == sme::simulate::SimulatorType::DUNE ? "Pixel"
+                                                                   : "DUNE")};
     if (QMessageBox::question(
             this, "Simulation Setup Failed",
             QString(
@@ -225,8 +231,13 @@ void TabSimulate::loadModelData() {
                 .arg(sim->errorMessage().c_str())
                 .arg(alternativeSim),
             QMessageBox::Yes | QMessageBox::No) == QMessageBox::Yes) {
-      useDune(model.getSimulationSettings().simulatorType !=
-              sme::simulate::SimulatorType::DUNE);
+      if (gpuPixelFailed) {
+        model.getSimulationSettings().options.pixel.backend =
+            sme::simulate::PixelBackendType::CPU;
+        loadModelData();
+      } else {
+        useDune(simulatorType != sme::simulate::SimulatorType::DUNE);
+      }
     }
     return;
   }

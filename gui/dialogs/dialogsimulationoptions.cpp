@@ -25,6 +25,17 @@ static int toIndex(sme::simulate::PixelIntegratorType integrator) {
   }
 }
 
+static int toIndex(sme::simulate::PixelBackendType backend) {
+  switch (backend) {
+  case sme::simulate::PixelBackendType::CPU:
+    return 0;
+  case sme::simulate::PixelBackendType::GPU:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
 static sme::simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
   switch (index) {
   case 0:
@@ -40,11 +51,47 @@ static sme::simulate::PixelIntegratorType toPixelIntegratorEnum(int index) {
   }
 }
 
+static sme::simulate::PixelBackendType toPixelBackendEnum(int index) {
+  switch (index) {
+  case 1:
+    return sme::simulate::PixelBackendType::GPU;
+  case 0:
+  default:
+    return sme::simulate::PixelBackendType::CPU;
+  }
+}
+
+static int toIndex(sme::simulate::GpuFloatPrecision precision) {
+  switch (precision) {
+  case sme::simulate::GpuFloatPrecision::Double:
+    return 0;
+  case sme::simulate::GpuFloatPrecision::Float:
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+static sme::simulate::GpuFloatPrecision toGpuFloatPrecisionEnum(int index) {
+  switch (index) {
+  case 1:
+    return sme::simulate::GpuFloatPrecision::Float;
+  case 0:
+  default:
+    return sme::simulate::GpuFloatPrecision::Double;
+  }
+}
+
+static bool isGpuSupportedPixelIntegrator(sme::simulate::PixelIntegratorType) {
+  return true;
+}
+
 DialogSimulationOptions::DialogSimulationOptions(
     const sme::simulate::Options &options, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogSimulationOptions>()},
       opt{options} {
   ui->setupUi(this);
+  populatePixelBackendChoices();
   setupConnections();
   loadDuneOpts();
   loadPixelOpts();
@@ -89,6 +136,8 @@ void DialogSimulationOptions::setupConnections() {
   connect(ui->btnDuneReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetDuneToDefaults);
   // Pixel tab
+  connect(ui->cmbPixelBackend, qOverload<int>(&QComboBox::currentIndexChanged),
+          this, &DialogSimulationOptions::cmbPixelBackend_currentIndexChanged);
   connect(ui->cmbPixelIntegrator,
           qOverload<int>(&QComboBox::currentIndexChanged), this,
           &DialogSimulationOptions::cmbPixelIntegrator_currentIndexChanged);
@@ -106,6 +155,9 @@ void DialogSimulationOptions::setupConnections() {
           &DialogSimulationOptions::chkPixelCSE_stateChanged);
   connect(ui->spnPixelOptLevel, qOverload<int>(&QSpinBox::valueChanged), this,
           &DialogSimulationOptions::spnPixelOptLevel_valueChanged);
+  connect(ui->cmbPixelGpuPrecision,
+          qOverload<int>(&QComboBox::currentIndexChanged), this,
+          &DialogSimulationOptions::cmbPixelGpuPrecision_currentIndexChanged);
   connect(ui->btnPixelReset, &QPushButton::clicked, this,
           &DialogSimulationOptions::resetPixelToDefaults);
 }
@@ -190,33 +242,76 @@ void DialogSimulationOptions::resetDuneToDefaults() {
   loadDuneOpts();
 }
 
+void DialogSimulationOptions::populatePixelBackendChoices() {
+  ui->cmbPixelBackend->clear();
+  ui->cmbPixelBackend->addItem("CPU");
+  ui->cmbPixelBackend->addItem("GPU");
+}
+
 void DialogSimulationOptions::loadPixelOpts() {
+  if (opt.pixel.backend == sme::simulate::PixelBackendType::GPU &&
+      !isGpuSupportedPixelIntegrator(opt.pixel.integrator)) {
+    opt.pixel.integrator = sme::simulate::PixelIntegratorType::RK212;
+  }
+  ui->cmbPixelBackend->setCurrentIndex(toIndex(opt.pixel.backend));
+  ui->cmbPixelGpuPrecision->setCurrentIndex(
+      toIndex(opt.pixel.gpuFloatPrecision));
   ui->cmbPixelIntegrator->setCurrentIndex(toIndex(opt.pixel.integrator));
   ui->txtPixelRelErr->setText(dblToQString(opt.pixel.maxErr.rel));
   ui->txtPixelAbsErr->setText(dblToQString(opt.pixel.maxErr.abs));
   ui->txtPixelDt->setText(dblToQString(opt.pixel.maxTimestep));
   ui->chkPixelMultithread->setChecked(opt.pixel.enableMultiThreading);
   ui->spnPixelThreads->setMaximum(oneapi::tbb::info::default_concurrency());
-  if (opt.pixel.enableMultiThreading) {
-    ui->spnPixelThreads->setEnabled(true);
-    if (opt.pixel.maxThreads > ui->spnPixelThreads->maximum()) {
-      opt.pixel.maxThreads = 0;
-    }
-    ui->spnPixelThreads->setValue(opt.pixel.maxThreads);
-  } else {
-    ui->spnPixelThreads->setEnabled(false);
+  if (opt.pixel.maxThreads > ui->spnPixelThreads->maximum()) {
+    opt.pixel.maxThreads = 0;
   }
+  ui->spnPixelThreads->setValue(opt.pixel.maxThreads);
   ui->chkPixelCSE->setChecked(opt.pixel.doCSE);
   int lvl = static_cast<int>(opt.pixel.optLevel);
   if (lvl > ui->spnPixelOptLevel->maximum()) {
     lvl = ui->spnPixelOptLevel->maximum();
   }
   ui->spnPixelOptLevel->setValue(lvl);
+  updatePixelBackendUi();
+}
+
+void DialogSimulationOptions::updatePixelBackendUi() {
+  const bool useGpu = opt.pixel.backend == sme::simulate::PixelBackendType::GPU;
+  const QString integratorTooltip =
+      "The Runge-Kutta integrator to be used in the simulation";
+  const QString multithreadingTooltip =
+      useGpu ? "Multithreading is only used by the CPU pixel backend"
+             : "Using multiple CPU threads can improve performance for large "
+               "models, but for small models it may reduce performance.";
+
+  ui->cmbPixelBackend->setEnabled(ui->cmbPixelBackend->count() > 1);
+  ui->cmbPixelGpuPrecision->setEnabled(useGpu);
+  ui->lblPixelGpuPrecision->setEnabled(useGpu);
+  ui->cmbPixelIntegrator->setEnabled(true);
+  ui->cmbPixelIntegrator->setToolTip(integratorTooltip);
+  ui->lblPixelIntegrator->setToolTip(integratorTooltip);
+  ui->chkPixelMultithread->setEnabled(!useGpu);
+  ui->chkPixelMultithread->setToolTip(multithreadingTooltip);
+  ui->lblPixelMultithread->setToolTip(multithreadingTooltip);
+  ui->lblPixelThreads->setToolTip(multithreadingTooltip);
+  ui->spnPixelThreads->setEnabled(!useGpu && opt.pixel.enableMultiThreading);
+  ui->spnPixelThreads->setToolTip(multithreadingTooltip);
+}
+
+void DialogSimulationOptions::cmbPixelBackend_currentIndexChanged(int index) {
+  opt.pixel.backend = toPixelBackendEnum(index);
+  loadPixelOpts();
 }
 
 void DialogSimulationOptions::cmbPixelIntegrator_currentIndexChanged(
     int index) {
   opt.pixel.integrator = toPixelIntegratorEnum(index);
+  if (opt.pixel.backend == sme::simulate::PixelBackendType::GPU &&
+      !isGpuSupportedPixelIntegrator(opt.pixel.integrator)) {
+    opt.pixel.integrator = sme::simulate::PixelIntegratorType::RK212;
+    loadPixelOpts();
+    return;
+  }
 }
 
 void DialogSimulationOptions::txtPixelAbsErr_editingFinished() {
@@ -250,6 +345,11 @@ void DialogSimulationOptions::chkPixelCSE_stateChanged() {
 
 void DialogSimulationOptions::spnPixelOptLevel_valueChanged(int value) {
   opt.pixel.optLevel = static_cast<unsigned>(value);
+}
+
+void DialogSimulationOptions::cmbPixelGpuPrecision_currentIndexChanged(
+    int index) {
+  opt.pixel.gpuFloatPrecision = toGpuFloatPrecisionEnum(index);
 }
 
 void DialogSimulationOptions::resetPixelToDefaults() {

@@ -20,16 +20,10 @@ jobs:
         target: ["gui-cli", "wheels"]
         platform:
           - os: "ubuntu-22.04"
-            shell: "bash"
           - os: "ubuntu-22.04-arm"
-            shell: "bash"
           - os: "macos-14"
-            shell: "bash"
           - os: "windows-2022"
-            shell: "msys2 {0}"
-    defaults:
-      run:
-        shell: ${{ matrix.platform.shell }}
+          - os: "windows-11-arm"
     env:
       CIBUILDWHEEL_VERSION: "3.4"
       CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.03.31"
@@ -43,17 +37,23 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2025.10.06
+      - uses: spatial-model-editor/setup-ci@2026.03.30
         with:
-          sme_deps: '2025.10.06'
+          sme_deps: '2026.03.29'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v6
         with:
           submodules: 'recursive'
       - name: Set "latest" version number unless commit is tagged
         if: startsWith(github.event.ref, 'refs/tags/') == false
+        shell: bash
         run: ./ci/set-latest-version.sh ${GITHUB_SHA}
-      - run: ./ci/${{ matrix.target }}-${{ runner.os }}.sh
+      - name: Build script
+        if: runner.os != 'Windows'
+        run: ./ci/${{ matrix.target }}-${{ runner.os }}.sh
+      - name: Build script
+        if: runner.os == 'Windows'
+        run: ./ci/${{ matrix.target }}-${{ runner.os }}.ps1
       - uses: actions/upload-artifact@v7
         with:
           name: artifacts-${{ matrix.target }}-${{ matrix.platform.os }}

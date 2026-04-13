@@ -3,6 +3,7 @@
 #include "model_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
+#include "sme/cuda_stubs.hpp"
 #include "sme/system_memory.hpp"
 #include <QComboBox>
 #include <QFile>
@@ -527,6 +528,25 @@ TEST_CASE("MainWindow: status bar memory info", tags) {
   REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM used by SME:"));
   REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM used by system:"));
   REQUIRE(statusBarMemoryUsageBar->toolTip().contains("RAM total available:"));
+
+  auto *statusBarGpuMemoryUsageBar{
+      w.statusBar()->findChild<QWidget *>("statusBarGpuMemoryUsageBar")};
+  REQUIRE(statusBarGpuMemoryUsageBar != nullptr);
+#ifdef SME_WITH_CUDA
+  const auto cudaMemoryInfo{sme::simulate::getCudaMemoryInfo()};
+  if (cudaMemoryInfo.has_value()) {
+    REQUIRE(statusBarGpuMemoryUsageBar->toolTip().contains("GPU RAM used:"));
+    REQUIRE(statusBarGpuMemoryUsageBar->toolTip().contains(
+        "GPU RAM total available:"));
+    REQUIRE(statusBarGpuMemoryUsageBar->toolTip().contains("GPU RAM total:"));
+  } else {
+    REQUIRE(statusBarGpuMemoryUsageBar->isHidden());
+    REQUIRE(statusBarGpuMemoryUsageBar->toolTip().isEmpty());
+  }
+#else
+  REQUIRE(statusBarGpuMemoryUsageBar->isHidden());
+  REQUIRE(statusBarGpuMemoryUsageBar->toolTip().isEmpty());
+#endif
 }
 
 TEST_CASE("MainWindow: drag & drop events", tags) {

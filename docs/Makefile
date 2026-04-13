@@ -7,5 +7,8 @@ all: html
 html:
 	sphinx-build -M html . build
 
+noexec:
+	sphinx-build -M html . build -D nbsphinx_execute=never
+
 clean:
 	rm -rf build sme/_autosummary

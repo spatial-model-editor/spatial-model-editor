@@ -30,6 +30,7 @@ cmake .. \
     -GNinja \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+    -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_EXE_LINKER_FLAGS="-fuse-ld=lld --coverage" \
     -DCMAKE_CXX_FLAGS="--coverage -D_GLIBCXX_USE_TBB_PAR_BACKEND=0"
@@ -45,7 +46,7 @@ jwm &
 mkdir gcov
 
 lcov -q -z -d .
-time ./test/tests -as ~[expensive] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[expensive]~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 find . -type f -name "*.gcno" -print0 | xargs -0 llvm-cov gcov -p >/dev/null
 ls *.gcov

@@ -27,6 +27,7 @@ cmake .. \
     -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake" \
+    -DCUDAToolkit_ROOT=/opt/smelibs/cuda \
     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -DCMAKE_CXX_FLAGS="-fpic -fvisibility=hidden -D_GLIBCXX_USE_TBB_PAR_BACKEND=0" \
     -DSME_EXTRA_EXE_LIBS=$SME_EXTRA_EXE_LIBS \
@@ -42,7 +43,7 @@ ccache --show-stats
 jwm &
 
 # run cpp tests
-time ./test/tests -as >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests

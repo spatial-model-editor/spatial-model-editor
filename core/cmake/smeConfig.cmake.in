@@ -1,18 +1,52 @@
 get_filename_component(SME_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 include(CMakeFindDependencyMacro)
 
+set(SME_WITH_CUDA @SME_WITH_CUDA@)
+
+if(WIN32)
+    set(SME_SBML_PACKAGE libsbml-static)
+    set(SME_SBML_TARGET libsbml-static)
+    set(SME_COMBINE_PACKAGE libCombine-static)
+    set(SME_COMBINE_TARGET libCombine-static)
+    set(SME_COMBINE_CONFIG libCombine-static-config.cmake)
+else()
+    set(SME_SBML_PACKAGE sbml-static)
+    set(SME_SBML_TARGET sbml-static)
+    set(SME_COMBINE_PACKAGE combine-static)
+    set(SME_COMBINE_TARGET Combine-static)
+    set(SME_COMBINE_CONFIG Combine-static-config.cmake)
+endif()
+
 find_dependency(SymEngine REQUIRED)
-find_dependency(sbml-static REQUIRED)
+find_dependency(${SME_SBML_PACKAGE} REQUIRED)
+if(WIN32)
+    set_property(
+        TARGET ${SME_SBML_TARGET}
+        APPEND
+        PROPERTY INTERFACE_COMPILE_DEFINITIONS LIBSBML_STATIC=1 LIBLAX_STATIC=1)
+endif()
 find_dependency(OpenCV REQUIRED COMPONENTS core imgproc)
 find_dependency(spdlog REQUIRED)
 find_dependency(TIFF REQUIRED)
 find_dependency(fmt REQUIRED)
+if(WIN32)
+    set(Boost_USE_STATIC_RUNTIME ON)
+endif()
 find_dependency(CGAL REQUIRED)
 find_dependency(cereal REQUIRED)
 find_dependency(Pagmo REQUIRED)
 find_dependency(TBB CONFIG REQUIRED)
-find_dependency(combine-static REQUIRED CONFIGS Combine-static-config.cmake)
+find_dependency(${SME_COMBINE_PACKAGE} REQUIRED CONFIGS ${SME_COMBINE_CONFIG})
+if(WIN32)
+    set_property(
+        TARGET ${SME_COMBINE_TARGET}
+        APPEND
+        PROPERTY INTERFACE_COMPILE_DEFINITIONS LIBCOMBINE_STATIC=1)
+endif()
 find_dependency(dune-copasi REQUIRED)
+if(SME_WITH_CUDA)
+    find_dependency(CUDAToolkit REQUIRED)
+endif()
 
 if(NOT TARGET sme::core)
     include("${SME_CMAKE_DIR}/smeTargets.cmake")

@@ -118,6 +118,7 @@ TEST_CASE("Serialization",
     REQUIRE(options.dune.newtonAbsErr == dbl_approx(10.0));
     REQUIRE(options.pixel.integrator ==
             sme::simulate::PixelIntegratorType::RK435);
+    REQUIRE(options.pixel.backend == sme::simulate::PixelBackendType::CPU);
     REQUIRE(options.pixel.maxErr.rel == dbl_approx(5e-5));
     REQUIRE(options.pixel.maxTimestep == dbl_approx(5.0));
     // round-trip save / load sme file
@@ -329,6 +330,8 @@ TEST_CASE("Serialization",
   SECTION("settings xml roundtrip") {
     model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
+    s.simulationSettings.options.pixel.backend =
+        simulate::PixelBackendType::GPU;
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
     s.simulationSettings.options.dune.maxThreads = 7;
     auto xml{common::toXml(s)};
@@ -336,6 +339,8 @@ TEST_CASE("Serialization",
     REQUIRE(s2.simulationSettings.simulatorType ==
             s.simulationSettings.simulatorType);
     REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
+    REQUIRE(s2.simulationSettings.options.pixel.backend ==
+            simulate::PixelBackendType::GPU);
     REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
             dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
     REQUIRE(s2.simulationSettings.options.dune.maxThreads == 7);
@@ -351,12 +356,16 @@ TEST_CASE("Serialization",
     ScopedTestLocale localeGuard(localeToUse);
     sme::model::Settings s{};
     s.simulationSettings.times = {{1, 0.3}, {2, 0.1}};
+    s.simulationSettings.options.pixel.backend =
+        simulate::PixelBackendType::GPU;
     s.simulationSettings.options.pixel.maxErr.rel = 0.02;
     auto xml{common::toXml(s)};
     auto s2{common::fromXml(xml)};
     REQUIRE(s2.simulationSettings.times == s.simulationSettings.times);
     REQUIRE(s2.simulationSettings.simulatorType ==
             s.simulationSettings.simulatorType);
+    REQUIRE(s2.simulationSettings.options.pixel.backend ==
+            simulate::PixelBackendType::GPU);
     REQUIRE(s2.simulationSettings.options.pixel.maxErr.rel ==
             dbl_approx(s.simulationSettings.options.pixel.maxErr.rel));
   }

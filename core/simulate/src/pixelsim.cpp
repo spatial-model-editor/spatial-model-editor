@@ -102,7 +102,11 @@ void PixelSim::calculateDcdt() {
   }
   // membrane contribution to dc/dt
   for (auto &sim : simMembranes) {
-    sim->evaluateReactions();
+    if (useTBB) {
+      sim->evaluateReactions_tbb();
+    } else {
+      sim->evaluateReactions();
+    }
   }
   for (auto &sim : simCompartments) {
     sim->spatiallyAverageDcdt();

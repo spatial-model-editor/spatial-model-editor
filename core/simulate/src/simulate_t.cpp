@@ -66,20 +66,28 @@ TEST_CASE("Simulate: very_simple_model, single pixel geometry",
   REQUIRE(m0.getId() == "c1_c2_membrane");
   REQUIRE(m0.getCompartmentA()->getId() == "c1");
   REQUIRE(m0.getCompartmentB()->getId() == "c2");
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::X).size() == 0);
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y).size() == 1);
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y)[0] ==
+  REQUIRE(m0.size() == 1);
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::XP).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::XM).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::YP).size() == 1);
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::YM).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::YP)[0] ==
           std::pair<std::size_t, std::size_t>{0, 0});
 
   const auto &m1 = s.getMembranes().getMembranes()[1];
   REQUIRE(m1.getId() == "c2_c3_membrane");
   REQUIRE(m1.getCompartmentA()->getId() == "c2");
   REQUIRE(m1.getCompartmentB()->getId() == "c3");
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::X).size() == 0);
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y).size() == 1);
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y)[0] ==
+  REQUIRE(m1.size() == 1);
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::XP).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::XM).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::YP).size() == 1);
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::YM).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::YP)[0] ==
           std::pair<std::size_t, std::size_t>{0, 0});
 
   // move membrane reactions from compartment to membrane
@@ -295,17 +303,27 @@ TEST_CASE("Simulate: very_simple_model, 2d geometry",
   REQUIRE(m0.getId() == "c1_c2_membrane");
   REQUIRE(m0.getCompartmentA()->getId() == "c1");
   REQUIRE(m0.getCompartmentB()->getId() == "c2");
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::X).size() == 178);
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Y).size() == 160);
-  REQUIRE(m0.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::XP).size() +
+              m0.getFaceIndexPairs(sme::geometry::Membrane::XM).size() ==
+          178);
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::YP).size() +
+              m0.getFaceIndexPairs(sme::geometry::Membrane::YM).size() ==
+          160);
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+  REQUIRE(m0.getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
 
   const auto &m1 = s.getMembranes().getMembranes()[1];
   REQUIRE(m1.getId() == "c2_c3_membrane");
   REQUIRE(m1.getCompartmentA()->getId() == "c2");
   REQUIRE(m1.getCompartmentB()->getId() == "c3");
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::X).size() == 58);
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Y).size() == 50);
-  REQUIRE(m1.getIndexPairs(sme::geometry::Membrane::Z).size() == 0);
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::XP).size() +
+              m1.getFaceIndexPairs(sme::geometry::Membrane::XM).size() ==
+          58);
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::YP).size() +
+              m1.getFaceIndexPairs(sme::geometry::Membrane::YM).size() ==
+          50);
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::ZP).empty());
+  REQUIRE(m1.getFaceIndexPairs(sme::geometry::Membrane::ZM).empty());
 
   // 1st order RK, fixed timestep simulation
   auto &options{s.getSimulationSettings().options};
@@ -359,6 +377,65 @@ TEST_CASE("Simulate: very_simple_model, failing Pixel sim",
   sim.doTimesteps(1.0);
   REQUIRE(!sim.errorMessage().empty());
   REQUIRE(sim.errorImages()[0].size() == QSize(100, 100));
+}
+
+TEST_CASE("PixelSim membrane reactions match between single-threaded and "
+          "multi-threaded execution",
+          "[core/simulate/simulate][core/simulate][core][simulate][pixel]"
+          "[membranes]") {
+  constexpr double time{1.0};
+  constexpr double comparisonTol{1e-13};
+  auto configurePixelSim = [](model::Model &m, bool enableMultiThreading) {
+    auto &options{m.getSimulationSettings().options};
+    m.getSimulationSettings().simulatorType = simulate::SimulatorType::Pixel;
+    options.pixel.integrator = simulate::PixelIntegratorType::RK101;
+    options.pixel.maxErr = {std::numeric_limits<double>::max(),
+                            std::numeric_limits<double>::max()};
+    options.pixel.maxTimestep = 0.01;
+    options.pixel.enableMultiThreading = enableMultiThreading;
+    options.pixel.maxThreads = 2;
+  };
+
+  auto singleThreadModel{getExampleModel(Mod::VerySimpleModel)};
+  auto multiThreadModel{getExampleModel(Mod::VerySimpleModel)};
+  configurePixelSim(singleThreadModel, false);
+  configurePixelSim(multiThreadModel, true);
+
+  simulate::Simulation singleThreadSim(singleThreadModel);
+  simulate::Simulation multiThreadSim(multiThreadModel);
+
+  const auto singleThreadSteps{singleThreadSim.doTimesteps(time, 1)};
+  const auto multiThreadSteps{multiThreadSim.doTimesteps(time, 1)};
+  REQUIRE(singleThreadSteps == multiThreadSteps);
+  REQUIRE(singleThreadSim.getTimePoints().size() ==
+          multiThreadSim.getTimePoints().size());
+  REQUIRE(singleThreadSim.getCompartmentIds() ==
+          multiThreadSim.getCompartmentIds());
+  const auto iLast{singleThreadSim.getTimePoints().size() - 1};
+  for (std::size_t iComp = 0;
+       iComp < singleThreadSim.getCompartmentIds().size(); ++iComp) {
+    REQUIRE(singleThreadSim.getSpeciesIds(iComp) ==
+            multiThreadSim.getSpeciesIds(iComp));
+    for (std::size_t iSpec = 0;
+         iSpec < singleThreadSim.getSpeciesIds(iComp).size(); ++iSpec) {
+      const auto singleThreadConc{singleThreadSim.getConc(iLast, iComp, iSpec)};
+      const auto multiThreadConc{multiThreadSim.getConc(iLast, iComp, iSpec)};
+      const auto &singleThreadDcdt{singleThreadSim.getDcdt(iComp, iSpec)};
+      const auto &multiThreadDcdt{multiThreadSim.getDcdt(iComp, iSpec)};
+      REQUIRE(singleThreadConc.size() == multiThreadConc.size());
+      REQUIRE(singleThreadDcdt.size() == multiThreadDcdt.size());
+      for (std::size_t iVoxel = 0; iVoxel < singleThreadConc.size(); ++iVoxel) {
+        REQUIRE(multiThreadConc[iVoxel] ==
+                Catch::Approx(singleThreadConc[iVoxel])
+                    .margin(comparisonTol)
+                    .epsilon(comparisonTol));
+        REQUIRE(multiThreadDcdt[iVoxel] ==
+                Catch::Approx(singleThreadDcdt[iVoxel])
+                    .margin(comparisonTol)
+                    .epsilon(comparisonTol));
+      }
+    }
+  }
 }
 
 TEST_CASE("Simulate: very_simple_model, empty compartment, DUNE sim",

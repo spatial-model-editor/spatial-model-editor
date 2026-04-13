@@ -3,8 +3,18 @@
 ## [Unreleased]
 ### Added
 - allow constant species to have spatially varying concentrations [#1133](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
-- support for importing and exporting 2d and 3d Parametric geometry [#1132](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
+- support for importing and exporting 2d and 3d Parametric (meshed) geometry [#1132](https://github.com/spatial-model-editor/spatial-model-editor/issues/1132)
 - add species concentration plot to the image slice dialog [#1134](https://github.com/spatial-model-editor/spatial-model-editor/issues/1134)
+- GPU backend for the Pixel solver on Linux and Windows [#1142](https://github.com/spatial-model-editor/spatial-model-editor/issues/1142)
+- option for non-zero origin of geometry [#1126](https://github.com/spatial-model-editor/spatial-model-editor/issues/1126)
+- RAM usage indicator [#1122](https://github.com/spatial-model-editor/spatial-model-editor/issues/1122)
+- support for cross diffusion terms [#1118](https://github.com/spatial-model-editor/spatial-model-editor/issues/1118)
+- support for non-unit storage terms [#1114](https://github.com/spatial-model-editor/spatial-model-editor/issues/1114)
+- dialog for importing analytic geometry [#1111](https://github.com/spatial-model-editor/spatial-model-editor/issues/1111)
+- Windows ARM64 binaries
+
+### Fixed
+- geometry clipping plane now works with non-zero origin geometry [#1130](https://github.com/spatial-model-editor/spatial-model-editor/issues/1130)
 
 ## [1.11.0] - 2026-02-04
 ### Added

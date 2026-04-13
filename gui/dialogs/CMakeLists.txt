@@ -1,6 +1,7 @@
 target_sources(
   gui
-  PRIVATE dialogabout.cpp
+  PRIVATE dependency_versions.cpp
+          dialogabout.cpp
           dialogabout.ui
           dialoganalytic.cpp
           dialoganalytic.ui

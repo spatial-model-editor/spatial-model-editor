@@ -20,6 +20,12 @@ target_sources(
           simulate_data.cpp
           simulate_options.cpp)
 
+if(SME_WITH_CUDA)
+  target_sources(core PRIVATE cuda_stubs.cpp cudapixelsim.cpp)
+else()
+  target_sources(core PRIVATE cudapixelsim_no_cuda.cpp)
+endif()
+
 if(BUILD_TESTING)
   target_sources(
     core_tests
@@ -39,6 +45,9 @@ if(BUILD_TESTING)
            simulate_options_t.cpp
            simulate_t.cpp
            simulate_steadystate_t.cpp)
+  if(SME_WITH_CUDA)
+    target_sources(core_tests PUBLIC cudapixelsim_t.cpp)
+  endif()
 endif()
 if(SME_BUILD_BENCHMARKS)
   target_sources(bench PUBLIC duneconverter_bench.cpp simulate_bench.cpp)

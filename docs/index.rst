@@ -69,6 +69,7 @@ Spatial Model Editor Documentation
    :caption: Developer documentation
 
    developer/core
+   developer/pixel-solver
    developer/tests
 
 .. toctree::

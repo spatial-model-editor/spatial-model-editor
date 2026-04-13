@@ -58,6 +58,20 @@ if(BUILD_TESTING)
   add_library(core_tests STATIC)
 endif()
 
+if(WIN32)
+  set(SME_SBML_PACKAGE libsbml-static)
+  set(SME_SBML_TARGET libsbml-static)
+  set(SME_COMBINE_PACKAGE libCombine-static)
+  set(SME_COMBINE_TARGET libCombine-static)
+  set(SME_COMBINE_CONFIG libCombine-static-config.cmake)
+else()
+  set(SME_SBML_PACKAGE sbml-static)
+  set(SME_SBML_TARGET sbml-static)
+  set(SME_COMBINE_PACKAGE combine-static)
+  set(SME_COMBINE_TARGET Combine-static)
+  set(SME_COMBINE_CONFIG Combine-static-config.cmake)
+endif()
+
 # find SymEngine and check it is compiled with LLVM enabled
 find_package(
   SymEngine
@@ -86,12 +100,23 @@ else()
 endif()
 
 # find libSBML and check it is compiled with the spatial extension enabled
-find_package(sbml-static REQUIRED)
+find_package(
+  ${SME_SBML_PACKAGE}
+  CONFIG
+  REQUIRED)
+if(WIN32)
+  set_property(
+    TARGET ${SME_SBML_TARGET}
+    APPEND
+    PROPERTY INTERFACE_COMPILE_DEFINITIONS
+             LIBSBML_STATIC=1
+             LIBLAX_STATIC=1)
+endif()
 message(STATUS "Testing libSBML spatial extension support")
 try_compile(
   SBML_SPATIAL "${CMAKE_CURRENT_BINARY_DIR}/cxx"
   "${CMAKE_SOURCE_DIR}/cmake/checkSpatialSBML.cpp"
-  LINK_LIBRARIES sbml-static
+  LINK_LIBRARIES ${SME_SBML_TARGET}
   OUTPUT_VARIABLE
     SBML_SPATIAL_ERROR_LOG
     CXX_STANDARD
@@ -111,6 +136,9 @@ find_package(OpenCV REQUIRED COMPONENTS core imgproc)
 find_package(spdlog REQUIRED)
 find_package(TIFF REQUIRED)
 find_package(fmt REQUIRED)
+if(WIN32)
+  set(Boost_USE_STATIC_RUNTIME ON)
+endif()
 find_package(CGAL REQUIRED)
 find_package(cereal REQUIRED)
 find_package(Pagmo REQUIRED)
@@ -119,10 +147,28 @@ find_package(
   CONFIG
   REQUIRED)
 find_package(
-  combine-static
+  ${SME_COMBINE_PACKAGE}
   REQUIRED
   CONFIGS
-  Combine-static-config.cmake)
+  ${SME_COMBINE_CONFIG})
+if(WIN32)
+  set_property(
+    TARGET ${SME_COMBINE_TARGET}
+    APPEND
+    PROPERTY INTERFACE_COMPILE_DEFINITIONS LIBCOMBINE_STATIC=1)
+endif()
+if(SME_WITH_CUDA)
+  find_package(CUDAToolkit REQUIRED)
+  target_include_directories(core SYSTEM PRIVATE ${CUDAToolkit_INCLUDE_DIRS})
+  target_link_libraries(
+    core
+    PUBLIC ${CMAKE_DL_LIBS}
+           CUDA::nvrtc_static
+           CUDA::nvrtc_builtins_static
+           CUDA::nvptxcompiler_static)
+else()
+  message(STATUS "CUDA toolkit disabled on this platform")
+endif()
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(
@@ -133,18 +179,19 @@ target_link_libraries(
   core
   PRIVATE TIFF::TIFF
           ${SYMENGINE_LIBRARIES}
-          sbml-static
-          Combine-static
+          ${SME_SBML_TARGET}
+          ${SME_COMBINE_TARGET}
           CGAL::CGAL
           cereal::cereal
           TBB::tbb
+          Dune::Copasi
           $<$<PLATFORM_ID:Windows>:psapi>)
+
 target_link_libraries(
   core
   PUBLIC opencv_core
          opencv_imgproc
          spdlog::spdlog
-         Dune::Copasi
          Qt::Gui
          Qt::Core
          Pagmo::pagmo)
