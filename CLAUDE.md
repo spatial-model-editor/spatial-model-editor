@@ -20,7 +20,9 @@ Implementation, test, and benchmark code for a component are co-located: `X.hpp`
 
 ## Building and testing
 
-All commands run from `build-sme-release/`:
+You can assume the script `ci/local-dev-setup.sh` has been run.
+
+All commands run from `build-release/`:
 
 ```bash
 ninja                                           # build
@@ -30,12 +32,14 @@ xvfb-run -a bash -c 'jwm & sleep 1 && ./test/tests "[gui]"'   # run GUI tests he
 xvfb-run -a bash -c 'jwm & sleep 1 && ./test/tests "TestName"' # run a specific GUI test
 ```
 
-Python tests from `build-sme-release/sme`:
+If running in a strict sandbox, ask for permission to run commands starting with `xvfb-run -a bash -c`.
+
+Python tests from `build-release/sme`:
 ```bash
 python -m pytest ../../sme/test
 ```
 
-For segfault debugging, use `build-sme-asan/`:
+For segfault debugging, use `build-asan/`:
 ```bash
 ASAN_OPTIONS="halt_on_error=0" ninja            # build with ASAN
 ./test/tests "[tagname]"                        # re-run to see ASAN output

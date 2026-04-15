@@ -1,6 +1,7 @@
 #include "model_test_utils.hpp"
 #include <QFile>
 #include <QString>
+#include <stdexcept>
 #include <string>
 
 namespace sme::test {
@@ -87,10 +88,18 @@ std::unique_ptr<libsbml::SBMLDocument> toSbmlDoc(model::Model &model) {
 void createBinaryFile(const QString &test_resource_filename,
                       const QString &output_filename) {
   QFile fIn(QString(":/test/%1").arg(test_resource_filename));
-  fIn.open(QIODevice::ReadOnly);
+  if (!fIn.open(QIODevice::ReadOnly)) {
+    throw std::runtime_error(
+        "sme::test::createBinaryFile() :: Failed to open " +
+        test_resource_filename.toStdString() + " for reading");
+  }
   auto data{fIn.readAll()};
   QFile fOut(output_filename);
-  fOut.open(QIODevice::WriteOnly);
+  if (!fOut.open(QIODevice::WriteOnly)) {
+    throw std::runtime_error(
+        "sme::test::createBinaryFile() :: Failed to open " +
+        output_filename.toStdString() + " for writing");
+  }
   fOut.write(data);
 }
 

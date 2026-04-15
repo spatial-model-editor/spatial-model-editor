@@ -154,7 +154,7 @@ TEST_CASE("DialogExport", "[gui/dialogs/export][gui/dialogs][gui][export]") {
     sendKeyEvents(&dia, {"Enter"});
     REQUIRE(mwt.getResult() == "QFileDialog::AcceptSave");
     QFile f2("tmpdiaex.txt");
-    f2.open(QIODevice::ReadOnly | QIODevice::Text);
+    REQUIRE(f2.open(QIODevice::ReadOnly | QIODevice::Text));
     QTextStream in(&f2);
     QStringList lines;
     while (!in.atEnd()) {

@@ -227,7 +227,7 @@ TEST_CASE("Mesh3d simple geometries",
         CAPTURE(scaling);
         mesh3d.setPhysicalGeometry({scaling, scaling, scaling}, {0, 0, 0});
         QFile qf(QString("x%1.msh").arg(scaling));
-        qf.open(QIODevice::WriteOnly | QIODevice::Text);
+        REQUIRE(qf.open(QIODevice::WriteOnly | QIODevice::Text));
         qf.write(mesh3d.getGMSH().toUtf8());
         qf.close();
         REQUIRE(std::fabs(common::min(mesh3d.getVerticesAsFlatArray())) <=
@@ -283,7 +283,7 @@ TEST_CASE("Mesh3d simple geometries",
         double newMaxCoord = maxCoord * scaling;
         mesh3d.setPhysicalGeometry({1.0, scaling, 1.0}, {0, 0, 0});
         QFile qf(QString("x%1.msh").arg(scaling));
-        qf.open(QIODevice::WriteOnly | QIODevice::Text);
+        REQUIRE(qf.open(QIODevice::WriteOnly | QIODevice::Text));
         qf.write(mesh3d.getGMSH().toUtf8());
         qf.close();
         REQUIRE(std::fabs(common::min(mesh3d.getVerticesAsFlatArray())) <=
