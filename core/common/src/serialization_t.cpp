@@ -194,7 +194,7 @@ TEST_CASE("Serialization",
   SECTION("Valid model: number of colors equals the number "
           "of sampledVolumes") {
     QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
+    REQUIRE(f.open(QIODevice::ReadOnly));
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     m.exportSMEFile("test2.sme");
@@ -214,7 +214,7 @@ TEST_CASE("Serialization",
   SECTION("Valid model: number of colors is greater than the "
           "number of sampledVolumes") {
     QFile f(":/models/liver-simplified.xml");
-    f.open(QIODevice::ReadOnly);
+    REQUIRE(f.open(QIODevice::ReadOnly));
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     m.exportSMEFile("test2.sme");
@@ -235,7 +235,7 @@ TEST_CASE("Serialization",
   }
   SECTION("Import a model saved using sme 1.3.1") {
     QFile f(":test/models/liver-simplified_v1.3.1.xml");
-    f.open(QIODevice::ReadOnly);
+    REQUIRE(f.open(QIODevice::ReadOnly));
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getCompartments()};
@@ -277,7 +277,7 @@ TEST_CASE("Serialization",
   }
   SECTION("Import a model with invalid color annotations") {
     QFile f(":test/models/liver-simplified_invalid_colors.xml");
-    f.open(QIODevice::ReadOnly);
+    REQUIRE(f.open(QIODevice::ReadOnly));
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColors()};
@@ -303,7 +303,7 @@ TEST_CASE("Serialization",
   }
   SECTION("Import a model with missing color annotations") {
     QFile f(":test/models/liver-simplified_missing_colors.xml");
-    f.open(QIODevice::ReadOnly);
+    REQUIRE(f.open(QIODevice::ReadOnly));
     model::Model m;
     m.importSBMLString(f.readAll().toStdString());
     const auto &s{m.getSampledFieldColors()};

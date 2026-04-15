@@ -1,9 +1,9 @@
+#include "resource_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate.hpp"
 #include "sme/version.hpp"
 #include <QElapsedTimer>
-#include <QFile>
 #include <fmt/core.h>
 #include <limits>
 #include <string>
@@ -151,9 +151,8 @@ static void printBenchmarks(const BenchmarkParams &params) {
 
     for (const auto &backend : params.backends) {
       model::Model s;
-      QFile f(QString(":/models/%1.xml").arg(model));
-      f.open(QIODevice::ReadOnly);
-      s.importSBMLString(f.readAll().toStdString());
+      s.importSBMLString(benchmarking::readResourceTextFile(
+          QString(":/models/%1.xml").arg(model)));
 
       auto &options = s.getSimulationSettings().options;
       options.pixel.backend = backend.pixelBackend;

@@ -1,10 +1,10 @@
 #pragma once
 
+#include "resource_utils.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/model_membranes_util.hpp"
-#include <QFile>
 #include <QImage>
 #include <QPointF>
 #include <QRgb>
@@ -26,9 +26,7 @@ struct ABtoC {
   sme::model::Model model;
   std::string xml;
   ABtoC() {
-    QFile f(":/models/ABtoC.xml");
-    f.open(QIODevice::ReadOnly);
-    xml = f.readAll().toStdString();
+    xml = sme::benchmarking::readResourceTextFile(":/models/ABtoC.xml");
     model.importSBMLString(xml);
   }
 };
@@ -49,9 +47,8 @@ struct VerySimpleModel {
   sme::model::Model model;
   std::string xml;
   VerySimpleModel() {
-    QFile f(":/models/very-simple-model.xml");
-    f.open(QIODevice::ReadOnly);
-    xml = f.readAll().toStdString();
+    xml = sme::benchmarking::readResourceTextFile(
+        ":/models/very-simple-model.xml");
     model.importSBMLString(xml);
   }
 };
@@ -71,9 +68,7 @@ struct LiverCells {
   sme::model::Model model;
   std::string xml;
   LiverCells() {
-    QFile f(":/models/liver-cells.xml");
-    f.open(QIODevice::ReadOnly);
-    xml = f.readAll().toStdString();
+    xml = sme::benchmarking::readResourceTextFile(":/models/liver-cells.xml");
     model.importSBMLString(xml);
   }
 };

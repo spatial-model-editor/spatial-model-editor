@@ -7,7 +7,7 @@ very convenient to install, so the easiest way to build locally
 is probably to use the pre-compiled static libraries used by
 the CI builds - see [ci/README](../ci/README.md) for more details.
 
-### Linux local build
+### Local build
 
 Clone the repo including submodules:
 
@@ -18,13 +18,24 @@ cd spatial-model-editor
 
 (If you already cloned without `--recursive` you can run `git submodule update --init --recursive`)
 
-Run the getdeps script to download the latest static libs and copy them to `/opt/smelibs`:
+On Linux and macOS, the easiest way to set up a local development build is to use the local setup script:
 
 ```
-sudo ./ext/getdeps.sh
+./ci/local-dev-setup.sh
 ```
 
-Make sure you have the system libraries required by Qt6 installed, for example on Ubuntu:
+This will:
+
+- download the appropriate `sme_deps` archive and install it to `/opt/smelibs`
+- configure and build a release build in `build-release`
+- configure and build an ASAN build in `build-asan`
+
+Useful options:
+
+- `./ci/local-dev-setup.sh --deps-only` to only install dependencies
+- `./ci/local-dev-setup.sh --skip-deps` to rebuild using an existing `/opt/smelibs`
+
+On Linux, make sure you have the system libraries required by Qt6 installed, for example on Ubuntu:
 
 ```
 sudo apt-get install \
@@ -42,18 +53,10 @@ sudo apt-get install \
     '^libxcb.*-dev'
 ```
 
-Build using CMake, e.g.
+After the script completes, you can run the tests from `build-release`, see [test/README.md](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/test/README.md) for more information:
 
 ```
-mkdir build
-cd build
-cmake .. -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
-ninja
-```
-
-Now you can run the tests, see [test/README.md](https://github.com/spatial-model-editor/spatial-model-editor/blob/main/test/README.md) for more information:
-
-```
+cd build-release
 ninja test
 ```
 

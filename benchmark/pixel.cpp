@@ -1,9 +1,9 @@
+#include "resource_utils.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate.hpp"
 #include "sme/version.hpp"
 #include <QElapsedTimer>
-#include <QFile>
 #include <fmt/core.h>
 
 using namespace sme;
@@ -92,9 +92,8 @@ static void printFixedTimestepPixel(const PixelParams &params) {
                     0.00001, 0.000005, 0.0000025, 0.000001}) {
     // import model
     model::Model s;
-    QFile f(QString(":/models/%1.xml").arg(params.models[0]));
-    f.open(QIODevice::ReadOnly);
-    s.importSBMLString(f.readAll().toStdString());
+    s.importSBMLString(benchmarking::readResourceTextFile(
+        QString(":/models/%1.xml").arg(params.models[0])));
 
     // setup simulator
     simulate::Options options;

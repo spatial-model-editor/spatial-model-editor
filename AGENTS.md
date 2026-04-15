@@ -29,17 +29,17 @@ Note that the implementation code, test code and optional benchmark code for a c
 ## How to run locally
 
 We have many dependencies, so we statically compile all of them in CI, and then provide compiled binaries built in CI for our users.
-You can assume the script ci/local-linux-dev-setup.sh has been run, i.e.
+You can assume the script ci/local-dev-setup.sh has been run, i.e.
 
-  - in build-sme-release/ you can do
+  - in build-release/ you can do
     - `ninja` to build
     - `ninja test` to run all non-gui tests in parallel
     - `./test/tests` with suitable tags to run a subset of the catch2 test suite.
-    - `xvfb-run -a ./test/tests "[gui]"` to run GUI tests headlessly on Linux (or replace `"[gui]"` with a specific test name)
-    - if running in a strict sandbox, ask for permission to run commands starting with `xvfb-run -a ./test/tests` outside the sandbox
-  - in build-sme-release/sme you can do
+    - `xvfb-run -a bash -c 'jwm & sleep 1 && ./test/tests "[gui]"'` to run GUI tests headlessly on Linux (or replace `"[gui]"` with a specific test name)
+    - if running in a strict sandbox, ask for permission to run commands starting with `xvfb-run -a bash -c` outside the sandbox
+  - in build-release/sme you can do
     - `python -m pytest ../../sme/test` to run the python tests
-  - if a test segfaults, in build-sme-asan/ you can do
+  - if a test segfaults, in build-asan/ you can do
     - `ASAN_OPTIONS="halt_on_error=0" ninja` to build
     - `./test/tests` with suitable tags to re-run a segfaulting test to see the ASAN output.
   - note that running the full test suite can take a few minutes

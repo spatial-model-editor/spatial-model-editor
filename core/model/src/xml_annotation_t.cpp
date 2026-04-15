@@ -99,7 +99,7 @@ TEST_CASE("XML Annotations",
 
     // load saved model with annotations
     QFile f2("tmpxmlsettings.xml");
-    f2.open(QIODevice::ReadOnly);
+    REQUIRE(f2.open(QIODevice::ReadOnly));
     std::unique_ptr<libsbml::SBMLDocument> doc2(
         libsbml::readSBMLFromString(f2.readAll().toStdString().c_str()));
     auto settings2{model::getSbmlAnnotation(doc2->getModel())};
