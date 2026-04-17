@@ -134,6 +134,12 @@ public:
   [[nodiscard]] std::string cudaCode(std::size_t i = 0,
                                      bool useFloat = false) const;
   /**
+   * @brief Metal code string after substitutions/inlining.
+   * @param i Expression index.
+   * @returns Metal expression string.
+   */
+  [[nodiscard]] std::string metalCode(std::size_t i = 0) const;
+  /**
    * @brief Derivative of expression ``i`` with respect to ``var``.
    * @param var Differentiation variable.
    * @param i Expression index.

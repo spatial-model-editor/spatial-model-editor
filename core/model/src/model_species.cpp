@@ -133,6 +133,7 @@ ModelSpecies::getSampledFieldFromSBML(const QString &id) const {
     // with stringstreams & subnormal doubles on macos:
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/465
     std::stringstream ss{sf->getSamples()};
+    ss.imbue(std::locale::classic());
     double val;
     while (ss >> val || !ss.eof()) {
       if (ss.fail() && std::fpclassify(val) == FP_SUBNORMAL) {

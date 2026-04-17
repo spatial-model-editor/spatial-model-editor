@@ -1,5 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "cudapixelsim.hpp"
+#ifdef SME_WITH_METAL
+#include "metalpixelsim.hpp"
+#endif
 #include "model_test_utils.hpp"
 #include "pixelsim.hpp"
 #include "sme/model.hpp"
@@ -16,11 +19,33 @@ using namespace sme::test;
 
 namespace {
 
+#ifdef SME_WITH_METAL
+using GpuPixelSim = simulate::MetalPixelSim;
+constexpr std::string_view gpuBackendName{"Metal"};
+#else
+using GpuPixelSim = simulate::CudaPixelSim;
+constexpr std::string_view gpuBackendName{"CUDA"};
+#endif
+
 constexpr double singleStepDt{1e-6};
 constexpr double longRunTime{1.0};
 constexpr double longRunMaxTimestep{1e-2};
-constexpr double comparisonAbsTol{1e-12};
-constexpr double comparisonRelTol{1e-10};
+
+struct ComparisonTolerance {
+  double abs;
+  double rel;
+};
+
+#ifdef SME_WITH_METAL
+constexpr ComparisonTolerance singleStepTolerance{1e-6, 1e-5};
+// Metal comparisons are against the CPU's double-precision trajectory even
+// though the backend is float-only, so full simulation sweeps need a looser
+// envelope than the kernel-local single-step checks.
+constexpr ComparisonTolerance multipleStepTolerance{5e-4, 1e-2};
+#else
+constexpr ComparisonTolerance singleStepTolerance{1e-13, 1e-11};
+constexpr ComparisonTolerance multipleStepTolerance{singleStepTolerance};
+#endif
 
 constexpr std::array allExampleModels{Mod::ABtoC,
                                       Mod::Brusselator,
@@ -47,7 +72,7 @@ constexpr std::array longRunExampleModels{Mod::ABtoC,
 constexpr std::array adaptiveLongRunExampleModels{
     Mod::ABtoC, Mod::SingleCompartmentDiffusion, Mod::VerySimpleModel};
 
-constexpr std::string_view toString(Mod mod) {
+constexpr const char *toString(Mod mod) {
   switch (mod) {
   case Mod::ABtoC:
     return "ABtoC";
@@ -116,7 +141,12 @@ void setRestartConcentrations(model::Model &m,
                         std::vector<std::vector<double>>{concentrations}};
 }
 
-bool isCudaRuntimeUnavailable(const std::string &msg) {
+bool isGpuRuntimeUnavailable(const std::string &msg) {
+#ifdef SME_WITH_METAL
+  constexpr std::array<std::string_view, 2> unavailableMessages{
+      "Failed to create the Metal device",
+      "Failed to create the Metal command queue"};
+#else
   constexpr std::array<std::string_view, 6> unavailableMessages{
       "Failed to initialize the CUDA driver",
       "Failed to query CUDA devices",
@@ -124,17 +154,19 @@ bool isCudaRuntimeUnavailable(const std::string &msg) {
       "Failed to get the primary CUDA device",
       "Failed to create the CUDA context",
       "Failed to create the CUDA stream"};
+#endif
   return std::ranges::any_of(unavailableMessages, [&msg](std::string_view s) {
     return msg.find(s) != std::string::npos;
   });
 }
 
-bool requireCudaReady(const simulate::CudaPixelSim &sim) {
+bool requireGpuReady(const GpuPixelSim &sim) {
   if (sim.errorMessage().empty()) {
     return true;
   }
-  if (isCudaRuntimeUnavailable(sim.errorMessage())) {
-    WARN("Skipping CUDA numerical comparison: " << sim.errorMessage());
+  if (isGpuRuntimeUnavailable(sim.errorMessage())) {
+    WARN("Skipping " << gpuBackendName
+                     << " numerical comparison: " << sim.errorMessage());
     return false;
   }
   REQUIRE(sim.errorMessage().empty());
@@ -142,21 +174,23 @@ bool requireCudaReady(const simulate::CudaPixelSim &sim) {
 }
 
 void requireNear(const std::vector<double> &cpuValues,
-                 const std::vector<double> &gpuValues) {
+                 const std::vector<double> &gpuValues,
+                 ComparisonTolerance tolerance = singleStepTolerance) {
   REQUIRE(cpuValues.size() == gpuValues.size());
   for (std::size_t i = 0; i < cpuValues.size(); ++i) {
     CAPTURE(i);
     CAPTURE(cpuValues[i]);
     CAPTURE(gpuValues[i]);
     REQUIRE(gpuValues[i] == Catch::Approx(cpuValues[i])
-                                .epsilon(comparisonRelTol)
-                                .margin(comparisonAbsTol));
+                                .epsilon(tolerance.rel)
+                                .margin(tolerance.abs));
   }
 }
 
-void requireMatchingSimulationState(const simulate::Simulation &cpuSim,
-                                    const simulate::Simulation &gpuSim,
-                                    std::size_t timeIndex) {
+void requireMatchingSimulationState(
+    const simulate::Simulation &cpuSim, const simulate::Simulation &gpuSim,
+    std::size_t timeIndex,
+    ComparisonTolerance tolerance = singleStepTolerance) {
   REQUIRE(cpuSim.getCompartmentIds() == gpuSim.getCompartmentIds());
   for (std::size_t iCompartment = 0;
        iCompartment < cpuSim.getCompartmentIds().size(); ++iCompartment) {
@@ -165,16 +199,34 @@ void requireMatchingSimulationState(const simulate::Simulation &cpuSim,
     for (std::size_t iSpecies = 0;
          iSpecies < cpuSim.getSpeciesIds(iCompartment).size(); ++iSpecies) {
       requireNear(cpuSim.getDcdt(iCompartment, iSpecies),
-                  gpuSim.getDcdt(iCompartment, iSpecies));
+                  gpuSim.getDcdt(iCompartment, iSpecies), tolerance);
       requireNear(cpuSim.getConc(timeIndex, iCompartment, iSpecies),
-                  gpuSim.getConc(timeIndex, iCompartment, iSpecies));
+                  gpuSim.getConc(timeIndex, iCompartment, iSpecies), tolerance);
     }
   }
 }
 
-void requireMatchingLowerOrderState(const simulate::Simulation &cpuSim,
-                                    const simulate::Simulation &gpuSim,
-                                    std::size_t timeIndex) {
+void requireMatchingConcentrations(
+    const simulate::Simulation &cpuSim, const simulate::Simulation &gpuSim,
+    std::size_t timeIndex,
+    ComparisonTolerance tolerance = singleStepTolerance) {
+  REQUIRE(cpuSim.getCompartmentIds() == gpuSim.getCompartmentIds());
+  for (std::size_t iCompartment = 0;
+       iCompartment < cpuSim.getCompartmentIds().size(); ++iCompartment) {
+    REQUIRE(cpuSim.getSpeciesIds(iCompartment) ==
+            gpuSim.getSpeciesIds(iCompartment));
+    for (std::size_t iSpecies = 0;
+         iSpecies < cpuSim.getSpeciesIds(iCompartment).size(); ++iSpecies) {
+      requireNear(cpuSim.getConc(timeIndex, iCompartment, iSpecies),
+                  gpuSim.getConc(timeIndex, iCompartment, iSpecies), tolerance);
+    }
+  }
+}
+
+void requireMatchingLowerOrderState(
+    const simulate::Simulation &cpuSim, const simulate::Simulation &gpuSim,
+    std::size_t timeIndex,
+    ComparisonTolerance tolerance = singleStepTolerance) {
   REQUIRE(cpuSim.getCompartmentIds() == gpuSim.getCompartmentIds());
   for (std::size_t iCompartment = 0;
        iCompartment < cpuSim.getCompartmentIds().size(); ++iCompartment) {
@@ -196,8 +248,8 @@ void requireMatchingLowerOrderState(const simulate::Simulation &cpuSim,
         CAPTURE(cpuValue);
         CAPTURE(gpuValue);
         REQUIRE(gpuValue == Catch::Approx(cpuValue)
-                                .epsilon(comparisonRelTol)
-                                .margin(comparisonAbsTol));
+                                .epsilon(tolerance.rel)
+                                .margin(tolerance.abs));
       }
     }
   }
@@ -228,6 +280,7 @@ void randomizeReactiveSpecies(model::Model &mCpu, model::Model &mGpu,
 
 } // namespace
 
+#ifdef SME_WITH_CUDA
 TEST_CASE("CudaPixelSim kernel source generation uses Symbolic CUDA code",
           "[core/simulate/cudapixelsim][core/simulate][core][simulate]") {
   const std::string expr{"pi + A"};
@@ -281,16 +334,58 @@ TEST_CASE("CudaPixelSim NVRTC compile failures include compile log details",
   REQUIRE(message.find("NVRTC_ERROR_COMPILATION") != std::string::npos);
   REQUIRE(message.find("identifier \"foo\" is undefined") != std::string::npos);
 }
+#endif
 
-TEST_CASE("CudaPixelSim unsupported-feature gating",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]") {
+#ifdef SME_WITH_METAL
+TEST_CASE("MetalPixelSim kernel source generation uses Symbolic Metal code",
+          "[core/simulate/metalpixelsim][core/simulate][core][simulate]") {
+  const std::string expr{"A + B"};
+  common::Symbolic symbolic(expr, {"A", "B"});
+  REQUIRE(symbolic.isValid());
+  symbolic.relabel({"sme_var_0", "sme_var_1"});
+  const auto expected = symbolic.metalCode();
+  REQUIRE(expected != expr);
+
+  const auto source =
+      simulate::detail::makeMetalKernelSource({"A", "B"}, {expr});
+  REQUIRE(source.find("const float sme_var_0 = sme_values[0];") !=
+          std::string::npos);
+  REQUIRE(source.find("const float sme_var_1 = sme_values[1];") !=
+          std::string::npos);
+  REQUIRE(source.find("sme_out[0] = " + expected + ";") != std::string::npos);
+}
+
+TEST_CASE("MetalPixelSim kernel source generation avoids variable collisions",
+          "[core/simulate/metalpixelsim][core/simulate][core][simulate]") {
+  const auto source =
+      simulate::detail::makeMetalKernelSource({"c", "h"}, {"c+h"});
+  REQUIRE(source.find("const float c = c[0];") == std::string::npos);
+  REQUIRE(source.find("const float sme_var_0 = sme_values[0];") !=
+          std::string::npos);
+  REQUIRE(source.find("const float sme_var_1 = sme_values[1];") !=
+          std::string::npos);
+}
+
+TEST_CASE("MetalPixelSim compile failures include compile log details",
+          "[core/simulate/metalpixelsim][core/simulate][core][simulate]") {
+  const auto message = simulate::detail::makeMetalCompileFailureMessage(
+      "Failed to compile Metal pixel kernel",
+      "program_source:12:17: error: use of undeclared identifier 'foo'");
+  REQUIRE(message.find("Failed to compile Metal pixel kernel") !=
+          std::string::npos);
+  REQUIRE(message.find("undeclared identifier 'foo'") != std::string::npos);
+}
+#endif
+
+TEST_CASE("GPU PixelSim unsupported-feature gating",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]") {
   SECTION("Rejects cross-diffusion") {
     auto m{getExampleModel(Mod::SingleCompartmentDiffusion)};
     m.getSpecies().setCrossDiffusionConstant("slow", "fast", "1");
     auto &options{m.getSimulationSettings().options};
     options.pixel.backend = simulate::PixelBackendType::GPU;
     options.pixel.integrator = simulate::PixelIntegratorType::RK101;
-    simulate::CudaPixelSim sim(m, {"circle"}, {{"slow", "fast"}});
+    GpuPixelSim sim(m, {"circle"}, {{"slow", "fast"}});
     REQUIRE(sim.errorMessage().find("cross-diffusion") != std::string::npos);
   }
 
@@ -300,7 +395,7 @@ TEST_CASE("CudaPixelSim unsupported-feature gating",
     auto &options{m.getSimulationSettings().options};
     options.pixel.backend = simulate::PixelBackendType::GPU;
     options.pixel.integrator = simulate::PixelIntegratorType::RK101;
-    simulate::CudaPixelSim sim(m, {"comp"}, {{"A", "B", "C"}});
+    GpuPixelSim sim(m, {"comp"}, {{"A", "B", "C"}});
     REQUIRE(sim.errorMessage().find("unit storage") != std::string::npos);
   }
 
@@ -312,15 +407,15 @@ TEST_CASE("CudaPixelSim unsupported-feature gating",
     auto &options{m.getSimulationSettings().options};
     options.pixel.backend = simulate::PixelBackendType::GPU;
     options.pixel.integrator = simulate::PixelIntegratorType::RK101;
-    simulate::CudaPixelSim sim(m, {"circle"}, {{"slow", "fast"}});
+    GpuPixelSim sim(m, {"circle"}, {{"slow", "fast"}});
     REQUIRE(sim.errorMessage().find("non-uniform diffusion") !=
             std::string::npos);
   }
 }
 
-TEST_CASE("CudaPixelSim reaction dcdt matches CPU PixelSim for one step",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-cuda-gpu]") {
+TEST_CASE("GPU PixelSim reaction dcdt matches CPU PixelSim for one step",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[expensive][requires-gpu]") {
   auto mCpu{getExampleModel(Mod::ABtoC)};
   auto mGpu{getExampleModel(Mod::ABtoC)};
   for (auto *m : {&mCpu, &mGpu}) {
@@ -339,9 +434,9 @@ TEST_CASE("CudaPixelSim reaction dcdt matches CPU PixelSim for one step",
   setRestartConcentrations(mGpu, inputConcentrations);
 
   simulate::PixelSim cpuSim(mCpu, {"comp"}, {{"A", "B", "C"}});
-  simulate::CudaPixelSim gpuSim(mGpu, {"comp"}, {{"A", "B", "C"}});
+  GpuPixelSim gpuSim(mGpu, {"comp"}, {{"A", "B", "C"}});
   REQUIRE(cpuSim.errorMessage().empty());
-  if (!requireCudaReady(gpuSim)) {
+  if (!requireGpuReady(gpuSim)) {
     return;
   }
 
@@ -356,9 +451,9 @@ TEST_CASE("CudaPixelSim reaction dcdt matches CPU PixelSim for one step",
   requireNear(cpuSim.getConcentrations(0), gpuSim.getConcentrations(0));
 }
 
-TEST_CASE("CudaPixelSim diffusion dcdt matches CPU PixelSim for one step",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-cuda-gpu]") {
+TEST_CASE("GPU PixelSim diffusion dcdt matches CPU PixelSim for one step",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[expensive][requires-gpu]") {
   auto mCpu{getExampleModel(Mod::SingleCompartmentDiffusion)};
   auto mGpu{getExampleModel(Mod::SingleCompartmentDiffusion)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU, singleStepDt);
@@ -372,9 +467,9 @@ TEST_CASE("CudaPixelSim diffusion dcdt matches CPU PixelSim for one step",
   setRestartConcentrations(mGpu, inputConcentrations);
 
   simulate::PixelSim cpuSim(mCpu, {"circle"}, {{"slow", "fast"}});
-  simulate::CudaPixelSim gpuSim(mGpu, {"circle"}, {{"slow", "fast"}});
+  GpuPixelSim gpuSim(mGpu, {"circle"}, {{"slow", "fast"}});
   REQUIRE(cpuSim.errorMessage().empty());
-  if (!requireCudaReady(gpuSim)) {
+  if (!requireGpuReady(gpuSim)) {
     return;
   }
 
@@ -389,9 +484,9 @@ TEST_CASE("CudaPixelSim diffusion dcdt matches CPU PixelSim for one step",
   requireNear(cpuSim.getConcentrations(0), gpuSim.getConcentrations(0));
 }
 
-TEST_CASE("CudaPixelSim membrane reactions match CPU for one step",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-cuda-gpu]") {
+TEST_CASE("GPU PixelSim membrane reactions match CPU for one step",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[expensive][requires-gpu]") {
   auto mCpu{getExampleModel(Mod::VerySimpleModel)};
   auto mGpu{getExampleModel(Mod::VerySimpleModel)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU, singleStepDt);
@@ -401,8 +496,9 @@ TEST_CASE("CudaPixelSim membrane reactions match CPU for one step",
   simulate::Simulation cpuSim(mCpu);
   simulate::Simulation gpuSim(mGpu);
   REQUIRE(cpuSim.errorMessage().empty());
-  if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-    WARN("Skipping CUDA membrane comparison: " << gpuSim.errorMessage());
+  if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+    WARN("Skipping " << gpuBackendName
+                     << " membrane comparison: " << gpuSim.errorMessage());
     return;
   }
   REQUIRE(gpuSim.errorMessage().empty());
@@ -413,13 +509,13 @@ TEST_CASE("CudaPixelSim membrane reactions match CPU for one step",
   REQUIRE(gpuSim.errorMessage().empty());
   REQUIRE(cpuSteps == 1);
   REQUIRE(gpuSteps == 1);
-  requireMatchingSimulationState(cpuSim, gpuSim, 1);
+  requireMatchingSimulationState(cpuSim, gpuSim, 1, multipleStepTolerance);
 }
 
-TEST_CASE("CudaPixelSim can run when constructed and executed on different "
+TEST_CASE("GPU PixelSim can run when constructed and executed on different "
           "threads",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[requires-cuda-gpu]") {
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[requires-gpu]") {
   auto m{getExampleModel(Mod::ABtoC)};
   configurePixelBackend(m, simulate::PixelBackendType::GPU, singleStepDt);
   for (const auto &speciesId : {"A", "B", "C"}) {
@@ -427,8 +523,9 @@ TEST_CASE("CudaPixelSim can run when constructed and executed on different "
   }
 
   simulate::Simulation sim(m);
-  if (isCudaRuntimeUnavailable(sim.errorMessage())) {
-    WARN("Skipping CUDA cross-thread run test: " << sim.errorMessage());
+  if (isGpuRuntimeUnavailable(sim.errorMessage())) {
+    WARN("Skipping " << gpuBackendName
+                     << " cross-thread run test: " << sim.errorMessage());
     return;
   }
   REQUIRE(sim.errorMessage().empty());
@@ -442,9 +539,9 @@ TEST_CASE("CudaPixelSim can run when constructed and executed on different "
   REQUIRE(sim.getTimePoints().size() == 2);
 }
 
-TEST_CASE("CudaPixelSim example-model sweep matches CPU for all example models",
-          "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-cuda-gpu]") {
+TEST_CASE("GPU PixelSim example-model sweep matches CPU for all example models",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[expensive][requires-gpu]") {
   for (std::size_t iExample = 0; iExample < allExampleModels.size();
        ++iExample) {
     const auto exampleModel = allExampleModels[iExample];
@@ -460,8 +557,9 @@ TEST_CASE("CudaPixelSim example-model sweep matches CPU for all example models",
     simulate::Simulation cpuSim(mCpu);
     simulate::Simulation gpuSim(mGpu);
     REQUIRE(cpuSim.errorMessage().empty());
-    if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-      WARN("Skipping CUDA example-model sweep: " << gpuSim.errorMessage());
+    if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+      WARN("Skipping " << gpuBackendName
+                       << " example-model sweep: " << gpuSim.errorMessage());
       return;
     }
     REQUIRE(gpuSim.errorMessage().empty());
@@ -472,14 +570,14 @@ TEST_CASE("CudaPixelSim example-model sweep matches CPU for all example models",
     REQUIRE(gpuSim.errorMessage().empty());
     REQUIRE(cpuSteps == 1);
     REQUIRE(gpuSteps == 1);
-    requireMatchingSimulationState(cpuSim, gpuSim, 1);
+    requireMatchingSimulationState(cpuSim, gpuSim, 1, multipleStepTolerance);
   }
 }
 
 TEST_CASE(
-    "CudaPixelSim membrane example model matches CPU after 1s",
-    "[core/simulate/cudapixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-cuda-gpu]") {
+    "GPU PixelSim membrane example model matches CPU after 1s",
+    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
+    "[requires-gpu]") {
   auto mCpu{getExampleModel(Mod::VerySimpleModel)};
   auto mGpu{getExampleModel(Mod::VerySimpleModel)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU,
@@ -491,8 +589,9 @@ TEST_CASE(
   simulate::Simulation cpuSim(mCpu);
   simulate::Simulation gpuSim(mGpu);
   REQUIRE(cpuSim.errorMessage().empty());
-  if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-    WARN("Skipping CUDA membrane 1s comparison: " << gpuSim.errorMessage());
+  if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+    WARN("Skipping " << gpuBackendName
+                     << " membrane 1s comparison: " << gpuSim.errorMessage());
     return;
   }
   REQUIRE(gpuSim.errorMessage().empty());
@@ -508,17 +607,18 @@ TEST_CASE(
   const auto gpuTimes = gpuSim.getTimePoints();
   REQUIRE(cpuTimes.size() >= 2);
   REQUIRE(gpuTimes.size() == cpuTimes.size());
-  requireNear(cpuTimes, gpuTimes);
+  requireNear(cpuTimes, gpuTimes, multipleStepTolerance);
   REQUIRE(cpuTimes.back() == Catch::Approx(longRunTime)
-                                 .epsilon(comparisonRelTol)
-                                 .margin(comparisonAbsTol));
-  requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1);
+                                 .epsilon(multipleStepTolerance.rel)
+                                 .margin(multipleStepTolerance.abs));
+  requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1,
+                                 multipleStepTolerance);
 }
 
 TEST_CASE(
-    "CudaPixelSim selected example models match CPU after 1s",
-    "[core/simulate/cudapixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-cuda-gpu]") {
+    "GPU PixelSim selected example models match CPU after 1s",
+    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
+    "[requires-gpu]") {
   std::size_t nModelsTested{0};
   for (std::size_t iExample = 0; iExample < longRunExampleModels.size();
        ++iExample) {
@@ -538,8 +638,9 @@ TEST_CASE(
     simulate::Simulation cpuSim(mCpu);
     simulate::Simulation gpuSim(mGpu);
     REQUIRE(cpuSim.errorMessage().empty());
-    if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-      WARN("Skipping CUDA 1s comparison sweep: " << gpuSim.errorMessage());
+    if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+      WARN("Skipping " << gpuBackendName
+                       << " 1s comparison sweep: " << gpuSim.errorMessage());
       return;
     }
     REQUIRE(gpuSim.errorMessage().empty());
@@ -555,20 +656,21 @@ TEST_CASE(
     const auto gpuTimes = gpuSim.getTimePoints();
     REQUIRE(cpuTimes.size() >= 2);
     REQUIRE(gpuTimes.size() == cpuTimes.size());
-    requireNear(cpuTimes, gpuTimes);
+    requireNear(cpuTimes, gpuTimes, multipleStepTolerance);
     REQUIRE(cpuTimes.back() == Catch::Approx(longRunTime)
-                                   .epsilon(comparisonRelTol)
-                                   .margin(comparisonAbsTol));
+                                   .epsilon(multipleStepTolerance.rel)
+                                   .margin(multipleStepTolerance.abs));
 
-    requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1);
+    requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1,
+                                   multipleStepTolerance);
   }
   REQUIRE(nModelsTested > 0);
 }
 
 TEST_CASE(
-    "CudaPixelSim selected example models match CPU after 1s with RK212",
-    "[core/simulate/cudapixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-cuda-gpu]") {
+    "GPU PixelSim selected example models match CPU after 1s with RK212",
+    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
+    "[requires-gpu]") {
   std::size_t nModelsTested{0};
   for (std::size_t iExample = 0; iExample < adaptiveLongRunExampleModels.size();
        ++iExample) {
@@ -590,8 +692,9 @@ TEST_CASE(
     simulate::Simulation cpuSim(mCpu);
     simulate::Simulation gpuSim(mGpu);
     REQUIRE(cpuSim.errorMessage().empty());
-    if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-      WARN("Skipping CUDA RK212 comparison sweep: " << gpuSim.errorMessage());
+    if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+      WARN("Skipping " << gpuBackendName
+                       << " RK212 comparison sweep: " << gpuSim.errorMessage());
       return;
     }
     REQUIRE(gpuSim.errorMessage().empty());
@@ -607,21 +710,23 @@ TEST_CASE(
     const auto gpuTimes = gpuSim.getTimePoints();
     REQUIRE(cpuTimes.size() >= 2);
     REQUIRE(gpuTimes.size() == cpuTimes.size());
-    requireNear(cpuTimes, gpuTimes);
+    requireNear(cpuTimes, gpuTimes, multipleStepTolerance);
     REQUIRE(cpuTimes.back() == Catch::Approx(longRunTime)
-                                   .epsilon(comparisonRelTol)
-                                   .margin(comparisonAbsTol));
+                                   .epsilon(multipleStepTolerance.rel)
+                                   .margin(multipleStepTolerance.abs));
 
-    requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1);
-    requireMatchingLowerOrderState(cpuSim, gpuSim, cpuTimes.size() - 1);
+    requireMatchingSimulationState(cpuSim, gpuSim, cpuTimes.size() - 1,
+                                   multipleStepTolerance);
+    requireMatchingLowerOrderState(cpuSim, gpuSim, cpuTimes.size() - 1,
+                                   multipleStepTolerance);
   }
   REQUIRE(nModelsTested > 0);
 }
 
 TEST_CASE(
-    "CudaPixelSim example-model sweep matches CPU with RK323 for one step",
-    "[core/simulate/cudapixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-cuda-gpu]") {
+    "GPU PixelSim example-model sweep matches CPU with RK323 for one step",
+    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
+    "[requires-gpu]") {
   for (std::size_t iExample = 0; iExample < allExampleModels.size();
        ++iExample) {
     const auto exampleModel = allExampleModels[iExample];
@@ -639,8 +744,9 @@ TEST_CASE(
     simulate::Simulation cpuSim(mCpu);
     simulate::Simulation gpuSim(mGpu);
     REQUIRE(cpuSim.errorMessage().empty());
-    if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-      WARN("Skipping CUDA RK323 sweep: " << gpuSim.errorMessage());
+    if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+      WARN("Skipping " << gpuBackendName
+                       << " RK323 sweep: " << gpuSim.errorMessage());
       return;
     }
     REQUIRE(gpuSim.errorMessage().empty());
@@ -651,14 +757,18 @@ TEST_CASE(
     REQUIRE(gpuSim.errorMessage().empty());
     REQUIRE(cpuSteps >= 1);
     REQUIRE(gpuSteps >= 1);
-    requireMatchingSimulationState(cpuSim, gpuSim, 1);
+    // For multi-stage RK methods, getDcdt() after an accepted step reflects the
+    // derivative from the last internal stage rather than a recomputed value at
+    // the final concentration. Compare the accepted concentration state here;
+    // dedicated dcdt tests cover derivative agreement directly.
+    requireMatchingConcentrations(cpuSim, gpuSim, 1, multipleStepTolerance);
   }
 }
 
 TEST_CASE(
-    "CudaPixelSim example-model sweep matches CPU with RK435 for one step",
-    "[core/simulate/cudapixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-cuda-gpu]") {
+    "GPU PixelSim example-model sweep matches CPU with RK435 for one step",
+    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
+    "[requires-gpu]") {
   for (std::size_t iExample = 0; iExample < allExampleModels.size();
        ++iExample) {
     const auto exampleModel = allExampleModels[iExample];
@@ -676,8 +786,9 @@ TEST_CASE(
     simulate::Simulation cpuSim(mCpu);
     simulate::Simulation gpuSim(mGpu);
     REQUIRE(cpuSim.errorMessage().empty());
-    if (isCudaRuntimeUnavailable(gpuSim.errorMessage())) {
-      WARN("Skipping CUDA RK435 sweep: " << gpuSim.errorMessage());
+    if (isGpuRuntimeUnavailable(gpuSim.errorMessage())) {
+      WARN("Skipping " << gpuBackendName
+                       << " RK435 sweep: " << gpuSim.errorMessage());
       return;
     }
     REQUIRE(gpuSim.errorMessage().empty());
@@ -688,10 +799,11 @@ TEST_CASE(
     REQUIRE(gpuSim.errorMessage().empty());
     REQUIRE(cpuSteps >= 1);
     REQUIRE(gpuSteps >= 1);
-    requireMatchingSimulationState(cpuSim, gpuSim, 1);
+    requireMatchingConcentrations(cpuSim, gpuSim, 1, multipleStepTolerance);
   }
 }
 
+#ifdef SME_WITH_CUDA
 TEST_CASE("CudaPixelSim float precision reaction matches double for one step",
           "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
           "[expensive][requires-cuda-gpu]") {
@@ -715,7 +827,7 @@ TEST_CASE("CudaPixelSim float precision reaction matches double for one step",
 
   simulate::CudaPixelSim doubleSim(mDouble, {"comp"}, {{"A", "B", "C"}});
   simulate::CudaPixelSim floatSim(mFloat, {"comp"}, {{"A", "B", "C"}});
-  if (!requireCudaReady(doubleSim) || !requireCudaReady(floatSim)) {
+  if (!requireGpuReady(doubleSim) || !requireGpuReady(floatSim)) {
     return;
   }
 
@@ -734,3 +846,4 @@ TEST_CASE("CudaPixelSim float precision reaction matches double for one step",
     REQUIRE(concFloat[i] == Catch::Approx(concDouble[i]).epsilon(1e-5));
   }
 }
+#endif

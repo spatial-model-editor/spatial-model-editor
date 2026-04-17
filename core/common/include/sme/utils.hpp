@@ -183,6 +183,7 @@ std::vector<int> toInt(const std::vector<bool> &v);
  */
 template <typename T> std::vector<T> stringToVector(const std::string &str) {
   std::istringstream ss(str);
+  ss.imbue(std::locale::classic());
   return std::vector<T>(std::istream_iterator<T>(ss),
                         std::istream_iterator<T>{});
 }

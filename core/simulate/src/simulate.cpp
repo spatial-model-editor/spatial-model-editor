@@ -1,6 +1,12 @@
 #include "sme/simulate.hpp"
-#include "cudapixelsim.hpp"
+#include "basesim.hpp"
 #include "dunesim.hpp"
+#ifdef SME_WITH_CUDA
+#include "cudapixelsim.hpp"
+#endif
+#ifdef SME_WITH_METAL
+#include "metalpixelsim.hpp"
+#endif
 #include "pixelsim.hpp"
 #include "sme/geometry.hpp"
 #include "sme/geometry_utils.hpp"
@@ -21,6 +27,60 @@ namespace sme::simulate {
 
 namespace {
 
+const std::vector<double> &emptyValues() {
+  static const std::vector<double> values;
+  return values;
+}
+
+const common::ImageStack &emptyImages() {
+  static const common::ImageStack images;
+  return images;
+}
+
+class UnavailableSim : public BaseSim {
+public:
+  explicit UnavailableSim(std::string message)
+      : unavailableErrorMessage{std::move(message)},
+        currentErrorMessage{unavailableErrorMessage} {}
+
+  std::size_t run(double, double, const std::function<bool()> &) override {
+    currentErrorMessage = unavailableErrorMessage;
+    return 0;
+  }
+
+  [[nodiscard]] const std::vector<double> &
+  getConcentrations(std::size_t) const override {
+    return emptyValues();
+  }
+
+  [[nodiscard]] std::size_t getConcentrationPadding() const override {
+    return 0;
+  }
+
+  [[nodiscard]] const std::string &errorMessage() const override {
+    return currentErrorMessage;
+  }
+
+  [[nodiscard]] const common::ImageStack &errorImages() const override {
+    return emptyImages();
+  }
+
+  void setCurrentErrormessage(const std::string &msg) override {
+    currentErrorMessage = msg;
+  }
+
+  [[nodiscard]] bool getStopRequested() const override { return stopRequested; }
+
+  void setStopRequested(bool stopRequestedValue) override {
+    stopRequested = stopRequestedValue;
+  }
+
+private:
+  std::string unavailableErrorMessage;
+  std::string currentErrorMessage;
+  bool stopRequested{false};
+};
+
 struct PixelDcdtView {
   const std::vector<double> *values{nullptr};
   std::size_t stride{0};
@@ -38,10 +98,19 @@ getPixelDcdtView(const BaseSim *simulator, std::size_t compartmentIndex,
     return {&pixelSim->getDcdt(compartmentIndex),
             nSpecies + concPadding.back()};
   }
+#ifdef SME_WITH_CUDA
   if (const auto *cudaPixelSim = dynamic_cast<const CudaPixelSim *>(simulator);
       cudaPixelSim != nullptr) {
     return {&cudaPixelSim->getDcdt(compartmentIndex), nSpecies};
   }
+#endif
+#ifdef SME_WITH_METAL
+  if (const auto *metalPixelSim =
+          dynamic_cast<const MetalPixelSim *>(simulator);
+      metalPixelSim != nullptr) {
+    return {&metalPixelSim->getDcdt(compartmentIndex), nSpecies};
+  }
+#endif
   return {};
 }
 
@@ -95,8 +164,16 @@ void Simulation::initSimulator() {
     return;
   }
   if (settings->options.pixel.backend == PixelBackendType::GPU) {
+#ifdef SME_WITH_METAL
+    simulator = std::make_unique<MetalPixelSim>(
+        model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+#elif defined(SME_WITH_CUDA)
     simulator = std::make_unique<CudaPixelSim>(
         model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
+#else
+    simulator = std::make_unique<UnavailableSim>(
+        "GPU pixel backend is not available in this build");
+#endif
   } else {
     simulator = std::make_unique<PixelSim>(
         model, compartmentIds, compartmentSpeciesIds, eventSubstitutions);
@@ -515,11 +592,20 @@ double Simulation::getLowerOrderConc(std::size_t compartmentIndex,
     return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
                                          pixelIndex);
   }
+#ifdef SME_WITH_CUDA
   if (const auto *s = dynamic_cast<const CudaPixelSim *>(simulator.get());
       s != nullptr) {
     return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
                                          pixelIndex);
   }
+#endif
+#ifdef SME_WITH_METAL
+  if (const auto *s = dynamic_cast<const MetalPixelSim *>(simulator.get());
+      s != nullptr) {
+    return s->getLowerOrderConcentration(compartmentIndex, speciesIndex,
+                                         pixelIndex);
+  }
+#endif
   return 0;
 }
 

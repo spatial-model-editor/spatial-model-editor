@@ -165,7 +165,7 @@ try {
   Invoke-LoggedCommand cmake @("--build", ".", "--parallel", "--target", "core", "tests", "--verbose")
   $testsOutput = "tests.txt"
   try {
-    & ".\test\tests.exe" -as "~[requires-cuda-gpu]" *> $testsOutput
+    & ".\test\tests.exe" -as "~[requires-gpu]~[requires-cuda-gpu]" *> $testsOutput
     if ($LASTEXITCODE -ne 0) {
       throw "tests.exe exited with code $LASTEXITCODE"
     }

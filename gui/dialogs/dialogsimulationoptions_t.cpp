@@ -11,6 +11,18 @@
 
 using namespace sme::test;
 
+namespace {
+
+constexpr bool gpuBackendAvailable() {
+#if defined(SME_WITH_CUDA) || defined(SME_WITH_METAL)
+  return true;
+#else
+  return false;
+#endif
+}
+
+} // namespace
+
 struct DialogSimulationOptionsWidgets {
   explicit DialogSimulationOptionsWidgets(
       const DialogSimulationOptions *dialog) {
@@ -31,6 +43,7 @@ struct DialogSimulationOptionsWidgets {
     GET_DIALOG_WIDGET(QPushButton, btnDuneReset);
     // Pixel tab
     GET_DIALOG_WIDGET(QComboBox, cmbPixelBackend);
+    GET_DIALOG_WIDGET(QComboBox, cmbPixelGpuPrecision);
     GET_DIALOG_WIDGET(QComboBox, cmbPixelIntegrator);
     GET_DIALOG_WIDGET(QLineEdit, txtPixelRelErr);
     GET_DIALOG_WIDGET(QLineEdit, txtPixelAbsErr);
@@ -58,6 +71,7 @@ struct DialogSimulationOptionsWidgets {
   QComboBox *cmbDuneLinearSolver;
   // Pixel tab
   QComboBox *cmbPixelBackend;
+  QComboBox *cmbPixelGpuPrecision;
   QComboBox *cmbPixelIntegrator;
   QLineEdit *txtPixelRelErr;
   QLineEdit *txtPixelAbsErr;
@@ -111,7 +125,8 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.dune.linearSolver == "BiCGSTAB");
     // higher than available -> automatically set to 0 (unlimited):
     REQUIRE(opt.dune.maxThreads == 0);
-    REQUIRE(widgets.cmbPixelBackend->count() == 2);
+    REQUIRE(widgets.cmbPixelBackend->count() ==
+            (gpuBackendAvailable() ? 2 : 1));
     REQUIRE(opt.pixel.backend == sme::simulate::PixelBackendType::CPU);
     REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(opt.pixel.maxErr.rel == dbl_approx(4e-4));
@@ -202,6 +217,7 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(opt.pixel.doCSE == defaultOpts.doCSE);
     REQUIRE(opt.pixel.optLevel == defaultOpts.optLevel);
   }
+#if defined(SME_WITH_CUDA) || defined(SME_WITH_METAL)
   SECTION("user selects GPU pixel backend") {
     widgets.tabSimulator->setCurrentIndex(1);
     widgets.cmbPixelIntegrator->setCurrentIndex(3);
@@ -212,6 +228,13 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     // RK435 (index 3) is supported on GPU
     REQUIRE(opt.pixel.integrator == sme::simulate::PixelIntegratorType::RK435);
     REQUIRE(widgets.cmbPixelIntegrator->isEnabled() == true);
+#ifdef SME_WITH_METAL
+    REQUIRE(opt.pixel.gpuFloatPrecision ==
+            sme::simulate::GpuFloatPrecision::Float);
+    REQUIRE(widgets.cmbPixelGpuPrecision->isEnabled() == false);
+#else
+    REQUIRE(widgets.cmbPixelGpuPrecision->isEnabled() == true);
+#endif
     REQUIRE(widgets.chkPixelMultithread->isEnabled() == false);
     REQUIRE(widgets.spnPixelThreads->isEnabled() == false);
 
@@ -233,4 +256,17 @@ TEST_CASE("DialogSimulationOptions", "[gui/dialogs/simulationoptions][gui/"
     REQUIRE(widgets.cmbPixelIntegrator->isEnabled() == true);
     REQUIRE(widgets.chkPixelMultithread->isEnabled() == true);
   }
+#else
+  SECTION("GPU backend choice is coerced to CPU when unavailable") {
+    options.pixel.backend = sme::simulate::PixelBackendType::GPU;
+    DialogSimulationOptions gpuDia(options);
+    DialogSimulationOptionsWidgets gpuWidgets(&gpuDia);
+    gpuDia.show();
+
+    const auto &opt = gpuDia.getOptions();
+    REQUIRE(gpuWidgets.cmbPixelBackend->count() == 1);
+    REQUIRE(opt.pixel.backend == sme::simulate::PixelBackendType::CPU);
+    REQUIRE(gpuWidgets.cmbPixelBackend->currentIndex() == 0);
+  }
+#endif
 }

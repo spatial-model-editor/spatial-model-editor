@@ -2,9 +2,37 @@
 #include "dunesim.hpp"
 #include "model_test_utils.hpp"
 #include "sme/model.hpp"
+#include "sme/simulate_options.hpp"
+#include "sme/utils.hpp"
+#include <locale>
+#include <optional>
 
 using namespace sme;
 using namespace sme::test;
+
+namespace {
+
+class ScopedTestLocale {
+public:
+  explicit ScopedTestLocale(std::locale newLocale)
+      : previousLocale(std::locale::global(std::move(newLocale))) {}
+  ~ScopedTestLocale() { std::locale::global(previousLocale); }
+
+private:
+  std::locale previousLocale;
+};
+
+std::optional<std::locale> getGermanLocale() {
+  for (const char *localeName : {"de_DE.UTF-8", "de_DE.utf8", "de_DE"}) {
+    try {
+      return std::locale(localeName);
+    } catch (const std::runtime_error &) {
+    }
+  }
+  return std::nullopt;
+}
+
+} // namespace
 
 TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
                      "simulate][core][simulate][dunesim][dune]") {
@@ -126,5 +154,24 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
       REQUIRE(m.getSpecies().getIds("comp")[2] == "W");
       REQUIRE(duneSim.getConcentrations(0)[2] == dbl_approx(3.0));
     }
+  }
+  SECTION("Construction is locale-independent") {
+    auto deLocale = getGermanLocale();
+    if (!deLocale.has_value()) {
+      WARN("Skipping locale test, no DE locale available");
+      return;
+    }
+    ScopedTestLocale localeGuard(*deLocale);
+
+    auto m{getTestModel("txy")};
+    m.getSpecies().remove("A");
+    m.getSpecies().remove("B");
+    m.getSimulationSettings().options.dune.dt = 1e-3;
+
+    const auto comps = common::toStdString(m.getCompartments().getIds());
+    simulate::DuneSim duneSim(m, comps);
+    REQUIRE(duneSim.errorMessage().empty());
+    duneSim.run(1e-3, 100e3, {});
+    REQUIRE(duneSim.errorMessage().empty());
   }
 }

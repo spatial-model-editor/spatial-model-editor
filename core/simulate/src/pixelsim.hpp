@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include "basesim.hpp"
-#include "sme/simulate_options.hpp"
+#include "pixelsim_base.hpp"
 #include <QImage>
-#include <atomic>
 #include <cstddef>
 #include <limits>
 #include <map>
@@ -27,12 +25,11 @@ class SimMembrane;
 /**
  * @brief Finite-difference pixel simulation backend.
  */
-class PixelSim : public BaseSim {
+class PixelSim : public PixelSimBase {
 private:
   std::vector<std::unique_ptr<SimCompartment>> simCompartments;
   std::vector<std::unique_ptr<SimMembrane>> simMembranes;
   const model::Model &doc;
-  double maxStableTimestep{std::numeric_limits<double>::max()};
   void calculateDcdt();
   void solveZeroStorageConstraints();
   double doRK101(double dt);
@@ -42,19 +39,10 @@ private:
   void doRKSubstep(double dt, double g1, double g2, double g3, double beta,
                    double delta);
   double doRKAdaptive(double dtMax);
-  std::size_t discardedSteps{0};
-  PixelIntegratorType integrator;
   bool hasAnyZeroStorageSpecies{false};
   double maxRelaxStableTimestep{std::numeric_limits<double>::max()};
-  PixelIntegratorError errMax;
-  double maxTimestep{std::numeric_limits<double>::max()};
-  double nextTimestep{1e-7};
-  double epsilon{1e-14};
   bool useTBB{false};
   std::size_t numMaxThreads{1};
-  std::string currentErrorMessage{};
-  common::ImageStack currentErrorImages{};
-  std::atomic<bool> stopRequested{false};
   std::size_t nExtraVars{0};
 
 public:
@@ -95,26 +83,6 @@ public:
   [[nodiscard]] double getLowerOrderConcentration(std::size_t compartmentIndex,
                                                   std::size_t speciesIndex,
                                                   std::size_t pixelIndex) const;
-  /**
-   * @brief Current error message.
-   */
-  [[nodiscard]] const std::string &errorMessage() const override;
-  /**
-   * @brief Current error images.
-   */
-  [[nodiscard]] const common::ImageStack &errorImages() const override;
-  /**
-   * @brief Request/clear stop flag.
-   */
-  void setStopRequested(bool stop) override;
-  /**
-   * @brief Stop-request flag.
-   */
-  bool getStopRequested() const override;
-  /**
-   * @brief Set current error message.
-   */
-  void setCurrentErrormessage(const std::string &msg) override;
 };
 
 } // namespace simulate

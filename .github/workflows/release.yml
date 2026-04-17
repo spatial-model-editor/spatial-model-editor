@@ -26,8 +26,8 @@ jobs:
           - os: "windows-11-arm"
     env:
       CIBUILDWHEEL_VERSION: "3.4"
-      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.03.31"
-      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2026.03.31"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.04.20"
+      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2026.04.20"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: spatial-model-editor/setup-ci@2026.03.30
         with:
-          sme_deps: '2026.03.29'
+          sme_deps: '2026.04.17'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v6
         with:

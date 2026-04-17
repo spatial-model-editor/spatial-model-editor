@@ -1,4 +1,5 @@
 #include "pixelsim_impl.hpp"
+#include "pixelsim_common.hpp"
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
 #include "sme/model.hpp"
@@ -196,13 +197,7 @@ void SimCompartment::applyStorage_tbb() {
                  });
 }
 
-// Forwards Euler stability bound for dimensionless diffusion constant {D/dx^2,
-// D/dy^2, D/dz^2}
-static double calculateMaxStableTimestep(
-    const std::array<double, 3> &dimensionlessDiffusion) {
-  return 1.0 / (2.0 * (dimensionlessDiffusion[0] + dimensionlessDiffusion[1] +
-                       dimensionlessDiffusion[2]));
-}
+using detail::calculateMaxStableTimestep;
 
 SimCompartment::SimCompartment(
     const model::Model &doc, const geometry::Compartment *compartment,
