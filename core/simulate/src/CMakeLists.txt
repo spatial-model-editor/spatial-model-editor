@@ -22,8 +22,9 @@ target_sources(
 
 if(SME_WITH_CUDA)
   target_sources(core PRIVATE cuda_stubs.cpp cudapixelsim.cpp)
-else()
-  target_sources(core PRIVATE cudapixelsim_no_cuda.cpp)
+endif()
+if(SME_WITH_METAL)
+  target_sources(core PRIVATE metalpixelsim.cpp)
 endif()
 
 if(BUILD_TESTING)
@@ -45,7 +46,7 @@ if(BUILD_TESTING)
            simulate_options_t.cpp
            simulate_t.cpp
            simulate_steadystate_t.cpp)
-  if(SME_WITH_CUDA)
+  if(SME_WITH_CUDA OR SME_WITH_METAL)
     target_sources(core_tests PUBLIC cudapixelsim_t.cpp)
   endif()
 endif()

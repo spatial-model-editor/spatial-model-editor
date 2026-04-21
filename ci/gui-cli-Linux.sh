@@ -43,7 +43,7 @@ ccache --show-stats
 jwm &
 
 # run cpp tests
-time ./test/tests -as ~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[requires-gpu]~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 
 # run python tests

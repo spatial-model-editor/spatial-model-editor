@@ -130,6 +130,17 @@ TEST_CASE("Symbolic", "[core/common/symbolic][core/common][core][symbolic]") {
     REQUIRE(cudaExpr != expr);
     REQUIRE(cudaExpr.find("sme_var_0") != std::string::npos);
   }
+  SECTION("A + B: Metal code with relabeled variables") {
+    std::string expr{"A + B"};
+    common::Symbolic sym(expr, {"A", "B"}, {});
+    CAPTURE(expr);
+    REQUIRE(sym.isValid() == true);
+    sym.relabel({"sme_var_0", "sme_var_1"});
+    const auto metalExpr = sym.metalCode();
+    REQUIRE(metalExpr != expr);
+    REQUIRE(metalExpr.find("sme_var_0") != std::string::npos);
+    REQUIRE(metalExpr.find("sme_var_1") != std::string::npos);
+  }
   SECTION("0.324*x + 2*3: one var, no constants") {
     std::string expr{"0.324 * x + 2*3"};
     common::Symbolic sym(expr, {"x"}, {});

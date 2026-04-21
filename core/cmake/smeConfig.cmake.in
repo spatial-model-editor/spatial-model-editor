@@ -2,6 +2,7 @@ get_filename_component(SME_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 include(CMakeFindDependencyMacro)
 
 set(SME_WITH_CUDA @SME_WITH_CUDA@)
+set(SME_WITH_METAL @SME_WITH_METAL@)
 
 if(WIN32)
     set(SME_SBML_PACKAGE libsbml-static)
@@ -46,6 +47,14 @@ endif()
 find_dependency(dune-copasi REQUIRED)
 if(SME_WITH_CUDA)
     find_dependency(CUDAToolkit REQUIRED)
+endif()
+if(SME_WITH_METAL)
+    # metal-cpp is header-only and currently has no packaged CMake config.
+    find_path(METALCPP_ROOT metal-cpp/Foundation/Foundation.hpp REQUIRED)
+    set(METALCPP_INCLUDE_DIR ${METALCPP_ROOT}/metal-cpp)
+    find_library(FOUNDATION_FRAMEWORK Foundation REQUIRED)
+    find_library(METAL_FRAMEWORK Metal REQUIRED)
+    find_library(QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 endif()
 
 if(NOT TARGET sme::core)

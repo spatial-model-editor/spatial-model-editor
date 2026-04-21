@@ -34,7 +34,7 @@ cmake .. \
     -DSME_LOG_LEVEL=OFF \
     -DSME_BUILD_CORE=on
 ninja core tests
-time ./test/tests -as ~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
+time ./test/tests -as ~[requires-gpu]~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt && exit 1)
 tail -n 100 tests.txt
 ninja install
 ccache --show-stats

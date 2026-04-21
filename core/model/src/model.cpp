@@ -37,6 +37,7 @@ void Model::createSBMLFile(const std::string &name) {
 }
 
 void Model::importSBMLFile(const std::string &filename) {
+  common::ScopedCLocale scopedCLocale;
   clear();
   currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Loading SBML file {}...", filename);
@@ -47,6 +48,7 @@ void Model::importSBMLFile(const std::string &filename) {
 
 void Model::importSBMLString(const std::string &xml,
                              const std::string &filename) {
+  common::ScopedCLocale scopedCLocale;
   clear();
   currentFilename = QFileInfo(filename.c_str()).baseName();
   SPDLOG_INFO("Importing SBML from string...");
@@ -156,6 +158,7 @@ void Model::exportSBMLFile(const std::string &filename) {
 }
 
 void Model::importFile(const std::string &filename) {
+  common::ScopedCLocale scopedCLocale;
   clear();
   std::unique_ptr<common::SmeFileContents> importedSmeFileContents{nullptr};
   currentFilename = QFileInfo(filename.c_str()).baseName();

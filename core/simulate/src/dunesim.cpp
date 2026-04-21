@@ -20,6 +20,7 @@ DuneSim::DuneSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::map<std::string, double, std::less<>> &substitutions) {
   try {
+    common::ScopedCLocale scopedCLocale;
     DuneConverter dc(sbmlDoc, substitutions, false);
     const auto &options{sbmlDoc.getSimulationSettings().options.dune};
     numMaxThreads =
@@ -42,9 +43,13 @@ DuneSim::DuneSim(
     if (dc.getMesh() != nullptr) {
       pDuneImpl2d =
           std::make_unique<DuneImpl<2>>(dc, options, sbmlDoc, compartmentIds);
-    } else {
+    } else if (dc.getMesh3d() != nullptr) {
       pDuneImpl3d =
           std::make_unique<DuneImpl<3>>(dc, options, sbmlDoc, compartmentIds);
+    } else {
+      currentErrorMessage = "No valid mesh found";
+      SPDLOG_ERROR("{}", currentErrorMessage);
+      return;
     }
   } catch (const Dune::Exception &e) {
     currentErrorMessage = e.what();
@@ -62,6 +67,7 @@ std::size_t DuneSim::run(double time, double timeout_ms,
   if (pDuneImpl2d == nullptr && pDuneImpl3d == nullptr) {
     return 0;
   }
+  common::ScopedCLocale scopedCLocale;
   oneapi::tbb::global_control control(
       oneapi::tbb::global_control::max_allowed_parallelism, numMaxThreads);
   QElapsedTimer timer;

@@ -250,6 +250,10 @@ std::string Symbolic::cudaCode(std::size_t i, bool useFloat) const {
   return SymEngine::cudacode(*exprInlined.at(i), precision);
 }
 
+std::string Symbolic::metalCode(std::size_t i) const {
+  return SymEngine::metalcode(*exprInlined.at(i));
+}
+
 std::string Symbolic::diff(const std::string &var, std::size_t i) const {
   return sbml(*exprInlined[i]->diff(symbols.at(var)));
 }

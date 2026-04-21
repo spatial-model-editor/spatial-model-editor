@@ -39,7 +39,7 @@ jwm &
 
 # run c++ tests
 # also allow tests to fail, since dune-logging segfaults due to UB
-time ./test/tests -as ~[expensive]~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt)
+time ./test/tests -as ~[expensive]~[requires-gpu]~[requires-cuda-gpu] >tests.txt 2>&1 || (tail -n 1000 tests.txt)
 tail -n 100 tests.txt
 
 # print UBSAN logfile

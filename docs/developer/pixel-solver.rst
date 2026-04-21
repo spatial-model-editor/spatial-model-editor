@@ -139,15 +139,21 @@ One signed face-direction batch has that property because a voxel can only have
 one neighbour in a given signed Cartesian direction. Different face directions
 do not have that guarantee, so they stay serial.
 
-CUDA backend
-------------
+GPU backend
+-----------
 
-Current scope of the CUDA backend
+Current scope of the GPU backends
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-``CudaPixelSim`` is currently a proof-of-concept backend with stricter input
-requirements than the CPU implementation. Setup fails early if the selected
-model uses any of the following:
+The GPU backend currently has two implementations with the same user-facing
+feature set:
+
+* ``CudaPixelSim`` on CUDA-enabled Linux and Windows systems
+* ``MetalPixelSim`` on Apple silicon macOS systems
+
+Both GPU backends currently have stricter input requirements than the CPU
+implementation. Setup fails early if the selected model uses any of the
+following:
 
 * cross-diffusion
 * time-dependent reaction terms
@@ -156,21 +162,27 @@ model uses any of the following:
 * non-uniform diffusion constants
 * storage values other than ``1``
 
-That reduced feature set is why the CUDA code path can use a simpler state
-layout with no extra ``time`` or ``x``/``y``/``z`` padding.
+That reduced feature set is why the current GPU code paths can use a simpler
+state layout with no extra ``time`` or ``x``/``y``/``z`` padding.
 
 Compartment kernels
 ^^^^^^^^^^^^^^^^^^^
 
-For each simulated compartment, ``CudaPixelSim`` allocates:
+For each simulated compartment, the GPU backend allocates:
 
 * host buffers for concentrations, ``dcdt`` and lower-order RK data
 * device buffers ``dConc``, ``dDcdt``, ``dLowerOrder`` and ``dOldConc``
 * device buffers for neighbour indices and uniform diffusion coefficients
-* one non-blocking CUDA stream and one ``dcdtReady`` event
+* backend-specific execution state:
 
-The symbolic reaction expressions are converted to CUDA source with
-``SymEngine::cudacode(...)`` and compiled at runtime with NVRTC.
+  * CUDA uses one non-blocking stream and one ``dcdtReady`` event per
+    compartment
+  * Metal uses ``MTL::Buffer`` allocations in shared storage and submits work
+    through a single command queue
+
+The symbolic reaction expressions are converted to backend source with
+``SymEngine::cudacode(...)`` or ``SymEngine::metalcode(...)`` and compiled at
+runtime with NVRTC or the Metal runtime compiler.
 
 The generated compartment kernels follow the same split as the CPU path:
 
@@ -181,24 +193,28 @@ The generated compartment kernels follow the same split as the CPU path:
 Membrane kernels
 ^^^^^^^^^^^^^^^^
 
-Each membrane also gets its own generated CUDA kernel. The setup step uploads
-one device array of voxel index pairs for every non-empty face direction and
-stores the inverse face length for that batch.
+Each membrane also gets its own generated backend kernel. The setup step
+uploads one device array of voxel index pairs for every non-empty face
+direction and stores the inverse face length for that batch.
 
-The generated ``membrane_reaction_kernel``:
+The generated membrane kernel:
 
 1. reads one face pair ``(ixA, ixB)``
 2. gathers the species values from ``dConc`` in the two adjacent compartments
 3. evaluates the generated membrane reaction function
-4. uses ``atomicAdd`` to accumulate the result into ``dDcdtA`` and ``dDcdtB``
+4. uses floating-point atomics to accumulate the result into ``dDcdtA`` and
+   ``dDcdtB``
 
-Because it uses atomics, the CUDA backend can run membrane batches that touch
-the same compartment in parallel across different streams.
+CUDA uses ``atomicAdd`` and Metal uses ``atomic_float`` with relaxed ordering.
+Because both backends use atomics, they can update shared membrane-adjacent
+voxels without staging the accumulation through the CPU.
 
-The membrane launches are pre-assigned round-robin across the compartment
+The CUDA membrane launches are pre-assigned round-robin across the compartment
 streams. For each stream, ``membraneStreamDeps`` stores the compartments whose
 ``dcdtReady`` events must be satisfied before that stream can start its
-assigned membrane kernels.
+assigned membrane kernels. The current Metal implementation follows the same
+kernel split, but uses a simpler submit-and-wait command-buffer flow instead of
+stream/event scheduling.
 
 CUDA step flow
 ^^^^^^^^^^^^^^
@@ -229,3 +245,17 @@ Additional details:
   ``dConc`` again, so an in-flight download cannot race with the next kernel.
 * Rejected adaptive steps restore ``dOldConc`` into ``dConc`` with
   ``cuMemcpyDtoDAsync(...)`` on the main compute stream.
+
+Metal step flow
+^^^^^^^^^^^^^^^
+
+The current Metal implementation keeps the same high-level kernel breakdown as
+CUDA, but uses a simpler execution strategy:
+
+* each solver stage builds one command buffer, commits it and waits for
+  completion before the next stage
+* Apple silicon shared-memory buffers avoid explicit device-to-host copies,
+  although concentrations and error buffers are still converted between host
+  ``double`` storage and device ``float`` storage
+* this is intentionally less aggressive than the CUDA overlap/stream model, but
+  keeps the control flow close enough that the solver logic stays aligned

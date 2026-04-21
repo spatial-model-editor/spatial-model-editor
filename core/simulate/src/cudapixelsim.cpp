@@ -1,4 +1,5 @@
 #include "cudapixelsim.hpp"
+#include "pixelsim_common.hpp"
 #include "pixelsim_impl.hpp"
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
@@ -30,98 +31,13 @@ class CudaPixelSimError : public std::runtime_error {
   using std::runtime_error::runtime_error;
 };
 
-static double calculateMaxStableTimestep(
-    const std::array<double, 3> &dimensionlessDiffusion) {
-  return 1.0 / (2.0 * (dimensionlessDiffusion[0] + dimensionlessDiffusion[1] +
-                       dimensionlessDiffusion[2]));
-}
+using detail::allMembraneFaceDirections;
+using detail::calculateMaxStableTimestep;
+using detail::getFaceFluxLength;
+using detail::hasAnyCrossDiffusion;
+using detail::invalidCompartmentIndex;
 
-constexpr std::size_t invalidCompartmentIndex{
-    std::numeric_limits<std::size_t>::max()};
 constexpr unsigned int cudaKernelBlockSize{128};
-
-constexpr std::array allMembraneFaceDirections{
-    geometry::Membrane::FACE_DIRECTION::XP,
-    geometry::Membrane::FACE_DIRECTION::XM,
-    geometry::Membrane::FACE_DIRECTION::YP,
-    geometry::Membrane::FACE_DIRECTION::YM,
-    geometry::Membrane::FACE_DIRECTION::ZP,
-    geometry::Membrane::FACE_DIRECTION::ZM};
-
-[[nodiscard]] static double
-getFaceFluxLength(geometry::Membrane::FACE_DIRECTION faceDirection,
-                  const common::VolumeF &voxelSize) {
-  switch (faceDirection) {
-  case geometry::Membrane::FACE_DIRECTION::XP:
-  case geometry::Membrane::FACE_DIRECTION::XM:
-    return voxelSize.width();
-  case geometry::Membrane::FACE_DIRECTION::YP:
-  case geometry::Membrane::FACE_DIRECTION::YM:
-    return voxelSize.height();
-  case geometry::Membrane::FACE_DIRECTION::ZP:
-  case geometry::Membrane::FACE_DIRECTION::ZM:
-    return voxelSize.depth();
-  }
-  return voxelSize.width();
-}
-
-static bool hasAnyCrossDiffusion(
-    const model::Model &doc,
-    const std::vector<std::vector<std::string>> &compartmentSpeciesIds) {
-  for (const auto &speciesIds : compartmentSpeciesIds) {
-    for (const auto &targetSpeciesId : speciesIds) {
-      for (const auto &sourceSpeciesId : speciesIds) {
-        if (targetSpeciesId == sourceSpeciesId) {
-          continue;
-        }
-        if (!doc.getSpecies()
-                 .getCrossDiffusionConstant(targetSpeciesId.c_str(),
-                                            sourceSpeciesId.c_str())
-                 .isEmpty()) {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
-static void validatePocCompartmentInputs(
-    const model::Model &doc, const std::vector<std::string> &compartmentIds,
-    const std::vector<std::vector<std::string>> &compartmentSpeciesIds) {
-  for (std::size_t compIndex = 0; compIndex < compartmentIds.size();
-       ++compIndex) {
-    const auto *compartment{doc.getCompartments().getCompartment(
-        compartmentIds[compIndex].c_str())};
-    if (compartment == nullptr) {
-      throw CudaPixelSimError(
-          fmt::format("CUDA pixel backend PoC could not find compartment '{}'",
-                      compartmentIds[compIndex]));
-    }
-    for (const auto &speciesId : compartmentSpeciesIds[compIndex]) {
-      const auto *field = doc.getSpecies().getField(speciesId.c_str());
-      if (field == nullptr) {
-        throw CudaPixelSimError(fmt::format(
-            "CUDA pixel backend PoC could not find field for species '{}'",
-            speciesId));
-      }
-      if (!field->getIsSpatial()) {
-        throw CudaPixelSimError(
-            "CUDA pixel backend PoC does not yet support non-spatial species");
-      }
-      if (!field->getIsUniformDiffusionConstant()) {
-        throw CudaPixelSimError(
-            "CUDA pixel backend PoC does not yet support non-uniform diffusion "
-            "constants");
-      }
-      if (doc.getSpecies().getStorage(speciesId.c_str()) != 1.0) {
-        throw CudaPixelSimError(
-            "CUDA pixel backend PoC currently requires unit storage for all "
-            "species");
-      }
-    }
-  }
-}
 
 static std::string getCudaErrorMessage(CUresult result) {
   const char *name{nullptr};
@@ -855,10 +771,10 @@ CudaPixelSim::CudaPixelSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : impl(std::make_unique<Impl>()), doc{sbmlDoc},
-      integrator{sbmlDoc.getSimulationSettings().options.pixel.integrator},
-      errMax{sbmlDoc.getSimulationSettings().options.pixel.maxErr},
-      maxTimestep{sbmlDoc.getSimulationSettings().options.pixel.maxTimestep} {
+    : PixelSimBase{sbmlDoc.getSimulationSettings().options.pixel.integrator,
+                   sbmlDoc.getSimulationSettings().options.pixel.maxErr,
+                   sbmlDoc.getSimulationSettings().options.pixel.maxTimestep},
+      impl(std::make_unique<Impl>()), doc{sbmlDoc} {
   CUcontext previousContext{};
   bool restorePreviousContext{false};
   try {
@@ -889,7 +805,8 @@ CudaPixelSim::CudaPixelSim(
           "CUDA pixel backend PoC does not yet support spatially dependent "
           "reaction terms");
     }
-    validatePocCompartmentInputs(doc, compartmentIds, compartmentSpeciesIds);
+    detail::validatePocCompartmentInputs<CudaPixelSimError>(
+        doc, compartmentIds, compartmentSpeciesIds, "CUDA");
     if (!isCudaAvailable()) {
       throw CudaPixelSimError(
           fmt::format("CUDA is not available: {}", cudaUnavailableReason()));
@@ -1252,15 +1169,27 @@ CudaPixelSim::CudaPixelSim(
 
 CudaPixelSim::~CudaPixelSim() = default;
 
-void CudaPixelSim::evaluateDcdt() {
-  // Record event on main stream so compartment streams can wait for prior work
+void CudaPixelSim::beginCompartmentParallelLaunches() {
   throwIfCudaFailed(cuEventRecord(impl->mainStreamReady, impl->stream),
                     "Failed to record main-stream-ready event");
-  // Launch reaction and diffusion kernels on per-compartment streams
   for (auto &state : impl->compartments) {
-    // Make compartment stream wait for main stream (substep kernels use main)
     throwIfCudaFailed(cuStreamWaitEvent(state.stream, impl->mainStreamReady, 0),
                       "Failed to sync compartment stream with main stream");
+  }
+}
+
+void CudaPixelSim::endCompartmentParallelLaunches() {
+  for (auto &state : impl->compartments) {
+    throwIfCudaFailed(cuStreamWaitEvent(impl->stream, state.dcdtReady, 0),
+                      "Failed to sync main stream with compartment");
+  }
+}
+
+void CudaPixelSim::evaluateDcdt() {
+  // Record event on main stream so compartment streams can wait for prior work
+  beginCompartmentParallelLaunches();
+  // Launch reaction and diffusion kernels on per-compartment streams
+  for (auto &state : impl->compartments) {
     auto nPixels = static_cast<unsigned int>(state.nPixels);
     const auto voxelGrid =
         (nPixels + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
@@ -1328,13 +1257,13 @@ void CudaPixelSim::evaluateDcdt() {
     // Re-record event to capture any membrane work added to this stream
     throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
                       "Failed to record compartment completion event");
-    throwIfCudaFailed(cuStreamWaitEvent(impl->stream, state.dcdtReady, 0),
-                      "Failed to sync main stream with compartment");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRk101Update(double dt) {
   float dtF = static_cast<float>(dt);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1344,23 +1273,31 @@ void CudaPixelSim::launchRk101Update(double dt) {
                                                     : static_cast<void *>(&dt),
                                      &nValues};
     launchKernel(state.kernels.rk101Update, valueGrid, cudaKernelBlockSize,
-                 impl->stream, updateArgs.data(), "rk101_update_kernel");
+                 state.stream, updateArgs.data(), "rk101_update_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchClampNegative() {
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nPixels = static_cast<unsigned int>(state.nPixels);
     const auto voxelGrid =
         (nPixels + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
     std::array<void *, 2> clampArgs{&state.dConc, &nPixels};
     launchKernel(state.kernels.clampNegative, voxelGrid, cudaKernelBlockSize,
-                 impl->stream, clampArgs.data(), "clamp_negative_kernel");
+                 state.stream, clampArgs.data(), "clamp_negative_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRk212Substep1(double dt) {
   float dtF = static_cast<float>(dt);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1373,12 +1310,16 @@ void CudaPixelSim::launchRk212Substep1(double dt) {
                                                      : static_cast<void *>(&dt),
                                       &nValues};
     launchKernel(state.kernels.rk212Substep1, valueGrid, cudaKernelBlockSize,
-                 impl->stream, substepArgs.data(), "rk212_substep1_kernel");
+                 state.stream, substepArgs.data(), "rk212_substep1_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRk212Substep2(double dt) {
   float dtF = static_cast<float>(dt);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1391,11 +1332,15 @@ void CudaPixelSim::launchRk212Substep2(double dt) {
                                                      : static_cast<void *>(&dt),
                                       &nValues};
     launchKernel(state.kernels.rk212Substep2, valueGrid, cudaKernelBlockSize,
-                 impl->stream, substepArgs.data(), "rk212_substep2_kernel");
+                 state.stream, substepArgs.data(), "rk212_substep2_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRkInit() {
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1403,8 +1348,11 @@ void CudaPixelSim::launchRkInit() {
     std::array<void *, 4> args{&state.dConc, &state.dLowerOrder,
                                &state.dOldConc, &nValues};
     launchKernel(state.kernels.rkInit, valueGrid, cudaKernelBlockSize,
-                 impl->stream, args.data(), "rk_init_kernel");
+                 state.stream, args.data(), "rk_init_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRkSubstep(double dt, double g1Val, double g2Val,
@@ -1416,6 +1364,7 @@ void CudaPixelSim::launchRkSubstep(double dt, double g1Val, double g2Val,
   float g3F = static_cast<float>(g3Val);
   float betaF = static_cast<float>(betaVal);
   float deltaF = static_cast<float>(deltaVal);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1438,8 +1387,11 @@ void CudaPixelSim::launchRkSubstep(double dt, double g1Val, double g2Val,
                                                : static_cast<void *>(&deltaVal),
                                 &nValues};
     launchKernel(state.kernels.rkSubstep, valueGrid, cudaKernelBlockSize,
-                 impl->stream, args.data(), "rk_substep_kernel");
+                 state.stream, args.data(), "rk_substep_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 void CudaPixelSim::launchRkFinalise(double cFactor, double s2Factor,
@@ -1447,6 +1399,7 @@ void CudaPixelSim::launchRkFinalise(double cFactor, double s2Factor,
   float cFactorF = static_cast<float>(cFactor);
   float s2FactorF = static_cast<float>(s2Factor);
   float s3FactorF = static_cast<float>(s3Factor);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1462,13 +1415,17 @@ void CudaPixelSim::launchRkFinalise(double cFactor, double s2Factor,
                                               : static_cast<void *>(&s3Factor),
                                &nValues};
     launchKernel(state.kernels.rkFinalise, valueGrid, cudaKernelBlockSize,
-                 impl->stream, args.data(), "rk_finalise_kernel");
+                 state.stream, args.data(), "rk_finalise_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
 }
 
 PixelIntegratorError CudaPixelSim::calculateRk212Error() {
   PixelIntegratorError err{0.0, 0.0};
   float epsilonF = static_cast<float>(epsilon);
+  beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nValues = static_cast<unsigned int>(state.concHost.size());
     const auto valueGrid =
@@ -1483,13 +1440,16 @@ PixelIntegratorError CudaPixelSim::calculateRk212Error() {
                                     &state.dErrorRel,
                                     &nValues};
     launchKernel(state.kernels.rk212Error, valueGrid, cudaKernelBlockSize,
-                 impl->stream, errorArgs.data(), "rk212_error_kernel");
+                 state.stream, errorArgs.data(), "rk212_error_kernel");
     auto nBlocks = static_cast<unsigned int>(state.nErrorBlocks);
     std::array<void *, 4> reduceArgs{&state.dErrorAbs, &state.dErrorRel,
                                      &state.dErrorResult, &nBlocks};
     launchKernel(state.kernels.rk212ErrorReduce, 1, cudaKernelBlockSize,
-                 impl->stream, reduceArgs.data(), "rk212_error_reduce_kernel");
+                 state.stream, reduceArgs.data(), "rk212_error_reduce_kernel");
+    throwIfCudaFailed(cuEventRecord(state.dcdtReady, state.stream),
+                      "Failed to record compartment completion event");
   }
+  endCompartmentParallelLaunches();
   throwIfCudaFailed(cuStreamSynchronize(impl->stream),
                     "CUDA RK212 error synchronization failed");
   const auto eSize = impl->gpuElementSize;
@@ -1595,66 +1555,36 @@ void CudaPixelSim::doRK212(double dt) {
 }
 
 void CudaPixelSim::doRK323(double dt) {
-  constexpr std::array<double, 3> g1{1.0, 0.25, 0.666666666666666666666};
-  constexpr std::array<double, 3> g2{0.0, 0.0, 0.0};
-  constexpr std::array<double, 3> g3{0.0, 0.75, 0.333333333333333333333};
-  constexpr std::array<double, 3> beta{1.0, 0.25, 0.6666666666666666666};
-  constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
+  using namespace detail::rk323;
   launchRkInit();
   evaluateDcdt();
   ensureDownloadComplete();
   launchRkSubstep(dt, g1[0], g2[0], g3[0], beta[0], delta[0]);
-  for (std::size_t i = 1; i < 3; ++i) {
+  for (std::size_t i = 1; i < g1.size(); ++i) {
     evaluateDcdt();
     launchRkSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
-  launchRkFinalise(0.0, 2.0, -1.0);
+  launchRkFinalise(finaliseFactors[0], finaliseFactors[1], finaliseFactors[2]);
 }
 
 void CudaPixelSim::doRK435(double dt) {
-  constexpr std::array<double, 5> g1{0.0, -0.497531095840104, 1.010070514199942,
-                                     -3.196559004608766, 1.717835630267259};
-  constexpr std::array<double, 5> g2{1.0, 1.384996869124138, 3.878155713328178,
-                                     -2.324512951813145, -0.514633322274467};
-  constexpr std::array<double, 5> g3{0.0, 0.0, 0.0, 1.642598936063715,
-                                     0.188295940828347};
-  constexpr std::array<double, 5> beta{0.075152045700771, 0.211361016946069,
-                                       1.100713347634329, 0.728537814675568,
-                                       0.393172889823198};
-  constexpr std::array<double, 7> delta{1.0,
-                                        0.081252332929194,
-                                        -1.083849060586449,
-                                        -1.096110881845602,
-                                        2.859440022030827,
-                                        -0.655568367959557,
-                                        -0.194421504490852};
-  double deltaSum = 1.0 / (delta[0] + delta[1] + delta[2] + delta[3] +
-                           delta[4] + delta[5] + delta[6]);
+  using namespace detail::rk435;
   launchRkInit();
   evaluateDcdt();
   ensureDownloadComplete();
   launchRkSubstep(dt, g1[0], g2[0], g3[0], beta[0], delta[0]);
-  for (std::size_t i = 1; i < 5; ++i) {
+  for (std::size_t i = 1; i < g1.size(); ++i) {
     evaluateDcdt();
     launchRkSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
-  launchRkFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
-}
-
-static double getErrorPower(PixelIntegratorType integ) {
-  if (integ == PixelIntegratorType::RK323) {
-    return 1.0 / 3.0;
-  }
-  if (integ == PixelIntegratorType::RK435) {
-    return 1.0 / 4.0;
-  }
-  return 1.0 / 2.0; // RK212
+  launchRkFinalise(deltaSumReciprocal * delta[5], deltaSumReciprocal,
+                   deltaSumReciprocal * delta[6]);
 }
 
 double CudaPixelSim::doRKAdaptive(double dtMax) {
   PixelIntegratorError err{0.0, 0.0};
   double dt{};
-  const double errPower = getErrorPower(integrator);
+  const double errPower = detail::getErrorPower(integrator);
   do {
     dt = std::min(nextTimestep, dtMax);
     if (integrator == PixelIntegratorType::RK323) {
@@ -1767,22 +1697,6 @@ double CudaPixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
     return 0.0;
   }
   return stateRef.lowerOrderHost[pixelIndex * stateRef.nSpecies + speciesIndex];
-}
-
-const std::string &CudaPixelSim::errorMessage() const {
-  return currentErrorMessage;
-}
-
-const common::ImageStack &CudaPixelSim::errorImages() const {
-  return currentErrorImages;
-}
-
-void CudaPixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
-
-bool CudaPixelSim::getStopRequested() const { return stopRequested.load(); }
-
-void CudaPixelSim::setCurrentErrormessage(const std::string &msg) {
-  currentErrorMessage = msg;
 }
 
 } // namespace sme::simulate

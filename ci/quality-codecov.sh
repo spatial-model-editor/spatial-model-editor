@@ -68,13 +68,13 @@ test_to_codecov() {
     popd
 }
 
-test_to_codecov "core" "~[expensive]~[requires-cuda-gpu][core]"
+test_to_codecov "core" "~[expensive]~[requires-gpu]~[requires-cuda-gpu][core]"
 
-test_to_codecov "gui" "~[expensive]~[requires-cuda-gpu]~[mainwindow][gui]"
+test_to_codecov "gui" "~[expensive]~[requires-gpu]~[requires-cuda-gpu]~[mainwindow][gui]"
 
-test_to_codecov "mainwindow" "~[expensive]~[requires-cuda-gpu][mainwindow][gui]"
+test_to_codecov "mainwindow" "~[expensive]~[requires-gpu]~[requires-cuda-gpu][mainwindow][gui]"
 
-test_to_codecov "cli" "~[expensive]~[requires-cuda-gpu][cli]"
+test_to_codecov "cli" "~[expensive]~[requires-gpu]~[requires-cuda-gpu][cli]"
 
 # python tests
 rm -f gcov/*

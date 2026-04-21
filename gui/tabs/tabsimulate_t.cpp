@@ -18,7 +18,12 @@ using namespace sme::test;
 
 namespace {
 
-bool isCudaRuntimeUnavailable(const std::string &msg) {
+bool isGpuRuntimeUnavailable(const std::string &msg) {
+#ifdef SME_WITH_METAL
+  constexpr std::array<std::string_view, 2> unavailableMessages{
+      "Failed to create the Metal device",
+      "Failed to create the Metal command queue"};
+#else
   constexpr std::array<std::string_view, 6> unavailableMessages{
       "Failed to initialize the CUDA driver",
       "Failed to query CUDA devices",
@@ -26,6 +31,7 @@ bool isCudaRuntimeUnavailable(const std::string &msg) {
       "Failed to get the primary CUDA device",
       "Failed to create the CUDA context",
       "Failed to create the CUDA stream"};
+#endif
   return std::ranges::any_of(unavailableMessages, [&msg](std::string_view s) {
     return msg.find(s) != std::string::npos;
   });
@@ -228,9 +234,8 @@ TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   }
 }
 
-TEST_CASE("TabSimulate can load CUDA pixel simulations",
-          "[gui/tabs/simulate/cuda][gui/tabs][gui][simulate]"
-          "[requires-cuda-gpu]") {
+TEST_CASE("TabSimulate can load GPU pixel simulations",
+          "[gui/tabs/simulate/gpu][gui/tabs][gui][simulate][requires-gpu]") {
   QLabelMouseTracker mouseTracker;
   QVoxelRenderer voxelRenderer;
   auto model{getExampleModel(Mod::ABtoC)};
@@ -245,8 +250,8 @@ TEST_CASE("TabSimulate can load CUDA pixel simulations",
 
   {
     sme::simulate::Simulation sim(model);
-    if (isCudaRuntimeUnavailable(sim.errorMessage())) {
-      WARN("Skipping GUI CUDA simulate test: " << sim.errorMessage());
+    if (isGpuRuntimeUnavailable(sim.errorMessage())) {
+      WARN("Skipping GUI GPU simulate test: " << sim.errorMessage());
       return;
     }
     REQUIRE(sim.errorMessage().empty());

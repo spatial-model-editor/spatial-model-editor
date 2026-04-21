@@ -169,6 +169,31 @@ if(SME_WITH_CUDA)
 else()
   message(STATUS "CUDA toolkit disabled on this platform")
 endif()
+if(SME_WITH_METAL)
+  find_path(
+    METALCPP_ROOT
+    metal-cpp/Foundation/Foundation.hpp
+    REQUIRED)
+  set(METALCPP_INCLUDE_DIR ${METALCPP_ROOT}/metal-cpp)
+  find_library(
+    FOUNDATION_FRAMEWORK
+    Foundation
+    REQUIRED)
+  find_library(
+    METAL_FRAMEWORK
+    Metal
+    REQUIRED)
+  find_library(
+    QUARTZCORE_FRAMEWORK
+    QuartzCore
+    REQUIRED)
+  target_include_directories(core SYSTEM PRIVATE ${METALCPP_INCLUDE_DIR})
+  target_link_libraries(
+    core
+    PRIVATE ${FOUNDATION_FRAMEWORK}
+            ${METAL_FRAMEWORK}
+            ${QUARTZCORE_FRAMEWORK})
+endif()
 target_include_directories(core SYSTEM PRIVATE ${SYMENGINE_INCLUDE_DIRS})
 # set Logger level
 target_compile_definitions(

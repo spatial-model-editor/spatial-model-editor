@@ -1,4 +1,4 @@
-// CUDA pixel simulator PoC
+// Metal pixel simulator PoC
 
 #pragma once
 
@@ -10,6 +10,10 @@
 #include <string_view>
 #include <vector>
 
+namespace MTL {
+class ComputeCommandEncoder;
+}
+
 namespace sme {
 
 namespace model {
@@ -20,31 +24,34 @@ namespace simulate {
 
 namespace detail {
 [[nodiscard]] std::string
-makeCudaKernelSource(const std::vector<std::string> &variables,
-                     const std::vector<std::string> &expressions,
-                     bool useFloat = false);
+makeMetalKernelSource(const std::vector<std::string> &variables,
+                      const std::vector<std::string> &expressions);
 [[nodiscard]] std::string
-makeNvrtcCompileFailureMessage(std::string_view context, std::string_view error,
-                               std::string_view compileLog);
+makeMetalCompileFailureMessage(std::string_view context,
+                               std::string_view error);
 } // namespace detail
 
-class CudaPixelSim : public PixelSimBase {
+class MetalPixelSim : public PixelSimBase {
 private:
   struct Impl;
   std::unique_ptr<Impl> impl;
   const model::Model &doc;
-  void beginCompartmentParallelLaunches();
-  void endCompartmentParallelLaunches();
-  void evaluateDcdt();
-  void launchRk101Update(double dt);
-  void launchClampNegative();
-  void launchRk212Substep1(double dt);
-  void launchRk212Substep2(double dt);
-  void launchRkInit();
-  void launchRkSubstep(double dt, double g1, double g2, double g3, double beta,
+  void encodeEvaluateDcdt(MTL::ComputeCommandEncoder *encoder);
+  void encodeRk101Update(MTL::ComputeCommandEncoder *encoder, double dt);
+  void encodeClampNegative(MTL::ComputeCommandEncoder *encoder);
+  void encodeRk212Substep1(MTL::ComputeCommandEncoder *encoder, double dt);
+  void encodeRk212Substep2(MTL::ComputeCommandEncoder *encoder, double dt);
+  void encodeRkInit(MTL::ComputeCommandEncoder *encoder);
+  void encodeRkSubstep(MTL::ComputeCommandEncoder *encoder, double dt,
+                       double g1, double g2, double g3, double beta,
                        double delta);
-  void launchRkFinalise(double cFactor, double s2Factor, double s3Factor);
-  [[nodiscard]] PixelIntegratorError calculateRk212Error();
+  void encodeRkFinalise(MTL::ComputeCommandEncoder *encoder, double cFactor,
+                        double s2Factor, double s3Factor);
+  void encodeRk212Error(MTL::ComputeCommandEncoder *encoder);
+  void encodeRk212Timestep(MTL::ComputeCommandEncoder *encoder, double dt);
+  void encodeRk323Timestep(MTL::ComputeCommandEncoder *encoder, double dt);
+  void encodeRk435Timestep(MTL::ComputeCommandEncoder *encoder, double dt);
+  [[nodiscard]] PixelIntegratorError readRk212ErrorResult() const;
   void restorePreStepConcentrations();
   void downloadStateToHost();
   void waitForDownload();
@@ -56,12 +63,12 @@ private:
   [[nodiscard]] double doRKAdaptive(double dtMax);
 
 public:
-  explicit CudaPixelSim(
+  explicit MetalPixelSim(
       const model::Model &sbmlDoc,
       const std::vector<std::string> &compartmentIds,
       const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
       const std::map<std::string, double, std::less<>> &substitutions = {});
-  ~CudaPixelSim() override;
+  ~MetalPixelSim() override;
 
   std::size_t run(double time, double timeout_ms,
                   const std::function<bool()> &stopRunningCallback) override;

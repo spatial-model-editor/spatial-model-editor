@@ -1,4 +1,5 @@
 #include "pixelsim.hpp"
+#include "pixelsim_common.hpp"
 #include "pixelsim_impl.hpp"
 #include "sme/geometry.hpp"
 #include "sme/logger.hpp"
@@ -163,54 +164,30 @@ void PixelSim::doRK212(double dt) {
 }
 
 void PixelSim::doRK323(double dt) {
-  // RK3(2)3: Shu Osher method with embedded Heun error estimate
-  // Taken from eq(2.18) of
-  // https://doi.org/10.1016/0021-9991(88)90177-5
-  constexpr std::array<double, 3> g1{1.0, 0.25, 0.666666666666666666666};
-  constexpr std::array<double, 3> g2{0.0, 0.0, 0.0};
-  constexpr std::array<double, 3> g3{0.0, 0.75, 0.333333333333333333333};
-  constexpr std::array<double, 3> beta{1.0, 0.25, 0.6666666666666666666};
-  constexpr std::array<double, 3> delta{0.0, 0.0, 1.0};
+  using namespace detail::rk323;
   for (auto &sim : simCompartments) {
     sim->doRKInit();
   }
-  for (std::size_t i = 0; i < 3; ++i) {
+  for (std::size_t i = 0; i < g1.size(); ++i) {
     doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
   for (auto &sim : simCompartments) {
-    sim->doRKFinalise(0.0, 2.0, -1.0);
+    sim->doRKFinalise(finaliseFactors[0], finaliseFactors[1],
+                      finaliseFactors[2]);
   }
 }
 
 void PixelSim::doRK435(double dt) {
-  // RK4(3)5: 3S* algorithm 6 (see also table 6)
-  // https://doi.org/10.1016/j.jcp.2009.11.006
-  // 5 stage RK4 with embedded RK3 error estimate
-  constexpr std::array<double, 5> g1{0.0, -0.497531095840104, 1.010070514199942,
-                                     -3.196559004608766, 1.717835630267259};
-  constexpr std::array<double, 5> g2{1.0, 1.384996869124138, 3.878155713328178,
-                                     -2.324512951813145, -0.514633322274467};
-  constexpr std::array<double, 5> g3{0.0, 0.0, 0.0, 1.642598936063715,
-                                     0.188295940828347};
-  constexpr std::array<double, 5> beta{0.075152045700771, 0.211361016946069,
-                                       1.100713347634329, 0.728537814675568,
-                                       0.393172889823198};
-  constexpr std::array<double, 7> delta{1.0,
-                                        0.081252332929194,
-                                        -1.083849060586449,
-                                        -1.096110881845602,
-                                        2.859440022030827,
-                                        -0.655568367959557,
-                                        -0.194421504490852};
-  double deltaSum = 1.0 / common::sum(delta);
+  using namespace detail::rk435;
   for (auto &sim : simCompartments) {
     sim->doRKInit();
   }
-  for (std::size_t i = 0; i < 5; ++i) {
+  for (std::size_t i = 0; i < g1.size(); ++i) {
     doRKSubstep(dt, g1[i], g2[i], g3[i], beta[i], delta[i]);
   }
   for (auto &sim : simCompartments) {
-    sim->doRKFinalise(deltaSum * delta[5], deltaSum, deltaSum * delta[6]);
+    sim->doRKFinalise(deltaSumReciprocal * delta[5], deltaSumReciprocal,
+                      deltaSumReciprocal * delta[6]);
   }
 }
 
@@ -227,23 +204,11 @@ void PixelSim::doRKSubstep(double dt, double g1, double g2, double g3,
   }
 }
 
-static double getErrorPower(PixelIntegratorType integrator) {
-  double errPower{1.0};
-  if (integrator == PixelIntegratorType::RK212) {
-    errPower = 1.0 / 2.0;
-  } else if (integrator == PixelIntegratorType::RK323) {
-    errPower = 1.0 / 3.0;
-  } else if (integrator == PixelIntegratorType::RK435) {
-    errPower = 1.0 / 4.0;
-  }
-  return errPower;
-}
-
 double PixelSim::doRKAdaptive(double dtMax) {
   // Adaptive timestep Runge-Kutta
   PixelIntegratorError err;
   double dt;
-  double errPower = getErrorPower(integrator);
+  double errPower = detail::getErrorPower(integrator);
   do {
     // do timestep
     dt = std::min(nextTimestep, dtMax);
@@ -308,10 +273,10 @@ PixelSim::PixelSim(
     const model::Model &sbmlDoc, const std::vector<std::string> &compartmentIds,
     const std::vector<std::vector<std::string>> &compartmentSpeciesIds,
     const std::map<std::string, double, std::less<>> &substitutions)
-    : doc{sbmlDoc},
-      integrator{sbmlDoc.getSimulationSettings().options.pixel.integrator},
-      errMax{sbmlDoc.getSimulationSettings().options.pixel.maxErr},
-      maxTimestep{sbmlDoc.getSimulationSettings().options.pixel.maxTimestep},
+    : PixelSimBase{sbmlDoc.getSimulationSettings().options.pixel.integrator,
+                   sbmlDoc.getSimulationSettings().options.pixel.maxErr,
+                   sbmlDoc.getSimulationSettings().options.pixel.maxTimestep},
+      doc{sbmlDoc},
       numMaxThreads{sbmlDoc.getSimulationSettings().options.pixel.maxThreads} {
   try {
     // check if reactions explicitly depend on time or space
@@ -522,22 +487,6 @@ double PixelSim::getLowerOrderConcentration(std::size_t compartmentIndex,
                                             std::size_t pixelIndex) const {
   return simCompartments[compartmentIndex]->getLowerOrderConcentration(
       speciesIndex, pixelIndex);
-}
-
-const std::string &PixelSim::errorMessage() const {
-  return currentErrorMessage;
-}
-
-const common::ImageStack &PixelSim::errorImages() const {
-  return currentErrorImages;
-}
-
-bool PixelSim::getStopRequested() const { return stopRequested.load(); }
-
-void PixelSim::setStopRequested(bool stop) { stopRequested.store(stop); }
-
-void PixelSim::setCurrentErrormessage(const std::string &msg) {
-  currentErrorMessage = msg;
 }
 
 } // namespace sme::simulate

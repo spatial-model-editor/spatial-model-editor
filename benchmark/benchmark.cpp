@@ -4,9 +4,12 @@
 #include "sme/simulate.hpp"
 #include "sme/version.hpp"
 #include <QElapsedTimer>
+#include <QImage>
 #include <fmt/core.h>
 #include <limits>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace sme;
@@ -17,21 +20,73 @@ struct BackendConfig {
   simulate::GpuFloatPrecision gpuPrecision;
 };
 
-static const std::vector<BackendConfig> allBackends{
-    {"Pixel/CPU", simulate::PixelBackendType::CPU,
-     simulate::GpuFloatPrecision::Double},
-    {"Pixel/GPU(f64)", simulate::PixelBackendType::GPU,
-     simulate::GpuFloatPrecision::Double},
-    {"Pixel/GPU(f32)", simulate::PixelBackendType::GPU,
-     simulate::GpuFloatPrecision::Float},
-};
+static std::vector<BackendConfig> makeAvailableBackends() {
+  std::vector<BackendConfig> backends{
+      {"Pixel/CPU", simulate::PixelBackendType::CPU,
+       simulate::GpuFloatPrecision::Double},
+  };
+#ifdef SME_WITH_CUDA
+  backends.emplace_back(BackendConfig{"Pixel/GPU(f64)",
+                                      simulate::PixelBackendType::GPU,
+                                      simulate::GpuFloatPrecision::Double});
+#endif
+#if defined(SME_WITH_CUDA) || defined(SME_WITH_METAL)
+  backends.emplace_back(BackendConfig{"Pixel/GPU(f32)",
+                                      simulate::PixelBackendType::GPU,
+                                      simulate::GpuFloatPrecision::Float});
+#endif
+  return backends;
+}
+
+static const std::vector<BackendConfig> allBackends = makeAvailableBackends();
+
+static void loadBenchmarkModel(model::Model &s, std::string_view modelName) {
+  if (modelName == "very-simple-model-single-pixels-3x1") {
+    s.importSBMLString(
+        benchmarking::readResourceTextFile(":/models/very-simple-model.xml"));
+    QImage img(":/geometry/single-pixels-3x1.png");
+    if (img.isNull()) {
+      throw std::runtime_error(
+          "Failed to load resource ':/geometry/single-pixels-3x1.png'");
+    }
+    s.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, false);
+    s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
+    s.getCompartments().setColor("c1", img.pixel(0, 0));
+    s.getCompartments().setColor("c2", img.pixel(1, 0));
+    s.getCompartments().setColor("c3", img.pixel(2, 0));
+    if (!s.getGeometry().getIsValid()) {
+      throw std::runtime_error(
+          "Failed to construct single-pixel benchmark geometry");
+    }
+    return;
+  }
+  if (modelName == "single-compartment-diffusion-single-pixel") {
+    s.importSBMLString(benchmarking::readResourceTextFile(
+        ":/models/single-compartment-diffusion.xml"));
+    QImage img(1, 1, QImage::Format_RGB32);
+    img.setPixel(0, 0, qRgb(12, 243, 154));
+    s.getGeometry().importGeometryFromImages(common::ImageStack{{img}}, false);
+    s.getGeometry().setVoxelSize({1.0, 1.0, 1.0});
+    s.getCompartments().setColor("circle", img.pixel(0, 0));
+    if (!s.getGeometry().getIsValid()) {
+      throw std::runtime_error(
+          "Failed to construct single-pixel diffusion benchmark geometry");
+    }
+    return;
+  }
+
+  s.importSBMLString(benchmarking::readResourceTextFile(
+      QString(":/models/%1.xml").arg(modelName.data())));
+}
 
 struct BenchmarkParams {
   int nTimesteps{1000};
   std::vector<const char *> models{
       "single-compartment-diffusion",
+      "single-compartment-diffusion-single-pixel",
       "ABtoC",
       "very-simple-model",
+      "very-simple-model-single-pixels-3x1",
       "brusselator-model",
       "circadian-clock",
       "gray-scott",
@@ -151,8 +206,7 @@ static void printBenchmarks(const BenchmarkParams &params) {
 
     for (const auto &backend : params.backends) {
       model::Model s;
-      s.importSBMLString(benchmarking::readResourceTextFile(
-          QString(":/models/%1.xml").arg(model)));
+      loadBenchmarkModel(s, model);
 
       auto &options = s.getSimulationSettings().options;
       options.pixel.backend = backend.pixelBackend;

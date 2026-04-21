@@ -3,6 +3,7 @@
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include "ui_dialogsimulationoptions.h"
+#include <QSignalBlocker>
 #include <QString>
 #include <oneapi/tbb/info.h>
 
@@ -84,6 +85,33 @@ static sme::simulate::GpuFloatPrecision toGpuFloatPrecisionEnum(int index) {
 
 static bool isGpuSupportedPixelIntegrator(sme::simulate::PixelIntegratorType) {
   return true;
+}
+
+static bool isGpuBackendAvailable() {
+#if defined(SME_WITH_CUDA) || defined(SME_WITH_METAL)
+  return true;
+#else
+  return false;
+#endif
+}
+
+static bool isFloatOnlyGpuBackend() {
+#ifdef SME_WITH_METAL
+  return true;
+#else
+  return false;
+#endif
+}
+
+static void applyGpuBackendConstraints(sme::simulate::Options &opt) {
+  if (!isGpuBackendAvailable() &&
+      opt.pixel.backend == sme::simulate::PixelBackendType::GPU) {
+    opt.pixel.backend = sme::simulate::PixelBackendType::CPU;
+  }
+  if (isFloatOnlyGpuBackend() &&
+      opt.pixel.backend == sme::simulate::PixelBackendType::GPU) {
+    opt.pixel.gpuFloatPrecision = sme::simulate::GpuFloatPrecision::Float;
+  }
 }
 
 DialogSimulationOptions::DialogSimulationOptions(
@@ -245,10 +273,13 @@ void DialogSimulationOptions::resetDuneToDefaults() {
 void DialogSimulationOptions::populatePixelBackendChoices() {
   ui->cmbPixelBackend->clear();
   ui->cmbPixelBackend->addItem("CPU");
-  ui->cmbPixelBackend->addItem("GPU");
+  if (isGpuBackendAvailable()) {
+    ui->cmbPixelBackend->addItem("GPU");
+  }
 }
 
 void DialogSimulationOptions::loadPixelOpts() {
+  applyGpuBackendConstraints(opt);
   if (opt.pixel.backend == sme::simulate::PixelBackendType::GPU &&
       !isGpuSupportedPixelIntegrator(opt.pixel.integrator)) {
     opt.pixel.integrator = sme::simulate::PixelIntegratorType::RK212;
@@ -277,16 +308,25 @@ void DialogSimulationOptions::loadPixelOpts() {
 
 void DialogSimulationOptions::updatePixelBackendUi() {
   const bool useGpu = opt.pixel.backend == sme::simulate::PixelBackendType::GPU;
+  const bool floatOnlyGpu = useGpu && isFloatOnlyGpuBackend();
   const QString integratorTooltip =
       "The Runge-Kutta integrator to be used in the simulation";
+  const QString gpuPrecisionTooltip =
+      floatOnlyGpu
+          ? "The Metal GPU backend currently uses float (32-bit) precision "
+            "only."
+          : "Floating-point precision used on the GPU. Float (32-bit) uses "
+            "less memory and is faster on most GPUs, but may reduce accuracy.";
   const QString multithreadingTooltip =
       useGpu ? "Multithreading is only used by the CPU pixel backend"
              : "Using multiple CPU threads can improve performance for large "
                "models, but for small models it may reduce performance.";
 
   ui->cmbPixelBackend->setEnabled(ui->cmbPixelBackend->count() > 1);
-  ui->cmbPixelGpuPrecision->setEnabled(useGpu);
+  ui->cmbPixelGpuPrecision->setEnabled(useGpu && !floatOnlyGpu);
   ui->lblPixelGpuPrecision->setEnabled(useGpu);
+  ui->cmbPixelGpuPrecision->setToolTip(gpuPrecisionTooltip);
+  ui->lblPixelGpuPrecision->setToolTip(gpuPrecisionTooltip);
   ui->cmbPixelIntegrator->setEnabled(true);
   ui->cmbPixelIntegrator->setToolTip(integratorTooltip);
   ui->lblPixelIntegrator->setToolTip(integratorTooltip);
@@ -349,6 +389,14 @@ void DialogSimulationOptions::spnPixelOptLevel_valueChanged(int value) {
 
 void DialogSimulationOptions::cmbPixelGpuPrecision_currentIndexChanged(
     int index) {
+  if (isFloatOnlyGpuBackend() &&
+      opt.pixel.backend == sme::simulate::PixelBackendType::GPU) {
+    opt.pixel.gpuFloatPrecision = sme::simulate::GpuFloatPrecision::Float;
+    const QSignalBlocker blocker(ui->cmbPixelGpuPrecision);
+    ui->cmbPixelGpuPrecision->setCurrentIndex(
+        toIndex(opt.pixel.gpuFloatPrecision));
+    return;
+  }
   opt.pixel.gpuFloatPrecision = toGpuFloatPrecisionEnum(index);
 }
 
