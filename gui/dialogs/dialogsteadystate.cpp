@@ -306,7 +306,7 @@ DialogSteadystate::~DialogSteadystate() = default;
 void DialogSteadystate::displayOptionsClicked() {
   DialogDisplayOptions dialog(m_compartmentNames, m_speciesNames,
                               m_displayoptions,
-                              std::vector<PlotWrapperObservable>{}, this);
+                              std::vector<PlotWrapperObservable>{}, {}, this);
 
   // we don´t care about timepoints here
   dialog.ui->cmbNormaliseOverAllTimepoints->hide();

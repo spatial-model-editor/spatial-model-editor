@@ -2,6 +2,8 @@ target_sources(
   gui
   PRIVATE tabevents.cpp
           tabevents.ui
+          tabfeatures.cpp
+          tabfeatures.ui
           tabfunctions.cpp
           tabfunctions.ui
           tabgeometry.cpp
@@ -20,6 +22,7 @@ if(BUILD_TESTING)
   target_sources(
     gui_tests
     PUBLIC tabevents_t.cpp
+           tabfeatures_t.cpp
            tabfunctions_t.cpp
            tabgeometry_t.cpp
            tabparameters_t.cpp

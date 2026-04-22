@@ -6,9 +6,10 @@
 #include <QMainWindow>
 #include <memory>
 
+class TabEvents;
+class TabFeatures;
 class TabFunctions;
 class TabGeometry;
-class TabEvents;
 class TabParameters;
 class TabReactions;
 class TabSimulate;
@@ -51,6 +52,7 @@ private:
   TabFunctions *tabFunctions;
   TabParameters *tabParameters;
   TabEvents *tabEvents;
+  TabFeatures *tabFeatures;
   TabSimulate *tabSimulate;
 
   QString getConvertedFilename(const QString &cpsFilename);

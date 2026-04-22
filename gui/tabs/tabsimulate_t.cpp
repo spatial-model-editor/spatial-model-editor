@@ -42,6 +42,48 @@ bool isGpuRuntimeUnavailable(const std::string &msg) {
 TEST_CASE("TabSimulate", "[gui/tabs/simulate][gui/tabs][gui][simulate]") {
   QLabelMouseTracker mouseTracker;
   QVoxelRenderer voxelRenderer;
+  SECTION("Feature plot lines use species colours and region names") {
+    auto model{getExampleModel(Mod::ABtoC)};
+    while (model.getFeatures().size() > 0) {
+      model.getFeatures().remove(0);
+    }
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+    QRgb speciesColor{qRgb(12, 34, 56)};
+    model.getSpecies().setColor("A", speciesColor);
+    sme::simulate::RoiSettings roi;
+    roi.roiType = sme::simulate::RoiType::Depth;
+    roi.numRegions = 2;
+    model.getFeatures().add("feature", "comp", "A", roi,
+                            sme::simulate::ReductionOp::Average);
+
+    TabSimulate tab(model, &mouseTracker, &voxelRenderer);
+    tab.show();
+    waitFor(&tab);
+    auto *plot{tab.findChild<QCustomPlot *>("plot")};
+    REQUIRE(plot != nullptr);
+
+    QCPGraph *region1{nullptr};
+    QCPGraph *region2{nullptr};
+    for (int i = 0; i < plot->graphCount(); ++i) {
+      if (plot->graph(i)->name() == "feature [region 1]") {
+        region1 = plot->graph(i);
+      } else if (plot->graph(i)->name() == "feature [region 2]") {
+        region2 = plot->graph(i);
+      }
+    }
+
+    REQUIRE(region1 != nullptr);
+    REQUIRE(region2 != nullptr);
+    REQUIRE(region1->pen().color().rgb() == speciesColor);
+    REQUIRE(region2->pen().color().rgb() == speciesColor);
+    REQUIRE(region1->pen().style() == Qt::DashLine);
+    REQUIRE(region2->pen().style() == Qt::DashLine);
+    REQUIRE(region1->scatterStyle().shape() ==
+            QCPScatterStyle::ScatterShape::ssTriangle);
+    REQUIRE(region2->scatterStyle().shape() ==
+            QCPScatterStyle::ScatterShape::ssSquare);
+  }
   SECTION("Many actions") {
     // load model & do initial simulation
     auto model{getExampleModel(Mod::ABtoC)};

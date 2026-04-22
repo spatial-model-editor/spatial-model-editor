@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "dialoganalytic.hpp"
+#include "math_test_utils.hpp"
 #include "model_test_utils.hpp"
 #include "qplaintextmathedit.hpp"
 #include "qt_test_utils.hpp"
@@ -126,6 +127,33 @@ TEST_CASE("DialogAnalytic",
       sendMouseClick(widgets.chkScale);
       REQUIRE(dia.isExpressionValid() == true);
       REQUIRE(dia.getExpression() == "10");
+    }
+  }
+  SECTION("ROI region expression") {
+    auto model{getExampleModel(Mod::ABtoC)};
+    auto compartmentVoxels = std::vector<sme::common::Voxel>{
+        {5, 5, 0}, {5, 6, 0}, {5, 7, 0}, {6, 6, 0}, {6, 7, 0}};
+    DialogAnalytic dia("x - 10", DialogAnalyticDataType::RoiRegion,
+                       {{10, 10, 1},
+                        compartmentVoxels,
+                        {0.0, 0.0, 0.0},
+                        {1.0, 1.0, 1.0},
+                        model.getUnits()},
+                       model.getParameters(), model.getFunctions(), false, 3);
+    dia.show();
+    DialogAnalyticWidgets widgets(&dia);
+    REQUIRE(dia.isExpressionValid() == true);
+    REQUIRE(symEq(dia.getExpression(), "x - 10"));
+    SECTION("editing to another negative expression remains valid") {
+      sendKeyEvents(widgets.txtExpression,
+                    {"Delete", "x", " ", "-", " ", "1", "0"});
+      REQUIRE(dia.isExpressionValid() == true);
+      REQUIRE(symEq(dia.getExpression(), "x - 20"));
+    }
+    SECTION("invalid syntax still disables acceptance") {
+      sendKeyEvents(widgets.txtExpression, {"Delete", "("});
+      REQUIRE(dia.isExpressionValid() == false);
+      REQUIRE(dia.getExpression().empty() == true);
     }
   }
 }

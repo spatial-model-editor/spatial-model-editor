@@ -13,6 +13,7 @@ using namespace sme::test;
 struct DialogDisplayOptionsWidgets {
   explicit DialogDisplayOptionsWidgets(const DialogDisplayOptions *dialog) {
     GET_DIALOG_WIDGET(QTreeWidget, listSpecies);
+    GET_DIALOG_WIDGET(QTreeWidget, listFeatures);
     GET_DIALOG_WIDGET(QCheckBox, chkShowMinMaxRanges);
     GET_DIALOG_WIDGET(QTreeWidget, listObservables);
     GET_DIALOG_WIDGET(QPushButton, btnAddObservable);
@@ -22,6 +23,7 @@ struct DialogDisplayOptionsWidgets {
     GET_DIALOG_WIDGET(QComboBox, cmbNormaliseOverAllTimepoints);
   }
   QTreeWidget *listSpecies;
+  QTreeWidget *listFeatures;
   QCheckBox *chkShowMinMaxRanges;
   QTreeWidget *listObservables;
   QPushButton *btnAddObservable;
@@ -245,5 +247,49 @@ TEST_CASE("DialogDisplayOptions",
       REQUIRE(dia.getObservables()[0].expression == "s1_c1*2");
       REQUIRE(dia.getObservables()[0].visible == true);
     }
+  }
+  SECTION("Feature visibility") {
+    QStringList compartments{"c1"};
+    std::vector<QStringList> species;
+    species.push_back({"s1"});
+    sme::model::DisplayOptions opts;
+    opts.showSpecies = {true};
+    opts.showFeatures = {true, false, true};
+    QStringList featureNames{"feat1", "feat2 [region 1]", "feat2 [region 2]"};
+    DialogDisplayOptions dia(compartments, species, opts, {}, featureNames);
+    dia.show();
+    DialogDisplayOptionsWidgets widgets(&dia);
+    SECTION("initial state matches showFeatures") {
+      REQUIRE(dia.getShowFeatures().size() == 3);
+      REQUIRE(dia.getShowFeatures()[0] == true);
+      REQUIRE(dia.getShowFeatures()[1] == false);
+      REQUIRE(dia.getShowFeatures()[2] == true);
+    }
+    SECTION("user unchecks first feature") {
+      widgets.listFeatures->topLevelItem(0)->setCheckState(
+          0, Qt::CheckState::Unchecked);
+      REQUIRE(dia.getShowFeatures()[0] == false);
+      REQUIRE(dia.getShowFeatures()[1] == false);
+      REQUIRE(dia.getShowFeatures()[2] == true);
+    }
+    SECTION("user checks second feature") {
+      widgets.listFeatures->topLevelItem(1)->setCheckState(
+          0, Qt::CheckState::Checked);
+      REQUIRE(dia.getShowFeatures()[0] == true);
+      REQUIRE(dia.getShowFeatures()[1] == true);
+      REQUIRE(dia.getShowFeatures()[2] == true);
+    }
+  }
+  SECTION("No features hides list") {
+    QStringList compartments{"c1"};
+    std::vector<QStringList> species;
+    species.push_back({"s1"});
+    sme::model::DisplayOptions opts;
+    opts.showSpecies = {true};
+    DialogDisplayOptions dia(compartments, species, opts, {});
+    dia.show();
+    DialogDisplayOptionsWidgets widgets(&dia);
+    REQUIRE(widgets.listFeatures->isVisible() == false);
+    REQUIRE(dia.getShowFeatures().empty());
   }
 }

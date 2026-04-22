@@ -18,6 +18,7 @@ if(BUILD_TESTING)
   target_sources(
     core_tests
     PUBLIC image_stack_t.cpp
+           id_t.cpp
            image_stack_impl_t.cpp
            logger_t.cpp
            serialization_t.cpp

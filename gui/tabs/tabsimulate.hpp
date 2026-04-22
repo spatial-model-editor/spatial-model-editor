@@ -55,6 +55,7 @@ private:
   std::vector<QStringList> speciesNames;
   std::vector<std::vector<std::size_t>> compartmentSpeciesToDraw;
   std::vector<PlotWrapperObservable> observables;
+  QStringList featureLineNames;
   QFuture<std::size_t> simSteps;
   QFutureWatcher<std::size_t> simWatcher;
   QTimer plotRefreshTimer;

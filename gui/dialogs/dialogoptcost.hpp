@@ -22,10 +22,16 @@ public:
   [[nodiscard]] const sme::simulate::OptCost &getOptCost() const;
 
 private:
+  struct TargetTypeItem {
+    sme::simulate::OptCostType optCostType;
+    std::string featureId;
+    QString label;
+  };
   const sme::model::Model &m_model;
   const std::vector<sme::simulate::OptCost> &m_defaultOptCosts;
   std::unique_ptr<Ui::DialogOptCost> ui;
   sme::simulate::OptCost m_optCost;
+  std::vector<TargetTypeItem> m_targetTypeItems;
   void cmbSpecies_currentIndexChanged(int index);
   void cmbCostType_currentIndexChanged(int index);
   void cmbDiffType_currentIndexChanged(int index);
@@ -33,5 +39,7 @@ private:
   void btnEditTargetValues_clicked();
   void txtWeight_editingFinished();
   void txtEpsilon_editingFinished();
+  void populateTargetTypes();
+  void updateTargetValuesLabel();
   void updateImage();
 };

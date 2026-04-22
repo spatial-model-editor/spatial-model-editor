@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "sme/feature_options.hpp"
 #include "sme/simulate_options.hpp"
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
@@ -41,6 +42,10 @@ public:
    */
   std::string xmlModel;
   /**
+   * @brief Feature extraction results: one FeatureResult per feature.
+   */
+  std::vector<simulate::FeatureResult> featureResults;
+  /**
    * @brief Clear all stored data.
    */
   void clear();
@@ -71,10 +76,13 @@ public:
     if (version == 0) {
       ar(timePoints, concentration, avgMinMax, concentrationMax, concPadding,
          xmlModel);
+    } else if (version == 1) {
+      ar(timePoints, concentration, avgMinMax, concentrationMax, concPadding,
+         xmlModel, featureResults);
     }
   }
 };
 
 } // namespace sme::simulate
 
-CEREAL_CLASS_VERSION(sme::simulate::SimulationData, 0);
+CEREAL_CLASS_VERSION(sme::simulate::SimulationData, 1);

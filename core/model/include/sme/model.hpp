@@ -9,6 +9,7 @@
 #include "sme/image_stack.hpp"
 #include "sme/model_compartments.hpp"
 #include "sme/model_events.hpp"
+#include "sme/model_features.hpp"
 #include "sme/model_functions.hpp"
 #include "sme/model_geometry.hpp"
 #include "sme/model_math.hpp"
@@ -72,6 +73,7 @@ private:
   std::unique_ptr<ModelParameters> modelParameters;
   std::unique_ptr<ModelUnits> modelUnits;
   std::unique_ptr<ModelMath> modelMath;
+  std::unique_ptr<ModelFeatures> modelFeatures;
 
   void initModelData(bool emptySpatialModel = false);
   void setHasUnsavedChanges(bool unsavedChanges);
@@ -227,6 +229,14 @@ public:
    * @returns Vector of sampled-field colors.
    */
   [[nodiscard]] const std::vector<QRgb> &getSampledFieldColors() const;
+  /**
+   * @brief Mutable access to feature manager.
+   */
+  ModelFeatures &getFeatures();
+  /**
+   * @brief Immutable access to feature manager.
+   */
+  [[nodiscard]] const ModelFeatures &getFeatures() const;
 
   /**
    * @brief Construct empty model wrapper.

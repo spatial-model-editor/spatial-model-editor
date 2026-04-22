@@ -30,7 +30,7 @@ DialogDisplayOptions::DialogDisplayOptions(
     const std::vector<QStringList> &speciesNames,
     const sme::model::DisplayOptions &displayOptions,
     const std::vector<PlotWrapperObservable> &plotWrapperObservables,
-    QWidget *parent)
+    const QStringList &featureLineNames, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogDisplayOptions>()},
       nSpecies(displayOptions.showSpecies.size()),
       observables(plotWrapperObservables) {
@@ -56,6 +56,22 @@ DialogDisplayOptions::DialogDisplayOptions(
   }
   ls->expandAll();
   ui->chkShowMinMaxRanges->setChecked(displayOptions.showMinMax);
+  // populate feature lines
+  auto *lf = ui->listFeatures;
+  lf->clear();
+  bool hasFeatures = !featureLineNames.isEmpty();
+  lf->setVisible(hasFeatures);
+  for (int i = 0; i < featureLineNames.size(); ++i) {
+    auto *item = new QTreeWidgetItem(lf, QStringList({featureLineNames[i]}));
+    item->setFlags(Qt::ItemIsSelectable | Qt::ItemIsUserCheckable |
+                   Qt::ItemIsEnabled | Qt::ItemNeverHasChildren);
+    bool visible =
+        i < static_cast<int>(displayOptions.showFeatures.size())
+            ? displayOptions.showFeatures[static_cast<std::size_t>(i)]
+            : true;
+    checkItem(item, visible);
+    lf->addTopLevelItem(item);
+  }
   for (const auto &observable : observables) {
     auto *obs =
         new QTreeWidgetItem(ui->listObservables, {observable.expression});
@@ -95,6 +111,15 @@ std::vector<bool> DialogDisplayOptions::getShowSpecies() const {
       checked.push_back(comp->child(is)->checkState(0) ==
                         Qt::CheckState::Checked);
     }
+  }
+  return checked;
+}
+
+std::vector<bool> DialogDisplayOptions::getShowFeatures() const {
+  std::vector<bool> checked;
+  for (int i = 0; i < ui->listFeatures->topLevelItemCount(); ++i) {
+    checked.push_back(ui->listFeatures->topLevelItem(i)->checkState(0) ==
+                      Qt::CheckState::Checked);
   }
   return checked;
 }

@@ -9,6 +9,26 @@
 #include <QPushButton>
 #include <QToolTip>
 
+static QString quantityNameFor(DialogImageDataDataType dataType) {
+  switch (dataType) {
+  case DialogImageDataDataType::Concentration:
+    return "concentration";
+  case DialogImageDataDataType::ConcentrationRateOfChange:
+    return "rate of change of concentration";
+  case DialogImageDataDataType::DiffusionConstant:
+    return "diffusion constant";
+  }
+  return {};
+}
+
+static QString quantityTitleName(DialogImageDataDataType dataType) {
+  auto name = quantityNameFor(dataType);
+  if (!name.isEmpty()) {
+    name[0] = name[0].toUpper();
+  }
+  return name;
+}
+
 DialogImageData::DialogImageData(
     const std::vector<double> &dataArray,
     const sme::model::SpeciesGeometry &speciesGeometry, bool invertYAxis,
@@ -25,19 +45,15 @@ DialogImageData::DialogImageData(
   ui->lblImage->setZSlider(ui->slideZIndex);
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
+  quantityName = quantityNameFor(dataType);
+  setWindowTitle(QString("%1 image data").arg(quantityTitleName(dataType)));
   if (dataType == DialogImageDataDataType::Concentration) {
-    setWindowTitle("Concentration image data");
-    quantityName = "concentration";
     quantityUnit = units.getConcentration();
   } else if (dataType == DialogImageDataDataType::ConcentrationRateOfChange) {
-    setWindowTitle("Concentration rate of change image data");
-    quantityName = "concentration rate of change";
     quantityUnit = QString("%1/%2")
                        .arg(units.getConcentration())
                        .arg(units.getTime().name);
   } else if (dataType == DialogImageDataDataType::DiffusionConstant) {
-    setWindowTitle("Diffusion constant image data");
-    quantityName = "diffusion constant";
     quantityUnit = units.getDiffusion();
   }
 
@@ -50,6 +66,8 @@ DialogImageData::DialogImageData(
 
   ui->lblMinConcUnits->setText(quantityUnit);
   ui->lblMaxConcUnits->setText(quantityUnit);
+  ui->lblMinConcLabel->setText(QString("Minimum %1").arg(quantityName));
+  ui->lblMaxConcLabel->setText(QString("Maximum %1").arg(quantityName));
   imgs.setVoxelSize(speciesGeometry.voxelSize);
   imgs.fill(0);
 

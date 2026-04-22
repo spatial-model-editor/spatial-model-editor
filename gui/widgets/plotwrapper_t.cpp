@@ -105,3 +105,19 @@ TEST_CASE("PlotWrapper",
   REQUIRE(p.plot->graphCount() == 0);
   REQUIRE(p.getTimepoints().size() == 0);
 }
+
+TEST_CASE("PlotWrapper feature lines",
+          "[gui/widgets/plotwrapper][gui/widgets][gui][plotwrapper]") {
+  QWidget parent;
+  PlotWrapper p("title", &parent);
+  QColor featureColor(12, 34, 56);
+  p.addFeatureLine("feature region", featureColor,
+                   QCPScatterStyle::ScatterShape::ssSquare);
+
+  REQUIRE(p.plot->graphCount() == 1);
+  REQUIRE(p.plot->graph(0)->name() == "feature region");
+  REQUIRE(p.plot->graph(0)->pen().color() == featureColor);
+  REQUIRE(p.plot->graph(0)->pen().style() == Qt::DashLine);
+  REQUIRE(p.plot->graph(0)->scatterStyle().shape() ==
+          QCPScatterStyle::ScatterShape::ssSquare);
+}

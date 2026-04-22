@@ -3,6 +3,7 @@ target_sources(
   PRIVATE plotwrapper.cpp
           gpumemoryusagebarwidget.cpp
           memoryusagebarwidget.cpp
+          regioncolorslabel.cpp
           qlabelslice.cpp
           qlabelmousetracker.cpp
           qplaintextmathedit.cpp
@@ -17,6 +18,7 @@ if(BUILD_TESTING)
     PUBLIC plotwrapper_t.cpp
            gpumemoryusagebarwidget_t.cpp
            memoryusagebarwidget_t.cpp
+           regioncolorslabel_t.cpp
            qlabelslice_t.cpp
            qlabelmousetracker_t.cpp
            qplaintextmathedit_t.cpp

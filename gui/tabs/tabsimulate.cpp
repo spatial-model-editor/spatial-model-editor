@@ -5,6 +5,7 @@
 #include "guiutils.hpp"
 #include "qlabelmousetracker.hpp"
 #include "qvoxelrenderer.hpp"
+#include "sme/feature_options.hpp"
 #include "sme/logger.hpp"
 #include "sme/mesh2d.hpp"
 #include "sme/mesh3d.hpp"
@@ -18,6 +19,7 @@
 #include <QProgressDialog>
 #include <QtConcurrent/QtConcurrent>
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 
@@ -157,6 +159,38 @@ static void importModelTimesAndIntervals(
                                QMessageBox::No) == QMessageBox::Yes;
 }
 
+[[nodiscard]] static QColor
+featureSpeciesColor(const sme::simulate::Simulation &simulation,
+                    const sme::simulate::FeatureDefinition &feature,
+                    const QColor &fallback) {
+  for (std::size_t ic = 0; ic < simulation.getCompartmentIds().size(); ++ic) {
+    if (simulation.getCompartmentIds()[ic] != feature.compartmentId) {
+      continue;
+    }
+    const auto &speciesIds = simulation.getSpeciesIds(ic);
+    for (std::size_t is = 0; is < speciesIds.size(); ++is) {
+      if (speciesIds[is] == feature.speciesId) {
+        return simulation.getSpeciesColors(ic)[is];
+      }
+    }
+  }
+  return fallback;
+}
+
+[[nodiscard]] static QCPScatterStyle::ScatterShape
+featureScatterShape(std::size_t lineIndex) {
+  static constexpr std::array shapes{
+      QCPScatterStyle::ScatterShape::ssTriangle,
+      QCPScatterStyle::ScatterShape::ssSquare,
+      QCPScatterStyle::ScatterShape::ssDiamond,
+      QCPScatterStyle::ScatterShape::ssCircle,
+      QCPScatterStyle::ScatterShape::ssCross,
+      QCPScatterStyle::ScatterShape::ssPlus,
+      QCPScatterStyle::ScatterShape::ssTriangleInverted,
+      QCPScatterStyle::ScatterShape::ssStar};
+  return shapes[lineIndex % shapes.size()];
+}
+
 void TabSimulate::loadModelData() {
   if (sim != nullptr && sim->getIsRunning()) {
     return;
@@ -283,12 +317,35 @@ void TabSimulate::loadModelData() {
       plt->addAvMinMaxLine(name, col);
     }
   }
+  // add feature lines
+  featureLineNames.clear();
+  const auto &features = model.getFeatures().getFeatures();
+  sme::common::indexedColors featureColors;
+  for (std::size_t fi = 0; fi < features.size(); ++fi) {
+    auto nRegions = sme::simulate::getNumRegions(features[fi].roi);
+    auto fallbackColor = featureColors[nSpecies + fi];
+    auto featureColor = featureSpeciesColor(*sim, features[fi], fallbackColor);
+    for (std::size_t li = 0; li < nRegions; ++li) {
+      QString name = QString::fromStdString(features[fi].name);
+      if (nRegions > 1) {
+        name = QString("%1 [region %2]").arg(name).arg(li + 1);
+      }
+      auto scatterShape = featureScatterShape(
+          static_cast<std::size_t>(featureLineNames.size()));
+      plt->addFeatureLine(name, featureColor, scatterShape);
+      featureLineNames.push_back(name);
+    }
+  }
   displayOptions = model.getDisplayOptions();
   if (displayOptions.showSpecies.size() != nSpecies) {
     // show species count doesn't match actual number of species
     // user probably added/removed species to model
     // just set all species visible in this case
     displayOptions.showSpecies.resize(nSpecies, true);
+  }
+  auto nFeatures = static_cast<std::size_t>(featureLineNames.size());
+  if (displayOptions.showFeatures.size() != nFeatures) {
+    displayOptions.showFeatures.resize(nFeatures, true);
   }
   updateSpeciesToDraw();
   updatePlotAndImages();
@@ -453,6 +510,18 @@ void TabSimulate::updatePlotAndImages() {
         ++speciesIndex;
       }
     }
+    // add feature data points
+    const auto &simData = sim->getSimulationData();
+    int featureLineIndex = 0;
+    for (std::size_t fi = 0; fi < simData.featureResults.size(); ++fi) {
+      const auto &fr = simData.featureResults[fi];
+      if (i < fr.values.size()) {
+        for (std::size_t bi = 0; bi < fr.values[i].size(); ++bi) {
+          plt->addFeaturePoint(featureLineIndex, time.back(), fr.values[i][bi]);
+          ++featureLineIndex;
+        }
+      }
+    }
     lblGeometry->setImage(images.back());
     voxGeometry->setImage(images.back());
     plt->plot->rescaleAxes(true);
@@ -488,7 +557,8 @@ void TabSimulate::finalizePlotAndImages() {
     plt->addObservableLine(obs, sme::common::indexedColors()[colorIndex]);
     ++colorIndex;
   }
-  plt->update(displayOptions.showSpecies, displayOptions.showMinMax);
+  plt->update(displayOptions.showSpecies, displayOptions.showMinMax,
+              displayOptions.showFeatures);
   updateSpeciesToDraw();
   // update all images
   for (int iTime = 0; iTime < time.size(); ++iTime) {
@@ -514,10 +584,11 @@ void TabSimulate::finalizePlotAndImages() {
 
 void TabSimulate::btnDisplayOptions_clicked() {
   DialogDisplayOptions dialog(compartmentNames, speciesNames, displayOptions,
-                              observables);
+                              observables, featureLineNames);
   if (dialog.exec() == QDialog::Accepted) {
     displayOptions.showMinMax = dialog.getShowMinMax();
     displayOptions.showSpecies = dialog.getShowSpecies();
+    displayOptions.showFeatures = dialog.getShowFeatures();
     displayOptions.normaliseOverAllTimepoints =
         dialog.getNormaliseOverAllTimepoints();
     displayOptions.normaliseOverAllSpecies =

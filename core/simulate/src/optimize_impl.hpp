@@ -11,6 +11,10 @@ namespace sme::simulate {
 void applyParameters(const pagmo::vector_double &values,
                      sme::model::Model *model);
 
+double calculateCosts(const OptConstData &optConstData,
+                      const std::vector<std::size_t> &optCostIndices,
+                      const sme::simulate::Simulation &sim,
+                      std::vector<std::vector<double>> &currentTargets);
 double calculateCosts(const std::vector<OptCost> &optCosts,
                       const std::vector<std::size_t> &optCostIndices,
                       const sme::simulate::Simulation &sim,

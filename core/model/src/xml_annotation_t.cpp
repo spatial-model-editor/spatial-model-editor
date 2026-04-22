@@ -39,6 +39,7 @@ TEST_CASE("XML Annotations",
     auto &optCost{optimizeOptions.optCosts.emplace_back()};
     optCost.name = "myOptCost";
     optCost.targetValues = {1.0, 3.0, 5.0};
+    optCost.featureId = "myFeatureId";
     auto &optParam{optimizeOptions.optParams.emplace_back()};
     optParam.name = "myOptParam";
     settings.speciesStorageValues["A"] = 2.5;
@@ -76,6 +77,7 @@ TEST_CASE("XML Annotations",
     REQUIRE(newOptimizeOptions.optCosts[0].targetValues[0] == dbl_approx(1.0));
     REQUIRE(newOptimizeOptions.optCosts[0].targetValues[1] == dbl_approx(3.0));
     REQUIRE(newOptimizeOptions.optCosts[0].targetValues[2] == dbl_approx(5.0));
+    REQUIRE(newOptimizeOptions.optCosts[0].featureId == "myFeatureId");
     REQUIRE(newOptimizeOptions.optParams.size() == 1);
     REQUIRE(newOptimizeOptions.optParams[0].name == "myOptParam");
     REQUIRE(newSettings.speciesStorageValues.size() == 1);
@@ -125,8 +127,10 @@ TEST_CASE("XML Annotations",
     REQUIRE(optimizeOptions2.optCosts[0].targetValues[0] == dbl_approx(1.0));
     REQUIRE(optimizeOptions2.optCosts[0].targetValues[1] == dbl_approx(3.0));
     REQUIRE(optimizeOptions2.optCosts[0].targetValues[2] == dbl_approx(5.0));
+    REQUIRE(optimizeOptions2.optCosts[0].featureId == "myFeatureId");
     REQUIRE(optimizeOptions2.optCosts[1].name == "optCost2");
     REQUIRE(optimizeOptions2.optCosts[1].targetValues.empty());
+    REQUIRE(optimizeOptions2.optCosts[1].featureId.empty());
     REQUIRE(optimizeOptions2.optParams.size() == 1);
     REQUIRE(optimizeOptions2.optParams[0].name == "newOptParamName");
     REQUIRE(settings2.speciesStorageValues.size() == 1);

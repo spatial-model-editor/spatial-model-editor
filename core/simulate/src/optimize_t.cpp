@@ -497,6 +497,13 @@ TEST_CASE("Save and load model with optimization settings",
   optimizeOptions.optParams.push_back(
       {sme::simulate::OptParamType::DiffusionConstant, "optParamDiff", "A", "",
        0.1, 0.2});
+  simulate::RoiSettings roi;
+  roi.roiType = simulate::RoiType::Analytic;
+  roi.expression = "1";
+  auto featureIndex = model.getFeatures().add(
+      "mean_C", model.getSpecies().getField("C")->getCompartment()->getId(),
+      "C", roi, simulate::ReductionOp::Average);
+  const auto featureId{model.getFeatures().getFeatures()[featureIndex].id};
   // optimization cost: absolute difference of concentration of species C from
   // zero, after simulating for time 1
   optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Concentration,
@@ -508,6 +515,17 @@ TEST_CASE("Save and load model with optimization settings",
                                       0,
                                       2,
                                       {}});
+  optimizeOptions.optCosts.push_back({sme::simulate::OptCostType::Feature,
+                                      simulate::OptCostDiffType::Relative,
+                                      "optCostFeature",
+                                      "C",
+                                      2.0,
+                                      0.7,
+                                      0,
+                                      2,
+                                      {},
+                                      1e-14,
+                                      featureId});
   model.getOptimizeOptions() = optimizeOptions;
   // export model as xml
   constexpr auto tempfilename{"test_optimize_load_save.xml"};
@@ -520,7 +538,7 @@ TEST_CASE("Save and load model with optimization settings",
           sme::simulate::OptAlgorithmType::ABC);
   REQUIRE(options.optAlgorithm.islands == 1);
   REQUIRE(options.optAlgorithm.population == 3);
-  REQUIRE(options.optCosts.size() == 1);
+  REQUIRE(options.optCosts.size() == 2);
   REQUIRE(options.optCosts[0].optCostType ==
           sme::simulate::OptCostType::Concentration);
   REQUIRE(options.optCosts[0].optCostDiffType ==
@@ -532,6 +550,21 @@ TEST_CASE("Save and load model with optimization settings",
   REQUIRE(options.optCosts[0].compartmentIndex == 0);
   REQUIRE(options.optCosts[0].speciesIndex == 2);
   REQUIRE(options.optCosts[0].targetValues.empty());
+  REQUIRE(options.optCosts[0].featureId.empty());
+  REQUIRE(options.optCosts[1].optCostType ==
+          sme::simulate::OptCostType::Feature);
+  REQUIRE(options.optCosts[1].optCostDiffType ==
+          simulate::OptCostDiffType::Relative);
+  REQUIRE(options.optCosts[1].name == "optCostFeature");
+  REQUIRE(options.optCosts[1].id == "C");
+  REQUIRE(options.optCosts[1].simulationTime == dbl_approx(2.0));
+  REQUIRE(options.optCosts[1].weight == dbl_approx(0.7));
+  REQUIRE(options.optCosts[1].compartmentIndex == 0);
+  REQUIRE(options.optCosts[1].speciesIndex == 2);
+  REQUIRE(options.optCosts[1].targetValues.empty());
+  REQUIRE(options.optCosts[1].featureId == featureId);
+  REQUIRE(reloadedModel.getFeatures().getIndexFromId(featureId) !=
+          reloadedModel.getFeatures().size());
   REQUIRE(options.optParams.size() == 2);
   REQUIRE(options.optParams[0].optParamType ==
           sme::simulate::OptParamType::ReactionParameter);

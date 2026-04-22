@@ -44,6 +44,7 @@ void PlotWrapper::addAvMinMaxLine(const QString &name, QColor col) {
   plot->legend->removeItem(plot->legend->itemCount() - 1);
   species.push_back(name.toStdString());
   concs.emplace_back();
+  featureGraphOffset = 3 * static_cast<int>(species.size());
 }
 
 void PlotWrapper::addAvMinMaxPoint(
@@ -54,6 +55,27 @@ void PlotWrapper::addAvMinMaxPoint(
   concs[static_cast<std::size_t>(lineIndex)].push_back(concentration);
   if (plot->graph(0)->dataCount() > times.size()) {
     times.push_back(time);
+  }
+}
+
+void PlotWrapper::addFeatureLine(const QString &name, QColor col,
+                                 QCPScatterStyle::ScatterShape scatterShape) {
+  SPDLOG_DEBUG("Adding feature line '{}', color {:x}", name.toStdString(),
+               col.rgb());
+  auto *g = plot->addGraph();
+  QPen pen(col);
+  pen.setStyle(Qt::DashLine);
+  g->setPen(pen);
+  g->setName(name);
+  g->setScatterStyle(QCPScatterStyle(scatterShape));
+  featureNames.push_back(name.toStdString());
+}
+
+void PlotWrapper::addFeaturePoint(int featureLineIndex, double time,
+                                  double value) {
+  int graphIndex = featureGraphOffset + featureLineIndex;
+  if (graphIndex < plot->graphCount()) {
+    plot->graph(graphIndex)->addData({time}, {value}, true);
   }
 }
 
@@ -98,9 +120,10 @@ void PlotWrapper::addObservableLine(
 
 void PlotWrapper::clearObservableLines() {
   SPDLOG_TRACE("Clearing {} observables", observables.size());
-  int nSpecies{static_cast<int>(species.size())};
+  int nFeatures{static_cast<int>(featureNames.size())};
+  int obsStart{featureGraphOffset + nFeatures};
   int nObservables{static_cast<int>(observables.size())};
-  for (int i = 3 * nSpecies + nObservables - 1; i >= 3 * nSpecies; --i) {
+  for (int i = obsStart + nObservables - 1; i >= obsStart; --i) {
     if (plot->removeGraph(i)) {
       SPDLOG_TRACE("Removed graph {}", i);
     } else {
@@ -120,7 +143,8 @@ void PlotWrapper::setVerticalLine(double x) {
 }
 
 void PlotWrapper::update(const std::vector<bool> &speciesVisible,
-                         bool showMinMax) {
+                         bool showMinMax,
+                         const std::vector<bool> &featureVisible) {
   int iSpecies = 0;
   plot->legend->clearItems();
   for (bool visible : speciesVisible) {
@@ -136,9 +160,19 @@ void PlotWrapper::update(const std::vector<bool> &speciesVisible,
     }
     ++iSpecies;
   }
+  for (std::size_t fi = 0; fi < featureNames.size(); ++fi) {
+    int graphIdx = featureGraphOffset + static_cast<int>(fi);
+    bool visible = fi < featureVisible.size() ? featureVisible[fi] : true;
+    auto *g = plot->graph(graphIdx);
+    g->setVisible(visible);
+    if (visible) {
+      g->addToLegend();
+    }
+  }
   int iObs = 0;
+  int nFeatures{static_cast<int>(featureNames.size())};
   for (const auto &observable : observables) {
-    auto *g = plot->graph(3 * static_cast<int>(species.size()) + iObs);
+    auto *g = plot->graph(featureGraphOffset + nFeatures + iObs);
     g->setVisible(observable.visible);
     if (observable.visible) {
       g->addToLegend();
@@ -156,6 +190,8 @@ void PlotWrapper::clear() {
   species.clear();
   concs.clear();
   times.clear();
+  featureNames.clear();
+  featureGraphOffset = 0;
 }
 
 double PlotWrapper::xValue(const QMouseEvent *event) const {
@@ -171,14 +207,18 @@ double PlotWrapper::xValue(const QMouseEvent *event) const {
 
 const QVector<double> &PlotWrapper::getTimepoints() const { return times; }
 
-static QString makeCSVHeader(const std::vector<std::string> &species) {
+static QString makeCSVHeader(const std::vector<std::string> &species,
+                             const std::vector<std::string> &featureNames) {
   QString csv;
-  if (species.empty()) {
+  if (species.empty() && featureNames.empty()) {
     return {};
   }
   std::string header("time, ");
   for (const auto &spec : species) {
     header.append(fmt::format("{0} (avg), {0} (min), {0} (max), ", spec));
+  }
+  for (const auto &feat : featureNames) {
+    header.append(fmt::format("{0}, ", feat));
   }
   csv.append(header.c_str());
   csv.chop(2);
@@ -187,7 +227,7 @@ static QString makeCSVHeader(const std::vector<std::string> &species) {
 }
 
 QString PlotWrapper::getDataAsCSV() const {
-  auto csv{makeCSVHeader(species)};
+  auto csv{makeCSVHeader(species, featureNames)};
   for (std::size_t it = 0; it < static_cast<std::size_t>(times.size()); ++it) {
     double t = times[static_cast<int>(it)];
     std::string row{fmt::format("{:.14e}, ", t)};
@@ -195,6 +235,17 @@ QString PlotWrapper::getDataAsCSV() const {
       const auto &c = concs[ic][it];
       row.append(
           fmt::format("{:.14e}, {:.14e}, {:.14e}, ", c.avg, c.min, c.max));
+    }
+    for (std::size_t fi = 0; fi < featureNames.size(); ++fi) {
+      int graphIdx = featureGraphOffset + static_cast<int>(fi);
+      auto *g = plot->graph(graphIdx);
+      auto data = g->data();
+      if (static_cast<int>(it) < data->size()) {
+        row.append(fmt::format("{:.14e}, ",
+                               (data->begin() + static_cast<int>(it))->value));
+      } else {
+        row.append("nan, ");
+      }
     }
     csv.append(row.c_str());
     csv.chop(2);

@@ -267,6 +267,39 @@ def test_simulate():
     assert len(m.simulation_results()) == 3
 
 
+def test_simulation_result_feature_values():
+    m = sme.open_example_model("ABtoC")
+    sim_results = m.simulate(0.001, 0.001, simulator_type=sme.SimulatorType.Pixel)
+    assert len(sim_results) == 2
+
+    first_result = sim_results[0]
+    assert set(first_result.feature_values.keys()) == {"A average", "B average"}
+    assert first_result.feature_values["A average"].shape == (1,)
+    assert first_result.feature_values["A average"].dtype == np.float64
+    assert first_result.feature_values["B average"].shape == (1,)
+
+    mask = m.compartments["comp"].geometry_mask
+    a_concentration = first_result.species_concentration["A"]
+    b_concentration = first_result.species_concentration["B"]
+    assert first_result.feature_values["A average"][0] == pytest.approx(
+        np.mean(a_concentration[mask])
+    )
+    assert first_result.feature_values["B average"][0] == pytest.approx(
+        np.mean(b_concentration[mask])
+    )
+
+    saved_results = m.simulation_results()
+    assert len(saved_results) == len(sim_results)
+    assert np.allclose(
+        saved_results[0].feature_values["A average"],
+        first_result.feature_values["A average"],
+    )
+    assert np.allclose(
+        saved_results[0].feature_values["B average"],
+        first_result.feature_values["B average"],
+    )
+
+
 def test_simulate_3d():
     for sim_type in [sme.SimulatorType.DUNE, sme.SimulatorType.Pixel]:
         m = sme.open_example_model("very-simple-model-3d")

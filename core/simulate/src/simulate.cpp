@@ -319,6 +319,7 @@ void Simulation::updateConcentrations(double t) {
       maxS[is] = std::max(maxS[is], a.back()[is].max);
     }
   }
+  model.getFeatures().evaluateAtTimepoint(data->timePoints.size() - 1);
 }
 
 Simulation::Simulation(model::Model &smeModel)

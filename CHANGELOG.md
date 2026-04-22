@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [1.12.0] - 2026-04-22
 ### Added
 - allow constant species to have spatially varying concentrations [#1133](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
 - support for importing and exporting 2d and 3d Parametric (meshed) geometry [#1132](https://github.com/spatial-model-editor/spatial-model-editor/issues/1132)
@@ -11,6 +11,7 @@
 - support for cross diffusion terms [#1118](https://github.com/spatial-model-editor/spatial-model-editor/issues/1118)
 - support for non-unit storage terms [#1114](https://github.com/spatial-model-editor/spatial-model-editor/issues/1114)
 - dialog for importing analytic geometry [#1111](https://github.com/spatial-model-editor/spatial-model-editor/issues/1111)
+- add feature extraction and allow features to be used as targets in parameter optimisation [#1136](https://github.com/spatial-model-editor/spatial-model-editor/issues/1136)
 - Windows ARM64 binaries
 
 ### Fixed

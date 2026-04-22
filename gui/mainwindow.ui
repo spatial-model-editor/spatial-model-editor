@@ -283,6 +283,12 @@
         </attribute>
         <layout class="QHBoxLayout" name="horizontalLayout_2"/>
        </widget>
+       <widget class="QWidget" name="tabFeatures">
+        <attribute name="title">
+         <string>Features</string>
+        </attribute>
+        <layout class="QHBoxLayout" name="horizontalLayout_tabFeatures"/>
+       </widget>
        <widget class="QWidget" name="tabSimulate">
         <property name="whatsThis">
          <string>&lt;h4&gt;Simulate tab&lt;/h4&gt;

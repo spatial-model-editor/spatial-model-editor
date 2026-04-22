@@ -1,4 +1,5 @@
 #pragma once
+#include "sme/feature_options.hpp"
 #include <array>
 #include <cereal/cereal.hpp>
 #include <cereal/types/string.hpp>
@@ -57,7 +58,7 @@ struct OptParam {
 /**
  * @brief Types of costs that can be used in optimization
  */
-enum class OptCostType { Concentration, ConcentrationDcdt };
+enum class OptCostType { Concentration, ConcentrationDcdt, Feature };
 
 /**
  * @brief Types of differences that can be used in costs
@@ -105,11 +106,13 @@ struct OptCost {
    */
   std::size_t speciesIndex;
   /**
-   * @brief The target values to compare with the species concentration or dcdt
+   * @brief The target image values for this observable
    *
-   * Should contain a value for each pixel in the image,
-   * including those outside of the compartment the species is located in.
-   * If empty, the target values are assumed to be zero everywhere.
+   * For concentration and feature observables this stores a concentration
+   * image. For dcdt observables this stores a dcdt image. It should contain a
+   * value for each pixel in the image, including those outside of the
+   * compartment the species is located in. If empty, the target values are
+   * assumed to be zero everywhere.
    */
   std::vector<double> targetValues;
   /**
@@ -119,6 +122,12 @@ struct OptCost {
    * avoid numerical issues caused by dividing by zero.
    */
   double epsilon{1e-15};
+  /**
+   * @brief Stable internal feature id for feature observables
+   *
+   * Empty for concentration and dcdt observables.
+   */
+  std::string featureId;
 
   template <class Archive>
   void serialize(Archive &ar, std::uint32_t const version) {
@@ -127,6 +136,11 @@ struct OptCost {
          CEREAL_NVP(id), CEREAL_NVP(simulationTime), CEREAL_NVP(weight),
          CEREAL_NVP(compartmentIndex), CEREAL_NVP(speciesIndex),
          CEREAL_NVP(targetValues), CEREAL_NVP(epsilon));
+    } else if (version == 1) {
+      ar(CEREAL_NVP(optCostType), CEREAL_NVP(optCostDiffType), CEREAL_NVP(name),
+         CEREAL_NVP(id), CEREAL_NVP(simulationTime), CEREAL_NVP(weight),
+         CEREAL_NVP(compartmentIndex), CEREAL_NVP(speciesIndex),
+         CEREAL_NVP(targetValues), CEREAL_NVP(epsilon), CEREAL_NVP(featureId));
     }
   }
 };
@@ -217,6 +231,6 @@ struct OptimizeOptions {
 } // namespace sme::simulate
 
 CEREAL_CLASS_VERSION(sme::simulate::OptimizeOptions, 0);
-CEREAL_CLASS_VERSION(sme::simulate::OptCost, 0);
+CEREAL_CLASS_VERSION(sme::simulate::OptCost, 1);
 CEREAL_CLASS_VERSION(sme::simulate::OptParam, 0);
 CEREAL_CLASS_VERSION(sme::simulate::OptAlgorithm, 0);

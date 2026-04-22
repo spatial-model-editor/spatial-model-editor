@@ -4,6 +4,7 @@
 #include "qt_test_utils.hpp"
 #include "sme/utils.hpp"
 #include <QComboBox>
+#include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
 
@@ -14,6 +15,7 @@ struct DialogOptCostWidgets {
   explicit DialogOptCostWidgets(const DialogOptCost *dialog) {
     GET_DIALOG_WIDGET(QComboBox, cmbSpecies);
     GET_DIALOG_WIDGET(QComboBox, cmbCostType);
+    GET_DIALOG_WIDGET(QLabel, lblTargetValuesLabel);
     GET_DIALOG_WIDGET(QLineEdit, txtSimulationTime);
     GET_DIALOG_WIDGET(QPushButton, btnEditTargetValues);
     GET_DIALOG_WIDGET(QComboBox, cmbDiffType);
@@ -22,6 +24,7 @@ struct DialogOptCostWidgets {
   }
   QComboBox *cmbSpecies;
   QComboBox *cmbCostType;
+  QLabel *lblTargetValuesLabel;
   QLineEdit *txtSimulationTime;
   QPushButton *btnEditTargetValues;
   QComboBox *cmbDiffType;
@@ -94,10 +97,16 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::Concentration);
+    REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
+    REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
     REQUIRE(widgets.txtEpsilon->isEnabled());
     widgets.cmbCostType->setCurrentIndex(1);
+    REQUIRE(widgets.lblTargetValuesLabel->text() ==
+            "Rate of change\nof concentration:");
+    REQUIRE(widgets.btnEditTargetValues->text() ==
+            "Edit Rate of change of concentration");
     widgets.cmbDiffType->setCurrentIndex(0);
     REQUIRE(dia.getOptCost().name == "cell/Mt");
     REQUIRE(dia.getOptCost().id == "Mt");
@@ -237,7 +246,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().name == "cell/P0");
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::ConcentrationDcdt);
-    REQUIRE(mwt.getResult() == "Concentration rate of change image data");
+    REQUIRE(mwt.getResult() == "Rate of change of concentration image data");
     // all pixels within compartment are set to 1.2
     REQUIRE(sme::common::max(dia.getOptCost().targetValues) == dbl_approx(1.2));
     // pixels outside of compartment are zero
@@ -301,5 +310,28 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
             simulate::OptCostType::Concentration);
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
+  }
+  SECTION("matching features appear in target type list") {
+    simulate::RoiSettings roi;
+    roi.roiType = simulate::RoiType::Analytic;
+    auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
+    auto featureIndex = model.getFeatures().add(
+        "peripheral Mt", compId, "Mt", roi, simulate::ReductionOp::Average);
+    DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
+    REQUIRE(widgets.cmbCostType->count() == 3);
+    REQUIRE(widgets.cmbCostType->itemText(0) == "Concentration");
+    REQUIRE(widgets.cmbCostType->itemText(1) ==
+            "Rate of change of concentration");
+    REQUIRE(widgets.cmbCostType->itemText(2) == "Feature: peripheral Mt");
+    widgets.cmbCostType->setCurrentIndex(2);
+    REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
+    REQUIRE(dia.getOptCost().featureId ==
+            model.getFeatures().getFeatures()[featureIndex].id);
+    REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
+    REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
+    widgets.cmbSpecies->setCurrentIndex(0);
+    REQUIRE(widgets.cmbCostType->count() == 2);
   }
 }

@@ -15,6 +15,8 @@ static QString toQStr(sme::simulate::OptCostType optCostType) {
     return "Concentration";
   case sme::simulate::OptCostType::ConcentrationDcdt:
     return "Rate of change of concentration";
+  case sme::simulate::OptCostType::Feature:
+    return "Feature";
   default:
     return "";
   }
@@ -31,10 +33,22 @@ static QString toQStr(sme::simulate::OptCostDiffType optCostDiffType) {
   }
 }
 
-static QString toQStr(const sme::simulate::OptCost &optCost) {
+static QString toQStr(const sme::simulate::OptCost &optCost,
+                      const sme::model::Model &model) {
+  QString targetType{toQStr(optCost.optCostType)};
+  if (optCost.optCostType == sme::simulate::OptCostType::Feature) {
+    QString featureName{"<missing>"};
+    const auto featureIndex{
+        model.getFeatures().getIndexFromId(optCost.featureId)};
+    if (featureIndex < model.getFeatures().size()) {
+      featureName = QString::fromStdString(
+          model.getFeatures().getFeatures()[featureIndex].name);
+    }
+    targetType = QString("Feature: %1").arg(featureName);
+  }
   return QString("%1 [%2 at t=%3, %4 difference]")
       .arg(optCost.name.c_str())
-      .arg(toQStr(optCost.optCostType))
+      .arg(targetType)
       .arg(toQStr(optCost.simulationTime))
       .arg(toQStr(optCost.optCostDiffType));
 }
@@ -188,7 +202,7 @@ DialogOptSetup::DialogOptSetup(const sme::model::Model &model, QWidget *parent)
   ui->spinPopulation->setValue(
       static_cast<int>(m_optimizeOptions.optAlgorithm.population));
   for (const auto &optCost : m_optimizeOptions.optCosts) {
-    ui->lstTargets->addItem(toQStr(optCost));
+    ui->lstTargets->addItem(toQStr(optCost, m_model));
   }
   for (const auto &optParam : m_optimizeOptions.optParams) {
     ui->lstParameters->addItem(toQStr(optParam));
@@ -268,7 +282,7 @@ void DialogOptSetup::btnAddTarget_clicked() {
   DialogOptCost dia(m_model, m_defaultOptCosts);
   if (dia.exec() == QDialog::Accepted) {
     m_optimizeOptions.optCosts.push_back(dia.getOptCost());
-    ui->lstTargets->addItem(toQStr(dia.getOptCost()));
+    ui->lstTargets->addItem(toQStr(dia.getOptCost(), m_model));
   }
 }
 
@@ -282,7 +296,7 @@ void DialogOptSetup::btnEditTarget_clicked() {
   if (dia.exec() == QDialog::Accepted) {
     m_optimizeOptions.optCosts[static_cast<std::size_t>(row)] =
         dia.getOptCost();
-    ui->lstTargets->item(row)->setText(toQStr(dia.getOptCost()));
+    ui->lstTargets->item(row)->setText(toQStr(dia.getOptCost(), m_model));
   }
 }
 

@@ -218,7 +218,7 @@
           </sizepolicy>
          </property>
          <property name="text">
-          <string>Mininum concentration</string>
+          <string>Minimum concentration</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
