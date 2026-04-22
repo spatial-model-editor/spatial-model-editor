@@ -9,6 +9,17 @@ target_sources(sme PRIVATE sme.cpp)
 target_include_directories(sme PRIVATE src)
 add_subdirectory(src)
 
+if(UNIX AND NOT APPLE)
+  target_compile_options(
+    sme PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
+                $<$<COMPILE_LANGUAGE:CXX>:-fdata-sections>)
+  target_link_options(
+    sme
+    PRIVATE
+    "LINKER:--exclude-libs,ALL"
+    "LINKER:--gc-sections")
+endif()
+
 # https://github.com/pybind/pybind11/issues/1818#issuecomment-506031452
 target_compile_options(sme
                        PUBLIC $<$<CXX_COMPILER_ID:Clang>:-fsized-deallocation>)

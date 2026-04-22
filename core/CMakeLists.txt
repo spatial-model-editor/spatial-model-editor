@@ -5,6 +5,12 @@ add_library(
   ALIAS
   core)
 
+if(UNIX AND NOT APPLE)
+  target_compile_options(
+    core PRIVATE $<$<COMPILE_LANGUAGE:CXX>:-ffunction-sections>
+                 $<$<COMPILE_LANGUAGE:CXX>:-fdata-sections>)
+endif()
+
 # Install-related code
 
 include(GNUInstallDirs)
