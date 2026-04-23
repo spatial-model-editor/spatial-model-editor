@@ -8,7 +8,6 @@
 [![documentation](https://readthedocs.org/projects/spatial-model-editor/badge/?version=stable)](https://spatial-model-editor.readthedocs.io/en/stable/?badge=stable)
 [![release builds](https://github.com/spatial-model-editor/spatial-model-editor/actions/workflows/release.yml/badge.svg)](https://github.com/spatial-model-editor/spatial-model-editor/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor/branch/main/graph/badge.svg)](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
-[![sonarcloud quality gate status](https://sonarcloud.io/api/project_badges/measure?project=spatial-model-editor_spatial-model-editor&metric=alert_status)](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 [![DOI](https://zenodo.org/badge/185185280.svg)](https://zenodo.org/badge/latestdoi/185185280)
 
 A GUI editor to create and edit spatial SBML models of bio-chemical reactions and simulate them using the
@@ -16,13 +15,11 @@ A GUI editor to create and edit spatial SBML models of bio-chemical reactions an
 
 ## Getting started
 
-To get started, download and run the GUI for your operating system
+To get started, download and run the GUI for your operating system:
 
-| [Linux](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [MacOS Arm64](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [Windows](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
-| :-----: | :-----: | :------- |
-| [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![macOS arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) |
-
-Windows Arm64: [spatial-model-editor-ARM64.exe](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.exe)
+| [Linux](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [Linux Arm64](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64) | [MacOS Arm64](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [Windows](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) | [Windows Arm64](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.exe) |
+| :-----: | :-----: | :-----: | :-----: | :-----: |
+| [![linux](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor) | [![linux arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-linux.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64) | [![macOS arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-osx.png)](https://github.com/ssciwr/sme-osx-arm64/releases/latest/download/spatial-model-editor.dmg) | [![windows](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor.exe) | [![windows arm64](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/icon-windows.png)](https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-model-editor-ARM64.exe) |
 
 Or take a look at our [website](https://spatial-model-editor.github.io/) or the [documentation](https://spatial-model-editor.readthedocs.io/)
 
@@ -31,13 +28,10 @@ Or take a look at our [website](https://spatial-model-editor.github.io/) or the 
 Pre-release preview binaries are also available which are built from the main branch and can be used for testing new features before the next release:
 
 - [Linux pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor)
+- [Linux Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64)
 - [MacOS Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64.dmg)
 - [Windows pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor.exe)
 - [Windows Arm64 pre-release](https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/spatial-model-editor-ARM64.exe)
-
-*Note: on linux some additional system libraries are required that may not be installed by default. To install them:*
-
-*  Fedora/RHEL/CentOS: `sudo yum install xcb-util-image xcb-util-keysyms xcb-util-renderutil xcb-util-wm`
 
 ![screenshot](https://raw.githubusercontent.com/spatial-model-editor/spatial-model-editor/main/docs/img/mesh.png)
 
