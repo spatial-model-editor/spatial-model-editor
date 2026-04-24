@@ -76,15 +76,11 @@ pytest sme
 
 - some components also have benchmarks in `X_bench.cpp`
 
-- follow [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor) static analysis suggestions where possible
-
 - avoid platform-dependent code: we support linux / macOS / windows
 
 ## Pull requests
 
 - pull requests are built and tested on [github actions](https://github.com/spatial-model-editor/spatial-model-editor/actions)
-
-- static analysis report from [sonarcloud](https://sonarcloud.io/dashboard?id=spatial-model-editor_spatial-model-editor)
 
 - test coverage report from [codecov](https://codecov.io/gh/spatial-model-editor/spatial-model-editor)
 
