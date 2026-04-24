@@ -125,4 +125,25 @@ TEST_CASE("QLabelSlice",
   REQUIRE(lblSlice.getSlicePixels().size() == 1);
   REQUIRE(lblSlice.getSlicePixels()[0] == QPoint(5, 3));
   REQUIRE(qAlpha(lblSlice.getImage().pixel(5, 3)) == 255);
+
+  SECTION("scale overlay adds ruler margin without breaking hit testing") {
+    lblSlice.resize(200, 120);
+    wait();
+    mouseDownPoints.clear();
+    lblSlice.setPhysicalUnits("m");
+    lblSlice.setPhysicalOrigin({1.0, 2.0, 0.0});
+    lblSlice.setPhysicalSize({20.0, 10.0, 1.0});
+    lblSlice.displayScale(true);
+    wait();
+
+    sendMouseClick(&lblSlice, {1, 40});
+    REQUIRE(mouseDownPoints.empty());
+
+    sendMouseClick(&lblSlice, {120, 40});
+    REQUIRE(mouseDownPoints.size() == 1);
+    REQUIRE(mouseDownPoints[0].x() >= 0);
+    REQUIRE(mouseDownPoints[0].x() < img.width());
+    REQUIRE(mouseDownPoints[0].y() >= 0);
+    REQUIRE(mouseDownPoints[0].y() < img.height());
+  }
 }

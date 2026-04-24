@@ -17,10 +17,31 @@
 
 using namespace sme::test;
 
+namespace {
+
+double graphMaxValue(const QCPGraph *graph) {
+  const auto &data{*graph->data()};
+  bool haveValue{false};
+  double maxValue{0.0};
+  for (auto it = data.constBegin(); it != data.constEnd(); ++it) {
+    if (!haveValue) {
+      maxValue = it->value;
+      haveValue = true;
+      continue;
+    }
+    maxValue = std::max(maxValue, it->value);
+  }
+  return haveValue ? maxValue : 0.0;
+}
+
+} // namespace
+
 struct DialogImageSliceWidgets {
   explicit DialogImageSliceWidgets(const DialogImageSlice *dialog) {
     GET_DIALOG_WIDGET(QSplitter, splitter);
     GET_DIALOG_WIDGET(QComboBox, cmbSliceType);
+    GET_DIALOG_WIDGET(QCheckBox, chkGrid);
+    GET_DIALOG_WIDGET(QCheckBox, chkScale);
     GET_DIALOG_WIDGET(QCheckBox, chkAspectRatio);
     GET_DIALOG_WIDGET(QCheckBox, chkSmoothInterpolation);
     GET_DIALOG_WIDGET(QCheckBox, chkAutoscaleYAxis);
@@ -33,6 +54,8 @@ struct DialogImageSliceWidgets {
   }
   QSplitter *splitter;
   QComboBox *cmbSliceType;
+  QCheckBox *chkGrid;
+  QCheckBox *chkScale;
   QCheckBox *chkAspectRatio;
   QCheckBox *chkSmoothInterpolation;
   QCheckBox *chkAutoscaleYAxis;
@@ -64,6 +87,8 @@ TEST_CASE("DialogImageSlice",
   REQUIRE(splitterSizes[1] > splitterSizes[0]);
   REQUIRE(splitterSizes[1] >= 1.7 * splitterSizes[0]);
   REQUIRE(splitterSizes[1] <= 2.3 * splitterSizes[0]);
+  REQUIRE(widgets.chkGrid->isChecked() == false);
+  REQUIRE(widgets.chkScale->isChecked() == false);
   REQUIRE(widgets.chkSmoothInterpolation->isChecked() == false);
   REQUIRE(widgets.chkAutoscaleYAxis->isChecked() == false);
   REQUIRE(widgets.chkAutoscaleYAxis->text() == "Autoscale y-axis");
@@ -92,6 +117,13 @@ TEST_CASE("DialogImageSlice",
     sendMouseMove(widgets.lblImage, {40, 32});
     newText = widgets.lblMouseLocation->text();
     REQUIRE(oldText != newText);
+  }
+  SECTION("user enables grid and scale on geometry slice") {
+    auto withoutOverlays{widgets.lblSlice->QLabel::pixmap().toImage()};
+    widgets.chkGrid->setChecked(true);
+    widgets.chkScale->setChecked(true);
+    auto withOverlays{widgets.lblSlice->QLabel::pixmap().toImage()};
+    REQUIRE(withoutOverlays != withOverlays);
   }
   SECTION("user sets slice to horizontal") {
     sendKeyEvents(widgets.cmbSliceType, {"Up"});
@@ -132,6 +164,42 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(img.height() == imgs[0][0].height());
   }
 
+  SECTION("selected z-slice is used for the sliced image") {
+    constexpr QRgb z0t0{0xff112233};
+    constexpr QRgb z1t0{0xff445566};
+    constexpr QRgb z2t0{0xff778899};
+    constexpr QRgb z0t1{0xff99aabb};
+    constexpr QRgb z1t1{0xffccddee};
+    constexpr QRgb z2t1{0xff123abc};
+    sme::common::ImageStack imgGeometry3d({12, 8, 3},
+                                          QImage::Format_ARGB32_Premultiplied);
+    QVector<sme::common::ImageStack> imgs3d;
+    imgs3d.emplace_back(imgGeometry3d.volume(),
+                        QImage::Format_ARGB32_Premultiplied);
+    imgs3d.emplace_back(imgGeometry3d.volume(),
+                        QImage::Format_ARGB32_Premultiplied);
+    imgs3d[0][0].fill(z0t0);
+    imgs3d[0][1].fill(z1t0);
+    imgs3d[0][2].fill(z2t0);
+    imgs3d[1][0].fill(z0t1);
+    imgs3d[1][1].fill(z1t1);
+    imgs3d[1][2].fill(z2t1);
+    QVector<double> time3d{0.0, 0.25};
+    DialogImageSlicePlotData plotData;
+    plotData.zIndex = 1;
+
+    DialogImageSlice dialog3d(imgGeometry3d, imgs3d, time3d, false, plotData);
+    dialog3d.show();
+
+    QImage slice = dialog3d.getSlicedImage();
+    REQUIRE(slice.width() == imgs3d.size());
+    REQUIRE(slice.height() == imgs3d[0][1].height());
+    REQUIRE(slice.pixel(0, 0) == z1t0);
+    REQUIRE(slice.pixel(0, slice.height() - 1) == z1t0);
+    REQUIRE(slice.pixel(1, 0) == z1t1);
+    REQUIRE(slice.pixel(1, slice.height() - 1) == z1t1);
+  }
+
   SECTION("simulation-backed plot updates with timepoint slider") {
     auto model{getExampleModel(Mod::ABtoC)};
     model.getSimulationSettings().times.clear();
@@ -150,6 +218,7 @@ TEST_CASE("DialogImageSlice",
     }
     DialogImageSlicePlotData plotData;
     plotData.simulation = &sim;
+    plotData.geometry = &model.getGeometry();
     plotData.speciesToDraw = {{0}};
     for (const auto &compartmentId : sim.getCompartmentIds()) {
       plotData.compartmentNames.push_back(
@@ -171,7 +240,7 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(plottedWidgets.lblSelectedTimepoint->text().contains("0.01"));
     REQUIRE(plottedWidgets.concentrationPlot->graphCount() == 1);
     REQUIRE(plottedWidgets.concentrationPlot->graph(0)->dataCount() ==
-            model.getGeometry().getImages().volume().height());
+            static_cast<int>(plottedWidgets.lblSlice->getSlicePixels().size()));
     REQUIRE(plottedWidgets.chkSmoothInterpolation->isChecked() == false);
     REQUIRE(plottedWidgets.chkAutoscaleYAxis->isChecked() == false);
     REQUIRE(plottedWidgets.lblImage->getImage()[0] ==
@@ -257,5 +326,67 @@ TEST_CASE("DialogImageSlice",
     REQUIRE(autoscaledYAxisRange.upper ==
             dbl_approx(expectedAutoscaledMaxConcentration));
     REQUIRE(autoscaledYAxisRange.upper < fixedYAxisRange.upper);
+  }
+
+  SECTION("simulation-backed 3d custom slice uses selected z plane") {
+    auto model{getExampleModel(Mod::VerySimpleModel3D)};
+    model.getSimulationSettings().times.clear();
+    model.getSimulationSettings().simulatorType =
+        sme::simulate::SimulatorType::Pixel;
+    sme::simulate::Simulation sim(model);
+    sim.doTimesteps(0.01);
+
+    QVector<double> timepoints;
+    for (double t : sim.getTimePoints()) {
+      timepoints.push_back(t);
+    }
+    QVector<sme::common::ImageStack> concImages;
+    concImages.reserve(static_cast<int>(timepoints.size()));
+    for (std::size_t i = 0; i < static_cast<std::size_t>(timepoints.size());
+         ++i) {
+      concImages.push_back(sim.getConcImage(i));
+    }
+
+    DialogImageSlicePlotData plotData;
+    plotData.simulation = &sim;
+    plotData.geometry = &model.getGeometry();
+    for (const auto &compartmentId : sim.getCompartmentIds()) {
+      plotData.compartmentNames.push_back(
+          model.getCompartments().getName(compartmentId.c_str()));
+    }
+    plotData.timeUnit = model.getUnits().getTime().name;
+    plotData.lengthUnit = model.getUnits().getLength().name;
+    plotData.concentrationUnit = model.getUnits().getConcentration();
+    plotData.timepointIndex = 1;
+    plotData.zIndex = 14;
+
+    DialogImageSlice plottedDialog(model.getGeometry().getImages(), concImages,
+                                   timepoints, false, plotData);
+    plottedDialog.show();
+    DialogImageSliceWidgets plottedWidgets(&plottedDialog);
+
+    sendKeyEvents(plottedWidgets.cmbSliceType, {"Down"});
+
+    REQUIRE(plottedWidgets.concentrationPlot->graphCount() == 5);
+    REQUIRE(graphMaxValue(plottedWidgets.concentrationPlot->graph(0)) > 0.0);
+    REQUIRE(plottedWidgets.concentrationPlot->yAxis->range().upper > 1e-10);
+
+    sendMouseMove(plottedWidgets.lblSlice,
+                  {plottedWidgets.lblSlice->width() / 2,
+                   plottedWidgets.lblSlice->height() / 2});
+    auto sliceText{plottedWidgets.lblMouseLocation->text()};
+    REQUIRE(sliceText.contains("x:"));
+    REQUIRE(sliceText.contains("y:"));
+    REQUIRE(sliceText.contains("z:"));
+
+    sendMouseMove(plottedWidgets.lblImage,
+                  {3 * plottedWidgets.lblImage->width() / 4,
+                   plottedWidgets.lblImage->height() / 2});
+    auto imageText{plottedWidgets.lblMouseLocation->text()};
+    REQUIRE(imageText.contains("x:"));
+    REQUIRE(imageText.contains("y:"));
+    REQUIRE(imageText.contains("z:"));
+    REQUIRE(imageText.contains("t:"));
+    REQUIRE(imageText.contains(model.getUnits().getTime().name));
   }
 }

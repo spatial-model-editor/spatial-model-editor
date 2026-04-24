@@ -1,4 +1,5 @@
 #include "qlabelslice.hpp"
+#include "imagerenderutils.hpp"
 #include "sme/logger.hpp"
 
 QLabelSlice::QLabelSlice(QWidget *parent) : QLabel(parent) {
@@ -12,6 +13,8 @@ void QLabelSlice::setImage(const QImage &img, bool invertYAxis) {
   flipYAxis = invertYAxis;
   slicePixels.clear();
   imgOriginal = img.convertToFormat(QImage::Format_RGB32);
+  physicalSize = {static_cast<double>(imgOriginal.width()),
+                  static_cast<double>(imgOriginal.height()), 1.0};
   slicePixels.reserve(static_cast<std::size_t>(imgOriginal.width()) +
                       static_cast<std::size_t>(imgOriginal.height()));
   if (flipYAxis) {
@@ -31,9 +34,36 @@ const QImage &QLabelSlice::getImage() const { return imgSliced; }
 
 void QLabelSlice::setAspectRatioMode(Qt::AspectRatioMode mode) {
   aspectRatioMode = mode;
+  resizeImage(size());
 }
 void QLabelSlice::setTransformationMode(Qt::TransformationMode mode) {
   transformationMode = mode;
+  resizeImage(size());
+}
+
+void QLabelSlice::setPhysicalUnits(const QString &units) {
+  lengthUnits = units;
+  resizeImage(size());
+}
+
+void QLabelSlice::setPhysicalOrigin(const sme::common::VoxelF &origin) {
+  physicalOrigin = origin;
+  resizeImage(size());
+}
+
+void QLabelSlice::setPhysicalSize(const sme::common::VolumeF &size) {
+  physicalSize = size;
+  resizeImage(this->size());
+}
+
+void QLabelSlice::displayGrid(bool enable) {
+  drawGrid = enable;
+  resizeImage(size());
+}
+
+void QLabelSlice::displayScale(bool enable) {
+  drawScale = enable;
+  resizeImage(size());
 }
 
 void QLabelSlice::setSlice(const QPoint &start, const QPoint &end) {
@@ -113,12 +143,14 @@ void QLabelSlice::resizeEvent(QResizeEvent *event) {
 bool QLabelSlice::setPixel(const QMouseEvent *ev, QPoint &pixel) {
   int x{ev->pos().x()};
   int y{ev->pos().y()};
-  if (imgSliced.isNull() || pixmap.isNull() || (x >= pixmap.width()) ||
-      (y >= pixmap.height()) || (x < 0) || (y < 0)) {
+  if (imgSliced.isNull() || pixmap.isNull() || pixmapImageSize.width() <= 0 ||
+      pixmapImageSize.height() <= 0 ||
+      (x >= pixmapImageSize.width() + offset.x()) ||
+      (y >= pixmapImageSize.height()) || (x < offset.x()) || (y < 0)) {
     return false;
   }
-  pixel.setX((imgSliced.width() * x) / pixmap.width());
-  pixel.setY((imgSliced.height() * y) / pixmap.height());
+  pixel.setX((imgSliced.width() * (x - offset.x())) / pixmapImageSize.width());
+  pixel.setY((imgSliced.height() * y) / pixmapImageSize.height());
   if (flipYAxis) {
     pixel.setY(imgSliced.height() - 1 - pixel.y());
   }
@@ -141,8 +173,20 @@ void QLabelSlice::resizeImage(const QSize &size) {
     this->clear();
     return;
   }
-  pixmap = QPixmap::fromImage(
-      imgSliced.scaled(size, aspectRatioMode, transformationMode));
+  sme::gui::ImageRenderOptions opts;
+  opts.aspectRatioMode = aspectRatioMode;
+  opts.transformationMode = transformationMode;
+  opts.drawGrid = drawGrid;
+  opts.drawScale = drawScale;
+  opts.flipYAxis = flipYAxis;
+  opts.tickLength = tickLength;
+  opts.physicalOrigin = physicalOrigin;
+  opts.physicalSize = physicalSize;
+  opts.lengthUnits = lengthUnits;
+  auto rendered{sme::gui::renderImageWithOverlays(imgSliced, size, opts)};
+  pixmap = rendered.pixmap;
+  pixmapImageSize = rendered.pixmapImageSize;
+  offset = rendered.offset;
   SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}", size.width(), size.height(),
                pixmap.size().width(), pixmap.size().height());
   this->setPixmap(pixmap);

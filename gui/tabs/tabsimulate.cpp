@@ -451,12 +451,16 @@ void TabSimulate::btnSimulate_clicked() {
 void TabSimulate::btnSliceImage_clicked() {
   DialogImageSlicePlotData plotData;
   plotData.simulation = sim.get();
+  plotData.geometry = &model.getGeometry();
   plotData.compartmentNames = compartmentNames;
   plotData.speciesToDraw = compartmentSpeciesToDraw;
   plotData.timeUnit = model.getUnits().getTime().name;
   plotData.lengthUnit = model.getUnits().getLength().name;
   plotData.concentrationUnit = model.getUnits().getConcentration();
   plotData.timepointIndex = ui->hslideTime->value();
+  if (const auto *zSlider{lblGeometry->getZSlider()}; zSlider != nullptr) {
+    plotData.zIndex = zSlider->value();
+  }
   DialogImageSlice dialog(model.getGeometry().getImages(), images, time,
                           flipYAxis, plotData);
   if (dialog.exec() == QDialog::Accepted) {

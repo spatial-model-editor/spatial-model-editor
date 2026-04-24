@@ -1,6 +1,7 @@
 target_sources(
   gui
   PRIVATE plotwrapper.cpp
+          imagerenderutils.cpp
           gpumemoryusagebarwidget.cpp
           memoryusagebarwidget.cpp
           regioncolorslabel.cpp
@@ -16,6 +17,7 @@ if(BUILD_TESTING)
   target_sources(
     gui_tests
     PUBLIC plotwrapper_t.cpp
+           imagerenderutils_t.cpp
            gpumemoryusagebarwidget_t.cpp
            memoryusagebarwidget_t.cpp
            regioncolorslabel_t.cpp

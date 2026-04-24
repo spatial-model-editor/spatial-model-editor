@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "sme/voxel.hpp"
 #include <QLabel>
 #include <QMouseEvent>
 #include <vector>
@@ -20,6 +21,11 @@ public:
   const QImage &getImage() const;
   void setAspectRatioMode(Qt::AspectRatioMode aspectRatioMode);
   void setTransformationMode(Qt::TransformationMode transformationMode);
+  void setPhysicalUnits(const QString &units);
+  void setPhysicalOrigin(const sme::common::VoxelF &origin);
+  void setPhysicalSize(const sme::common::VolumeF &size);
+  void displayGrid(bool enable);
+  void displayScale(bool enable);
   void setSlice(const QPoint &start, const QPoint &end);
   const std::vector<QPoint> &getSlicePixels() const;
   void setHorizontalSlice(int y);
@@ -44,12 +50,20 @@ private:
   QImage imgOriginal;
   QImage imgSliced;
   QPixmap pixmap;
+  QSize pixmapImageSize;
+  const int tickLength{10};
+  QPoint offset{0, 0};
   QPoint startPixel;
   QPoint currentPixel;
   Qt::AspectRatioMode aspectRatioMode = Qt::KeepAspectRatio;
   Qt::TransformationMode transformationMode = Qt::FastTransformation;
   bool mouseIsDown{false};
+  bool drawGrid{false};
+  bool drawScale{false};
   bool flipYAxis{false};
+  sme::common::VoxelF physicalOrigin{0.0, 0.0, 0.0};
+  sme::common::VolumeF physicalSize{1.0, 1.0, 1.0};
+  QString lengthUnits{};
   bool setPixel(const QMouseEvent *ev, QPoint &pixel);
   void fadeOriginalImage();
   void resizeImage(const QSize &size);

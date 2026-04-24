@@ -1,5 +1,9 @@
 # Changelog
 
+## [Unreleased]
+### Fixed
+- ImageSlice dialog now uses the currently selected z-slice, mouseover text reports physical `x/y/z/t` values, geometry image has grid and scale overlays [#577](https://github.com/spatial-model-editor/spatial-model-editor/issues/577)
+
 ## [1.12.0] - 2026-04-22
 ### Added
 - allow constant species to have spatially varying concentrations [#1133](https://github.com/spatial-model-editor/spatial-model-editor/issues/1133)
