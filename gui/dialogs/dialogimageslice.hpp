@@ -14,16 +14,22 @@ namespace sme::simulate {
 class Simulation;
 }
 
+namespace sme::model {
+class ModelGeometry;
+}
+
 enum class SliceType { Horizontal, Vertical, Custom };
 
 struct DialogImageSlicePlotData {
   const sme::simulate::Simulation *simulation{nullptr};
+  const sme::model::ModelGeometry *geometry{nullptr};
   QStringList compartmentNames{};
   std::vector<std::vector<std::size_t>> speciesToDraw{};
   QString timeUnit{};
   QString lengthUnit{};
   QString concentrationUnit{};
   int timepointIndex{-1};
+  int zIndex{0};
 };
 
 class DialogImageSlice : public QDialog {
@@ -39,12 +45,11 @@ public:
   QImage getSlicedImage() const;
 
 private:
-  // todo: don't hard-code z to zero here
-  static constexpr std::size_t z_index{0};
   const std::unique_ptr<Ui::DialogImageSlice> ui;
   const QVector<sme::common::ImageStack> &imgs;
   const QVector<double> &time;
   const DialogImageSlicePlotData plotData;
+  std::size_t zIndex{0};
   sme::common::ImageStack slice;
   QVector<double> distanceAlongSlice;
   std::vector<std::size_t> sliceArrayIndices;
@@ -66,6 +71,8 @@ private:
   void updateDisplayedSlicedImage();
   void updateSelectedTimepointText();
   void updateConcentrationPlot();
+  [[nodiscard]] QString
+  formatPhysicalPoint(const sme::common::Voxel &voxel) const;
   void saveSlicedImage();
   void cmbSliceType_activated(int index);
   void lblSlice_mouseDown(QPoint point);

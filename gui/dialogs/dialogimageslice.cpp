@@ -1,5 +1,6 @@
 #include "dialogimageslice.hpp"
 #include "sme/logger.hpp"
+#include "sme/model_geometry.hpp"
 #include "sme/simulate.hpp"
 #include "ui_dialogimageslice.h"
 #include <QFileDialog>
@@ -27,6 +28,15 @@ void setAxisRange(QCPAxis *axis, double minValue, double maxValue) {
   axis->setRange(minValue, maxValue);
 }
 
+QString toQStr(double x) { return QString::number(x, 'g', 14); }
+
+QString formatValueWithUnit(double value, const QString &unit) {
+  if (unit.isEmpty()) {
+    return toQStr(value);
+  }
+  return QString("%1 %2").arg(toQStr(value), unit);
+}
+
 } // namespace
 
 DialogImageSlice::DialogImageSlice(
@@ -40,9 +50,25 @@ DialogImageSlice::DialogImageSlice(
       endPoint{geometryImage.volume().width() - 1, 0} {
   ui->setupUi(this);
 
+  if (!geometryImage.empty()) {
+    zIndex = static_cast<std::size_t>(
+        std::clamp(plotData.zIndex, 0,
+                   static_cast<int>(geometryImage.volume().depth()) - 1));
+  }
+
   ui->lblImage->setAspectRatioMode(Qt::IgnoreAspectRatio);
   ui->lblImage->setTransformationMode(Qt::FastTransformation);
-  ui->lblSlice->setImage(geometryImage[z_index], invertYAxis);
+  ui->lblSlice->setImage(geometryImage[zIndex], invertYAxis);
+  ui->lblSlice->setPhysicalUnits(plotData.lengthUnit);
+  if (plotData.geometry != nullptr) {
+    ui->lblSlice->setPhysicalOrigin(plotData.geometry->getPhysicalOrigin());
+  }
+  ui->lblSlice->setPhysicalSize(
+      {geometryImage.voxelSize().width() *
+           static_cast<double>(geometryImage.volume().width()),
+       geometryImage.voxelSize().height() *
+           static_cast<double>(geometryImage.volume().height()),
+       1.0});
   initConcentrationPlot();
 
   connect(ui->buttonBox, &QDialogButtonBox::accepted, this,
@@ -67,6 +93,10 @@ DialogImageSlice::DialogImageSlice(
               lbl->setTransformationMode(Qt::FastTransformation);
             }
           });
+  connect(ui->chkGrid, &QCheckBox::toggled, this,
+          [lbl = ui->lblSlice](bool checked) { lbl->displayGrid(checked); });
+  connect(ui->chkScale, &QCheckBox::toggled, this,
+          [lbl = ui->lblSlice](bool checked) { lbl->displayScale(checked); });
   connect(ui->lblSlice, &QLabelSlice::mouseDown, this,
           &DialogImageSlice::lblSlice_mouseDown);
   connect(ui->lblSlice, &QLabelSlice::sliceDrawn, this,
@@ -137,7 +167,7 @@ void DialogImageSlice::updateSlicePlotData() {
   double distance{0.0};
   distanceAlongSlice.push_back(0.0);
   sliceArrayIndices.push_back(sme::common::voxelArrayIndex(
-      volume, pixels.front().x(), pixels.front().y(), z_index));
+      volume, pixels.front().x(), pixels.front().y(), zIndex));
   for (std::size_t i = 1; i < pixels.size(); ++i) {
     const auto dx{static_cast<double>(pixels[i].x() - pixels[i - 1].x()) *
                   voxelSize.width()};
@@ -146,7 +176,7 @@ void DialogImageSlice::updateSlicePlotData() {
     distance += std::hypot(dx, dy);
     distanceAlongSlice.push_back(distance);
     sliceArrayIndices.push_back(sme::common::voxelArrayIndex(
-        volume, pixels[i].x(), pixels[i].y(), z_index));
+        volume, pixels[i].x(), pixels[i].y(), zIndex));
   }
   fixedAxisRangesValid = false;
 }
@@ -207,7 +237,7 @@ void DialogImageSlice::updateSlicedImage() {
   for (const auto &img : imgs) {
     int y = np - 1;
     for (const auto &pixel : pixels) {
-      slice[0].setPixel(t, y, img[z_index].pixel(pixel));
+      slice[0].setPixel(t, y, img[zIndex].pixel(pixel));
       --y;
     }
     ++t;
@@ -226,10 +256,9 @@ void DialogImageSlice::updateDisplayedSlicedImage() {
 void DialogImageSlice::updateSelectedTimepointText() {
   QString text;
   if (!time.isEmpty()) {
-    text = QString("Displayed timepoint: %1").arg(time[selectedTimepointIndex]);
-    if (!plotData.timeUnit.isEmpty()) {
-      text.append(QString(" %1").arg(plotData.timeUnit));
-    }
+    text = QString("Displayed time: %1")
+               .arg(formatValueWithUnit(time[selectedTimepointIndex],
+                                        plotData.timeUnit));
   }
   ui->lblSelectedTimepoint->setText(text);
 }
@@ -344,6 +373,17 @@ void DialogImageSlice::cmbSliceType_activated(int index) {
       QPoint(imgs[0].volume().width() / 2, imgs[0].volume().height() / 2));
 }
 
+QString
+DialogImageSlice::formatPhysicalPoint(const sme::common::Voxel &voxel) const {
+  if (plotData.geometry != nullptr) {
+    return plotData.geometry->getPhysicalPointAsString(voxel);
+  }
+  return QString("x: %1, y: %2, z: %3")
+      .arg(voxel.p.x())
+      .arg(voxel.p.y())
+      .arg(voxel.z);
+}
+
 void DialogImageSlice::lblSlice_mouseDown(QPoint point) {
   if (sliceType == SliceType::Horizontal) {
     horizontal = point.y();
@@ -374,7 +414,8 @@ void DialogImageSlice::lblSlice_mouseWheelEvent(int delta) {
 
 void DialogImageSlice::lblSlice_mouseOver(QPoint point) {
   ui->lblMouseLocation->setText(
-      QString("Mouse location: (x=%1, y=%2)").arg(point.x()).arg(point.y()));
+      QString("Mouse location: %1")
+          .arg(formatPhysicalPoint({point.x(), point.y(), zIndex})));
 }
 
 void DialogImageSlice::lblImage_mouseOver(const sme::common::Voxel &voxel) {
@@ -382,13 +423,18 @@ void DialogImageSlice::lblImage_mouseOver(const sme::common::Voxel &voxel) {
       ui->lblSlice->getSlicePixels().empty()) {
     return;
   }
-  double t = time[voxel.p.x()];
+  if (voxel.p.x() < 0 || voxel.p.x() >= static_cast<int>(time.size())) {
+    return;
+  }
   auto i{static_cast<std::size_t>(slice[0].height() - 1 - voxel.p.y())};
+  if (i >= ui->lblSlice->getSlicePixels().size()) {
+    return;
+  }
   const auto &p = ui->lblSlice->getSlicePixels()[i];
-  ui->lblMouseLocation->setText(QString("Mouse location: (x=%1, y=%2, t=%3)")
-                                    .arg(p.x())
-                                    .arg(p.y())
-                                    .arg(t));
+  ui->lblMouseLocation->setText(
+      QString("Mouse location: %1, t: %2")
+          .arg(formatPhysicalPoint({p.x(), p.y(), zIndex}))
+          .arg(formatValueWithUnit(time[voxel.p.x()], plotData.timeUnit)));
 }
 
 void DialogImageSlice::slideTimepoint_valueChanged(int value) {

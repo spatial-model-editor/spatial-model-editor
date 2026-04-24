@@ -1,4 +1,5 @@
 #include "qlabelmousetracker.hpp"
+#include "imagerenderutils.hpp"
 #include "sme/logger.hpp"
 #include <QPainter>
 #include <algorithm>
@@ -160,234 +161,30 @@ bool QLabelMouseTracker::setCurrentPixel(const QPoint &pos) {
   return true;
 }
 
-struct GridSpacing {
-  double physicalWidth{0.0};
-  int pixelStep{1};
-};
-
-static GridSpacing getGridWidth(const sme::common::VolumeF &physicalSize,
-                                const QSize &pixmapSize,
-                                const QSize &imagePixelSize) {
-  constexpr double minWidthPixels{20};
-  // start with grid of width 1 physical unit
-  double gridPixelWidth{static_cast<double>(pixmapSize.width())};
-  double gridPhysicalWidth{physicalSize.width()};
-  // rescale with in pixels to: ~ [1, 2] * minWidthPixels
-  // hopefully with reasonably nice looking numerical intervals
-  while (gridPixelWidth < minWidthPixels) {
-    gridPhysicalWidth *= 10.0;
-    gridPixelWidth *= 10.0;
-  }
-  while (gridPixelWidth > 10 * minWidthPixels) {
-    gridPhysicalWidth /= 10.0;
-    gridPixelWidth /= 10.0;
-  }
-  if (gridPixelWidth > 8 * minWidthPixels) {
-    gridPhysicalWidth /= 5.0;
-    gridPixelWidth /= 5.0;
-  } else if (gridPixelWidth > 4 * minWidthPixels) {
-    gridPhysicalWidth /= 2.0;
-    gridPixelWidth /= 2.0;
-  }
-  int pixelStep{1};
-  if (imagePixelSize.width() > 0 && pixmapSize.width() > 0) {
-    double pixelDisplayWidth{static_cast<double>(pixmapSize.width()) /
-                             static_cast<double>(imagePixelSize.width())};
-    if (pixelDisplayWidth > 0.0) {
-      double pixelPhysicalWidth{physicalSize.width() /
-                                static_cast<double>(imagePixelSize.width())};
-      double multiple{std::round(gridPixelWidth / pixelDisplayWidth)};
-      if (multiple < 1.0) {
-        multiple = 1.0;
-      }
-      pixelStep = static_cast<int>(multiple);
-      gridPhysicalWidth = multiple * pixelPhysicalWidth;
-    }
-  }
-  return {gridPhysicalWidth, pixelStep};
-}
-
-static QString getGridPointLabel(double value, bool includeUnits,
-                                 const QString &lengthUnits) {
-  auto label{QString::number(value, 'g', 3)};
-  if (includeUnits) {
-    label.append(" ").append(lengthUnits);
-  }
-  return label;
-}
-
-// Returns pixel positions for scale tick marks, from 0 to nPixels (inclusive).
-// nPixels is one past the last valid pixel index: it represents the far edge
-// of the image and is always included so the full physical extent is labelled.
-static std::vector<int> getScaleEdgePixels(int nPixels, int pixelStep) {
-  std::vector<int> edgePixels;
-  if (nPixels <= 0 || pixelStep <= 0) {
-    return edgePixels;
-  }
-  for (int i = 0; i <= nPixels; i += pixelStep) {
-    edgePixels.push_back(i);
-  }
-  if (edgePixels.back() != nPixels) {
-    edgePixels.push_back(nPixels);
-  }
-  return edgePixels;
-}
-
-static QSize getPixmapSize(const QSize &displaySize, double physicalAspectRatio,
-                           Qt::AspectRatioMode aspectRatioMode) {
-  int width{std::max(1, displaySize.width())};
-  int height{std::max(1, displaySize.height())};
-  if (aspectRatioMode == Qt::IgnoreAspectRatio ||
-      !std::isfinite(physicalAspectRatio) || physicalAspectRatio <= 0.0) {
-    return {width, height};
-  }
-  double displayAspectRatio{static_cast<double>(displaySize.width()) /
-                            static_cast<double>(displaySize.height())};
-  if (displayAspectRatio > physicalAspectRatio) {
-    return {std::max(1, static_cast<int>(displaySize.height() *
-                                         physicalAspectRatio)),
-            height};
-  }
-  return {width, std::max(1, static_cast<int>(displaySize.width() /
-                                              physicalAspectRatio))};
-}
-
 void QLabelMouseTracker::resizeImage(const QSize &size) {
   if (image.empty()) {
     this->clear();
     return;
   }
-  pixmap = QPixmap(size);
-  pixmap.fill(QColor(0, 0, 0, 0));
-  offset = {0, 0};
-  QPainter p(&pixmap);
-  bool haveSpaceForScale{false};
-  if (drawScale) {
-    int w{p.fontMetrics().horizontalAdvance("8e+88")};
-    int h{p.fontMetrics().height()};
-    // only draw scale if picture is bigger than labels
-    if (size.width() > 2 * w && size.height() > 2 * h) {
-      offset = {w + tickLength, h + tickLength};
-      haveSpaceForScale = true;
-    }
-  }
-  QSize availableSize{size};
-  availableSize.rwidth() -= offset.x();
-  availableSize.rheight() -= offset.y();
-  pixmapImageSize =
-      getPixmapSize(availableSize, physicalSize.width() / physicalSize.height(),
-                    aspectRatioMode);
   const auto &srcImage{image[currentVoxel.z]};
-  double sx{static_cast<double>(pixmapImageSize.width()) /
-            static_cast<double>(srcImage.width())};
-  double sy{static_cast<double>(pixmapImageSize.height()) /
-            static_cast<double>(srcImage.height())};
-  p.setRenderHint(QPainter::SmoothPixmapTransform,
-                  transformationMode == Qt::SmoothTransformation);
-  p.save();
-  p.translate(offset.x(), 0);
-  p.scale(sx, sy);
-  p.drawImage(QPoint(0, 0), srcImage);
-  p.restore();
+  sme::gui::ImageRenderOptions opts;
+  opts.aspectRatioMode = aspectRatioMode;
+  opts.transformationMode = transformationMode;
+  opts.drawGrid = drawGrid;
+  opts.drawScale = drawScale;
+  opts.flipYAxis = flipYAxis;
+  opts.verticalIndicatorSourceX = verticalIndicatorSourceX;
+  opts.tickLength = tickLength;
+  opts.physicalOrigin = physicalOrigin;
+  opts.physicalSize = physicalSize;
+  opts.lengthUnits = lengthUnits;
+  auto rendered{sme::gui::renderImageWithOverlays(srcImage, size, opts)};
+  pixmap = rendered.pixmap;
+  pixmapImageSize = rendered.pixmapImageSize;
+  offset = rendered.offset;
   SPDLOG_DEBUG("resize -> {}x{}, pixmap -> {}x{}, image -> {}x{}", size.width(),
                size.height(), pixmap.width(), pixmap.height(),
                pixmapImageSize.width(), pixmapImageSize.height());
-  if (drawGrid || (drawScale && haveSpaceForScale)) {
-    QPen gridPen(QColor(127, 127, 127));
-    gridPen.setCosmetic(true);
-    p.setPen(gridPen);
-    auto gridSpacing =
-        getGridWidth(physicalSize, pixmapImageSize, srcImage.size());
-    int prevTextEnd{-1000};
-    int maxXIndex{(srcImage.width() - 1) / gridSpacing.pixelStep};
-    if (drawGrid) {
-      p.save();
-      p.translate(offset.x(), 0);
-      p.scale(sx, sy);
-      for (int i = 0; i <= maxXIndex; ++i) {
-        int srcX{i * gridSpacing.pixelStep};
-        p.drawLine(QPointF(srcX, 0), QPointF(srcX, srcImage.height()));
-      }
-      p.restore();
-    }
-    auto xScaleEdgePixels{
-        getScaleEdgePixels(srcImage.width(), gridSpacing.pixelStep)};
-    double xPixelWidth{physicalSize.width() /
-                       static_cast<double>(srcImage.width())};
-    for (int srcX : xScaleEdgePixels) {
-      int x{std::clamp(static_cast<int>(std::lround(srcX * sx)), 0,
-                       pixmapImageSize.width() - 1)};
-      if (drawScale && haveSpaceForScale) {
-        auto label{getGridPointLabel(
-            physicalOrigin.p.x() + static_cast<double>(srcX) * xPixelWidth,
-            srcX == 0, lengthUnits)};
-        // paint text label & extend tick mark if there is enough space
-        if (int labelWidth{p.fontMetrics().horizontalAdvance(label)};
-            prevTextEnd + (labelWidth + 1) / 2 + 4 < x &&
-            x + (labelWidth + 1) / 2 <= pixmapImageSize.width()) {
-          p.drawText(QRect(x + offset.x() - labelWidth / 2,
-                           pixmapImageSize.height() - 1 + tickLength,
-                           labelWidth, offset.y() - tickLength),
-                     Qt::AlignHCenter | Qt::AlignTop, label);
-          p.drawLine(x + offset.x(), pixmapImageSize.height() - 1,
-                     x + offset.x(), pixmapImageSize.height() - 1 + tickLength);
-          prevTextEnd = x + (labelWidth + 1) / 2;
-        }
-      }
-    }
-    int maxYIndex{(srcImage.height() - 1) / gridSpacing.pixelStep};
-    if (drawGrid) {
-      p.save();
-      p.translate(offset.x(), 0);
-      p.scale(sx, sy);
-      for (int i = 0; i <= maxYIndex; ++i) {
-        int srcY{i * gridSpacing.pixelStep};
-        if (!flipYAxis) {
-          srcY = srcImage.height() - 1 - srcY;
-        }
-        p.drawLine(QPointF(0, srcY), QPointF(srcImage.width(), srcY));
-      }
-      p.restore();
-    }
-    auto yScaleEdgePixels{
-        getScaleEdgePixels(srcImage.height(), gridSpacing.pixelStep)};
-    double yPixelWidth{physicalSize.height() /
-                       static_cast<double>(srcImage.height())};
-    for (int srcY : yScaleEdgePixels) {
-      int y;
-      if (flipYAxis) {
-        y = std::clamp(static_cast<int>(std::lround(srcY * sy)), 0,
-                       pixmapImageSize.height() - 1);
-      } else {
-        y = std::clamp(static_cast<int>(std::lround(
-                           static_cast<double>(srcImage.height() - srcY) * sy)),
-                       0, pixmapImageSize.height() - 1);
-      }
-      if (drawScale && haveSpaceForScale) {
-        auto label{getGridPointLabel(
-            physicalOrigin.p.y() + static_cast<double>(srcY) * yPixelWidth,
-            srcY == 0, lengthUnits)};
-        p.drawText(
-            QRect(0, y - offset.y() / 2, offset.x() - tickLength, offset.y()),
-            Qt::AlignVCenter | Qt::AlignRight, label);
-        p.drawLine(offset.x() - tickLength, y, offset.x(), y);
-      }
-    }
-  }
-  if (verticalIndicatorSourceX >= 0 &&
-      verticalIndicatorSourceX < srcImage.width()) {
-    QPen indicatorPen(Qt::black);
-    indicatorPen.setCosmetic(true);
-    p.setPen(indicatorPen);
-    int x{std::clamp(static_cast<int>(std::lround(
-                         (static_cast<double>(verticalIndicatorSourceX) + 0.5) *
-                         static_cast<double>(pixmapImageSize.width()) /
-                         static_cast<double>(srcImage.width()))) -
-                         1,
-                     0, pixmapImageSize.width() - 1)};
-    p.drawLine(offset.x() + x, 0, offset.x() + x, pixmapImageSize.height() - 1);
-  }
-  p.end();
   this->setPixmap(pixmap);
 }
 

@@ -62,6 +62,24 @@
          </property>
         </widget>
        </item>
+       <item row="3" column="0">
+        <layout class="QHBoxLayout" name="horizontalLayoutSliceOptions">
+         <item>
+          <widget class="QCheckBox" name="chkGrid">
+           <property name="text">
+            <string>Show &amp;grid</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="chkScale">
+           <property name="text">
+            <string>Show &amp;scale</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
        <item row="0" column="0">
         <widget class="QLabel" name="lblGeometrySlice">
          <property name="sizePolicy">
