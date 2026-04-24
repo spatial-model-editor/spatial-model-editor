@@ -1,4 +1,6 @@
 #include "sme/feature_eval.hpp"
+#include "sme/feature_eval_quantiles.hpp"
+#include "sme/feature_options.hpp"
 #include "sme/logger.hpp"
 #include "sme/symbolic.hpp"
 #include <algorithm>
@@ -173,38 +175,66 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
   double result = 0.0;
   std::size_t count = 0;
   bool first = true;
-  for (std::size_t i = 0; i < concs.size(); ++i) {
-    if (voxelRegions[i] != targetRegion) {
-      continue;
+  double q = 0.0;
+  bool is_quantile = false;
+  switch (op) {
+  case ReductionOp::FirstQuantile:
+    is_quantile = true;
+    q = 0.25;
+  case ReductionOp::Median:
+    is_quantile = true;
+    q = 0.5;
+  case ReductionOp::ThirdQuantile:
+    is_quantile = true;
+    q = 0.75;
+  default:
+    // do nothing
+    q = 0.0;
+    is_quantile = false;
+  }
+
+  if (is_quantile) {
+    if (concs.size() > 0) {
+      result = Quantile(q)(concs);
     }
-    const double c = concs[i];
-    if (first) {
-      if (op == ReductionOp::Min || op == ReductionOp::Max) {
-        result = c;
+    return result;
+  } else {
+
+    for (std::size_t i = 0; i < concs.size(); ++i) {
+      if (voxelRegions[i] != targetRegion) {
+        continue;
       }
-      first = false;
+      const double c = concs[i];
+      if (first) {
+        if (op == ReductionOp::Min || op == ReductionOp::Max) {
+          result = c;
+        }
+        first = false;
+      }
+      switch (op) {
+      case ReductionOp::Average:
+      case ReductionOp::Sum:
+        result += c;
+        break;
+      case ReductionOp::Min:
+        result = std::min(result, c);
+        break;
+      case ReductionOp::Max:
+        result = std::max(result, c);
+        break;
+      default:
+        continue;
+      }
+      ++count;
     }
-    switch (op) {
-    case ReductionOp::Average:
-    case ReductionOp::Sum:
-      result += c;
-      break;
-    case ReductionOp::Min:
-      result = std::min(result, c);
-      break;
-    case ReductionOp::Max:
-      result = std::max(result, c);
-      break;
+    if (op == ReductionOp::Average && count > 0) {
+      result /= static_cast<double>(count);
     }
-    ++count;
+    if (first && (op == ReductionOp::Min || op == ReductionOp::Max)) {
+      result = 0.0;
+    }
+    return result;
   }
-  if (op == ReductionOp::Average && count > 0) {
-    result /= static_cast<double>(count);
-  }
-  if (first && (op == ReductionOp::Min || op == ReductionOp::Max)) {
-    result = 0.0;
-  }
-  return result;
 }
 
 std::vector<double>
