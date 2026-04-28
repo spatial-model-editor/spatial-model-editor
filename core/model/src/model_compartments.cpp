@@ -244,6 +244,12 @@ bool ModelCompartments::remove(const QString &id) {
       orphanedMembraneIds.push_back(m.getId());
     }
   }
+  if (modelReactions != nullptr) {
+    modelReactions->removeAllInLocation(id);
+    for (const auto &mId : orphanedMembraneIds) {
+      modelReactions->removeAllInLocation(mId.c_str());
+    }
+  }
   ids.removeAt(i);
   names.removeAt(i);
   colors.removeAt(i);

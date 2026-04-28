@@ -113,6 +113,10 @@ public:
    */
   void removeAllInvolvingSpecies(const QString &speciesId);
   /**
+   * @brief Remove all reactions in a location.
+   */
+  void removeAllInLocation(const QString &locationId);
+  /**
    * @brief Set reaction name.
    */
   QString setName(const QString &id, const QString &name);

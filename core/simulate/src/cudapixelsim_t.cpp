@@ -415,7 +415,7 @@ TEST_CASE("GPU PixelSim unsupported-feature gating",
 
 TEST_CASE("GPU PixelSim reaction dcdt matches CPU PixelSim for one step",
           "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-gpu]") {
+          "[requires-gpu]") {
   auto mCpu{getExampleModel(Mod::ABtoC)};
   auto mGpu{getExampleModel(Mod::ABtoC)};
   for (auto *m : {&mCpu, &mGpu}) {
@@ -453,7 +453,7 @@ TEST_CASE("GPU PixelSim reaction dcdt matches CPU PixelSim for one step",
 
 TEST_CASE("GPU PixelSim diffusion dcdt matches CPU PixelSim for one step",
           "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-gpu]") {
+          "[requires-gpu]") {
   auto mCpu{getExampleModel(Mod::SingleCompartmentDiffusion)};
   auto mGpu{getExampleModel(Mod::SingleCompartmentDiffusion)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU, singleStepDt);
@@ -486,7 +486,7 @@ TEST_CASE("GPU PixelSim diffusion dcdt matches CPU PixelSim for one step",
 
 TEST_CASE("GPU PixelSim membrane reactions match CPU for one step",
           "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-gpu]") {
+          "[requires-gpu]") {
   auto mCpu{getExampleModel(Mod::VerySimpleModel)};
   auto mGpu{getExampleModel(Mod::VerySimpleModel)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU, singleStepDt);
@@ -574,10 +574,9 @@ TEST_CASE("GPU PixelSim example-model sweep matches CPU for all example models",
   }
 }
 
-TEST_CASE(
-    "GPU PixelSim membrane example model matches CPU after 1s",
-    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-gpu]") {
+TEST_CASE("GPU PixelSim membrane example model matches CPU after 1s",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[requires-gpu]") {
   auto mCpu{getExampleModel(Mod::VerySimpleModel)};
   auto mGpu{getExampleModel(Mod::VerySimpleModel)};
   configurePixelBackend(mCpu, simulate::PixelBackendType::CPU,
@@ -615,10 +614,9 @@ TEST_CASE(
                                  multipleStepTolerance);
 }
 
-TEST_CASE(
-    "GPU PixelSim selected example models match CPU after 1s",
-    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-gpu]") {
+TEST_CASE("GPU PixelSim selected example models match CPU after 1s",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[requires-gpu]") {
   std::size_t nModelsTested{0};
   for (std::size_t iExample = 0; iExample < longRunExampleModels.size();
        ++iExample) {
@@ -667,10 +665,9 @@ TEST_CASE(
   REQUIRE(nModelsTested > 0);
 }
 
-TEST_CASE(
-    "GPU PixelSim selected example models match CPU after 1s with RK212",
-    "[core/simulate/gpupixelsim][core/simulate][core][simulate][expensive]"
-    "[requires-gpu]") {
+TEST_CASE("GPU PixelSim selected example models match CPU after 1s with RK212",
+          "[core/simulate/gpupixelsim][core/simulate][core][simulate]"
+          "[requires-gpu]") {
   std::size_t nModelsTested{0};
   for (std::size_t iExample = 0; iExample < adaptiveLongRunExampleModels.size();
        ++iExample) {
@@ -806,7 +803,7 @@ TEST_CASE(
 #ifdef SME_WITH_CUDA
 TEST_CASE("CudaPixelSim float precision reaction matches double for one step",
           "[core/simulate/cudapixelsim][core/simulate][core][simulate]"
-          "[expensive][requires-cuda-gpu]") {
+          "[requires-cuda-gpu]") {
   auto mDouble{getExampleModel(Mod::ABtoC)};
   auto mFloat{getExampleModel(Mod::ABtoC)};
   for (auto *m : {&mDouble, &mFloat}) {

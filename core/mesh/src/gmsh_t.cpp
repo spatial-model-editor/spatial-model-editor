@@ -267,109 +267,107 @@ $EndElements
     REQUIRE(!imgWithoutBackground.colorTable().contains(qRgb(0, 0, 0)));
     REQUIRE(imgWithBackground.colorTable().contains(qRgb(0, 0, 0)));
   }
+}
 
-  SECTION("round-trip via duneconverter gmsh export") {
-    constexpr double minMatchingFraction{0.80};
-    for (const auto &modelId :
-         {test::Mod::VerySimpleModel3D, test::Mod::SelKov3D,
-          test::Mod::FitzhughNagumo3D}) {
-      for (const bool includeBackground : {true, false}) {
-        CAPTURE(modelId);
-        CAPTURE(includeBackground);
-        auto model = test::getExampleModel(modelId);
-        const auto &original = model.getGeometry().getImages();
-        REQUIRE(!original.empty());
-        const auto originalVolume = original.volume();
-        const int nMax =
-            std::max({originalVolume.width(), originalVolume.height(),
-                      static_cast<int>(originalVolume.depth())});
-        std::map<QRgb, QRgb> originalToRoundTripColor;
-        const auto &compartmentColors = model.getCompartments().getColors();
-        const common::indexedColors indexedColors;
-        for (int i = 0; i < compartmentColors.size(); ++i) {
-          originalToRoundTripColor[compartmentColors[i]] =
-              indexedColors[static_cast<std::size_t>(i)].rgb();
-        }
+TEST_CASE("Gmsh voxel import round-trip via duneconverter gmsh export",
+          "[core/mesh/gmsh][core/mesh][core][mesh][gmsh][expensive]") {
+  constexpr double minMatchingFraction{0.80};
+  for (const auto &modelId : {test::Mod::VerySimpleModel3D, test::Mod::SelKov3D,
+                              test::Mod::FitzhughNagumo3D}) {
+    for (const bool includeBackground : {true, false}) {
+      CAPTURE(modelId);
+      CAPTURE(includeBackground);
+      auto model = test::getExampleModel(modelId);
+      const auto &original = model.getGeometry().getImages();
+      REQUIRE(!original.empty());
+      const auto originalVolume = original.volume();
+      const int nMax =
+          std::max({originalVolume.width(), originalVolume.height(),
+                    static_cast<int>(originalVolume.depth())});
+      std::map<QRgb, QRgb> originalToRoundTripColor;
+      const auto &compartmentColors = model.getCompartments().getColors();
+      const common::indexedColors indexedColors;
+      for (int i = 0; i < compartmentColors.size(); ++i) {
+        originalToRoundTripColor[compartmentColors[i]] =
+            indexedColors[static_cast<std::size_t>(i)].rgb();
+      }
 
-        const QString iniFilename = QDir::current().filePath("tmp_gmsh_rt.ini");
-        const QString gmshFilename =
-            QDir::current().filePath("tmp_gmsh_rt.msh");
-        QFile::remove(iniFilename);
-        QFile::remove(gmshFilename);
-        simulate::DuneConverter dc(model, {}, true, iniFilename);
-        (void)dc;
-        REQUIRE(QFile::exists(gmshFilename));
+      const QString iniFilename = QDir::current().filePath("tmp_gmsh_rt.ini");
+      const QString gmshFilename = QDir::current().filePath("tmp_gmsh_rt.msh");
+      QFile::remove(iniFilename);
+      QFile::remove(gmshFilename);
+      simulate::DuneConverter dc(model, {}, true, iniFilename);
+      (void)dc;
+      REQUIRE(QFile::exists(gmshFilename));
 
-        auto gmshMesh = mesh::readGMSHMesh(gmshFilename);
-        REQUIRE(gmshMesh.has_value());
-        auto roundTrip =
-            mesh::voxelizeGMSHMesh(*gmshMesh, nMax, includeBackground);
-        REQUIRE(!roundTrip.empty());
+      auto gmshMesh = mesh::readGMSHMesh(gmshFilename);
+      REQUIRE(gmshMesh.has_value());
+      auto roundTrip =
+          mesh::voxelizeGMSHMesh(*gmshMesh, nMax, includeBackground);
+      REQUIRE(!roundTrip.empty());
 
-        common::VoxelF meshMin{std::numeric_limits<double>::max(),
-                               std::numeric_limits<double>::max(),
-                               std::numeric_limits<double>::max()};
-        common::VoxelF meshMax{std::numeric_limits<double>::lowest(),
-                               std::numeric_limits<double>::lowest(),
-                               std::numeric_limits<double>::lowest()};
-        for (const auto &v : gmshMesh->vertices) {
-          meshMin.p.rx() = std::min(meshMin.p.x(), v.p.x());
-          meshMin.p.ry() = std::min(meshMin.p.y(), v.p.y());
-          meshMin.z = std::min(meshMin.z, v.z);
-          meshMax.p.rx() = std::max(meshMax.p.x(), v.p.x());
-          meshMax.p.ry() = std::max(meshMax.p.y(), v.p.y());
-          meshMax.z = std::max(meshMax.z, v.z);
-        }
-        const double w = meshMax.p.x() - meshMin.p.x();
-        const double h = meshMax.p.y() - meshMin.p.y();
-        const double d = meshMax.z - meshMin.z;
-        const auto roundVol = roundTrip.volume();
-        const auto origin = model.getGeometry().getPhysicalOrigin();
-        const auto voxelSize = model.getGeometry().getVoxelSize();
+      common::VoxelF meshMin{std::numeric_limits<double>::max(),
+                             std::numeric_limits<double>::max(),
+                             std::numeric_limits<double>::max()};
+      common::VoxelF meshMax{std::numeric_limits<double>::lowest(),
+                             std::numeric_limits<double>::lowest(),
+                             std::numeric_limits<double>::lowest()};
+      for (const auto &v : gmshMesh->vertices) {
+        meshMin.p.rx() = std::min(meshMin.p.x(), v.p.x());
+        meshMin.p.ry() = std::min(meshMin.p.y(), v.p.y());
+        meshMin.z = std::min(meshMin.z, v.z);
+        meshMax.p.rx() = std::max(meshMax.p.x(), v.p.x());
+        meshMax.p.ry() = std::max(meshMax.p.y(), v.p.y());
+        meshMax.z = std::max(meshMax.z, v.z);
+      }
+      const double w = meshMax.p.x() - meshMin.p.x();
+      const double h = meshMax.p.y() - meshMin.p.y();
+      const double d = meshMax.z - meshMin.z;
+      const auto roundVol = roundTrip.volume();
+      const auto origin = model.getGeometry().getPhysicalOrigin();
+      const auto voxelSize = model.getGeometry().getVoxelSize();
 
-        std::size_t nSame = 0;
-        std::size_t nTotal = roundVol.nVoxels();
-        for (std::size_t z = 0; z < roundVol.depth(); ++z) {
-          double pz = meshMin.z + d * (0.5 + static_cast<double>(z)) /
-                                      static_cast<double>(roundVol.depth());
-          auto oz = static_cast<std::size_t>(
-              common::toVoxelIndex(pz, origin.z, voxelSize.depth(),
-                                   static_cast<int>(originalVolume.depth())));
-          for (int y = 0; y < roundVol.height(); ++y) {
-            double pyBottom = static_cast<double>(roundVol.height() - 1 - y);
-            double py =
-                meshMin.p.y() +
-                h * (0.5 + pyBottom) / static_cast<double>(roundVol.height());
-            int oyBottom = common::toVoxelIndex(
-                py, origin.p.y(), voxelSize.height(), originalVolume.height());
-            int oy = originalVolume.height() - 1 - oyBottom;
-            for (int x = 0; x < roundVol.width(); ++x) {
-              double px =
-                  meshMin.p.x() + w * (0.5 + static_cast<double>(x)) /
-                                      static_cast<double>(roundVol.width());
-              int ox = common::toVoxelIndex(px, origin.p.x(), voxelSize.width(),
-                                            originalVolume.width());
-              auto originalColor = original[oz].pixel(ox, oy);
-              auto mappedColorIter =
-                  originalToRoundTripColor.find(originalColor);
-              auto expectedRoundColor = originalColor;
-              if (mappedColorIter != originalToRoundTripColor.end()) {
-                expectedRoundColor = mappedColorIter->second;
-              }
-              if (roundTrip[z].pixel(x, y) == expectedRoundColor) {
-                ++nSame;
-              }
+      std::size_t nSame = 0;
+      std::size_t nTotal = roundVol.nVoxels();
+      for (std::size_t z = 0; z < roundVol.depth(); ++z) {
+        double pz = meshMin.z + d * (0.5 + static_cast<double>(z)) /
+                                    static_cast<double>(roundVol.depth());
+        auto oz = static_cast<std::size_t>(
+            common::toVoxelIndex(pz, origin.z, voxelSize.depth(),
+                                 static_cast<int>(originalVolume.depth())));
+        for (int y = 0; y < roundVol.height(); ++y) {
+          double pyBottom = static_cast<double>(roundVol.height() - 1 - y);
+          double py =
+              meshMin.p.y() +
+              h * (0.5 + pyBottom) / static_cast<double>(roundVol.height());
+          int oyBottom = common::toVoxelIndex(
+              py, origin.p.y(), voxelSize.height(), originalVolume.height());
+          int oy = originalVolume.height() - 1 - oyBottom;
+          for (int x = 0; x < roundVol.width(); ++x) {
+            double px =
+                meshMin.p.x() + w * (0.5 + static_cast<double>(x)) /
+                                    static_cast<double>(roundVol.width());
+            int ox = common::toVoxelIndex(px, origin.p.x(), voxelSize.width(),
+                                          originalVolume.width());
+            auto originalColor = original[oz].pixel(ox, oy);
+            auto mappedColorIter = originalToRoundTripColor.find(originalColor);
+            auto expectedRoundColor = originalColor;
+            if (mappedColorIter != originalToRoundTripColor.end()) {
+              expectedRoundColor = mappedColorIter->second;
+            }
+            if (roundTrip[z].pixel(x, y) == expectedRoundColor) {
+              ++nSame;
             }
           }
         }
-        CAPTURE(nSame);
-        CAPTURE(nTotal);
-        const double matchingFraction =
-            static_cast<double>(nSame) / static_cast<double>(nTotal);
-        CAPTURE(matchingFraction);
-        CAPTURE(minMatchingFraction);
-        REQUIRE(matchingFraction >= minMatchingFraction);
       }
+      CAPTURE(nSame);
+      CAPTURE(nTotal);
+      const double matchingFraction =
+          static_cast<double>(nSame) / static_cast<double>(nTotal);
+      CAPTURE(matchingFraction);
+      CAPTURE(minMatchingFraction);
+      REQUIRE(matchingFraction >= minMatchingFraction);
     }
   }
 }

@@ -426,6 +426,13 @@ void ModelReactions::removeAllInvolvingSpecies(const QString &speciesId) {
   }
 }
 
+void ModelReactions::removeAllInLocation(const QString &locationId) {
+  const auto reactionIdsToRemove{getIds(locationId)};
+  for (const auto &reactionId : reactionIdsToRemove) {
+    remove(reactionId);
+  }
+}
+
 QString ModelReactions::setName(const QString &id, const QString &name) {
   auto i = ids.indexOf(id);
   if (i < 0) {

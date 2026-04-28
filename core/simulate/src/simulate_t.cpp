@@ -685,12 +685,6 @@ TEST_CASE("Simulate: very_simple_model, membrane reaction units consistency",
        {simulate::SimulatorType::DUNE, simulate::SimulatorType::Pixel}) {
     double epsilon{1e-8};
     double margin{1e-13};
-    if (simulatorType == simulate::SimulatorType::DUNE) {
-      // todo: why this has increased so much vs dune-copasi 1 (1e-6 epsilon,
-      // 1e-13 margin)
-      margin = 1e-6;
-      epsilon = 1e-2;
-    }
     double simTime{0.025};
     // import model
     auto s1{getExampleModel(Mod::VerySimpleModel)};
