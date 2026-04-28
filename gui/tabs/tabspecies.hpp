@@ -11,6 +11,10 @@ namespace Ui {
 class TabSpecies;
 }
 
+namespace sme::common {
+struct Voxel;
+} // namespace sme::common
+
 namespace sme::model {
 class Model;
 } // namespace sme::model
@@ -27,6 +31,8 @@ public:
                       QVoxelRenderer *voxelRenderer, QWidget *parent = nullptr);
   ~TabSpecies() override;
   void loadModelData(const QString &selection = {});
+  [[nodiscard]] QString
+  getMouseoverConcentrationText(const sme::common::Voxel &voxel) const;
 
 private:
   std::unique_ptr<Ui::TabSpecies> ui;

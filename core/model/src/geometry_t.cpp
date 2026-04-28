@@ -128,6 +128,16 @@ TEST_CASE("Geometry: Compartments and Fields",
     REQUIRE(comp.getVoxel(0).p == QPoint(3, 3));
     REQUIRE(comp.getVoxel(1).p == QPoint(3, 4));
 
+    // getIdx: in-compartment voxels return their compartment index
+    REQUIRE(comp.getIdx({3, 3, 0}) == std::optional<std::size_t>(0));
+    REQUIRE(comp.getIdx({3, 4, 0}) == std::optional<std::size_t>(1));
+    // out-of-compartment voxel: nullopt
+    REQUIRE(!comp.getIdx({0, 0, 0}).has_value());
+    // out-of-bounds voxels: nullopt
+    REQUIRE(!comp.getIdx({-1, 0, 0}).has_value());
+    REQUIRE(!comp.getIdx({6, 0, 0}).has_value());
+    REQUIRE(!comp.getIdx({0, 0, 1}).has_value());
+
     geometry::Field field(&comp, "s1");
     field.setUniformConcentration(1.3);
     REQUIRE(field.getConcentration().size() == 2);

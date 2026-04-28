@@ -887,7 +887,14 @@ void MainWindow::lblGeometry_mouseOver(const sme::common::Voxel &voxel) {
   if (!model.getGeometry().getHasImage()) {
     return;
   }
-  statusBar()->showMessage(model.getGeometry().getPhysicalPointAsString(voxel));
+  QString message{model.getGeometry().getPhysicalPointAsString(voxel)};
+  if (ui->tabMain->currentWidget() == ui->tabSpecies) {
+    auto concText{tabSpecies->getMouseoverConcentrationText(voxel)};
+    if (!concText.isEmpty()) {
+      message += "  |  " + concText;
+    }
+  }
+  statusBar()->showMessage(message);
 }
 
 void MainWindow::spinGeometryZoom_valueChanged(int value) {

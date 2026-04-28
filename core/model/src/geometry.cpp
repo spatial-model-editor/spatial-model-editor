@@ -134,6 +134,16 @@ const std::vector<std::size_t> &Compartment::getArrayPoints() const {
   return arrayPoints;
 }
 
+std::optional<std::size_t>
+Compartment::getIdx(const common::Voxel &voxel) const {
+  const auto &volume = images.volume();
+  if (voxel.z >= volume.depth() || !images[voxel.z].valid(voxel.p) ||
+      images[voxel.z].pixelIndex(voxel.p) == 0) {
+    return std::nullopt;
+  }
+  return arrayPoints[common::voxelArrayIndex(volume, voxel, /*invertY=*/true)];
+}
+
 Membrane::Membrane(std::string membraneId, const Compartment *A,
                    const Compartment *B,
                    const std::vector<std::pair<Voxel, Voxel>> *voxelPairs)
