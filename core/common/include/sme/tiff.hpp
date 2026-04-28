@@ -31,12 +31,14 @@ using TiffDataType = uint16_t;
  * @param imageSize Image dimensions.
  * @param conc Concentration values in image order.
  * @param voxelSize Physical voxel size.
+ * @param physicalOrigin Physical location of the (0,0,0) pixel.
  * @returns Maximum concentration value used to scale TIFF pixel values, or a
  * negative value on failure.
  */
 double writeTIFF(const std::string &filename, const QSize &imageSize,
                  const std::vector<double> &conc,
-                 const sme::common::VolumeF &voxelSize);
+                 const sme::common::VolumeF &voxelSize,
+                 const sme::common::VoxelF &physicalOrigin);
 
 /**
  * @brief Reader for single- or multi-page TIFF images.
