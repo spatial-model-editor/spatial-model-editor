@@ -1,35 +1,69 @@
+#pragma once
+
 #include <cmath>
+#include <cstddef>
 #include <vector>
 
 namespace sme::simulate {
 
 /**
-@brief TODO
+ * @brief Class for computing quantiles. Features an internal buffer in order to
+ * avoid reordering the original data. The implementation is numerically
+ * equivalent to python's pandas' 'quantile' function with interpolation method
+ * 'nearest'.
+ *
  */
 class Quantile {
   double _quantile_value;
   std::vector<double> _copied_data;
 
 public:
-
-  auto set_quantile(double q) -> void {
-    this->_quantile_value = q;
-  }
-
-  auto get_quantile() ->double {
-    return _quantile_value;
-  }
+  /**
+   * @brief Set the quantile object
+   *
+   * @param q
+   */
+  auto set_quantile(double q) -> void;
 
   /**
-  @brief TODO
-  */
+   * @brief Get the quantile object
+   *
+   * @return double
+   */
+  auto get_quantile() -> double;
+
+  /**
+   * @brief Clear the interal buffer
+   *
+   */
+  auto clear() -> void;
+
+  /**
+   * @brief Reserves space in the internal buffer to avoid reallocations
+   *
+   */
+  auto reserve(std::size_t capacity) -> void;
+
+  /**
+   * @brief Construct a new Quantile object
+   *
+   * @param q
+   */
   Quantile(double q);
 
   /**
-  @brief TODO
-  */
-  auto operator()(const std::vector<double>& data, const std::vector<std::size_t> &voxelRegions,
-                      std::size_t targetRegion) -> double;
+   * @brief Compute quantile on internal buffer
+   *
+   * @return double
+   */
+  auto compute() -> double;
+
+  /**
+   * @brief add data to internal buffer
+   *
+   * @param v
+   */
+  auto add_data(double v) -> void;
 };
 
 } // namespace sme::simulate

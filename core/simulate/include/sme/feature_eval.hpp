@@ -3,7 +3,6 @@
 #include "sme/feature_options.hpp"
 #include "sme/geometry.hpp"
 #include "sme/voxel.hpp"
-#include "sme/feature_eval_quantiles.hpp"
 #include <cstddef>
 #include <vector>
 
@@ -67,16 +66,9 @@ computeAxisSliceRegions(const geometry::Compartment &comp,
  * @param targetRegion Region index to reduce over.
  * @returns Scalar result of the reduction.
  */
-class ApplyReduction {
-
-    Quantile quantile;
-
-public:
-  double operator()(ReductionOp op, const std::vector<double> &concs,
+double applyReduction(ReductionOp op, const std::vector<double> &concs,
                       const std::vector<std::size_t> &voxelRegions,
                       std::size_t targetRegion);
-};
-
 
 /**
  * @brief Evaluate one feature at one timepoint.
