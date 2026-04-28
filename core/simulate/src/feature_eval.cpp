@@ -169,7 +169,6 @@ std::vector<std::size_t> computeVoxelRegions(const RoiSettings &roi,
   return std::vector<std::size_t>(comp.nVoxels(), excludedRegion);
 }
 
-// README: where is this used? how is this used?
 double applyReduction(ReductionOp op, const std::vector<double> &concs,
                       const std::vector<std::size_t> &voxelRegions,
                       std::size_t targetRegion) {
