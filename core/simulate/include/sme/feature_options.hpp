@@ -19,7 +19,15 @@ enum class RoiType { Analytic, Image, Depth, AxisSlices };
 /**
  * @brief Reduction operation applied over voxels in a region.
  */
-enum class ReductionOp { Average, Sum, Min, Max, FirstQuantile, Median, ThirdQuantile, };
+enum class ReductionOp {
+  Average,
+  Sum,
+  Min,
+  Max,
+  FirstQuantile,
+  Median,
+  ThirdQuantile,
+};
 
 /**
  * @brief Generic named ROI parameter value.

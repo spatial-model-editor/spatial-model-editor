@@ -485,7 +485,8 @@ TEST_CASE("FeatureEval",
     REQUIRE(results[1] == dbl_approx(200.0));
   }
 
-  SECTION("evaluateFeature: quantiles ignore excluded and out of range regions") {
+  SECTION(
+      "evaluateFeature: quantiles ignore excluded and out of range regions") {
     simulate::FeatureDefinition feat;
     feat.name = "partial_quantile";
     feat.compartmentId = "comp";
