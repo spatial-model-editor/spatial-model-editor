@@ -237,7 +237,8 @@ static void addCompartment(
         double max = common::writeTIFF(
             tiffFilename.toStdString(),
             f->getCompartment()->getCompartmentImages()[0].size(), conc,
-            model.getGeometry().getVoxelSize());
+            model.getGeometry().getVoxelSize(),
+            model.getGeometry().getPhysicalOrigin());
         tiffs.push_back(sampledFieldName);
         ini.addValue("initial.expression",
                      QString("%1*%2(position_x,position_y)")
