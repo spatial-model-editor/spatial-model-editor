@@ -25,5 +25,9 @@ struct SymbolicFunction {
    * @brief Function body expression.
    */
   std::string body;
+  /**
+   * @brief Human-readable description of the function (used as tooltip text).
+   */
+  std::string description;
 };
 } // namespace sme::common

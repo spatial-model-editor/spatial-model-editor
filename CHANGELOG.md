@@ -3,6 +3,7 @@
 ## [Unreleased]
 ### Added
 - species concentration at the mouseover location in the species tab [#122](https://github.com/spatial-model-editor/spatial-model-editor/issues/122)
+- tooltip in math expression editors describing the symbol or function under the cursor [#560](https://github.com/spatial-model-editor/spatial-model-editor/issues/560)
 
 ### Fixed
 - ImageSlice dialog now uses the currently selected z-slice, mouseover text reports physical `x/y/z/t` values, geometry image has grid and scale overlays [#577](https://github.com/spatial-model-editor/spatial-model-editor/issues/577)

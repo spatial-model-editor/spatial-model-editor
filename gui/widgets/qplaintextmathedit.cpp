@@ -3,8 +3,10 @@
 #include "sme/utils.hpp"
 #include <QAbstractItemModel>
 #include <QAbstractItemView>
+#include <QHelpEvent>
 #include <QScrollBar>
 #include <QString>
+#include <QToolTip>
 #include <algorithm>
 #include <limits>
 
@@ -48,6 +50,9 @@ const std::vector<std::string> &QPlainTextMathEdit::getVariables() const {
 }
 
 void QPlainTextMathEdit::clearVariables() {
+  for (const auto &[var, displayName] : mapVarsToDisplayNames) {
+    mapDisplayNamesToDescriptions.erase(displayName);
+  }
   vars.clear();
   mapDisplayNamesToVars.clear();
   mapVarsToDisplayNames.clear();
@@ -104,7 +109,8 @@ static void appendQuotedName(QTextCursor &tc, const QString &name) {
 }
 
 void QPlainTextMathEdit::addVariable(const std::string &variable,
-                                     const std::string &displayName) {
+                                     const std::string &displayName,
+                                     const std::string &description) {
   SPDLOG_TRACE("adding var: {}", variable);
   vars.push_back(variable);
   auto name{displayName};
@@ -114,6 +120,9 @@ void QPlainTextMathEdit::addVariable(const std::string &variable,
   SPDLOG_TRACE("  -> display name {}", name);
   mapDisplayNamesToVars[name] = variable;
   mapVarsToDisplayNames[variable] = name;
+  if (!description.empty()) {
+    mapDisplayNamesToDescriptions[name] = description;
+  }
   updateCompleter();
   qPlainTextEdit_textChanged();
 }
@@ -126,6 +135,7 @@ void QPlainTextMathEdit::removeVariable(const std::string &variable) {
     const auto &displayName{iter->second};
     SPDLOG_TRACE("  -> display name {}", displayName);
     mapDisplayNamesToVars.erase(displayName);
+    mapDisplayNamesToDescriptions.erase(displayName);
     mapVarsToDisplayNames.erase(iter);
   }
   qPlainTextEdit_textChanged();
@@ -168,6 +178,9 @@ void QPlainTextMathEdit::addFunction(
   SPDLOG_TRACE("  -> display name {}", function.name);
   mapDisplayNamesToFuncs[function.name] = function.id;
   mapFuncsToDisplayNames[function.id] = function.name;
+  if (!function.description.empty()) {
+    mapDisplayNamesToDescriptions[function.name] = function.description;
+  }
   updateCompleter();
   qPlainTextEdit_textChanged();
 }
@@ -179,6 +192,7 @@ void QPlainTextMathEdit::removeFunction(const std::string &functionId) {
     std::string displayName = iter->second;
     SPDLOG_TRACE("  -> display name {}", displayName);
     mapDisplayNamesToFuncs.erase(displayName);
+    mapDisplayNamesToDescriptions.erase(displayName);
     mapFuncsToDisplayNames.erase(iter);
   }
   functions.erase(std::remove_if(functions.begin(), functions.end(),
@@ -198,6 +212,7 @@ void QPlainTextMathEdit::setConstants(
     if (auto iter = mapVarsToDisplayNames.find(c.first);
         iter != mapVarsToDisplayNames.end()) {
       mapDisplayNamesToVars.erase(iter->second);
+      mapDisplayNamesToDescriptions.erase(iter->second);
       mapVarsToDisplayNames.erase(iter);
     }
   }
@@ -206,9 +221,30 @@ void QPlainTextMathEdit::setConstants(
     consts.emplace_back(c.id, c.value);
     mapDisplayNamesToVars[c.name] = c.id;
     mapVarsToDisplayNames[c.id] = c.name;
+    if (!c.description.empty()) {
+      mapDisplayNamesToDescriptions[c.name] = c.description;
+    }
   }
   updateCompleter();
   qPlainTextEdit_textChanged();
+}
+
+void QPlainTextMathEdit::setDescription(const std::string &displayName,
+                                        const std::string &description) {
+  if (description.empty()) {
+    mapDisplayNamesToDescriptions.erase(displayName);
+  } else {
+    mapDisplayNamesToDescriptions[displayName] = description;
+  }
+}
+
+std::string
+QPlainTextMathEdit::getDescription(const std::string &displayName) const {
+  if (auto it{mapDisplayNamesToDescriptions.find(displayName)};
+      it != mapDisplayNamesToDescriptions.cend()) {
+    return it->second;
+  }
+  return {};
 }
 
 void QPlainTextMathEdit::updateCompleter() {
@@ -429,10 +465,14 @@ void QPlainTextMathEdit::qPlainTextEdit_cursorPositionChanged() {
   setExtraSelections({s});
 }
 
-QString QPlainTextMathEdit::getCurrentWord() {
-  auto expr{toPlainText()};
-  auto tc{textCursor()};
-  const auto pos{tc.position()};
+struct WordSelection {
+  QString word;
+  qsizetype startPos;
+  qsizetype endPos;
+};
+
+static WordSelection findWordAt(const QString &expr, QTextCursor cursor) {
+  const auto pos{cursor.position()};
   bool inQuotes{false};
   auto quoteEndPos{expr.indexOf(quoteChar)};
   auto quoteStartPos{quoteEndPos};
@@ -442,16 +482,21 @@ QString QPlainTextMathEdit::getCurrentWord() {
     quoteEndPos = expr.indexOf(quoteChar, quoteStartPos + 1);
   }
   if (inQuotes) {
-    // if quoted: word is everything inside the quotes
-    currentWordStartPos = quoteStartPos;
-    currentWordEndPos = quoteEndPos;
-    return expr.mid(quoteStartPos + 1, quoteEndPos - quoteStartPos - 1);
+    // word is the text between the quotes (or everything after an unterminated
+    // open quote, in which case mid() returns to end of string)
+    return {expr.mid(quoteStartPos + 1, quoteEndPos - quoteStartPos - 1),
+            quoteStartPos, quoteEndPos};
   }
-  // otherwise use normal Qt word selection
-  tc.select(QTextCursor::WordUnderCursor);
-  currentWordStartPos = tc.selectionStart();
-  currentWordEndPos = tc.selectionEnd();
-  return tc.selectedText();
+  cursor.select(QTextCursor::WordUnderCursor);
+  return {cursor.selectedText(), cursor.selectionStart(),
+          cursor.selectionEnd()};
+}
+
+QString QPlainTextMathEdit::getCurrentWord() {
+  auto sel{findWordAt(toPlainText(), textCursor())};
+  currentWordStartPos = sel.startPos;
+  currentWordEndPos = sel.endPos;
+  return sel.word;
 }
 
 void QPlainTextMathEdit::insertCompletion(const QString &completion) {
@@ -467,6 +512,42 @@ void QPlainTextMathEdit::insertCompletion(const QString &completion) {
   tc.removeSelectedText();
   appendQuotedName(tc, completion);
   setTextCursor(tc);
+}
+
+std::string
+QPlainTextMathEdit::symbolAtViewportPos(const QPoint &viewportPos) const {
+  auto cursor{cursorForPosition(viewportPos)};
+  auto sel{findWordAt(toPlainText(), cursor)};
+  // reject hovers that snapped to a word boundary from beyond the text:
+  // require the viewport x to lie within the selected word's bounding rect
+  auto startCursor{cursor};
+  startCursor.setPosition(static_cast<int>(sel.startPos));
+  auto endCursor{cursor};
+  endCursor.setPosition(static_cast<int>(std::max(sel.endPos, sel.startPos)));
+  const auto leftEdge{cursorRect(startCursor).left()};
+  const auto rightEdge{cursorRect(endCursor).right()};
+  if (viewportPos.x() < leftEdge || viewportPos.x() > rightEdge) {
+    return {};
+  }
+  return sel.word.toStdString();
+}
+
+bool QPlainTextMathEdit::viewportEvent(QEvent *e) {
+  if (e->type() == QEvent::ToolTip) {
+    auto *helpEvent = static_cast<QHelpEvent *>(e);
+    auto symbol{symbolAtViewportPos(helpEvent->pos())};
+    if (auto it{mapDisplayNamesToDescriptions.find(symbol)};
+        !symbol.empty() && it != mapDisplayNamesToDescriptions.cend()) {
+      QString tooltip{
+          QString("<b>%1</b><br>%2")
+              .arg(QString::fromStdString(symbol).toHtmlEscaped(),
+                   QString::fromStdString(it->second).toHtmlEscaped())};
+      QToolTip::showText(helpEvent->globalPos(), tooltip, viewport());
+      return true;
+    }
+    QToolTip::hideText();
+  }
+  return QPlainTextEdit::viewportEvent(e);
 }
 
 void QPlainTextMathEdit::keyPressEvent(QKeyEvent *e) {
