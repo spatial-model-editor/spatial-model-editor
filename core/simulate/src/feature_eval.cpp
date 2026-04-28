@@ -169,14 +169,19 @@ std::vector<std::size_t> computeVoxelRegions(const RoiSettings &roi,
   return std::vector<std::size_t>(comp.nVoxels(), excludedRegion);
 }
 
-double applyReduction(ReductionOp op, const std::vector<double> &concs,
-                      const std::vector<std::size_t> &voxelRegions,
-                      std::size_t targetRegion) {
+// README: where is this used? how is this used?
+// TODO: Make this into a functor perhaps to allow statefullness.
+double ApplyReduction::operator()(ReductionOp op,
+                                  const std::vector<double> &concs,
+                                  const std::vector<std::size_t> &voxelRegions,
+                                  std::size_t targetRegion) {
   double result = 0.0;
   std::size_t count = 0;
   bool first = true;
   double q = 0.0;
   bool is_quantile = false;
+
+  // TODO: I do not like this integration at all. Fix SoC, O/C, DI
   switch (op) {
   case ReductionOp::FirstQuantile:
     is_quantile = true;
@@ -195,7 +200,7 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
 
   if (is_quantile) {
     if (concs.size() > 0) {
-      result = Quantile(q)(concs);
+      result = this->quantile(concs, voxelRegions, targetRegion);
     }
     return result;
   } else {
