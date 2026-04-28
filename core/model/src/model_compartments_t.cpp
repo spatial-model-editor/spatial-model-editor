@@ -293,6 +293,28 @@ TEST_CASE("SBML compartments",
       REQUIRE(r.getParameterName("B_transport", "k1") == "");
       REQUIRE(r.getParameterValue("B_transport", "k1") == dbl_approx(0.0));
     }
+    SECTION("remove c1: orphaned membranes are removed from SBML") {
+      // https://github.com/spatial-model-editor/spatial-model-editor/issues/288
+      c.remove("c1");
+      const auto remainingMembraneIds{m.getIds()};
+      model::Model reloaded;
+      reloaded.importSBMLString(model.getXml().toStdString());
+      REQUIRE(reloaded.getMembranes().getIds() == remainingMembraneIds);
+    }
+    SECTION("remove c2: orphaned membranes are removed from SBML") {
+      c.remove("c2");
+      const auto remainingMembraneIds{m.getIds()};
+      model::Model reloaded;
+      reloaded.importSBMLString(model.getXml().toStdString());
+      REQUIRE(reloaded.getMembranes().getIds() == remainingMembraneIds);
+    }
+    SECTION("remove c3: orphaned membranes are removed from SBML") {
+      c.remove("c3");
+      const auto remainingMembraneIds{m.getIds()};
+      model::Model reloaded;
+      reloaded.importSBMLString(model.getXml().toStdString());
+      REQUIRE(reloaded.getMembranes().getIds() == remainingMembraneIds);
+    }
   }
   SECTION("New model: add compartment, remove it again") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/506

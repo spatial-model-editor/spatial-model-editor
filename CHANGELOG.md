@@ -7,6 +7,7 @@
 ### Fixed
 - ImageSlice dialog now uses the currently selected z-slice, mouseover text reports physical `x/y/z/t` values, geometry image has grid and scale overlays [#577](https://github.com/spatial-model-editor/spatial-model-editor/issues/577)
 - exported TIFF files now include geometry origin [#412](https://github.com/spatial-model-editor/spatial-model-editor/issues/412)
+- membranes not getting fully removed from model when a compartment is removed [#288](https://github.com/spatial-model-editor/spatial-model-editor/issues/288)
 
 ## [1.12.0] - 2026-04-22
 ### Added
