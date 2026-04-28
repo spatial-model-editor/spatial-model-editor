@@ -14,6 +14,7 @@
 #include <QRgb>
 #include <array>
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -120,6 +121,11 @@ public:
    * @brief Mapping from full-image voxels to compartment voxel indices.
    */
   [[nodiscard]] const std::vector<std::size_t> &getArrayPoints() const;
+  /**
+   * @brief Compartment voxel index for an image voxel, if inside compartment.
+   */
+  [[nodiscard]] std::optional<std::size_t>
+  getIdx(const common::Voxel &voxel) const;
 };
 
 /**

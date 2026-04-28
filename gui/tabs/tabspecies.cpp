@@ -92,6 +92,29 @@ TabSpecies::TabSpecies(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
 
 TabSpecies::~TabSpecies() = default;
 
+QString TabSpecies::getMouseoverConcentrationText(
+    const sme::common::Voxel &voxel) const {
+  if (currentSpeciesId.isEmpty()) {
+    return {};
+  }
+  const auto *field = model.getSpecies().getField(currentSpeciesId);
+  if (field == nullptr) {
+    return {};
+  }
+  const auto *comp = field->getCompartment();
+  if (comp == nullptr) {
+    return {};
+  }
+  const auto idx = comp->getIdx(voxel);
+  if (!idx.has_value()) {
+    return {};
+  }
+  return QString("%1 = %2 %3")
+      .arg(model.getSpecies().getName(currentSpeciesId))
+      .arg(field->getConcentration()[*idx])
+      .arg(model.getUnits().getConcentration());
+}
+
 void TabSpecies::loadModelData(const QString &selection) {
   enableWidgets(false);
   // update tree list of species

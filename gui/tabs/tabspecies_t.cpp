@@ -382,4 +382,29 @@ TEST_CASE("TabSpecies", "[gui/tabs/species][gui/tabs][gui][species]") {
     REQUIRE(listSpecies->currentItem()->parent()->text(0) == "Outside");
     REQUIRE(listSpecies->currentItem()->parent()->childCount() == 1);
   }
+  SECTION("getMouseoverConcentrationText") {
+    // no species selected: empty
+    REQUIRE(tab.getMouseoverConcentrationText({0, 0, 0}).isEmpty());
+
+    model = getExampleModel(Mod::VerySimpleModel);
+    tab.loadModelData();
+    // select B_cell: a spatial species in the Cell compartment
+    sendKeyEvents(listSpecies, {"Down", "Down", "Down", "Down"});
+    REQUIRE(listSpecies->currentItem()->text(0) == "B_cell");
+    const auto cellCompartmentId{model.getCompartments().getIds()[1]};
+    const auto bCellId{model.getSpecies().getIds(cellCompartmentId)[1]};
+    const auto *field{model.getSpecies().getField(bCellId)};
+    REQUIRE(field != nullptr);
+    const auto &voxelsInComp{field->getCompartment()->getVoxels()};
+    REQUIRE(!voxelsInComp.empty());
+    // voxel inside the Cell compartment: returns formatted string
+    const auto inside{tab.getMouseoverConcentrationText(voxelsInComp.front())};
+    REQUIRE(inside.startsWith("B_cell = "));
+    REQUIRE(inside.endsWith(model.getUnits().getConcentration()));
+    // voxel outside any compartment: empty
+    const auto width{model.getGeometry().getImages().volume().width()};
+    const auto height{model.getGeometry().getImages().volume().height()};
+    REQUIRE(tab.getMouseoverConcentrationText({width + 10, height + 10, 0})
+                .isEmpty());
+  }
 }
