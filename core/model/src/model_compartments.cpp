@@ -158,20 +158,40 @@ QString ModelCompartments::add(const QString &name) {
 static void removeCompartmentFromSBML(libsbml::Model *model,
                                       const std::string &sId) {
   auto *comp = model->getCompartment(sId);
+  if (comp == nullptr) {
+    SPDLOG_WARN("Compartment {} not found in SBML model", sId);
+    return;
+  }
   // find and remove any spatial SBML stuff related to compartment
   const auto *scp = static_cast<const libsbml::SpatialCompartmentPlugin *>(
       comp->getPlugin("spatial"));
   if (scp->isSetCompartmentMapping()) {
     std::string domainTypeId = scp->getCompartmentMapping()->getDomainType();
     auto *geom = getOrCreateGeometry(model);
+    std::string domainId;
     if (const auto *dom = geom->getDomainByDomainType(domainTypeId);
         dom != nullptr) {
-      if (std::unique_ptr<libsbml::Domain> rmdom(
-              geom->removeDomain(dom->getId()));
+      domainId = dom->getId();
+      if (std::unique_ptr<libsbml::Domain> rmdom(geom->removeDomain(domainId));
           rmdom != nullptr) {
         SPDLOG_INFO("  - removed Domain {}", rmdom->getId());
       } else {
         SPDLOG_WARN("Failed to remove Domain for compartment {}", sId);
+      }
+    }
+    if (!domainId.empty()) {
+      // remove any AdjacentDomains entries that reference the removed Domain
+      for (int i = static_cast<int>(geom->getNumAdjacentDomains()) - 1; i >= 0;
+           --i) {
+        const auto *adj = geom->getAdjacentDomains(static_cast<unsigned>(i));
+        if ((adj->isSetDomain1() && adj->getDomain1() == domainId) ||
+            (adj->isSetDomain2() && adj->getDomain2() == domainId)) {
+          if (std::unique_ptr<libsbml::AdjacentDomains> rmadj(
+                  geom->removeAdjacentDomains(static_cast<unsigned>(i)));
+              rmadj != nullptr) {
+            SPDLOG_INFO("  - removed AdjacentDomains {}", rmadj->getId());
+          }
+        }
       }
     }
     if (auto *sfgeom{getSampledFieldGeometry(geom)}; sfgeom != nullptr) {
@@ -215,11 +235,24 @@ bool ModelCompartments::remove(const QString &id) {
   hasUnsavedChanges = true;
   SPDLOG_INFO("Clearing simulation data");
   simulationData->clear();
+  // collect membranes adjacent to this compartment before we drop them from
+  // the in-memory list, so we can also remove them from the SBML document
+  std::vector<std::string> orphanedMembraneIds;
+  for (const auto &m : modelMembranes->getMembranes()) {
+    if (m.getCompartmentA()->getId() == compartmentId ||
+        m.getCompartmentB()->getId() == compartmentId) {
+      orphanedMembraneIds.push_back(m.getId());
+    }
+  }
   ids.removeAt(i);
   names.removeAt(i);
   colors.removeAt(i);
   using diffType = decltype(compartments)::difference_type;
   compartments.erase(compartments.begin() + static_cast<diffType>(i));
+  for (const auto &mId : orphanedMembraneIds) {
+    SPDLOG_INFO("Removing orphaned membrane compartment '{}'", mId);
+    removeCompartmentFromSBML(sbmlModel, mId);
+  }
   removeCompartmentFromSBML(sbmlModel, compartmentId);
   for (const auto &s : modelSpecies->getIds(compartmentId.c_str())) {
     modelSpecies->remove(s);
