@@ -203,7 +203,6 @@ configure_build() {
         -GNinja
         -S .
         -B "$build_dir"
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
         -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
         -DCMAKE_BUILD_TYPE=RelWithDebInfo
         -DBUILD_SHARED_LIBS=OFF
