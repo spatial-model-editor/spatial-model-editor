@@ -182,19 +182,19 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
   switch (op) {
   case ReductionOp::FirstQuantile:
     is_quantile = true;
-    quantile.set_quantile(0.25);
+    quantile.setQuantile(0.25);
     break;
   case ReductionOp::Median:
     is_quantile = true;
-    quantile.set_quantile(0.5);
+    quantile.setQuantile(0.5);
     break;
   case ReductionOp::ThirdQuantile:
     is_quantile = true;
-    quantile.set_quantile(0.75);
+    quantile.setQuantile(0.75);
     break;
   default:
     // do nothing
-    quantile.set_quantile(0.0);
+    quantile.setQuantile(0.0);
     is_quantile = false;
   }
 
@@ -223,7 +223,7 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
     case ReductionOp::FirstQuantile:
     case ReductionOp::Median:
     case ReductionOp::ThirdQuantile:
-      quantile.add_data(c);
+      quantile.addData(c);
       break;
     default:
       continue;
@@ -307,7 +307,7 @@ evaluateFeature(const FeatureDefinition &feature,
     case ReductionOp::FirstQuantile:
     case ReductionOp::Median:
     case ReductionOp::ThirdQuantile:
-      quantiles[regionIndex].add_data(c);
+      quantiles[regionIndex].addData(c);
       break;
     }
     ++counts[regionIndex];

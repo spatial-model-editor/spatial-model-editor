@@ -23,17 +23,17 @@ public:
    *
    * @param q
    */
-  auto set_quantile(double q) -> void;
+  auto setQuantile(double q) -> void;
 
   /**
    * @brief Get the quantile object
    *
    * @return double
    */
-  auto get_quantile() -> double;
+  auto getQuantile() -> double;
 
   /**
-   * @brief Clear the interal buffer
+   * @brief Clear the internal buffer
    *
    */
   auto clear() -> void;
@@ -63,7 +63,7 @@ public:
    *
    * @param v
    */
-  auto add_data(double v) -> void;
+  auto addData(double v) -> void;
 };
 
 } // namespace sme::simulate

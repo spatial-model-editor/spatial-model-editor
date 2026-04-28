@@ -1,5 +1,6 @@
 #include "catch_wrapper.hpp"
 #include "sme/feature_eval_quantiles.hpp"
+#include <stdexcept>
 #include <vector>
 
 using namespace sme;
@@ -7,7 +8,7 @@ using namespace sme;
 static double computeQuantile(double q, const std::vector<double> &values) {
   simulate::Quantile quantile(q);
   for (const auto value : values) {
-    quantile.add_data(value);
+    quantile.addData(value);
   }
   return quantile.compute();
 }
@@ -35,30 +36,40 @@ TEST_CASE("FeatureEvalQuantiles",
 
   SECTION("clear allows reuse with different data") {
     simulate::Quantile quantile(0.5);
-    quantile.add_data(10.0);
-    quantile.add_data(20.0);
-    quantile.add_data(30.0);
+    quantile.addData(10.0);
+    quantile.addData(20.0);
+    quantile.addData(30.0);
     REQUIRE(quantile.compute() == dbl_approx(20.0));
 
     quantile.clear();
-    quantile.add_data(5.0);
-    quantile.add_data(1.0);
-    quantile.add_data(9.0);
+    quantile.addData(5.0);
+    quantile.addData(1.0);
+    quantile.addData(9.0);
     REQUIRE(quantile.compute() == dbl_approx(5.0));
   }
 
   SECTION("set and get quantile value") {
     simulate::Quantile quantile(0.25);
-    REQUIRE(quantile.get_quantile() == dbl_approx(0.25));
-    quantile.set_quantile(0.75);
-    REQUIRE(quantile.get_quantile() == dbl_approx(0.75));
+    REQUIRE(quantile.getQuantile() == dbl_approx(0.25));
+    quantile.setQuantile(0.75);
+    REQUIRE(quantile.getQuantile() == dbl_approx(0.75));
 
-    quantile.add_data(8.0);
-    quantile.add_data(2.0);
-    quantile.add_data(4.0);
-    quantile.add_data(10.0);
-    quantile.add_data(6.0);
+    quantile.addData(8.0);
+    quantile.addData(2.0);
+    quantile.addData(4.0);
+    quantile.addData(10.0);
+    quantile.addData(6.0);
     REQUIRE(quantile.compute() == dbl_approx(8.0));
+  }
+
+  SECTION("rejects quantile values outside [0, 1]") {
+    REQUIRE_THROWS_AS(simulate::Quantile(-0.1), std::invalid_argument);
+    REQUIRE_THROWS_AS(simulate::Quantile(1.1), std::invalid_argument);
+
+    simulate::Quantile quantile(0.5);
+    REQUIRE_THROWS_AS(quantile.setQuantile(-0.1), std::invalid_argument);
+    REQUIRE_THROWS_AS(quantile.setQuantile(1.1), std::invalid_argument);
+    REQUIRE(quantile.getQuantile() == dbl_approx(0.5));
   }
 
   SECTION("input order does not change result") {

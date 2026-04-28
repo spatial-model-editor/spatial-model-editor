@@ -1,18 +1,31 @@
 #include "sme/feature_eval_quantiles.hpp"
 #include <algorithm>
 #include <cmath>
-#include <ranges>
+#include <stdexcept>
 #include <vector>
 
 namespace sme::simulate {
 
-Quantile::Quantile(double q) { _quantile_value = q; }
+// constructor
+Quantile::Quantile(double q) {
+  if (q < 0.0 || q > 1.0) {
+    throw std::invalid_argument("Quantile must be between 0 and 1");
+  }
 
-auto Quantile::set_quantile(double q) -> void { this->_quantile_value = q; }
+  _quantile_value = q;
+}
 
-auto Quantile::get_quantile() -> double { return _quantile_value; }
+// helpers
+auto Quantile::setQuantile(double q) -> void {
+  if (q < 0.0 || q > 1.0) {
+    throw std::invalid_argument("Quantile must be between 0 and 1");
+  }
+  this->_quantile_value = q;
+}
 
-auto Quantile::add_data(double v) -> void { this->_copied_data.push_back(v); }
+auto Quantile::getQuantile() -> double { return _quantile_value; }
+
+auto Quantile::addData(double v) -> void { this->_copied_data.push_back(v); }
 
 auto Quantile::clear() -> void { this->_copied_data.clear(); }
 
@@ -20,6 +33,7 @@ auto Quantile::reserve(std::size_t capacity) -> void {
   this->_copied_data.reserve(capacity);
 }
 
+// main computing method
 auto Quantile::compute() -> double {
   if (_copied_data.empty()) {
     return 0.0;
