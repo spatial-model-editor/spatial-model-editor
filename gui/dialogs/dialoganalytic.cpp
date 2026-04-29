@@ -51,11 +51,14 @@ DialogAnalytic::DialogAnalytic(
   // add x,y,z variables
   const auto &spatialCoordinates{modelParameters.getSpatialCoordinates()};
   ui->txtExpression->addVariable(spatialCoordinates.x.id,
-                                 spatialCoordinates.x.name);
+                                 spatialCoordinates.x.name,
+                                 "Spatial x-coordinate");
   ui->txtExpression->addVariable(spatialCoordinates.y.id,
-                                 spatialCoordinates.y.name);
+                                 spatialCoordinates.y.name,
+                                 "Spatial y-coordinate");
   ui->txtExpression->addVariable(spatialCoordinates.z.id,
-                                 spatialCoordinates.z.name);
+                                 spatialCoordinates.z.name,
+                                 "Spatial z-coordinate");
   for (const auto &function : modelFunctions.getSymbolicFunctions()) {
     ui->txtExpression->addFunction(function);
   }

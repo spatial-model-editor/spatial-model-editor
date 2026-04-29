@@ -65,7 +65,9 @@ void TabFunctions::listFunctions_currentRowChanged(int row) {
   auto args = funcs.getArguments(id);
   // reset variables to only built-in functions
   ui->txtFunctionDef->reset();
-  ui->txtFunctionDef->setVariables(sme::common::toStdString(args));
+  for (const auto &arg : args) {
+    ui->txtFunctionDef->addVariable(arg.toStdString(), {}, "Function argument");
+  }
   // add model functions
   for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
     ui->txtFunctionDef->addFunction(function);
@@ -132,7 +134,8 @@ void TabFunctions::btnAddFunctionParam_clicked() {
     SPDLOG_INFO("Adding parameter {}", param.toStdString());
     auto argId = model.getFunctions().addArgument(currentFunctionId, param);
     ui->listFunctionParams->addItem(argId);
-    ui->txtFunctionDef->addVariable(param.toStdString());
+    ui->txtFunctionDef->addVariable(param.toStdString(), {},
+                                    "Function argument");
     ui->listFunctionParams->setCurrentRow(ui->listFunctionParams->count() - 1);
   }
 }

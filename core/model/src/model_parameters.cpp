@@ -333,31 +333,59 @@ void ModelParameters::setSpatialCoordinates(SpatialCoordinates coords) {
               z->getName());
 }
 
+static std::string speciesCompartmentSuffix(const libsbml::Model *model,
+                                            const libsbml::Species *spec) {
+  if (spec->getCompartment().empty()) {
+    return {};
+  }
+  const auto *comp = model->getCompartment(spec->getCompartment());
+  const std::string &compName{comp != nullptr && !comp->getName().empty()
+                                  ? comp->getName()
+                                  : spec->getCompartment()};
+  return " in compartment '" + compName + "'";
+}
+
 std::vector<IdName>
 ModelParameters::getSymbols(const QStringList &compartments) const {
   std::vector<IdName> symbols;
   const auto nCompartments{sbmlModel->getNumCompartments()};
   const auto nSpecies{sbmlModel->getNumSpecies()};
-  symbols.reserve(static_cast<std::size_t>(ids.size()) + 3 +
+  symbols.reserve(static_cast<std::size_t>(ids.size()) + 4 +
                   static_cast<std::size_t>(nCompartments + nSpecies));
   for (int i = 0; i < ids.size(); ++i) {
-    symbols.push_back({ids[i].toStdString(), names[i].toStdString()});
+    const auto &paramId{ids[i]};
+    std::string desc{"Parameter"};
+    if (const auto *param = sbmlModel->getParameter(paramId.toStdString());
+        param != nullptr) {
+      if (sbmlModel->getAssignmentRule(param->getId()) != nullptr) {
+        desc += ", value given by assignment rule";
+      } else {
+        desc += ", value = " + std::to_string(param->getValue());
+      }
+    }
+    symbols.push_back(
+        {paramId.toStdString(), names[i].toStdString(), std::move(desc)});
   }
   for (unsigned i = 0; i < nSpecies; ++i) {
     const auto *spec = sbmlModel->getSpecies(i);
     if (compartments.empty() ||
         compartments.contains(spec->getCompartment().c_str())) {
-      symbols.push_back({spec->getId(), spec->getName()});
+      std::string desc{"Species" + speciesCompartmentSuffix(sbmlModel, spec)};
+      symbols.push_back({spec->getId(), spec->getName(), std::move(desc)});
     }
   }
   for (unsigned i = 0; i < nCompartments; ++i) {
     const auto *comp = sbmlModel->getCompartment(i);
-    symbols.push_back({comp->getId(), comp->getName()});
+    std::string desc{"Compartment, size = " + std::to_string(comp->getSize())};
+    symbols.push_back({comp->getId(), comp->getName(), std::move(desc)});
   }
-  symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name});
-  symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name});
-  symbols.push_back({spatialCoordinates.z.id, spatialCoordinates.z.name});
-  symbols.push_back({"time", "t"});
+  symbols.push_back({spatialCoordinates.x.id, spatialCoordinates.x.name,
+                     "Spatial x-coordinate"});
+  symbols.push_back({spatialCoordinates.y.id, spatialCoordinates.y.name,
+                     "Spatial y-coordinate"});
+  symbols.push_back({spatialCoordinates.z.id, spatialCoordinates.z.name,
+                     "Spatial z-coordinate"});
+  symbols.push_back({"time", "t", "Simulation time"});
   return symbols;
 }
 
@@ -403,7 +431,11 @@ std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
     if (getIsSpeciesConstant(spec) && !isSpatialSpecies(spec)) {
       SPDLOG_TRACE("found scalar constant species {}", spec->getId());
       double init_conc = spec->getInitialConcentration();
-      constants.push_back({spec->getId(), spec->getName(), init_conc});
+      std::string desc{
+          "Constant species" + speciesCompartmentSuffix(sbmlModel, spec) +
+          ", initial concentration = " + std::to_string(init_conc)};
+      constants.push_back(
+          {spec->getId(), spec->getName(), init_conc, std::move(desc)});
       SPDLOG_TRACE("parameter {} = {}", spec->getId(), init_conc);
     }
   }
@@ -413,7 +445,8 @@ std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
     if (isConstantParameter(param)) {
       SPDLOG_TRACE("parameter {} = {}", param->getId(), param->getValue());
       constants.push_back(
-          {param->getId(), param->getName(), param->getValue()});
+          {param->getId(), param->getName(), param->getValue(),
+           "Parameter, value = " + std::to_string(param->getValue())});
     }
   }
   // also get compartment volumes (the compartmentID may be used in the
@@ -422,7 +455,9 @@ std::vector<IdNameValue> ModelParameters::getGlobalConstants() const {
   for (unsigned int k = 0; k < sbmlModel->getNumCompartments(); ++k) {
     const auto *comp = sbmlModel->getCompartment(k);
     SPDLOG_TRACE("parameter {} = {}", comp->getId(), comp->getSize());
-    constants.push_back({comp->getId(), comp->getName(), comp->getSize()});
+    constants.push_back(
+        {comp->getId(), comp->getName(), comp->getSize(),
+         "Compartment, size = " + std::to_string(comp->getSize())});
   }
   return constants;
 }

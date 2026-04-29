@@ -24,6 +24,7 @@ class ModelSpecies;
 struct IdName {
   std::string id;
   std::string name;
+  std::string description;
 };
 
 /**
@@ -42,6 +43,7 @@ struct IdNameValue {
   std::string id;
   std::string name;
   double value;
+  std::string description;
 };
 
 /**

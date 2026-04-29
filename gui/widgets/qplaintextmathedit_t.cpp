@@ -299,6 +299,37 @@ TEST_CASE("QPlainTextMathEdit", "[gui/widgets/qplaintextmathedit][gui/"
     REQUIRE_THAT(mathEdit.getErrorMessage().toStdString(),
                  ContainsSubstring("Variable 'K' not found"));
   }
+  SECTION("symbol descriptions") {
+    mathEdit.show();
+    mathEdit.clearVariables();
+    // variable with description
+    mathEdit.addVariable("x_id", "X", "Spatial x-coordinate");
+    REQUIRE(mathEdit.getDescription("X") == "Spatial x-coordinate");
+    // variable without description
+    mathEdit.addVariable("y_id", "Y");
+    REQUIRE(mathEdit.getDescription("Y").empty());
+    // unknown display name
+    REQUIRE(mathEdit.getDescription("not_a_symbol").empty());
+    // removing variable also removes its description
+    mathEdit.removeVariable("x_id");
+    REQUIRE(mathEdit.getDescription("X").empty());
+    // function description (taken from SymbolicFunction.description)
+    sme::common::SymbolicFunction f;
+    f.id = "f_id";
+    f.name = "F";
+    f.args = {"a", "b"};
+    f.body = "a + b";
+    f.description = "F(a, b) = a + b";
+    mathEdit.addFunction(f);
+    REQUIRE(mathEdit.getDescription("F") == "F(a, b) = a + b");
+    mathEdit.removeFunction("f_id");
+    REQUIRE(mathEdit.getDescription("F").empty());
+    // setConstants populates and clears descriptions
+    mathEdit.setConstants({{"k_id", "K", 2.0, "Parameter, value = 2"}});
+    REQUIRE(mathEdit.getDescription("K") == "Parameter, value = 2");
+    mathEdit.setConstants({});
+    REQUIRE(mathEdit.getDescription("K").empty());
+  }
   SECTION("expression that parses but doesn't compile") {
     // https://github.com/spatial-model-editor/spatial-model-editor/issues/805
     mathEdit.show();

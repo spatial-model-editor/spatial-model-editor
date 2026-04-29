@@ -244,6 +244,15 @@ ModelFunctions::getSymbolicFunctions() const {
     }
     fn.body = getExpression(id).toStdString();
     SPDLOG_DEBUG("  - body: {}", fn.body);
+    std::string desc{fn.name + "("};
+    for (std::size_t i = 0; i < fn.args.size(); ++i) {
+      if (i > 0) {
+        desc += ", ";
+      }
+      desc += fn.args[i];
+    }
+    desc += ") = " + fn.body;
+    fn.description = std::move(desc);
   }
   return fns;
 }

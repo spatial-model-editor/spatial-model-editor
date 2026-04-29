@@ -14,6 +14,10 @@ QDoubleSpinBoxNoScroll::QDoubleSpinBoxNoScroll(QWidget *parent)
 
 void QDoubleSpinBoxNoScroll::wheelEvent(QWheelEvent *event) { event->ignore(); }
 
+static std::string reactionParamDescription(double value) {
+  return QString("Reaction parameter, value = %1").arg(value).toStdString();
+}
+
 TabReactions::TabReactions(sme::model::Model &m,
                            QLabelMouseTracker *mouseTracker,
                            QVoxelRenderer *voxelRenderer, QWidget *parent)
@@ -185,9 +189,9 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
   ui->cmbReactionLocation->setCurrentIndex(static_cast<int>(locationIndex));
   ui->txtReactionRate->reset();
   // add model parameters
-  for (const auto &[id, name] :
-       model.getParameters().getSymbols(compartments)) {
-    ui->txtReactionRate->addVariable(id, name);
+  for (const auto &symbol : model.getParameters().getSymbols(compartments)) {
+    ui->txtReactionRate->addVariable(symbol.id, symbol.name,
+                                     symbol.description);
   }
   // add model functions
   for (const auto &function : model.getFunctions().getSymbolicFunctions()) {
@@ -198,9 +202,12 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
     auto *comp = new QTreeWidgetItem;
     comp->setText(0, model.getCompartments().getName(compID));
     ui->listReactionSpecies->addTopLevelItem(comp);
+    auto compName = model.getCompartments().getName(compID);
     for (const auto &sId : model.getSpecies().getIds(compID)) {
       auto sName = model.getSpecies().getName(sId);
-      ui->txtReactionRate->addVariable(sId.toStdString(), sName.toStdString());
+      ui->txtReactionRate->addVariable(
+          sId.toStdString(), sName.toStdString(),
+          QString("Species in compartment '%1'").arg(compName).toStdString());
       auto *item = new QTreeWidgetItem;
       item->setText(0, sName);
       auto *spinBox = new QDoubleSpinBoxNoScroll(ui->listReactionSpecies);
@@ -243,7 +250,8 @@ void TabReactions::listReactions_currentItemChanged(QTreeWidgetItem *current,
     ui->listReactionParams->setRowCount(n + 1);
     ui->listReactionParams->setItem(n, 0, itemName);
     ui->listReactionParams->setItem(n, 1, itemValue);
-    ui->txtReactionRate->addVariable(paramId.toStdString(), name.toStdString());
+    ui->txtReactionRate->addVariable(paramId.toStdString(), name.toStdString(),
+                                     reactionParamDescription(value));
   }
   ui->listReactionParams->blockSignals(false);
   ui->txtReactionRate->importVariableMath(
@@ -338,10 +346,12 @@ void TabReactions::listReactionParams_cellChanged(int row, int column) {
       ui->listReactionParams->blockSignals(false);
     }
     // update math expression with new parameter name
+    double currentValue{reactions.getParameterValue(currentReacId, paramId)};
     ui->txtReactionRate->blockSignals(true);
     ui->txtReactionRate->removeVariable(paramId.toStdString());
     ui->txtReactionRate->addVariable(paramId.toStdString(),
-                                     newName.toStdString());
+                                     newName.toStdString(),
+                                     reactionParamDescription(currentValue));
     ui->txtReactionRate->blockSignals(false);
     ui->txtReactionRate->importVariableMath(
         model.getReactions().getRateExpression(currentReacId).toStdString());
@@ -355,6 +365,9 @@ void TabReactions::listReactionParams_cellChanged(int row, int column) {
     if (isValidDouble) {
       item->setBackground({});
       reactions.setParameterValue(currentReacId, paramId, value);
+      auto paramName{reactions.getParameterName(currentReacId, paramId)};
+      ui->txtReactionRate->setDescription(paramName.toStdString(),
+                                          reactionParamDescription(value));
     } else {
       SPDLOG_WARN("Invalid number ignored: '{}'", item->text().toStdString());
       item->setBackground(Qt::red);
@@ -380,7 +393,8 @@ void TabReactions::btnAddReactionParam_clicked() {
   ui->listReactionParams->setRowCount(n + 1);
   ui->listReactionParams->setItem(n, 0, itemName);
   ui->listReactionParams->setItem(n, 1, itemValue);
-  ui->txtReactionRate->addVariable(id.toStdString(), uniqueName.toStdString());
+  ui->txtReactionRate->addVariable(id.toStdString(), uniqueName.toStdString(),
+                                   reactionParamDescription(0));
   ui->listReactionParams->setCurrentItem(itemValue);
   ui->btnRemoveReactionParam->setEnabled(true);
   ui->listReactionParams->blockSignals(false);

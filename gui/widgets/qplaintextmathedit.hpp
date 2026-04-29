@@ -30,12 +30,16 @@ public:
   void clearVariables();
   void setVariables(const std::vector<std::string> &variables);
   void addVariable(const std::string &variable,
-                   const std::string &displayName = {});
+                   const std::string &displayName = {},
+                   const std::string &description = {});
   void removeVariable(const std::string &variable);
   void reset();
   void addFunction(const sme::common::SymbolicFunction &function);
   void removeFunction(const std::string &functionId);
   void setConstants(const std::vector<sme::model::IdNameValue> &constants = {});
+  void setDescription(const std::string &displayName,
+                      const std::string &description);
+  std::string getDescription(const std::string &displayName) const;
   void updateCompleter();
 
 signals:
@@ -57,6 +61,7 @@ private:
   StringStringMap mapDisplayNamesToVars;
   StringStringMap mapFuncsToDisplayNames;
   StringStringMap mapDisplayNamesToFuncs;
+  StringStringMap mapDisplayNamesToDescriptions;
   QString currentDisplayMath;
   std::string currentVariableMath;
   QString currentErrorMessage;
@@ -72,4 +77,6 @@ private:
   QString getCurrentWord();
   void insertCompletion(const QString &completion);
   void keyPressEvent(QKeyEvent *e) override;
+  bool viewportEvent(QEvent *e) override;
+  std::string symbolAtViewportPos(const QPoint &viewportPos) const;
 };

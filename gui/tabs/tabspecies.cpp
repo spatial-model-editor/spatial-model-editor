@@ -535,7 +535,7 @@ void TabSpecies::updateCrossDiffusionWidgets() {
     txtExpression->setMaximumHeight(35);
     txtExpression->setMinimumHeight(30);
     for (const auto &symbol : symbols) {
-      txtExpression->addVariable(symbol.id, symbol.name);
+      txtExpression->addVariable(symbol.id, symbol.name, symbol.description);
     }
     for (const auto &function : functions) {
       txtExpression->addFunction(function);
