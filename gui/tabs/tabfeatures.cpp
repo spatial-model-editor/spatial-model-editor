@@ -71,9 +71,9 @@ TabFeatures::TabFeatures(sme::model::Model &m, QLabelMouseTracker *mouseTracker,
   ui->cmbReduction->addItem("Sum");
   ui->cmbReduction->addItem("Min");
   ui->cmbReduction->addItem("Max");
-  ui->cmbReduction->addItem("First quantile");
+  ui->cmbReduction->addItem("First quartile");
   ui->cmbReduction->addItem("Median");
-  ui->cmbReduction->addItem("Third quantile");
+  ui->cmbReduction->addItem("Third quartile");
 }
 
 TabFeatures::~TabFeatures() = default;

@@ -162,9 +162,9 @@ TEST_CASE("TabFeatures", "[gui/tabs/features][gui/tabs][gui][features]") {
     // check that the associations are correct and that we can switch to the
     // quantile stuff too
     REQUIRE(cmbReduction->count() == 7);
-    REQUIRE(cmbReduction->itemText(4) == "First quantile");
+    REQUIRE(cmbReduction->itemText(4) == "First quartile");
     REQUIRE(cmbReduction->itemText(5) == "Median");
-    REQUIRE(cmbReduction->itemText(6) == "Third quantile");
+    REQUIRE(cmbReduction->itemText(6) == "Third quartile");
 
     cmbReduction->setCurrentIndex(4);
     REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
