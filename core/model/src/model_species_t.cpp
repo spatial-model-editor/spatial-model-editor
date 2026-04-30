@@ -551,6 +551,120 @@ TEST_CASE("SBML species",
       REQUIRE(concentration[i] == dbl_approx(correct_conc(voxels[i])));
     }
   }
+  SECTION("Analytic conc with SBML built-in functions") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};
+    auto coords = [&m](const common::Voxel &voxel) {
+      auto p = m.getGeometry().getPhysicalPoint(voxel);
+      return std::pair<double, double>{p.p.x(), p.p.y()};
+    };
+    // Loose tolerance: the LLVM-compiled symengine path and the platform
+    // <cmath> reference can disagree by a few ULPs for transcendentals (seen
+    // on Windows MSVC).
+    constexpr double tol{1e-12};
+    auto check = [&](const std::string &expr, auto &&reference) {
+      s.setAnalyticConcentration("A_c1", expr.c_str());
+      REQUIRE(s.getInitialConcentrationType("A_c1") ==
+              model::SpatialDataType::Analytic);
+      const auto &concentration{s.getField("A_c1")->getConcentration()};
+      REQUIRE(concentration.size() == voxels.size());
+      for (std::size_t i = 0; i < voxels.size(); ++i) {
+        auto [x, y] = coords(voxels[i]);
+        REQUIRE(concentration[i] ==
+                Catch::Approx(reference(x, y)).epsilon(tol).margin(tol));
+      }
+    };
+    check("exp(-x*x*0.001)",
+          [](double x, double) { return std::exp(-x * x * 0.001); });
+    check("sin(x*0.1) + cos(y*0.1)", [](double x, double y) {
+      return std::sin(x * 0.1) + std::cos(y * 0.1);
+    });
+    check("sqrt(x*x + y*y + 1)",
+          [](double x, double y) { return std::sqrt(x * x + y * y + 1); });
+    check("abs(x - 50)", [](double x, double) { return std::abs(x - 50); });
+    check("floor(x*0.1) + ceil(y*0.1)", [](double x, double y) {
+      return std::floor(x * 0.1) + std::ceil(y * 0.1);
+    });
+    // SBML L3: ln() is natural log; log() with one argument is log10
+    check("ln(x + 1)", [](double x, double) { return std::log(x + 1); });
+    check("log10(x + 1)", [](double x, double) { return std::log10(x + 1); });
+    // SBML L3: log(b, x) is log base b of x
+    check("log(2, x + 1)",
+          [](double x, double) { return std::log(x + 1) / std::log(2.0); });
+    check("power(x, 2) + power(y, 3)",
+          [](double x, double y) { return x * x + y * y * y; });
+    check("max(x, y)", [](double x, double y) { return std::max(x, y); });
+    check("min(x, y)", [](double x, double y) { return std::min(x, y); });
+    check("tanh((x - 50) * 0.1)",
+          [](double x, double) { return std::tanh((x - 50) * 0.1); });
+  }
+  SECTION("Analytic conc references SBML time csymbol (evaluates as 0)") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    // initial concentrations are evaluated at t=0
+    s.setAnalyticConcentration("A_c1", "x + time");
+    REQUIRE(s.getInitialConcentrationType("A_c1") ==
+            model::SpatialDataType::Analytic);
+    const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};
+    const auto &concentration{s.getField("A_c1")->getConcentration()};
+    REQUIRE(voxels.size() == concentration.size());
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      double x{m.getGeometry().getPhysicalPoint(voxels[i]).p.x()};
+      REQUIRE(concentration[i] == dbl_approx(x));
+    }
+  }
+  SECTION("Analytic conc with nested piecewise") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    s.setAnalyticConcentration(
+        "A_c1", "piecewise(piecewise(10, y < 50, 20), x < 33, 30)");
+    const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};
+    const auto &concentration{s.getField("A_c1")->getConcentration()};
+    REQUIRE(voxels.size() == concentration.size());
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      auto p = m.getGeometry().getPhysicalPoint(voxels[i]);
+      double expected{30};
+      if (p.p.x() < 33) {
+        expected = (p.p.y() < 50) ? 10 : 20;
+      }
+      REQUIRE(concentration[i] == dbl_approx(expected));
+    }
+  }
+  SECTION("Analytic conc with logical/relational operators") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    // piecewise with `and` / `or` / `not` of relational ops
+    s.setAnalyticConcentration(
+        "A_c1", "piecewise(1, and(x > 25, x < 75), piecewise(2, or(x <= 10, x "
+                ">= 90), 0))");
+    const auto &voxels{s.getField("A_c1")->getCompartment()->getVoxels()};
+    const auto &concentration{s.getField("A_c1")->getConcentration()};
+    REQUIRE(voxels.size() == concentration.size());
+    for (std::size_t i = 0; i < voxels.size(); ++i) {
+      double x{m.getGeometry().getPhysicalPoint(voxels[i]).p.x()};
+      double expected{0};
+      if (x > 25 && x < 75) {
+        expected = 1;
+      } else if (x <= 10 || x >= 90) {
+        expected = 2;
+      }
+      REQUIRE(concentration[i] == dbl_approx(expected));
+    }
+  }
+  SECTION("Invalid analytic conc expression is rejected") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &s{m.getSpecies()};
+    // valid baseline so we can detect the field was untouched on failure
+    s.setAnalyticConcentration("A_c1", "7");
+    const auto baseline{s.getField("A_c1")->getConcentration()};
+    // syntactically invalid SBML math
+    s.setAnalyticConcentration("A_c1", "x +* 2");
+    REQUIRE(s.getField("A_c1")->getConcentration() == baseline);
+    // references an unknown symbol
+    s.setAnalyticConcentration("A_c1", "x + nope");
+    REQUIRE(s.getField("A_c1")->getConcentration() == baseline);
+  }
   SECTION("Storage values") {
     auto m{getExampleModel(Mod::VerySimpleModel)};
     auto &s{m.getSpecies()};

@@ -176,7 +176,7 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
       }
       CAPTURE(sum);
       CAPTURE(diff);
-      REQUIRE(diff / sum < 1e-13);
+      REQUIRE(diff / sum < 1e-12);
     }
   }
   SECTION("Callback is provided and used to stop simulation") {

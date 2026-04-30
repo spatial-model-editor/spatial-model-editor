@@ -658,44 +658,52 @@ void ModelSpecies::setFieldAnalyticValues(
   auto inlinedExpr = inlineFunctions(expr, *modelFunctions);
   inlinedExpr = inlineAssignments(inlinedExpr, sbmlModel);
   SPDLOG_INFO("  - inlined expr: {}", inlinedExpr);
-  std::string xId{modelParameters->getSpatialCoordinates().x.id};
-  std::string yId{modelParameters->getSpatialCoordinates().y.id};
-  std::string zId{modelParameters->getSpatialCoordinates().z.id};
-  std::map<const std::string, std::pair<double, bool>> sbmlVars;
-  for (const auto &c : modelParameters->getGlobalConstants()) {
-    sbmlVars[c.id] = {c.value, false};
-  }
-  auto &xCoordPair = sbmlVars[xId];
-  xCoordPair = {0, false};
-  double &xCoord = xCoordPair.first;
-  auto &yCoordPair = sbmlVars[yId];
-  yCoordPair = {0, false};
-  double &yCoord = yCoordPair.first;
-  auto &zCoordPair = sbmlVars[zId];
-  zCoordPair = {0, false};
-  double &zCoord = zCoordPair.first;
-  for (const auto &[key, val] : substitutions) {
-    SPDLOG_INFO("substituting {} -> {}", key, val);
-    sbmlVars[key] = {val, false};
-  }
-  auto astExpr = mathStringToAST(inlinedExpr);
-  SPDLOG_INFO("  - parsed expr: {}", mathASTtoString(astExpr.get()));
-  if (astExpr == nullptr) {
+  // Validate as SBML math via libSBML before handing to symengine
+  if (mathStringToAST(inlinedExpr, sbmlModel) == nullptr) {
     SPDLOG_ERROR("Failed to parse expression '{}'", inlinedExpr);
     return;
   }
+  const std::string xId{modelParameters->getSpatialCoordinates().x.id};
+  const std::string yId{modelParameters->getSpatialCoordinates().y.id};
+  const std::string zId{modelParameters->getSpatialCoordinates().z.id};
+  std::vector<std::pair<std::string, double>> constants;
+  // SBML csymbol `time` evaluates to 0 in the initial-conditions context
+  constants.emplace_back("time", 0.0);
+  for (const auto &c : modelParameters->getGlobalConstants()) {
+    if (c.id == xId || c.id == yId || c.id == zId) {
+      continue;
+    }
+    constants.emplace_back(c.id, c.value);
+  }
+  for (const auto &[key, val] : substitutions) {
+    SPDLOG_INFO("substituting {} -> {}", key, val);
+    constants.emplace_back(key, val);
+  }
+  common::Symbolic sym(inlinedExpr, {xId, yId, zId}, constants);
+  if (!sym.isValid()) {
+    SPDLOG_ERROR("Failed to parse expression '{}': {}", inlinedExpr,
+                 sym.getErrorMessage());
+    return;
+  }
+  if (!sym.compile()) {
+    SPDLOG_ERROR("Failed to compile expression '{}': {}", inlinedExpr,
+                 sym.getErrorMessage());
+    return;
+  }
   hasUnsavedChanges = true;
+  std::vector<double> vars(3);
+  std::vector<double> result(1);
   for (std::size_t i = 0; i < field.getCompartment()->nVoxels(); ++i) {
     const auto &voxel{field.getCompartment()->getVoxel(i)};
     auto physicalPoint{modelGeometry->getPhysicalPoint(voxel)};
-    xCoord = physicalPoint.p.x();
-    yCoord = physicalPoint.p.y();
-    zCoord = physicalPoint.z;
-    double value = evaluateMathAST(astExpr.get(), sbmlVars, sbmlModel);
+    vars[0] = physicalPoint.p.x();
+    vars[1] = physicalPoint.p.y();
+    vars[2] = physicalPoint.z;
+    sym.eval(result, vars);
     if (valueType == AnalyticValueType::Concentration) {
-      field.setConcentration(i, value);
+      field.setConcentration(i, result[0]);
     } else if (valueType == AnalyticValueType::DiffusionConstant) {
-      field.setDiffusionConstant(i, value);
+      field.setDiffusionConstant(i, result[0]);
     }
   }
   if (valueType == AnalyticValueType::Concentration) {
