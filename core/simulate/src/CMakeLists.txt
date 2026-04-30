@@ -3,6 +3,7 @@ target_sources(
   PRIVATE basesim.cpp
           dune_cell_data.cpp
           feature_eval.cpp
+          feature_eval_quantiles.cpp
           feature_options.cpp
           duneconverter.cpp
           duneconverter_impl.cpp
@@ -33,6 +34,7 @@ if(BUILD_TESTING)
   target_sources(
     core_tests
     PUBLIC feature_eval_t.cpp
+           feature_eval_quantiles_t.cpp
            feature_options_t.cpp
            duneconverter_t.cpp
            duneconverter_impl_t.cpp

@@ -99,6 +99,19 @@ TEST_CASE("FeatureEval",
                                      5) == dbl_approx(0.0));
     REQUIRE(simulate::applyReduction(simulate::ReductionOp::Max, concs, regions,
                                      5) == dbl_approx(0.0));
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::Median, concs,
+                                     regions, 5) == dbl_approx(0.0));
+  }
+
+  SECTION("applyReduction: quantiles") {
+    std::vector<double> concs = {8.0, 2.0, 4.0, 10.0, 6.0};
+    std::vector<std::size_t> regions = {1, 1, 1, 1, 1};
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::FirstQuartile,
+                                     concs, regions, 1) == dbl_approx(4.0));
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::Median, concs,
+                                     regions, 1) == dbl_approx(6.0));
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::ThirdQuartile,
+                                     concs, regions, 1) == dbl_approx(8.0));
   }
 
   SECTION("computeDepthRegions: 5x5 compartment") {
@@ -426,5 +439,83 @@ TEST_CASE("FeatureEval",
     REQUIRE(results.size() == 2);
     REQUIRE(results[0] == dbl_approx(5.0));
     REQUIRE(results[1] == dbl_approx(7.0));
+  }
+
+  SECTION("evaluateFeature: one region with quantile reductions") {
+    simulate::FeatureDefinition feat;
+    feat.name = "quantiles";
+    feat.compartmentId = "comp";
+    feat.speciesId = "A";
+    feat.roi.roiType = simulate::RoiType::Analytic;
+    feat.roi.numRegions = 1;
+
+    std::vector<double> concs = {8.0, 2.0, 4.0, 10.0, 6.0};
+    std::vector<std::size_t> regions = {1, 1, 1, 1, 1};
+
+    feat.reduction = simulate::ReductionOp::FirstQuartile;
+    auto results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0] == dbl_approx(4.0));
+
+    feat.reduction = simulate::ReductionOp::Median;
+    results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0] == dbl_approx(6.0));
+
+    feat.reduction = simulate::ReductionOp::ThirdQuartile;
+    results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0] == dbl_approx(8.0));
+  }
+
+  SECTION("evaluateFeature: quantiles are computed per region") {
+    simulate::FeatureDefinition feat;
+    feat.name = "region_quantiles";
+    feat.compartmentId = "comp";
+    feat.speciesId = "A";
+    feat.roi.roiType = simulate::RoiType::Image;
+    feat.roi.numRegions = 2;
+    feat.reduction = simulate::ReductionOp::Median;
+
+    std::vector<double> concs = {1.0, 100.0, 5.0, 200.0, 9.0, 300.0};
+    std::vector<std::size_t> regions = {1, 2, 1, 2, 1, 2};
+    auto results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 2);
+    REQUIRE(results[0] == dbl_approx(5.0));
+    REQUIRE(results[1] == dbl_approx(200.0));
+  }
+
+  SECTION(
+      "evaluateFeature: quantiles ignore excluded and out of range regions") {
+    simulate::FeatureDefinition feat;
+    feat.name = "partial_quantile";
+    feat.compartmentId = "comp";
+    feat.speciesId = "A";
+    feat.roi.roiType = simulate::RoiType::Analytic;
+    feat.roi.numRegions = 1;
+    feat.reduction = simulate::ReductionOp::Median;
+
+    std::vector<double> concs = {1.0, 1000.0, 5.0, 2000.0, 9.0};
+    std::vector<std::size_t> regions = {1, 0, 1, 2, 1};
+    auto results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 1);
+    REQUIRE(results[0] == dbl_approx(5.0));
+  }
+
+  SECTION("evaluateFeature: empty quantile regions return zero") {
+    simulate::FeatureDefinition feat;
+    feat.name = "empty_quantile";
+    feat.compartmentId = "comp";
+    feat.speciesId = "A";
+    feat.roi.roiType = simulate::RoiType::Image;
+    feat.roi.numRegions = 2;
+    feat.reduction = simulate::ReductionOp::Median;
+
+    std::vector<double> concs = {2.0, 4.0, 6.0};
+    std::vector<std::size_t> regions = {1, 1, 1};
+    auto results = simulate::evaluateFeature(feat, concs, regions);
+    REQUIRE(results.size() == 2);
+    REQUIRE(results[0] == dbl_approx(4.0));
+    REQUIRE(results[1] == dbl_approx(0.0));
   }
 }

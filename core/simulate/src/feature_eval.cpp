@@ -1,4 +1,6 @@
 #include "sme/feature_eval.hpp"
+#include "sme/feature_eval_quantiles.hpp"
+#include "sme/feature_options.hpp"
 #include "sme/logger.hpp"
 #include "sme/symbolic.hpp"
 #include <algorithm>
@@ -173,6 +175,28 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
   double result = 0.0;
   std::size_t count = 0;
   bool first = true;
+  bool is_quantile = false;
+  Quantile quantile(0.0);
+
+  switch (op) {
+  case ReductionOp::FirstQuartile:
+    is_quantile = true;
+    quantile.setQuantile(0.25);
+    break;
+  case ReductionOp::Median:
+    is_quantile = true;
+    quantile.setQuantile(0.5);
+    break;
+  case ReductionOp::ThirdQuartile:
+    is_quantile = true;
+    quantile.setQuantile(0.75);
+    break;
+  default:
+    // do nothing
+    quantile.setQuantile(0.0);
+    is_quantile = false;
+  }
+
   for (std::size_t i = 0; i < concs.size(); ++i) {
     if (voxelRegions[i] != targetRegion) {
       continue;
@@ -195,14 +219,25 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
     case ReductionOp::Max:
       result = std::max(result, c);
       break;
+    case ReductionOp::FirstQuartile:
+    case ReductionOp::Median:
+    case ReductionOp::ThirdQuartile:
+      quantile.addData(c);
+      break;
+    default:
+      continue;
     }
     ++count;
   }
+
   if (op == ReductionOp::Average && count > 0) {
     result /= static_cast<double>(count);
   }
   if (first && (op == ReductionOp::Min || op == ReductionOp::Max)) {
     result = 0.0;
+  }
+  if (is_quantile) {
+    result = quantile.compute();
   }
   return result;
 }
@@ -215,7 +250,35 @@ evaluateFeature(const FeatureDefinition &feature,
   std::vector<double> results(numRegions, 0.0);
   std::vector<std::size_t> counts(numRegions, 0);
   std::vector<bool> initialized(numRegions, false);
+  std::vector<Quantile> quantiles;
+
+  bool is_quantile = false;
   const auto op = feature.reduction;
+
+  switch (op) {
+  case ReductionOp::FirstQuartile:
+    is_quantile = true;
+    for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
+      quantiles.push_back(Quantile(0.25));
+    }
+    break;
+  case ReductionOp::Median:
+    is_quantile = true;
+    for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
+      quantiles.push_back(Quantile(0.5));
+    }
+    break;
+  case ReductionOp::ThirdQuartile:
+    is_quantile = true;
+    for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
+      quantiles.push_back(Quantile(0.75));
+    }
+    break;
+  default:
+    // do nothing
+    is_quantile = false;
+  }
+
   for (std::size_t i = 0; i < concs.size(); ++i) {
     const auto region = voxelRegions[i];
     if (region == excludedRegion || region > numRegions) {
@@ -240,12 +303,22 @@ evaluateFeature(const FeatureDefinition &feature,
     case ReductionOp::Max:
       results[regionIndex] = std::max(results[regionIndex], c);
       break;
+    case ReductionOp::FirstQuartile:
+    case ReductionOp::Median:
+    case ReductionOp::ThirdQuartile:
+      quantiles[regionIndex].addData(c);
+      break;
     }
     ++counts[regionIndex];
   }
+
   for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
     if (op == ReductionOp::Average && counts[regionIndex] > 0) {
       results[regionIndex] /= static_cast<double>(counts[regionIndex]);
+    }
+
+    if (is_quantile) {
+      results[regionIndex] = quantiles[regionIndex].compute();
     }
   }
   return results;

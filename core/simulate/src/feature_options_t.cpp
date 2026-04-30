@@ -17,6 +17,11 @@ TEST_CASE("FeatureOptions",
     REQUIRE(simulate::toString(simulate::ReductionOp::Sum) == "Sum");
     REQUIRE(simulate::toString(simulate::ReductionOp::Min) == "Min");
     REQUIRE(simulate::toString(simulate::ReductionOp::Max) == "Max");
+    REQUIRE(simulate::toString(simulate::ReductionOp::FirstQuartile) ==
+            "First quartile");
+    REQUIRE(simulate::toString(simulate::ReductionOp::Median) == "Median");
+    REQUIRE(simulate::toString(simulate::ReductionOp::ThirdQuartile) ==
+            "Third quartile");
   }
   SECTION("RoiSettings serialization round-trip") {
     simulate::RoiSettings roi;
@@ -63,7 +68,7 @@ TEST_CASE("FeatureOptions",
     feat.roi.roiType = simulate::RoiType::AxisSlices;
     feat.roi.numRegions = 4;
     simulate::setRoiParameterInt(feat.roi, simulate::roi_param::axis, 2);
-    feat.reduction = simulate::ReductionOp::Max;
+    feat.reduction = simulate::ReductionOp::Median;
 
     std::stringstream ss;
     {
@@ -85,7 +90,7 @@ TEST_CASE("FeatureOptions",
     REQUIRE(feat2.roi.numRegions == 4);
     REQUIRE(simulate::getRoiParameterInt(feat2.roi, simulate::roi_param::axis,
                                          0) == 2);
-    REQUIRE(feat2.reduction == simulate::ReductionOp::Max);
+    REQUIRE(feat2.reduction == simulate::ReductionOp::Median);
   }
   SECTION("FeatureResult serialization round-trip") {
     simulate::FeatureResult res;

@@ -31,6 +31,12 @@ std::string toString(ReductionOp reduction) {
     return "Min";
   case Max:
     return "Max";
+  case FirstQuartile:
+    return "First quartile";
+  case Median:
+    return "Median";
+  case ThirdQuartile:
+    return "Third quartile";
   default:
     return "";
   }
