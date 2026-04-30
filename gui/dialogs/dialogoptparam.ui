@@ -30,6 +30,9 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="1" column="1">
       <widget class="QComboBox" name="cmbParameter">
+       <property name="toolTip">
+        <string>Select the model parameter that the optimizer may change</string>
+       </property>
        <property name="currentIndex">
         <number>-1</number>
        </property>
@@ -37,6 +40,9 @@
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="lblParameterLabel">
+       <property name="toolTip">
+        <string>Select the model parameter that the optimizer may change</string>
+       </property>
        <property name="text">
         <string>Parameter</string>
        </property>
@@ -47,6 +53,9 @@
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="lblLowerBoundLabel">
+       <property name="toolTip">
+        <string>Minimum allowed value for the selected optimization parameter</string>
+       </property>
        <property name="text">
         <string>Lower bound:</string>
        </property>
@@ -56,10 +65,17 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="txtLowerBound"/>
+      <widget class="QLineEdit" name="txtLowerBound">
+       <property name="toolTip">
+        <string>Minimum allowed value for the selected optimization parameter</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0">
       <widget class="QLabel" name="lblUpperBoundLabel">
+       <property name="toolTip">
+        <string>Maximum allowed value for the selected optimization parameter</string>
+       </property>
        <property name="text">
         <string>Upper bound:</string>
        </property>
@@ -69,7 +85,11 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QLineEdit" name="txtUpperBound"/>
+      <widget class="QLineEdit" name="txtUpperBound">
+       <property name="toolTip">
+        <string>Maximum allowed value for the selected optimization parameter</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
