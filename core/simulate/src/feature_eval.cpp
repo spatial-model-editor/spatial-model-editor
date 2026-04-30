@@ -179,7 +179,7 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
   Quantile quantile(0.0);
 
   switch (op) {
-  case ReductionOp::FirstQuantile:
+  case ReductionOp::FirstQuartile:
     is_quantile = true;
     quantile.setQuantile(0.25);
     break;
@@ -187,7 +187,7 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
     is_quantile = true;
     quantile.setQuantile(0.5);
     break;
-  case ReductionOp::ThirdQuantile:
+  case ReductionOp::ThirdQuartile:
     is_quantile = true;
     quantile.setQuantile(0.75);
     break;
@@ -219,9 +219,9 @@ double applyReduction(ReductionOp op, const std::vector<double> &concs,
     case ReductionOp::Max:
       result = std::max(result, c);
       break;
-    case ReductionOp::FirstQuantile:
+    case ReductionOp::FirstQuartile:
     case ReductionOp::Median:
-    case ReductionOp::ThirdQuantile:
+    case ReductionOp::ThirdQuartile:
       quantile.addData(c);
       break;
     default:
@@ -256,7 +256,7 @@ evaluateFeature(const FeatureDefinition &feature,
   const auto op = feature.reduction;
 
   switch (op) {
-  case ReductionOp::FirstQuantile:
+  case ReductionOp::FirstQuartile:
     is_quantile = true;
     for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
       quantiles.push_back(Quantile(0.25));
@@ -268,7 +268,7 @@ evaluateFeature(const FeatureDefinition &feature,
       quantiles.push_back(Quantile(0.5));
     }
     break;
-  case ReductionOp::ThirdQuantile:
+  case ReductionOp::ThirdQuartile:
     is_quantile = true;
     for (std::size_t regionIndex = 0; regionIndex < numRegions; ++regionIndex) {
       quantiles.push_back(Quantile(0.75));
@@ -303,9 +303,9 @@ evaluateFeature(const FeatureDefinition &feature,
     case ReductionOp::Max:
       results[regionIndex] = std::max(results[regionIndex], c);
       break;
-    case ReductionOp::FirstQuantile:
+    case ReductionOp::FirstQuartile:
     case ReductionOp::Median:
-    case ReductionOp::ThirdQuantile:
+    case ReductionOp::ThirdQuartile:
       quantiles[regionIndex].addData(c);
       break;
     }

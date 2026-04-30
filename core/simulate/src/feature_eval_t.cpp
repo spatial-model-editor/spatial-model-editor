@@ -106,11 +106,11 @@ TEST_CASE("FeatureEval",
   SECTION("applyReduction: quantiles") {
     std::vector<double> concs = {8.0, 2.0, 4.0, 10.0, 6.0};
     std::vector<std::size_t> regions = {1, 1, 1, 1, 1};
-    REQUIRE(simulate::applyReduction(simulate::ReductionOp::FirstQuantile,
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::FirstQuartile,
                                      concs, regions, 1) == dbl_approx(4.0));
     REQUIRE(simulate::applyReduction(simulate::ReductionOp::Median, concs,
                                      regions, 1) == dbl_approx(6.0));
-    REQUIRE(simulate::applyReduction(simulate::ReductionOp::ThirdQuantile,
+    REQUIRE(simulate::applyReduction(simulate::ReductionOp::ThirdQuartile,
                                      concs, regions, 1) == dbl_approx(8.0));
   }
 
@@ -452,7 +452,7 @@ TEST_CASE("FeatureEval",
     std::vector<double> concs = {8.0, 2.0, 4.0, 10.0, 6.0};
     std::vector<std::size_t> regions = {1, 1, 1, 1, 1};
 
-    feat.reduction = simulate::ReductionOp::FirstQuantile;
+    feat.reduction = simulate::ReductionOp::FirstQuartile;
     auto results = simulate::evaluateFeature(feat, concs, regions);
     REQUIRE(results.size() == 1);
     REQUIRE(results[0] == dbl_approx(4.0));
@@ -462,7 +462,7 @@ TEST_CASE("FeatureEval",
     REQUIRE(results.size() == 1);
     REQUIRE(results[0] == dbl_approx(6.0));
 
-    feat.reduction = simulate::ReductionOp::ThirdQuantile;
+    feat.reduction = simulate::ReductionOp::ThirdQuartile;
     results = simulate::evaluateFeature(feat, concs, regions);
     REQUIRE(results.size() == 1);
     REQUIRE(results[0] == dbl_approx(8.0));

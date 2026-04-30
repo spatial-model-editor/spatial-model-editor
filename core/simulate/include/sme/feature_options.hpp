@@ -24,9 +24,9 @@ enum class ReductionOp {
   Sum,
   Min,
   Max,
-  FirstQuantile,
+  FirstQuartile,
   Median,
-  ThirdQuantile,
+  ThirdQuartile,
 };
 
 /**

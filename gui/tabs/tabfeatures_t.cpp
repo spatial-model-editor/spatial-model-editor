@@ -168,7 +168,7 @@ TEST_CASE("TabFeatures", "[gui/tabs/features][gui/tabs][gui][features]") {
 
     cmbReduction->setCurrentIndex(4);
     REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
-            sme::simulate::ReductionOp::FirstQuantile);
+            sme::simulate::ReductionOp::FirstQuartile);
 
     cmbReduction->setCurrentIndex(5);
     REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
@@ -176,7 +176,7 @@ TEST_CASE("TabFeatures", "[gui/tabs/features][gui/tabs][gui][features]") {
 
     cmbReduction->setCurrentIndex(6);
     REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
-            sme::simulate::ReductionOp::ThirdQuantile);
+            sme::simulate::ReductionOp::ThirdQuartile);
 
     // switch to image ROI: import button enabled, labels remain editable
     cmbRoiType->setCurrentIndex(cmbRoiType->findText("Image"));

@@ -17,10 +17,10 @@ TEST_CASE("FeatureOptions",
     REQUIRE(simulate::toString(simulate::ReductionOp::Sum) == "Sum");
     REQUIRE(simulate::toString(simulate::ReductionOp::Min) == "Min");
     REQUIRE(simulate::toString(simulate::ReductionOp::Max) == "Max");
-    REQUIRE(simulate::toString(simulate::ReductionOp::FirstQuantile) ==
+    REQUIRE(simulate::toString(simulate::ReductionOp::FirstQuartile) ==
             "First quantile");
     REQUIRE(simulate::toString(simulate::ReductionOp::Median) == "Median");
-    REQUIRE(simulate::toString(simulate::ReductionOp::ThirdQuantile) ==
+    REQUIRE(simulate::toString(simulate::ReductionOp::ThirdQuartile) ==
             "Third quantile");
   }
   SECTION("RoiSettings serialization round-trip") {

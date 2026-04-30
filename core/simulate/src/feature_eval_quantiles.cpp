@@ -7,13 +7,7 @@
 namespace sme::simulate {
 
 // constructor
-Quantile::Quantile(double q) {
-  if (q < 0.0 || q > 1.0) {
-    throw std::invalid_argument("Quantile must be between 0 and 1");
-  }
-
-  _quantile_value = q;
-}
+Quantile::Quantile(double q) { this->setQuantile(q); }
 
 // helpers
 auto Quantile::setQuantile(double q) -> void {
