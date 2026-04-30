@@ -286,7 +286,7 @@ TEST_CASE("DUNE: function 2d - large triangles",
 
 TEST_CASE("DUNE: function 2d - more models, small triangles",
           "[core/simulate/dunefunction][core/"
-          "simulate][core][dunefunction][expensive][dune][2d]") {
+          "simulate][core][dunefunction][dune][2d]") {
   for (auto exampleModel : {Mod::ABtoC, Mod::VerySimpleModel,
                             Mod::LiverSimplified, Mod::LiverCells}) {
     CAPTURE(exampleModel);
@@ -325,7 +325,7 @@ TEST_CASE("DUNE: function 3d", "[core/simulate/dunefunction][core/"
 
 TEST_CASE("DUNE: function 3d - small cell volumes",
           "[core/simulate/dunefunction][core/"
-          "simulate][expensive][core][dunefunction][dune][3d]") {
+          "simulate][core][dunefunction][dune][3d]") {
   for (auto exampleModel :
        {Mod::SingleCompartmentDiffusion3D, Mod::VerySimpleModel3D}) {
     CAPTURE(exampleModel);

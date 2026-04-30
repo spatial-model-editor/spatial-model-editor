@@ -147,6 +147,13 @@ static void addCompartment(
         &diffusionConstantArrays,
     std::unordered_map<std::string, std::vector<std::string>> &speciesNames,
     const QString &compartmentId, std::size_t &simDataCompartmentIndex) {
+  struct MembraneOutflowData {
+    QString otherCompartmentId{};
+    std::vector<std::string> duneSpeciesNames{};
+    std::vector<std::string> rhs{};
+    std::vector<std::vector<std::string>> jacobian{};
+  };
+
   const auto &lengthUnit = model.getUnits().getLength();
   const auto &volumeUnit = model.getUnits().getVolume();
   double volOverL3{model::getVolOverL3(lengthUnit, volumeUnit)};
@@ -204,13 +211,54 @@ static void addCompartment(
     ini.addSection("model", "scalar_field", dummySpeciesName);
     ini.addValue("compartment", compartmentId);
     ini.addValue("initial.expression", "0");
-    // todo: this reaction expression is a hack to avoid timestep -> 0
-    ini.addValue("reaction.expression", "0.1");
-    ini.addValue(
-        QString("reaction.jacobian.%1.expression").arg(dummySpeciesName), "0");
     ini.addValue("storage.expression", "1");
     return;
   }
+
+  std::vector<MembraneOutflowData> membraneOutflows;
+  for (const auto &membrane : model.getMembranes().getMembranes()) {
+    const QString compartmentA = membrane.getCompartmentA()->getId().c_str();
+    const QString compartmentB = membrane.getCompartmentB()->getId().c_str();
+    QString otherCompartmentId;
+    if (compartmentA == compartmentId) {
+      otherCompartmentId = compartmentB;
+    } else if (compartmentB == compartmentId) {
+      otherCompartmentId = compartmentA;
+    }
+    if (otherCompartmentId.isEmpty()) {
+      continue;
+    }
+
+    auto membraneReactions = common::toStdString(
+        model.getReactions().getIds(membrane.getId().c_str()));
+    auto otherSimulatedSpecies = getSimulatedSpecies(model, otherCompartmentId);
+    auto otherDuneSpeciesNames =
+        makeValidDuneSpeciesNames(otherSimulatedSpecies);
+
+    auto membraneSpecies = simulatedSpecies;
+    membraneSpecies.insert(membraneSpecies.end(),
+                           otherSimulatedSpecies.cbegin(),
+                           otherSimulatedSpecies.cend());
+    auto membraneDuneSpecies = duneSpeciesNames;
+    membraneDuneSpecies.insert(membraneDuneSpecies.end(),
+                               otherDuneSpeciesNames.cbegin(),
+                               otherDuneSpeciesNames.cend());
+
+    PdeScaleFactors membraneScaleFactors;
+    membraneScaleFactors.species = volOverL3;
+    membraneScaleFactors.reaction = -1.0;
+    SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
+                membraneScaleFactors.species);
+
+    Pde membranePde(&model, membraneSpecies, membraneReactions,
+                    membraneDuneSpecies, membraneScaleFactors,
+                    extraReactionVars, relabelledExtraReactionVars,
+                    substitutions);
+    membraneOutflows.push_back(
+        {otherCompartmentId, std::move(membraneDuneSpecies),
+         membranePde.getRHS(), membranePde.getJacobian()});
+  }
+
   for (std::size_t i = 0; i < nSpecies; ++i) {
     QString name{simulatedSpecies[i].c_str()};
     QString duneName{duneSpeciesNames[i].c_str()};
@@ -340,51 +388,17 @@ static void addCompartment(
     }
 
     // membrane flux terms
-    // todo: should collect membranes outside of this loop over species!
-    for (const auto &membrane : model.getMembranes().getMembranes()) {
-      auto cA = membrane.getCompartmentA()->getId().c_str();
-      auto cB = membrane.getCompartmentB()->getId().c_str();
-      QString otherCompId;
-      if (cA == compartmentId) {
-        otherCompId = cB;
-      } else if (cB == compartmentId) {
-        otherCompId = cA;
-      }
-      if (!otherCompId.isEmpty()) {
-        QString membraneID = membrane.getId().c_str();
-        auto mReacs =
-            common::toStdString(model.getReactions().getIds(membraneID));
-        auto simulatedSpeciesOther = getSimulatedSpecies(model, otherCompId);
-        auto duneSpeciesNamesOther =
-            makeValidDuneSpeciesNames(simulatedSpeciesOther);
-
-        auto mSpecies = simulatedSpecies;
-        for (const auto &s : simulatedSpeciesOther) {
-          mSpecies.push_back(s);
-        }
-        auto mDuneSpecies = duneSpeciesNames;
-        for (const auto &s : duneSpeciesNamesOther) {
-          mDuneSpecies.push_back(s);
-        }
-        PdeScaleFactors mScaleFactors;
-        mScaleFactors.species = volOverL3;
-        mScaleFactors.reaction = -1.0;
-        SPDLOG_INFO("  - multiplying species by [vol]/[length]^3 = {}",
-                    mScaleFactors.species);
-
-        Pde pdeBcs(&model, mSpecies, mReacs, mDuneSpecies, mScaleFactors,
-                   extraReactionVars, relabelledExtraReactionVars,
-                   substitutions);
-        // reaction expression
-        ini.addValue(QString("outflow.%1.expression").arg(otherCompId),
-                     pdeBcs.getRHS()[i].c_str());
-        // reaction expression jacobian
-        for (std::size_t j = 0; j < mDuneSpecies.size(); ++j) {
-          QString lhs = QString("outflow.%1.jacobian.%2.expression")
-                            .arg(otherCompId, mDuneSpecies[j].c_str());
-          QString rhs = pdeBcs.getJacobian()[i][j].c_str();
-          ini.addValue(lhs, rhs);
-        }
+    for (const auto &membraneOutflow : membraneOutflows) {
+      ini.addValue(QString("outflow.%1.expression")
+                       .arg(membraneOutflow.otherCompartmentId),
+                   membraneOutflow.rhs[i].c_str());
+      for (std::size_t j = 0; j < membraneOutflow.duneSpeciesNames.size();
+           ++j) {
+        QString lhs = QString("outflow.%1.jacobian.%2.expression")
+                          .arg(membraneOutflow.otherCompartmentId,
+                               membraneOutflow.duneSpeciesNames[j].c_str());
+        QString rhs = membraneOutflow.jacobian[i][j].c_str();
+        ini.addValue(lhs, rhs);
       }
     }
   }

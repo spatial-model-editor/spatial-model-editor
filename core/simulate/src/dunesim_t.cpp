@@ -1,9 +1,13 @@
 #include "catch_wrapper.hpp"
+#include "dune_headers.hpp"
+#include "dunegrid.hpp"
 #include "dunesim.hpp"
 #include "model_test_utils.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "sme/simulate_options.hpp"
 #include "sme/utils.hpp"
+#include <array>
 #include <locale>
 #include <optional>
 
@@ -32,6 +36,31 @@ std::optional<std::locale> getGermanLocale() {
   return std::nullopt;
 }
 
+using HostGrid2d = Dune::UGGrid<2>;
+using MDGTraits2d = Dune::mdgrid::FewSubDomainsTraits<2, 64>;
+
+template <typename Grid>
+std::vector<double> getAllElementCoordinates(Grid *grid,
+                                             unsigned int subdomain) {
+  std::vector<double> v;
+  auto gridView = grid->subDomain(subdomain).leafGridView();
+  for (const auto &e : elements(gridView)) {
+    for (int i = 0; i < e.geometry().corners(); ++i) {
+      for (double c : e.geometry().corner(i)) {
+        v.push_back(c);
+      }
+    }
+  }
+  return v;
+}
+
+std::array<std::vector<double>, 2>
+getSubdomainElementCoordinates(const mesh::Mesh2d &mesh) {
+  auto duneGrid = simulate::makeDuneGrid<HostGrid2d, MDGTraits2d>(mesh);
+  return {getAllElementCoordinates(duneGrid.first.get(), 0),
+          getAllElementCoordinates(duneGrid.first.get(), 1)};
+}
+
 } // namespace
 
 TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
@@ -44,6 +73,8 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     std::vector<std::string> comps{"comp"};
     simulate::DuneSim duneSim(m, comps);
     REQUIRE(duneSim.errorMessage().empty());
+    duneSim.run(0.05, 100e3, {});
+    REQUIRE(duneSim.errorMessage().empty());
   }
   SECTION(
       "Compartment in model has no species, but membrane contains reactions") {
@@ -53,6 +84,14 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     m.getSpecies().setInitialConcentration("B_c2", 0.1);
     auto col1{m.getCompartments().getColor("c1")};
     auto col2{m.getCompartments().getColor("c2")};
+    auto &duneOptions{m.getSimulationSettings().options.dune};
+    duneOptions.maxThreads = 1;
+    duneOptions.dt = 0.05;
+    duneOptions.minDt = 0.05;
+    duneOptions.maxDt = 0.05;
+    duneOptions.newtonRelErr = 1e-14;
+    duneOptions.newtonAbsErr = 1e-14;
+    duneOptions.linearSolver = "BiCGSTAB";
     // remove all species from nucleus, but keep compartment in model
     m.getSpecies().remove("A_c3");
     m.getSpecies().remove("B_c3");
@@ -66,6 +105,14 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(2, 9999);
     REQUIRE(maxPoints.size() == 3);
     REQUIRE(maxAreas.size() == 3);
+    const auto *meshWithEmptyCompartment{m.getGeometry().getMesh2d()};
+    REQUIRE(meshWithEmptyCompartment != nullptr);
+    REQUIRE(meshWithEmptyCompartment->isValid());
+    const std::array<std::size_t, 2> triangleCountsWithEmptyCompartment{
+        meshWithEmptyCompartment->getTriangleIndices()[0].size(),
+        meshWithEmptyCompartment->getTriangleIndices()[1].size()};
+    const auto elementCoordinatesWithEmptyCompartment{
+        getSubdomainElementCoordinates(*meshWithEmptyCompartment)};
     simulate::DuneSim duneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
       duneSim.run(0.05, 100e3, {});
@@ -88,6 +135,28 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
     m.getGeometry().getMesh2d()->setBoundaryMaxPoints(2, maxPoints[2]);
     m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(0, maxAreas[0]);
     m.getGeometry().getMesh2d()->setCompartmentMaxTriangleArea(1, maxAreas[1]);
+    const auto *meshWithoutEmptyCompartment{m.getGeometry().getMesh2d()};
+    REQUIRE(meshWithoutEmptyCompartment != nullptr);
+    REQUIRE(meshWithoutEmptyCompartment->isValid());
+    const auto &triangleIndicesWithoutEmptyCompartment{
+        meshWithoutEmptyCompartment->getTriangleIndices()};
+    REQUIRE(triangleIndicesWithoutEmptyCompartment.size() == 2);
+    const auto elementCoordinatesWithoutEmptyCompartment{
+        getSubdomainElementCoordinates(*meshWithoutEmptyCompartment)};
+    for (std::size_t iComp = 0; iComp < 2; ++iComp) {
+      CAPTURE(iComp);
+      REQUIRE(triangleCountsWithEmptyCompartment[iComp] ==
+              triangleIndicesWithoutEmptyCompartment[iComp].size());
+      REQUIRE(elementCoordinatesWithEmptyCompartment[iComp].size() ==
+              elementCoordinatesWithoutEmptyCompartment[iComp].size());
+      for (std::size_t i = 0;
+           i < elementCoordinatesWithEmptyCompartment[iComp].size(); ++i) {
+        CAPTURE(i);
+        REQUIRE(
+            elementCoordinatesWithEmptyCompartment[iComp][i] ==
+            dbl_approx(elementCoordinatesWithoutEmptyCompartment[iComp][i]));
+      }
+    }
     comps.pop_back();
     simulate::DuneSim newDuneSim(m, comps);
     for (std::size_t i = 0; i < 2; ++i) {
@@ -107,8 +176,7 @@ TEST_CASE("DuneSim", "[core/simulate/dunesim][core/"
       }
       CAPTURE(sum);
       CAPTURE(diff);
-      // todo: why did this increase from 1e-10 for dune-copasi 2?
-      REQUIRE(diff / sum < 1e-4);
+      REQUIRE(diff / sum < 1e-13);
     }
   }
   SECTION("Callback is provided and used to stop simulation") {

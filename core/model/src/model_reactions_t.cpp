@@ -371,6 +371,33 @@ TEST_CASE("SBML reactions",
     REQUIRE(m.getReactions().getIds(locations[4]).size() == 2);
     REQUIRE(m.getReactions().getIds(locations[5]).size() == 0);
   }
+  SECTION("Deleting a compartment removes surviving reactions in deleted "
+          "locations") {
+    auto m{getExampleModel(Mod::VerySimpleModel)};
+    auto &reactions{m.getReactions()};
+    reactions.add("orphaned membrane reaction", "c1_c2_membrane", "1");
+    reactions.add("orphaned compartment reaction", "c1", "1");
+    const auto membraneReactionId{reactions.getIds("c1_c2_membrane").back()};
+    const auto compartmentReactionId{reactions.getIds("c1").back()};
+    REQUIRE(reactions.getLocation(membraneReactionId) == "c1_c2_membrane");
+    REQUIRE(reactions.getLocation(compartmentReactionId) == "c1");
+
+    m.getCompartments().remove("c1");
+
+    // These reactions do not involve any deleted species, so they need to be
+    // removed because their locations are being deleted.
+    REQUIRE(reactions.getLocation(membraneReactionId).isEmpty());
+    REQUIRE(reactions.getLocation(compartmentReactionId).isEmpty());
+    REQUIRE_FALSE(
+        reactions.getIds("c1_c2_membrane").contains(membraneReactionId));
+    REQUIRE_FALSE(reactions.getIds("c1").contains(compartmentReactionId));
+
+    auto doc{toSbmlDoc(m)};
+    REQUIRE(doc->getModel()->getReaction(membraneReactionId.toStdString()) ==
+            nullptr);
+    REQUIRE(doc->getModel()->getReaction(compartmentReactionId.toStdString()) ==
+            nullptr);
+  }
   SECTION("SBML Modifer Species: compartment reaction") {
     // note: these are only exported to make the SBML valid, we don't use them
     auto m{getExampleModel(Mod::LiverSimplified)};
