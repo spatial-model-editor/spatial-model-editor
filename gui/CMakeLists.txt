@@ -51,6 +51,7 @@ target_link_libraries(
          Qt::OpenGLWidgets
          Qt::OpenGL
          ${VTK_LIBRARIES})
+target_compile_definitions(gui PRIVATE ${SME_QT_NO_KEYWORD_DEFS})
 
 vtk_module_autoinit(
   TARGETS

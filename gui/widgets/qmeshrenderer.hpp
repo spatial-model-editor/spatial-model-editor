@@ -35,7 +35,7 @@ public:
   void setRenderMode(RenderMode mode);
   void clear();
 
-signals:
+Q_SIGNALS:
   void mouseClicked(int compartmentIndex);
 
 protected:

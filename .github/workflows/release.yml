@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: spatial-model-editor/setup-ci@2026.03.30
         with:
-          sme_deps: '2026.04.17'
+          sme_deps: '2026.04.30'
           cache_id: ${{ matrix.target }}
       - uses: actions/checkout@v6
         with:

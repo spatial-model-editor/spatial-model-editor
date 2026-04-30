@@ -30,9 +30,6 @@
 #endif
 #endif
 
-// Qt defines emit keyword which interferes with a tbb emit() function
-#undef emit
-
 #include <dune-copasi-config.hh>
 
 #include <dune/copasi/common/stepper.hh>
@@ -58,8 +55,6 @@
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/parametertree.hh>
 #include <dune/common/parametertreeparser.hh>
-
-#define emit // restore the Qt empty definition of "emit"
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop

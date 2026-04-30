@@ -115,13 +115,13 @@ void QLabelMouseTracker::mousePressEvent(QMouseEvent *ev) {
       maskIndex = static_cast<int>(
           maskImage[currentVoxel.z].pixel(currentVoxel.p) & RGB_MASK);
     }
-    emit mouseClicked(color, currentVoxel);
+    Q_EMIT mouseClicked(color, currentVoxel);
   }
 }
 
 void QLabelMouseTracker::mouseMoveEvent(QMouseEvent *ev) {
   if (setCurrentPixel(ev->pos())) {
-    emit mouseOver(currentVoxel);
+    Q_EMIT mouseOver(currentVoxel);
   }
 }
 
@@ -132,7 +132,7 @@ void QLabelMouseTracker::mouseDoubleClickEvent(QMouseEvent *ev) {
 }
 
 void QLabelMouseTracker::wheelEvent(QWheelEvent *ev) {
-  emit mouseWheelEvent(ev);
+  Q_EMIT mouseWheelEvent(ev);
 }
 
 void QLabelMouseTracker::resizeEvent(QResizeEvent *event) {

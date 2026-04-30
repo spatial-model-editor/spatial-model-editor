@@ -153,7 +153,7 @@ void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
           qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
                imageDataArray->GetValue(idx + 2));
       SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", x, y, z, col);
-      emit mouseClicked(col, sme::common::Voxel{x, y, z});
+      Q_EMIT mouseClicked(col, sme::common::Voxel{x, y, z});
     }
   }
 }
