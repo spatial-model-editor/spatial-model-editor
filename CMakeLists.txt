@@ -135,6 +135,7 @@ get_target_property(
   Qt6::Core
   LOCATION)
 message(STATUS "Found QtCore: ${QtCore_location}")
+set(SME_QT_NO_KEYWORD_DEFS QT_NO_SIGNALS_SLOTS_KEYWORDS QT_NO_EMIT)
 
 # enable Qt utils: moc, uic, rcc
 set(CMAKE_AUTOMOC ON)

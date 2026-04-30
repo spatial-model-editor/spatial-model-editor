@@ -31,7 +31,7 @@ public:
   void setHorizontalSlice(int y);
   void setVerticalSlice(int x);
 
-signals:
+Q_SIGNALS:
   void sliceDrawn(QPoint start, QPoint end);
   void mouseOver(QPoint point);
   void mouseDown(QPoint point);

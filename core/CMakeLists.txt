@@ -227,7 +227,10 @@ target_link_libraries(
          Qt::Core
          Pagmo::pagmo)
 
-target_compile_definitions(core PUBLIC ${SME_EXTRA_CORE_DEFS})
+target_compile_definitions(
+  core
+  PRIVATE ${SME_QT_NO_KEYWORD_DEFS}
+  PUBLIC ${SME_EXTRA_CORE_DEFS})
 
 if(BUILD_TESTING)
   target_link_libraries(

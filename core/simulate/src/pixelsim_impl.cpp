@@ -12,19 +12,10 @@
 #include <cmath>
 #include <cstdlib>
 #include <memory>
+#include <oneapi/tbb/global_control.h>
+#include <oneapi/tbb/parallel_for.h>
+#include <oneapi/tbb/tick_count.h>
 #include <utility>
-// Qt defines emit keyword which interferes with a tbb emit() function
-#ifdef emit
-#undef emit
-#include <oneapi/tbb/global_control.h>
-#include <oneapi/tbb/parallel_for.h>
-#include <oneapi/tbb/tick_count.h>
-#define emit // restore the Qt empty definition of "emit"
-#else
-#include <oneapi/tbb/global_control.h>
-#include <oneapi/tbb/parallel_for.h>
-#include <oneapi/tbb/tick_count.h>
-#endif
 
 namespace sme::simulate {
 

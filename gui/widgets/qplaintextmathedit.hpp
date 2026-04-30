@@ -42,7 +42,7 @@ public:
   std::string getDescription(const std::string &displayName) const;
   void updateCompleter();
 
-signals:
+Q_SIGNALS:
   void mathChanged(const QString &math, bool valid,
                    const QString &errorMessage);
 

@@ -25,7 +25,7 @@ public:
   void renderOnClippingPaneChange(SmeVtkWidget *smeVtkWidget);
   inline vtkPlane *getClippingPlane() { return clippingPlane.Get(); }
 
-signals:
+Q_SIGNALS:
   void mouseClicked(QRgb col, sme::common::Voxel voxel);
 
 protected:

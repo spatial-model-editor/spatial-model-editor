@@ -194,7 +194,7 @@ void QMeshRenderer::mouseReleaseEvent(QMouseEvent *ev) {
       auto compartmentIndex =
           static_cast<int>(std::distance(actors.begin(), iter));
       SPDLOG_TRACE("Click on compartmentIndex {}", compartmentIndex);
-      emit mouseClicked(compartmentIndex);
+      Q_EMIT mouseClicked(compartmentIndex);
     }
   }
 }

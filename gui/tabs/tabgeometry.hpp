@@ -33,7 +33,7 @@ public:
   void enableTabs();
   void invertYAxis(bool enable);
 
-signals:
+Q_SIGNALS:
   void invalidModelOrNoGeometryImage();
   void modelGeometryChanged();
 
