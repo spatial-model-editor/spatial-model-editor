@@ -36,6 +36,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Remove the selected optimization target</string>
+       </property>
        <property name="text">
         <string>Remove target</string>
        </property>
@@ -43,6 +46,9 @@
      </item>
      <item row="7" column="4" colspan="2">
       <widget class="QPushButton" name="btnRemoveParameter">
+       <property name="toolTip">
+        <string>Remove the selected optimization parameter</string>
+       </property>
        <property name="text">
         <string>Remove parameter</string>
        </property>
@@ -50,6 +56,9 @@
      </item>
      <item row="7" column="2" colspan="2">
       <widget class="QPushButton" name="btnEditParameter">
+       <property name="toolTip">
+        <string>Edit the selected optimization parameter</string>
+       </property>
        <property name="text">
         <string>Edit parameter</string>
        </property>
@@ -62,6 +71,9 @@
          <horstretch>1</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Edit the selected optimization target</string>
        </property>
        <property name="text">
         <string>Edit target</string>
@@ -76,6 +88,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Add a new optimization target to fit</string>
+       </property>
        <property name="text">
         <string>Add target</string>
        </property>
@@ -83,19 +98,33 @@
      </item>
      <item row="7" column="0" colspan="2">
       <widget class="QPushButton" name="btnAddParameter">
+       <property name="toolTip">
+        <string>Add a new optimization parameter to fit</string>
+       </property>
        <property name="text">
         <string>Add parameter</string>
        </property>
       </widget>
      </item>
      <item row="6" column="0" colspan="6">
-      <widget class="QListWidget" name="lstParameters"/>
+      <widget class="QListWidget" name="lstParameters">
+       <property name="toolTip">
+        <string>Parameters that the optimizer is allowed to change</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0" colspan="6">
-      <widget class="QListWidget" name="lstTargets"/>
+      <widget class="QListWidget" name="lstTargets">
+       <property name="toolTip">
+        <string>Targets that the optimizer will try to match</string>
+       </property>
+      </widget>
      </item>
      <item row="5" column="0" colspan="6">
       <widget class="QLabel" name="lblParametersLabel">
+       <property name="toolTip">
+        <string>Parameters that the optimizer is allowed to change</string>
+       </property>
        <property name="text">
         <string>Parameters:</string>
        </property>
@@ -108,6 +137,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Set how many candidate parameter sets each thread evolves</string>
        </property>
        <property name="text">
         <string>Population per thread:</string>
@@ -125,6 +157,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Set how many candidate parameter sets each thread evolves</string>
+       </property>
        <property name="minimum">
         <number>2</number>
        </property>
@@ -140,6 +175,9 @@
          <horstretch>0</horstretch>
          <verstretch>0</verstretch>
         </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Set the number of optimization threads to run in parallel</string>
        </property>
        <property name="whatsThis">
         <string>The number of CPU threads to use</string>
@@ -160,6 +198,9 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Set the number of optimization threads to run in parallel</string>
+       </property>
        <property name="text">
         <string>Threads:</string>
        </property>
@@ -176,10 +217,16 @@
          <verstretch>0</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Select the optimization algorithm</string>
+       </property>
       </widget>
      </item>
      <item row="0" column="0" colspan="6">
       <widget class="QLabel" name="lblAlgorithmLabel">
+       <property name="toolTip">
+        <string>Select the optimization algorithm</string>
+       </property>
        <property name="text">
         <string>Algorithm:</string>
        </property>
@@ -190,6 +237,9 @@
      </item>
      <item row="2" column="0" colspan="6">
       <widget class="QLabel" name="lblTargetsLabel">
+       <property name="toolTip">
+        <string>Targets that the optimizer will try to match</string>
+       </property>
        <property name="text">
         <string>Targets:</string>
        </property>

@@ -30,6 +30,9 @@
     <layout class="QGridLayout" name="gridLayout">
      <item row="0" column="0">
       <widget class="QLabel" name="lblSpeciesLabel">
+       <property name="toolTip">
+        <string>Select the species whose values will be matched</string>
+       </property>
        <property name="text">
         <string>Species:</string>
        </property>
@@ -40,6 +43,9 @@
      </item>
      <item row="0" column="1">
       <widget class="QComboBox" name="cmbSpecies">
+       <property name="toolTip">
+        <string>Select the species whose values will be matched</string>
+       </property>
        <property name="currentIndex">
         <number>-1</number>
        </property>
@@ -47,6 +53,9 @@
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="lblCostTypeLabel">
+       <property name="toolTip">
+        <string>Choose whether to match concentration, rate of change, or a feature</string>
+       </property>
        <property name="text">
         <string>Target type:</string>
        </property>
@@ -57,6 +66,9 @@
      </item>
      <item row="1" column="1">
       <widget class="QComboBox" name="cmbCostType">
+       <property name="toolTip">
+        <string>Choose whether to match concentration, rate of change, or a feature</string>
+       </property>
        <item>
         <property name="text">
          <string>Concentration</string>
@@ -71,6 +83,9 @@
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="lblSimulationTimeLabel">
+       <property name="toolTip">
+        <string>Simulation time at which this target is evaluated</string>
+       </property>
        <property name="text">
         <string>Simulation time:</string>
        </property>
@@ -80,7 +95,11 @@
       </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="txtSimulationTime"/>
+      <widget class="QLineEdit" name="txtSimulationTime">
+       <property name="toolTip">
+        <string>Simulation time at which this target is evaluated</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="1">
       <widget class="QLabelMouseTracker" name="lblImage" native="true">
@@ -90,9 +109,12 @@
          <verstretch>1</verstretch>
         </sizepolicy>
        </property>
+       <property name="toolTip">
+        <string>Preview of the target values used for this optimization target</string>
+       </property>
        <property name="whatsThis">
-        <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+        <string>&lt;h4&gt;Target values preview&lt;/h4&gt;
+&lt;p&gt;Preview of the image data that defines the selected optimization target.&lt;/p&gt;</string>
        </property>
        <property name="text" stdset="0">
         <string/>
@@ -101,6 +123,9 @@
      </item>
      <item row="4" column="1">
       <widget class="QPushButton" name="btnEditTargetValues">
+       <property name="toolTip">
+        <string>Edit the target values image used for this optimization target</string>
+       </property>
        <property name="text">
         <string>Edit Concentration</string>
        </property>
@@ -108,6 +133,9 @@
      </item>
      <item row="5" column="0">
       <widget class="QLabel" name="lblDiffTypeLabel">
+       <property name="toolTip">
+        <string>Choose whether differences are measured absolutely or relatively</string>
+       </property>
        <property name="text">
         <string>Difference type:</string>
        </property>
@@ -118,6 +146,9 @@
      </item>
      <item row="5" column="1">
       <widget class="QComboBox" name="cmbDiffType">
+       <property name="toolTip">
+        <string>Choose whether differences are measured absolutely or relatively</string>
+       </property>
        <item>
         <property name="text">
          <string>Absolute</string>
@@ -132,6 +163,9 @@
      </item>
      <item row="6" column="0">
       <widget class="QLabel" name="lblWeightLabel">
+       <property name="toolTip">
+        <string>Weight applied to this target in the overall optimization cost</string>
+       </property>
        <property name="text">
         <string>Weight:</string>
        </property>
@@ -141,10 +175,17 @@
       </widget>
      </item>
      <item row="6" column="1">
-      <widget class="QLineEdit" name="txtWeight"/>
+      <widget class="QLineEdit" name="txtWeight">
+       <property name="toolTip">
+        <string>Weight applied to this target in the overall optimization cost</string>
+       </property>
+      </widget>
      </item>
      <item row="7" column="0">
       <widget class="QLabel" name="lblEpsilonLabel">
+       <property name="toolTip">
+        <string>Small value used when computing relative differences</string>
+       </property>
        <property name="text">
         <string>Epsilon:</string>
        </property>
@@ -154,10 +195,17 @@
       </widget>
      </item>
      <item row="7" column="1">
-      <widget class="QLineEdit" name="txtEpsilon"/>
+      <widget class="QLineEdit" name="txtEpsilon">
+       <property name="toolTip">
+        <string>Small value used when computing relative differences</string>
+       </property>
+      </widget>
      </item>
      <item row="3" column="0" rowspan="2">
       <widget class="QLabel" name="lblTargetValuesLabel">
+       <property name="toolTip">
+        <string>Preview of the target values used for this optimization target</string>
+       </property>
        <property name="text">
         <string>Concentration:</string>
        </property>

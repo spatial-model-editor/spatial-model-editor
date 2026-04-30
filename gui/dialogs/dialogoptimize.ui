@@ -42,12 +42,15 @@
        <widget class="QWidget" name="layoutWidget">
         <layout class="QGridLayout" name="gridLayout">
          <item row="1" column="3">
-          <widget class="QComboBox" name="cmbMode">
+         <widget class="QComboBox" name="cmbMode">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Choose whether the selected target is shown in 2D or 3D</string>
            </property>
           </widget>
          </item>
@@ -58,6 +61,9 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Choose whether the selected target is shown in 2D or 3D</string>
            </property>
            <property name="text">
             <string>Plotting mode:</string>
@@ -71,6 +77,9 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>Select which optimization target to display</string>
            </property>
           </widget>
          </item>
@@ -87,6 +96,9 @@
              <width>0</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>Switch between value and difference views</string>
            </property>
            <property name="currentIndex">
             <number>0</number>
@@ -110,6 +122,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Reference target values for the selected optimization target</string>
+               </property>
                <property name="text">
                 <string>Target values:</string>
                </property>
@@ -129,9 +144,12 @@
                  <height>100</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>2D preview of the selected optimization target values</string>
+               </property>
                <property name="whatsThis">
-                <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+                <string>&lt;h4&gt;Optimization target values&lt;/h4&gt;
+&lt;p&gt;Preview of the target values that the optimizer is trying to match for the selected target.&lt;/p&gt;</string>
                </property>
                <property name="text" stdset="0">
                 <string/>
@@ -155,6 +173,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>3D preview of the selected optimization target values</string>
+               </property>
               </widget>
              </item>
              <item>
@@ -164,6 +185,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Current best values produced by the optimizer</string>
                </property>
                <property name="text">
                 <string>Values using current best parameters:</string>
@@ -187,9 +211,12 @@
                  <height>100</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>2D preview of the current best result</string>
+               </property>
                <property name="whatsThis">
-                <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+                <string>&lt;h4&gt;Current best result&lt;/h4&gt;
+&lt;p&gt;Preview of the values produced by the current best parameter set found so far.&lt;/p&gt;</string>
                </property>
                <property name="text" stdset="0">
                 <string/>
@@ -213,6 +240,9 @@
                  <height>0</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>3D preview of the current best result</string>
+               </property>
               </widget>
              </item>
              <item>
@@ -222,6 +252,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Choose the z-slice shown in the 2D value previews</string>
                </property>
                <property name="text">
                 <string>z-axis</string>
@@ -235,6 +268,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Choose the z-slice shown in the 2D value previews</string>
                </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -262,6 +298,9 @@
                  <verstretch>0</verstretch>
                 </sizepolicy>
                </property>
+               <property name="toolTip">
+                <string>Difference between the current best result and the selected target</string>
+               </property>
                <property name="text">
                 <string>Difference between result and estimation:</string>
                </property>
@@ -281,9 +320,12 @@
                  <height>100</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>2D preview of the difference between result and target</string>
+               </property>
                <property name="whatsThis">
-                <string>&lt;h4&gt;Initial concentration&lt;/h4&gt;
-      &lt;p&gt;An image of the initial concentration resulting from the supplied analytic expression.&lt;/p&gt;</string>
+                <string>&lt;h4&gt;Target difference&lt;/h4&gt;
+&lt;p&gt;Preview of the difference between the current best result and the selected target values.&lt;/p&gt;</string>
                </property>
                <property name="text" stdset="0">
                 <string/>
@@ -307,6 +349,9 @@
                  <height>100</height>
                 </size>
                </property>
+               <property name="toolTip">
+                <string>3D preview of the difference between result and target</string>
+               </property>
               </widget>
              </item>
              <item>
@@ -316,6 +361,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Choose the z-slice shown in the 2D difference preview</string>
                </property>
                <property name="text">
                 <string>z-axis</string>
@@ -329,6 +377,9 @@
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
+               </property>
+               <property name="toolTip">
+                <string>Choose the z-slice shown in the 2D difference preview</string>
                </property>
                <property name="orientation">
                 <enum>Qt::Horizontal</enum>
@@ -347,6 +398,9 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>Select which optimization target to display</string>
+           </property>
            <property name="text">
             <string>Target:</string>
            </property>
@@ -357,10 +411,18 @@
        <widget class="QWidget" name="layoutWidget1">
         <layout class="QVBoxLayout" name="vlayout2">
          <item>
-          <widget class="QCustomPlot" name="pltFitness" native="true"/>
+          <widget class="QCustomPlot" name="pltFitness" native="true">
+           <property name="toolTip">
+            <string>Plot of best fitness against optimization iteration</string>
+           </property>
+          </widget>
          </item>
          <item>
-          <widget class="QCustomPlot" name="pltParams" native="true"/>
+          <widget class="QCustomPlot" name="pltParams" native="true">
+           <property name="toolTip">
+            <string>Plot of the current best parameter values against optimization iteration</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -379,6 +441,9 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="toolTip">
+          <string>Open the optimization setup dialog</string>
+         </property>
          <property name="text">
           <string>Setup</string>
          </property>
@@ -391,6 +456,9 @@
            <horstretch>0</horstretch>
            <verstretch>0</verstretch>
           </sizepolicy>
+         </property>
+         <property name="toolTip">
+          <string>Start or stop parameter optimization</string>
          </property>
          <property name="text">
           <string>Start</string>
