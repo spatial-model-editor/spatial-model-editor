@@ -45,7 +45,7 @@ public:
   void displayScale(bool enable);
   void invertYAxis(bool enable);
 
-signals:
+Q_SIGNALS:
   void mouseClicked(QRgb col, sme::common::Voxel voxel);
   void mouseOver(const sme::common::Voxel &voxel);
   void mouseWheelEvent(QWheelEvent *ev);

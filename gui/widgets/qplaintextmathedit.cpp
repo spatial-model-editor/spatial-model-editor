@@ -417,7 +417,8 @@ void QPlainTextMathEdit::qPlainTextEdit_textChanged() {
       currentDisplayMath = variablesToDisplayNames(currentVariableMath).c_str();
     }
   }
-  emit mathChanged(currentDisplayMath, expressionIsValid, currentErrorMessage);
+  Q_EMIT mathChanged(currentDisplayMath, expressionIsValid,
+                     currentErrorMessage);
 }
 
 static std::pair<int, bool> getClosingBracket(const QString &expr, int pos,

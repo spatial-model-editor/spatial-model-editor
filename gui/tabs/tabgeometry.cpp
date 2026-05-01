@@ -161,7 +161,7 @@ void TabGeometry::lblGeometry_mouseClicked(QRgb col, sme::common::Voxel point) {
     QGuiApplication::restoreOverrideCursor();
     enableTabs();
     loadModelData(ui->listCompartments->currentItem()->text());
-    emit modelGeometryChanged();
+    Q_EMIT modelGeometryChanged();
     return;
   }
   // display compartment the user just clicked on
@@ -182,7 +182,7 @@ void TabGeometry::btnAddCompartment_clicked() {
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     enableTabs();
     loadModelData(newCompartmentName);
-    emit modelGeometryChanged();
+    Q_EMIT modelGeometryChanged();
   }
 }
 
@@ -204,13 +204,13 @@ void TabGeometry::btnRemoveCompartment_clicked() {
     ui->tabCompartmentGeometry->setCurrentIndex(0);
     enableTabs();
     loadModelData();
-    emit modelGeometryChanged();
+    Q_EMIT modelGeometryChanged();
   }
 }
 
 void TabGeometry::btnChangeCompartment_clicked() {
   if (!(model.getIsValid() && model.getGeometry().getHasImage())) {
-    emit invalidModelOrNoGeometryImage();
+    Q_EMIT invalidModelOrNoGeometryImage();
     SPDLOG_DEBUG("invalid geometry and/or model: ignoring");
     return;
   }

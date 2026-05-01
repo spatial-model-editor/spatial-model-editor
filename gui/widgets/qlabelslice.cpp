@@ -103,7 +103,7 @@ void QLabelSlice::mousePressEvent(QMouseEvent *ev) {
   if (ev->buttons() != Qt::NoButton && setPixel(ev, startPixel)) {
     currentPixel = startPixel;
     mouseIsDown = true;
-    emit mouseDown(currentPixel);
+    Q_EMIT mouseDown(currentPixel);
   }
 }
 
@@ -111,10 +111,10 @@ void QLabelSlice::mouseMoveEvent(QMouseEvent *ev) {
   if (!setPixel(ev, currentPixel)) {
     return;
   }
-  emit mouseOver(currentPixel);
+  Q_EMIT mouseOver(currentPixel);
   if (mouseIsDown) {
     SPDLOG_TRACE("mouseDown ({},{})", currentPixel.x(), currentPixel.y());
-    emit mouseDown(currentPixel);
+    Q_EMIT mouseDown(currentPixel);
   }
 }
 
@@ -122,7 +122,7 @@ void QLabelSlice::mouseReleaseEvent(QMouseEvent *ev) {
   if (mouseIsDown) {
     SPDLOG_TRACE("sliceDrawn ({},{})->({},{})", startPixel.x(), startPixel.y(),
                  currentPixel.x(), currentPixel.y());
-    emit sliceDrawn(startPixel, currentPixel);
+    Q_EMIT sliceDrawn(startPixel, currentPixel);
   }
   ev->accept();
   mouseIsDown = false;
@@ -131,7 +131,7 @@ void QLabelSlice::mouseReleaseEvent(QMouseEvent *ev) {
 void QLabelSlice::mouseDoubleClickEvent(QMouseEvent *ev) { ev->accept(); }
 
 void QLabelSlice::wheelEvent(QWheelEvent *ev) {
-  emit mouseWheelEvent(ev->angleDelta().y());
+  Q_EMIT mouseWheelEvent(ev->angleDelta().y());
 }
 
 void QLabelSlice::resizeEvent(QResizeEvent *event) {

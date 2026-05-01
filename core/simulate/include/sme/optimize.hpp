@@ -5,18 +5,11 @@
 #include "sme/simulate.hpp"
 #include <memory>
 #include <mutex>
+#include <oneapi/tbb/concurrent_queue.h>
 #include <optional>
 #include <pagmo/algorithm.hpp>
 #include <pagmo/archipelago.hpp>
 #include <pagmo/population.hpp>
-// Qt defines emit keyword which interferes with a tbb emit() function
-#ifdef emit
-#undef emit
-#include <oneapi/tbb/concurrent_queue.h>
-#define emit // restore the Qt empty definition of "emit"
-#else
-#include <oneapi/tbb/concurrent_queue.h>
-#endif
 
 namespace sme::simulate {
 
