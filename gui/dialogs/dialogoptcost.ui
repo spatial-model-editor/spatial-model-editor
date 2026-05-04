@@ -225,7 +225,7 @@
       </widget>
      </item>
      <item row="2" column="0" alignment="Qt::AlignRight">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="lblFeatureValuesLabel">
        <property name="text">
         <string>Feature:</string>
        </property>
@@ -255,6 +255,7 @@
  <tabstops>
   <tabstop>cmbSpecies</tabstop>
   <tabstop>cmbCostType</tabstop>
+  <tabstop>cmbFeature</tabstop>
   <tabstop>txtSimulationTime</tabstop>
   <tabstop>btnEditTargetValues</tabstop>
   <tabstop>cmbDiffType</tabstop>

@@ -58,7 +58,7 @@ struct OptParam {
 /**
  * @brief Types of costs that can be used in optimization
  */
-enum class OptCostType { Concentration, ConcentrationDcdt, Feature };
+enum class OptCostType { Unused, Concentration, ConcentrationDcdt, Feature };
 
 /**
  * @brief Types of differences that can be used in costs

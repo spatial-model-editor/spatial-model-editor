@@ -68,6 +68,8 @@ DialogOptCost::DialogOptCost(
     }
     connect(ui->cmbSpecies, &QComboBox::currentIndexChanged, this,
             &DialogOptCost::cmbSpecies_currentIndexChanged);
+    connect(ui->cmbFeature, &QComboBox::currentIndexChanged, this,
+            &DialogOptCost::cmbFeature_currentIndexChanged);
     connect(ui->cmbCostType, &QComboBox::currentIndexChanged, this,
             &DialogOptCost::cmbCostType_currentIndexChanged);
     connect(ui->cmbDiffType, &QComboBox::currentIndexChanged, this,
@@ -80,6 +82,7 @@ DialogOptCost::DialogOptCost(
             &DialogOptCost::txtWeight_editingFinished);
     connect(ui->txtEpsilon, &QLineEdit::editingFinished, this,
             &DialogOptCost::txtEpsilon_editingFinished);
+
     ui->cmbDiffType->setCurrentIndex(toIndex(m_optCost.optCostDiffType));
     ui->txtSimulationTime->setText(QString::number(m_optCost.simulationTime));
     ui->txtWeight->setText(QString::number(m_optCost.weight));
@@ -106,6 +109,8 @@ void DialogOptCost::populateTargetTypes() {
   ui->cmbCostType->blockSignals(true);
   ui->cmbCostType->clear();
   m_targetTypeItems.push_back(
+      {sme::simulate::OptCostType::Unused, {}, "Unused"});
+  m_targetTypeItems.push_back(
       {sme::simulate::OptCostType::Concentration, {}, "Concentration"});
   m_targetTypeItems.push_back({sme::simulate::OptCostType::ConcentrationDcdt,
                                {},
@@ -128,14 +133,18 @@ void DialogOptCost::populateTargetTypes() {
 
 void DialogOptCost::populateFeatureTypes() {
   m_featureTypeItems.clear();
-  ui->cmbCostType->blockSignals(true);
-  ui->cmbCostType->clear();
+  m_featureTypeItems.push_back(
+      {sme::simulate::OptCostType::Unused, {}, "Unused"});
+  ui->cmbFeature->blockSignals(true);
+  ui->cmbFeature->clear();
 
   const auto featureIndex =
       m_model.getFeatures().getIndexFromId(m_optCost.featureId);
   const auto &features = m_model.getFeatures().getFeatures();
 
   for (const auto &feature : features) {
+    // only allow features to be shown that belong to the currently selected
+    // species
     if (feature.speciesId != m_optCost.id) {
       continue;
     }
@@ -143,7 +152,7 @@ void DialogOptCost::populateFeatureTypes() {
         {sme::simulate::OptCostType::Feature, feature.id,
          QString("Feature: %1").arg(QString::fromStdString(feature.name))});
   }
-
+  // TODO: what's this doing?
   if (m_optCost.optCostType == sme::simulate::OptCostType::Feature &&
       (m_optCost.featureId.empty() || featureIndex >= features.size())) {
     m_featureTypeItems.push_back(
@@ -155,7 +164,7 @@ void DialogOptCost::populateFeatureTypes() {
   int selectedIndex{0};
   for (int i = 0; i < static_cast<int>(m_featureTypeItems.size()); ++i) {
     const auto &item = m_featureTypeItems[static_cast<std::size_t>(i)];
-    ui->cmbCostType->addItem(item.label);
+    ui->cmbFeature->addItem(item.label);
     const bool sameFeature =
         item.optCostType != sme::simulate::OptCostType::Feature ||
         item.featureId == m_optCost.featureId;
@@ -163,9 +172,8 @@ void DialogOptCost::populateFeatureTypes() {
       selectedIndex = i;
     }
   }
-  ui->cmbCostType->setCurrentIndex(selectedIndex);
-  ui->cmbCostType->blockSignals(false);
-  updateTargetValuesLabel();
+  ui->cmbFeature->setCurrentIndex(selectedIndex);
+  ui->cmbFeature->blockSignals(false);
 }
 
 void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
@@ -183,7 +191,13 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
                                sme::simulate::OptCostDiffType::Relative);
   }
   populateTargetTypes();
+  populateFeatureTypes();
   updateImage();
+}
+
+void DialogOptCost::cmbFeature_currentIndexChanged(int index) {
+
+  populateFeatureTypes();
 }
 
 void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
@@ -193,6 +207,9 @@ void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
   }
   const auto &item = m_targetTypeItems[static_cast<std::size_t>(index)];
   m_optCost.optCostType = item.optCostType;
+
+  // TODO: check out what's going on here, this is messing with features but I
+  // don´t think it should
   if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
     m_optCost.featureId = item.featureId;
   } else {
