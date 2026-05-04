@@ -32,7 +32,9 @@ private:
   std::unique_ptr<Ui::DialogOptCost> ui;
   sme::simulate::OptCost m_optCost;
   std::vector<TargetTypeItem> m_targetTypeItems;
+  std::vector<TargetTypeItem> m_featureTypeItems;
   void cmbSpecies_currentIndexChanged(int index);
+  void cmbFeature_currentIndexChanged(int index);
   void cmbCostType_currentIndexChanged(int index);
   void cmbDiffType_currentIndexChanged(int index);
   void txtSimulationTime_editingFinished();
@@ -40,6 +42,7 @@ private:
   void txtWeight_editingFinished();
   void txtEpsilon_editingFinished();
   void populateTargetTypes();
+  void populateFeatureTypes();
   void updateTargetValuesLabel();
   void updateImage();
 };

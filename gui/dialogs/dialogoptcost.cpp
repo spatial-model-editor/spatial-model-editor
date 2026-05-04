@@ -110,33 +110,56 @@ void DialogOptCost::populateTargetTypes() {
   m_targetTypeItems.push_back({sme::simulate::OptCostType::ConcentrationDcdt,
                                {},
                                "Rate of change of concentration"});
-  const auto featureIndex =
-      m_model.getFeatures().getIndexFromId(m_optCost.featureId);
-  const auto &features = m_model.getFeatures().getFeatures();
-  for (const auto &feature : features) {
-    if (feature.speciesId != m_optCost.id) {
-      continue;
-    }
-    m_targetTypeItems.push_back(
-        {sme::simulate::OptCostType::Feature, feature.id,
-         QString("Feature: %1").arg(QString::fromStdString(feature.name))});
-  }
-  if (m_optCost.optCostType == sme::simulate::OptCostType::Feature &&
-      (m_optCost.featureId.empty() || featureIndex >= features.size())) {
-    m_targetTypeItems.push_back(
-        {sme::simulate::OptCostType::Feature, m_optCost.featureId,
-         QString("Feature: <missing> (%1)")
-             .arg(QString::fromStdString(m_optCost.featureId))});
-  }
+
   int selectedIndex{0};
   for (int i = 0; i < static_cast<int>(m_targetTypeItems.size()); ++i) {
     const auto &item = m_targetTypeItems[static_cast<std::size_t>(i)];
     ui->cmbCostType->addItem(item.label);
     const bool sameType = item.optCostType == m_optCost.optCostType;
+
+    if (sameType) {
+      selectedIndex = i;
+    }
+  }
+  ui->cmbCostType->setCurrentIndex(selectedIndex);
+  ui->cmbCostType->blockSignals(false);
+  updateTargetValuesLabel();
+}
+
+void DialogOptCost::populateFeatureTypes() {
+  m_featureTypeItems.clear();
+  ui->cmbCostType->blockSignals(true);
+  ui->cmbCostType->clear();
+
+  const auto featureIndex =
+      m_model.getFeatures().getIndexFromId(m_optCost.featureId);
+  const auto &features = m_model.getFeatures().getFeatures();
+
+  for (const auto &feature : features) {
+    if (feature.speciesId != m_optCost.id) {
+      continue;
+    }
+    m_featureTypeItems.push_back(
+        {sme::simulate::OptCostType::Feature, feature.id,
+         QString("Feature: %1").arg(QString::fromStdString(feature.name))});
+  }
+
+  if (m_optCost.optCostType == sme::simulate::OptCostType::Feature &&
+      (m_optCost.featureId.empty() || featureIndex >= features.size())) {
+    m_featureTypeItems.push_back(
+        {sme::simulate::OptCostType::Feature, m_optCost.featureId,
+         QString("Feature: <missing> (%1)")
+             .arg(QString::fromStdString(m_optCost.featureId))});
+  }
+
+  int selectedIndex{0};
+  for (int i = 0; i < static_cast<int>(m_featureTypeItems.size()); ++i) {
+    const auto &item = m_featureTypeItems[static_cast<std::size_t>(i)];
+    ui->cmbCostType->addItem(item.label);
     const bool sameFeature =
         item.optCostType != sme::simulate::OptCostType::Feature ||
         item.featureId == m_optCost.featureId;
-    if (sameType && sameFeature) {
+    if (sameFeature) {
       selectedIndex = i;
     }
   }
