@@ -109,8 +109,6 @@ void DialogOptCost::populateTargetTypes() {
   ui->cmbCostType->blockSignals(true);
   ui->cmbCostType->clear();
   m_targetTypeItems.push_back(
-      {sme::simulate::OptCostType::Unused, {}, "Unused"});
-  m_targetTypeItems.push_back(
       {sme::simulate::OptCostType::Concentration, {}, "Concentration"});
   m_targetTypeItems.push_back({sme::simulate::OptCostType::ConcentrationDcdt,
                                {},
@@ -192,29 +190,52 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
   }
   populateTargetTypes();
   populateFeatureTypes();
+  // Re-apply mutual-exclusion state after repopulating combo contents.
+  cmbFeature_currentIndexChanged(ui->cmbFeature->currentIndex());
   updateImage();
 }
 
 void DialogOptCost::cmbFeature_currentIndexChanged(int index) {
-
-  populateFeatureTypes();
+  if (index < 0 ||
+      static_cast<std::size_t>(index) >= m_featureTypeItems.size()) {
+    return;
+  }
+  const auto &item = m_featureTypeItems[static_cast<std::size_t>(index)];
+  if (item.optCostType == sme::simulate::OptCostType::Feature) {
+    // A concrete feature selection owns the target type: lock cost type combo.
+    m_optCost.optCostType = sme::simulate::OptCostType::Feature;
+    m_optCost.featureId = item.featureId;
+    ui->cmbCostType->setEnabled(false);
+  } else {
+    // "Unused" means feature targeting is inactive: fall back to cost type combo.
+    m_optCost.featureId.clear();
+    ui->cmbCostType->setEnabled(true);
+    const auto costTypeIndex{ui->cmbCostType->currentIndex()};
+    if (costTypeIndex >= 0 &&
+        static_cast<std::size_t>(costTypeIndex) < m_targetTypeItems.size()) {
+      m_optCost.optCostType =
+          m_targetTypeItems[static_cast<std::size_t>(costTypeIndex)].optCostType;
+    }
+  }
+  updateTargetValuesLabel();
 }
 
 void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
+  const auto featureIndex{ui->cmbFeature->currentIndex()};
+  // Ignore cost-type changes while a feature target is active.
+  if (featureIndex >= 0 &&
+      static_cast<std::size_t>(featureIndex) < m_featureTypeItems.size() &&
+      m_featureTypeItems[static_cast<std::size_t>(featureIndex)].optCostType ==
+          sme::simulate::OptCostType::Feature) {
+    return;
+  }
   if (index < 0 ||
       static_cast<std::size_t>(index) >= m_targetTypeItems.size()) {
     return;
   }
   const auto &item = m_targetTypeItems[static_cast<std::size_t>(index)];
   m_optCost.optCostType = item.optCostType;
-
-  // TODO: check out what's going on here, this is messing with features but I
-  // don´t think it should
-  if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
-    m_optCost.featureId = item.featureId;
-  } else {
-    m_optCost.featureId.clear();
-  }
+  m_optCost.featureId.clear();
   updateTargetValuesLabel();
 }
 
