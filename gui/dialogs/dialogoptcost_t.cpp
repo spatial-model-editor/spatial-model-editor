@@ -15,6 +15,7 @@ struct DialogOptCostWidgets {
   explicit DialogOptCostWidgets(const DialogOptCost *dialog) {
     GET_DIALOG_WIDGET(QComboBox, cmbSpecies);
     GET_DIALOG_WIDGET(QComboBox, cmbCostType);
+    GET_DIALOG_WIDGET(QComboBox, cmbFeature);
     GET_DIALOG_WIDGET(QLabel, lblTargetValuesLabel);
     GET_DIALOG_WIDGET(QLineEdit, txtSimulationTime);
     GET_DIALOG_WIDGET(QPushButton, btnEditTargetValues);
@@ -24,6 +25,7 @@ struct DialogOptCostWidgets {
   }
   QComboBox *cmbSpecies;
   QComboBox *cmbCostType;
+  QComboBox *cmbFeature;
   QLabel *lblTargetValuesLabel;
   QLineEdit *txtSimulationTime;
   QPushButton *btnEditTargetValues;
@@ -311,7 +313,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
   }
-  SECTION("matching features appear in target type list") {
+  SECTION("feature selection mode is mutually exclusive with target type mode") {
     simulate::RoiSettings roi;
     roi.roiType = simulate::RoiType::Analytic;
     auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
@@ -320,18 +322,64 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
     DialogOptCostWidgets widgets(&dia);
     dia.show();
-    REQUIRE(widgets.cmbCostType->count() == 3);
+
+    REQUIRE(widgets.cmbCostType->count() == 2);
     REQUIRE(widgets.cmbCostType->itemText(0) == "Concentration");
     REQUIRE(widgets.cmbCostType->itemText(1) ==
             "Rate of change of concentration");
-    REQUIRE(widgets.cmbCostType->itemText(2) == "Feature: peripheral Mt");
-    widgets.cmbCostType->setCurrentIndex(2);
+    REQUIRE(widgets.cmbFeature->count() == 2);
+    REQUIRE(widgets.cmbFeature->itemText(0) == "Unused");
+    REQUIRE(widgets.cmbFeature->itemText(1) == "Feature: peripheral Mt");
+
+    widgets.cmbCostType->setCurrentIndex(1);
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::ConcentrationDcdt);
+    REQUIRE(dia.getOptCost().featureId.empty());
+
+    widgets.cmbFeature->setCurrentIndex(1);
+    REQUIRE(widgets.cmbCostType->isEnabled() == false);
     REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
     REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
     REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
-    widgets.cmbSpecies->setCurrentIndex(0);
-    REQUIRE(widgets.cmbCostType->count() == 2);
+
+    // switching cost type while feature mode is active should be ignored
+    widgets.cmbCostType->setCurrentIndex(0);
+    REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
+    REQUIRE(dia.getOptCost().featureId ==
+            model.getFeatures().getFeatures()[featureIndex].id);
+
+    widgets.cmbFeature->setCurrentIndex(0);
+    REQUIRE(widgets.cmbCostType->isEnabled());
+    REQUIRE(dia.getOptCost().featureId.empty());
+    REQUIRE(dia.getOptCost().optCostType ==
+            simulate::OptCostType::Concentration);
+
+    widgets.cmbSpecies->setCurrentIndex(0); // P0
+    REQUIRE(widgets.cmbFeature->count() == 1);
+    REQUIRE(widgets.cmbFeature->itemText(0) == "Unused");
+  }
+  SECTION("pre-selected feature target starts in feature mode") {
+    simulate::RoiSettings roi;
+    roi.roiType = simulate::RoiType::Analytic;
+    auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
+    auto featureIndex = model.getFeatures().add(
+        "mean Mt", compId, "Mt", roi, simulate::ReductionOp::Average);
+    auto initialOptCost = defaultOptCosts[1];
+    initialOptCost.optCostType = simulate::OptCostType::Feature;
+    initialOptCost.featureId = model.getFeatures().getFeatures()[featureIndex].id;
+
+    DialogOptCost dia(model, defaultOptCosts, &initialOptCost);
+    DialogOptCostWidgets widgets(&dia);
+    dia.show();
+
+    REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
+    REQUIRE(dia.getOptCost().featureId ==
+            model.getFeatures().getFeatures()[featureIndex].id);
+    REQUIRE(widgets.cmbCostType->isEnabled() == false);
+    REQUIRE(widgets.cmbFeature->count() == 2);
+    REQUIRE(widgets.cmbFeature->itemText(1) == "Feature: mean Mt");
+    REQUIRE(widgets.cmbFeature->currentIndex() == 1);
   }
 }
