@@ -313,7 +313,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
   }
-  SECTION("feature selection mode is mutually exclusive with target type mode") {
+  SECTION(
+      "feature selection mode is mutually exclusive with target type mode") {
     simulate::RoiSettings roi;
     roi.roiType = simulate::RoiType::Analytic;
     auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
@@ -367,11 +368,12 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     simulate::RoiSettings roi;
     roi.roiType = simulate::RoiType::Analytic;
     auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
-    auto featureIndex = model.getFeatures().add(
-        "mean Mt", compId, "Mt", roi, simulate::ReductionOp::Average);
+    auto featureIndex = model.getFeatures().add("mean Mt", compId, "Mt", roi,
+                                                simulate::ReductionOp::Average);
     auto initialOptCost = defaultOptCosts[1];
     initialOptCost.optCostType = simulate::OptCostType::Feature;
-    initialOptCost.featureId = model.getFeatures().getFeatures()[featureIndex].id;
+    initialOptCost.featureId =
+        model.getFeatures().getFeatures()[featureIndex].id;
 
     DialogOptCost dia(model, defaultOptCosts, &initialOptCost);
     DialogOptCostWidgets widgets(&dia);

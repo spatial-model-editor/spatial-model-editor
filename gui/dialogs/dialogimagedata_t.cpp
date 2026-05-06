@@ -153,8 +153,7 @@ TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
     dia.show();
     wait();
     DialogImageDataWidgets widgets(&dia);
-    REQUIRE(widgets.lblFeatureValueLabel->text() ==
-            "Computed feature value:");
+    REQUIRE(widgets.lblFeatureValueLabel->text() == "Computed feature value:");
     REQUIRE(widgets.lblFeatureValue->text() == "3");
   }
   SECTION("min changed to valid value") {
