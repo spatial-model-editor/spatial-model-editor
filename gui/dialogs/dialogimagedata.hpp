@@ -1,11 +1,13 @@
 #pragma once
 
+#include "sme/feature_options.hpp"
 #include "sme/geometry_utils.hpp"
 #include "sme/image_stack.hpp"
 #include "sme/model.hpp"
 #include "sme/utils.hpp"
 #include <QDialog>
 #include <memory>
+#include <optional>
 
 namespace Ui {
 class DialogImageData;
@@ -17,6 +19,11 @@ enum class DialogImageDataDataType {
   DiffusionConstant
 };
 
+struct DialogImageDataFeaturePreview {
+  sme::simulate::FeatureDefinition feature;
+  std::vector<std::size_t> voxelRegions;
+};
+
 class DialogImageData : public QDialog {
   Q_OBJECT
 
@@ -26,6 +33,7 @@ public:
       const sme::model::SpeciesGeometry &speciesGeometry,
       bool invertYAxis = false,
       DialogImageDataDataType dataType = DialogImageDataDataType::Concentration,
+      const DialogImageDataFeaturePreview *featurePreview = nullptr,
       QWidget *parent = nullptr);
   ~DialogImageData() override;
   const std::vector<double> &getData() const;
@@ -47,12 +55,14 @@ private:
   sme::common::ImageStack imgs;
   sme::geometry::VoxelIndexer qpi;
   std::vector<double> data;
+  std::optional<DialogImageDataFeaturePreview> featurePreview;
 
   sme::common::VoxelF physicalPoint(const sme::common::Voxel &voxel) const;
   std::size_t pointToArrayIndex(const sme::common::Voxel &voxel) const;
   void importArray(const std::vector<double> &concentrationArray);
   void importImage(const sme::common::ImageStack &concentrationImage);
   void updateImageFromData();
+  void updateFeatureValueLabel();
   void rescaleData(double newMin, double newMax);
   void gaussianFilter(const sme::common::Voxel &direction, double sigma);
   void smoothData();

@@ -76,9 +76,9 @@ getOptTimesteps(const OptimizeOptions &options) {
   return optTimesteps;
 }
 
-static FeatureOptCost resolveFeatureOptCost(const sme::model::Model &model,
-                                            const OptCost &optCost,
-                                            const common::Volume &imageSize) {
+FeatureOptCost resolveFeatureOptCost(const sme::model::Model &model,
+                                     const OptCost &optCost,
+                                     const common::Volume &imageSize) {
   FeatureOptCost featureOptCost;
   if (optCost.featureId.empty()) {
     featureOptCost.errorMessage =

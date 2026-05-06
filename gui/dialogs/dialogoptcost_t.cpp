@@ -338,17 +338,20 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
 
     widgets.cmbFeature->setCurrentIndex(1);
     REQUIRE(widgets.cmbCostType->isEnabled() == false);
+    REQUIRE(widgets.cmbCostType->currentText() == "Concentration");
     REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
-    REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
-    REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
+    REQUIRE(widgets.lblTargetValuesLabel->text() == "Source\nconcentration:");
+    REQUIRE(widgets.btnEditTargetValues->text() ==
+            "Edit Concentration to Derive Target");
 
     // switching cost type while feature mode is active should be ignored
     widgets.cmbCostType->setCurrentIndex(0);
     REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
+    REQUIRE(widgets.cmbCostType->currentText() == "Concentration");
 
     widgets.cmbFeature->setCurrentIndex(0);
     REQUIRE(widgets.cmbCostType->isEnabled());
@@ -378,6 +381,7 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
     REQUIRE(widgets.cmbCostType->isEnabled() == false);
+    REQUIRE(widgets.cmbCostType->currentText() == "Concentration");
     REQUIRE(widgets.cmbFeature->count() == 2);
     REQUIRE(widgets.cmbFeature->itemText(1) == "Feature: mean Mt");
     REQUIRE(widgets.cmbFeature->currentIndex() == 1);

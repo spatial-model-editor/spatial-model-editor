@@ -2,6 +2,7 @@
 #include "dialogimagedata.hpp"
 #include "ui_dialogoptcost.h"
 #include <QMessageBox>
+#include <optional>
 
 static QString toQStr(double x) { return QString::number(x, 'g', 14); }
 
@@ -205,16 +206,25 @@ void DialogOptCost::cmbFeature_currentIndexChanged(int index) {
     // A concrete feature selection owns the target type: lock cost type combo.
     m_optCost.optCostType = sme::simulate::OptCostType::Feature;
     m_optCost.featureId = item.featureId;
+    for (int i = 0; i < static_cast<int>(m_targetTypeItems.size()); ++i) {
+      if (m_targetTypeItems[static_cast<std::size_t>(i)].optCostType ==
+          sme::simulate::OptCostType::Concentration) {
+        ui->cmbCostType->setCurrentIndex(i);
+        break;
+      }
+    }
     ui->cmbCostType->setEnabled(false);
   } else {
-    // "Unused" means feature targeting is inactive: fall back to cost type combo.
+    // "Unused" means feature targeting is inactive: fall back to cost type
+    // combo.
     m_optCost.featureId.clear();
     ui->cmbCostType->setEnabled(true);
     const auto costTypeIndex{ui->cmbCostType->currentIndex()};
     if (costTypeIndex >= 0 &&
         static_cast<std::size_t>(costTypeIndex) < m_targetTypeItems.size()) {
       m_optCost.optCostType =
-          m_targetTypeItems[static_cast<std::size_t>(costTypeIndex)].optCostType;
+          m_targetTypeItems[static_cast<std::size_t>(costTypeIndex)]
+              .optCostType;
     }
   }
   updateTargetValuesLabel();
@@ -255,10 +265,20 @@ void DialogOptCost::btnEditTargetValues_clicked() {
   if (m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt) {
     dataType = DialogImageDataDataType::ConcentrationRateOfChange;
   }
+  std::optional<DialogImageDataFeaturePreview> featurePreview;
+  if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
+    const auto featureIndex{
+        m_model.getFeatures().getIndexFromId(m_optCost.featureId)};
+    if (featureIndex < m_model.getFeatures().size()) {
+      featurePreview = {m_model.getFeatures().getFeatures()[featureIndex],
+                        m_model.getFeatures().getVoxelRegions(featureIndex)};
+    }
+  }
   try {
     DialogImageData dialog(m_optCost.targetValues,
                            m_model.getSpeciesGeometry(m_optCost.id.c_str()),
-                           m_model.getDisplayOptions().invertYAxis, dataType);
+                           m_model.getDisplayOptions().invertYAxis, dataType,
+                           featurePreview ? &*featurePreview : nullptr);
     if (dialog.exec() == QDialog::Accepted) {
       m_optCost.targetValues = dialog.getImageArray();
       updateImage();
@@ -283,6 +303,11 @@ void DialogOptCost::txtEpsilon_editingFinished() {
 }
 
 void DialogOptCost::updateTargetValuesLabel() {
+  if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
+    ui->lblTargetValuesLabel->setText("Source\nconcentration:");
+    ui->btnEditTargetValues->setText("Edit Concentration to Derive Target");
+    return;
+  }
   const auto text{targetValuesText(m_optCost.optCostType)};
   ui->lblTargetValuesLabel->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));

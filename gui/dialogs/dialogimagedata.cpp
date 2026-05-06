@@ -1,5 +1,6 @@
 #include "dialogimagedata.hpp"
 #include "guiutils.hpp"
+#include "sme/feature_eval.hpp"
 #include "sme/logger.hpp"
 #include "sme/model_units.hpp"
 #include "ui_dialogimagedata.h"
@@ -7,6 +8,7 @@
 #include <QInputDialog>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QStringList>
 #include <QToolTip>
 
 static QString quantityNameFor(DialogImageDataDataType dataType) {
@@ -32,7 +34,8 @@ static QString quantityTitleName(DialogImageDataDataType dataType) {
 DialogImageData::DialogImageData(
     const std::vector<double> &dataArray,
     const sme::model::SpeciesGeometry &speciesGeometry, bool invertYAxis,
-    DialogImageDataDataType dataType, QWidget *parent)
+    DialogImageDataDataType dataType,
+    const DialogImageDataFeaturePreview *featurePreview_, QWidget *parent)
     : QDialog(parent), ui{std::make_unique<Ui::DialogImageData>()},
       voxelSize(speciesGeometry.voxelSize),
       voxels(speciesGeometry.compartmentVoxels),
@@ -42,6 +45,12 @@ DialogImageData::DialogImageData(
       qpi(speciesGeometry.compartmentImageSize,
           speciesGeometry.compartmentVoxels) {
   ui->setupUi(this);
+  if (featurePreview_ != nullptr) {
+    featurePreview = *featurePreview_;
+  }
+  ui->lineFeatureValue->setVisible(featurePreview.has_value());
+  ui->lblFeatureValueLabel->setVisible(featurePreview.has_value());
+  ui->lblFeatureValue->setVisible(featurePreview.has_value());
   ui->lblImage->setZSlider(ui->slideZIndex);
   const auto &units = speciesGeometry.modelUnits;
   lengthUnit = units.getLength().name;
@@ -232,6 +241,32 @@ void DialogImageData::updateImageFromData() {
                            QColor(intensity, intensity, intensity).rgb());
   }
   ui->lblImage->setImage(imgs);
+  updateFeatureValueLabel();
+}
+
+void DialogImageData::updateFeatureValueLabel() {
+  if (!featurePreview.has_value()) {
+    return;
+  }
+  const auto featureValues{sme::simulate::evaluateFeature(
+      featurePreview->feature, data, featurePreview->voxelRegions)};
+  if (featureValues.empty()) {
+    ui->lblFeatureValue->setText("n/a");
+    return;
+  }
+  if (featureValues.size() == 1) {
+    ui->lblFeatureValueLabel->setText("Computed feature value:");
+    ui->lblFeatureValue->setText(toQStr(featureValues.front()));
+    return;
+  }
+  QStringList valueTexts;
+  for (std::size_t i = 0; i < featureValues.size(); ++i) {
+    valueTexts.push_back(QString("Region %1: %2")
+                             .arg(static_cast<qulonglong>(i + 1))
+                             .arg(toQStr(featureValues[i])));
+  }
+  ui->lblFeatureValueLabel->setText("Computed feature values:");
+  ui->lblFeatureValue->setText(valueTexts.join("\n"));
 }
 
 void DialogImageData::rescaleData(double newMin, double newMax) {
@@ -258,6 +293,7 @@ void DialogImageData::rescaleData(double newMin, double newMax) {
                    return newMin +
                           (newMax - newMin) * (c - oldMin) / (oldMax - oldMin);
                  });
+  updateFeatureValueLabel();
 }
 
 void DialogImageData::gaussianFilter(const sme::common::Voxel &direction,

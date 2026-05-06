@@ -156,10 +156,10 @@
      <item row="5" column="2">
       <widget class="QPushButton" name="btnEditTargetValues">
        <property name="toolTip">
-        <string>Edit the target values image used for this optimization target</string>
+        <string>Edit the target values image used for this optimization target. For feature targets, this is the concentration image used to derive the feature value.</string>
        </property>
        <property name="text">
-        <string>Edit Concentration</string>
+        <string>Edit Target</string>
        </property>
       </widget>
      </item>
@@ -179,7 +179,7 @@
      <item row="1" column="2">
       <widget class="QComboBox" name="cmbCostType">
        <property name="toolTip">
-        <string>Choose whether to match concentration or rate of change. This is mutually exclusive with features.´</string>
+        <string>Choose whether to match concentration or rate of change. Feature targets are derived from concentration images, so this is locked to concentration when a feature is selected.</string>
        </property>
        <item>
         <property name="text">
@@ -217,7 +217,7 @@
      <item row="2" column="2">
       <widget class="QComboBox" name="cmbFeature">
        <property name="toolTip">
-        <string>Select from the features associated with the selected Species. This is mutually exclusive with 'Target type'. </string>
+        <string>Select from the features associated with the selected species. Feature targets are derived from concentration images.</string>
        </property>
        <property name="maxVisibleItems">
         <number>99</number>

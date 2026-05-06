@@ -30,6 +30,8 @@ struct DialogImageDataWidgets {
     GET_DIALOG_WIDGET(QPushButton, btnSmoothImage);
     GET_DIALOG_WIDGET(QSlider, slideZIndex);
     GET_DIALOG_WIDGET(QLabelMouseTracker, lblImage);
+    GET_DIALOG_WIDGET(QLabel, lblFeatureValueLabel);
+    GET_DIALOG_WIDGET(QLabel, lblFeatureValue);
     GET_DIALOG_WIDGET(QLabel, lblConcentration);
   }
   QLabel *lblMinConcLabel;
@@ -44,6 +46,8 @@ struct DialogImageDataWidgets {
   QPushButton *btnSmoothImage;
   QSlider *slideZIndex;
   QLabelMouseTracker *lblImage;
+  QLabel *lblFeatureValueLabel;
+  QLabel *lblFeatureValue;
   QLabel *lblConcentration;
 };
 
@@ -136,6 +140,22 @@ TEST_CASE("DialogImageData", "[gui/dialogs/concentrationimage][gui/"
     for (auto i : outsideArrayIndices) {
       REQUIRE(a[i] == dbl_approx(0.0));
     }
+  }
+  SECTION("feature preview displays computed feature value") {
+    std::vector<double> arr{5.0, 0.0, 0.0, 3.0, 0.0, 0.0, 1.0, 99.0, 0.0};
+    sme::simulate::FeatureDefinition feature;
+    feature.roi.numRegions = 1;
+    feature.reduction = sme::simulate::ReductionOp::Average;
+    DialogImageDataFeaturePreview featurePreview{feature, {1, 1, 1, 0}};
+    DialogImageData dia(arr, specGeom, false,
+                        DialogImageDataDataType::Concentration,
+                        &featurePreview);
+    dia.show();
+    wait();
+    DialogImageDataWidgets widgets(&dia);
+    REQUIRE(widgets.lblFeatureValueLabel->text() ==
+            "Computed feature value:");
+    REQUIRE(widgets.lblFeatureValue->text() == "3");
   }
   SECTION("min changed to valid value") {
     // initial range 0-1

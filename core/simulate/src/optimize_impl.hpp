@@ -11,6 +11,10 @@ namespace sme::simulate {
 void applyParameters(const pagmo::vector_double &values,
                      sme::model::Model *model);
 
+FeatureOptCost resolveFeatureOptCost(const sme::model::Model &model,
+                                     const OptCost &optCost,
+                                     const common::Volume &imageSize);
+
 double calculateCosts(const OptConstData &optConstData,
                       const std::vector<std::size_t> &optCostIndices,
                       const sme::simulate::Simulation &sim,
