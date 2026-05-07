@@ -159,6 +159,25 @@ TEST_CASE("TabFeatures", "[gui/tabs/features][gui/tabs][gui][features]") {
     cmbReduction->setCurrentIndex(1); // Sum
     REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
             sme::simulate::ReductionOp::Sum);
+    // check that the associations are correct and that we can switch to the
+    // quantile stuff too
+    REQUIRE(cmbReduction->count() == 7);
+    REQUIRE(cmbReduction->itemText(4) == "First quartile");
+    REQUIRE(cmbReduction->itemText(5) == "Median");
+    REQUIRE(cmbReduction->itemText(6) == "Third quartile");
+
+    cmbReduction->setCurrentIndex(4);
+    REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
+            sme::simulate::ReductionOp::FirstQuartile);
+
+    cmbReduction->setCurrentIndex(5);
+    REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
+            sme::simulate::ReductionOp::Median);
+
+    cmbReduction->setCurrentIndex(6);
+    REQUIRE(model.getFeatures().getFeatures()[0].reduction ==
+            sme::simulate::ReductionOp::ThirdQuartile);
+
     // switch to image ROI: import button enabled, labels remain editable
     cmbRoiType->setCurrentIndex(cmbRoiType->findText("Image"));
     REQUIRE(model.getFeatures().getFeatures()[0].roi.roiType ==
