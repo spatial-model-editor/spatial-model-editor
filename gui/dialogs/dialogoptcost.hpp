@@ -42,4 +42,5 @@ private:
   void populateTargetTypes();
   void updateTargetValuesLabel();
   void updateImage();
+  void updateImageFeature();
 };

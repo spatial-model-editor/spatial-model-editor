@@ -2,6 +2,7 @@
 #include "dialogoptcost.hpp"
 #include "model_test_utils.hpp"
 #include "qt_test_utils.hpp"
+#include "qlabelmousetracker.hpp"
 #include "sme/utils.hpp"
 #include <QComboBox>
 #include <QLabel>
@@ -16,6 +17,8 @@ struct DialogOptCostWidgets {
     GET_DIALOG_WIDGET(QComboBox, cmbSpecies);
     GET_DIALOG_WIDGET(QComboBox, cmbCostType);
     GET_DIALOG_WIDGET(QLabel, lblTargetValuesLabel);
+    GET_DIALOG_WIDGET(QLabel, lblFeature);
+    GET_DIALOG_WIDGET(QLabelMouseTracker, lblImageFeature);
     GET_DIALOG_WIDGET(QLineEdit, txtSimulationTime);
     GET_DIALOG_WIDGET(QPushButton, btnEditTargetValues);
     GET_DIALOG_WIDGET(QComboBox, cmbDiffType);
@@ -25,6 +28,8 @@ struct DialogOptCostWidgets {
   QComboBox *cmbSpecies;
   QComboBox *cmbCostType;
   QLabel *lblTargetValuesLabel;
+  QLabel *lblFeature;
+  QLabelMouseTracker *lblImageFeature;
   QLineEdit *txtSimulationTime;
   QPushButton *btnEditTargetValues;
   QComboBox *cmbDiffType;
@@ -325,13 +330,37 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(widgets.cmbCostType->itemText(1) ==
             "Rate of change of concentration");
     REQUIRE(widgets.cmbCostType->itemText(2) == "Feature: peripheral Mt");
+    REQUIRE(widgets.lblFeature->isVisible() == false);
+    REQUIRE(widgets.lblImageFeature->isVisible() == false);
     widgets.cmbCostType->setCurrentIndex(2);
     REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
+    REQUIRE(widgets.lblFeature->isVisible());
+    REQUIRE(widgets.lblImageFeature->isVisible());
+    const auto &featureImage = widgets.lblImageFeature->getImage();
+    REQUIRE(featureImage.empty() == false);
+    REQUIRE(featureImage.volume() == model.getGeometry().getImages().volume());
+    REQUIRE(featureImage.colorTable()[0] == qRgb(0, 0, 0));
+    REQUIRE(featureImage.colorTable()[1] ==
+            sme::common::indexedColors()[0].rgb());
+    const auto *comp = model.getCompartments().getCompartment(
+        QString::fromStdString(compId));
+    REQUIRE(comp != nullptr);
+    std::size_t nRegionPixels{0};
+    for (const auto &voxel : comp->getVoxels()) {
+      if (static_cast<std::size_t>(voxel.z) < featureImage.volume().depth() &&
+          featureImage[static_cast<std::size_t>(voxel.z)].pixelIndex(
+              voxel.p) == 1) {
+        ++nRegionPixels;
+      }
+    }
+    REQUIRE(nRegionPixels == comp->getVoxels().size());
     REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
     REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
     widgets.cmbSpecies->setCurrentIndex(0);
     REQUIRE(widgets.cmbCostType->count() == 2);
+    REQUIRE(widgets.lblFeature->isVisible() == false);
+    REQUIRE(widgets.lblImageFeature->isVisible() == false);
   }
 }
