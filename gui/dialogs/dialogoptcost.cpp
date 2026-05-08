@@ -1,5 +1,6 @@
 #include "dialogoptcost.hpp"
 #include "dialogimagedata.hpp"
+#include "sme/utils.hpp"
 #include "ui_dialogoptcost.h"
 #include <QMessageBox>
 
@@ -43,6 +44,8 @@ DialogOptCost::DialogOptCost(
     : QDialog(parent), m_model{model}, m_defaultOptCosts{defaultOptCosts},
       ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
+  ui->lblFeature->setVisible(false);
+  ui->lblImageFeature->setVisible(false);
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
     // model has no species: disable everything except cancel button
@@ -161,6 +164,7 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
   }
   populateTargetTypes();
   updateImage();
+  updateImageFeature();
 }
 
 void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
@@ -172,6 +176,12 @@ void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
   m_optCost.optCostType = item.optCostType;
   if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
     m_optCost.featureId = item.featureId;
+
+    // show feature image
+    ui->lblFeature->setVisible(true);
+    ui->lblImageFeature->setVisible(true);
+    updateImageFeature();
+
   } else {
     m_optCost.featureId.clear();
   }
@@ -194,6 +204,7 @@ void DialogOptCost::btnEditTargetValues_clicked() {
   if (m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt) {
     dataType = DialogImageDataDataType::ConcentrationRateOfChange;
   }
+
   try {
     DialogImageData dialog(m_optCost.targetValues,
                            m_model.getSpeciesGeometry(m_optCost.id.c_str()),
@@ -223,8 +234,14 @@ void DialogOptCost::txtEpsilon_editingFinished() {
 
 void DialogOptCost::updateTargetValuesLabel() {
   const auto text{targetValuesText(m_optCost.optCostType)};
+  const auto isFeatureTarget{m_optCost.optCostType ==
+                             sme::simulate::OptCostType::Feature};
   ui->lblTargetValuesLabel->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
+  ui->lblTargetDisplayed->setText(
+      QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
+  ui->lblFeature->setVisible(isFeatureTarget);
+  ui->lblImageFeature->setVisible(isFeatureTarget);
   ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
 }
 
@@ -233,4 +250,51 @@ void DialogOptCost::updateImage() {
       m_model.getSpeciesGeometry(m_optCost.id.c_str()).compartmentImageSize};
   ui->lblImage->setImage(
       sme::common::ImageStack(imageSize, m_optCost.targetValues));
+}
+
+void DialogOptCost::updateImageFeature() {
+  const auto &features = m_model.getFeatures().getFeatures();
+  const auto featureIndex =
+      m_model.getFeatures().getIndexFromId(m_optCost.featureId);
+  if (featureIndex >= features.size() ||
+      !m_model.getFeatures().isValid(featureIndex)) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
+  const auto &feature = features[featureIndex];
+  const auto &regions = m_model.getFeatures().getVoxelRegions(featureIndex);
+  const auto *comp = m_model.getCompartments().getCompartment(
+      QString::fromStdString(feature.compartmentId));
+  if (comp == nullptr || regions.empty()) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
+  // Feature regions are stored per compartment voxel. Build a full
+  // geometry-sized indexed image so the preview lines up with the target image.
+  const auto &vol = m_model.getGeometry().getImages().volume();
+  sme::common::ImageStack imageStack(
+      vol, sme::common::ImageStack::indexedImageFormat);
+  imageStack.fill(0);
+  // Palette index 0 is the black background; regions 1..N use the same
+  // indexed colors as the feature editor.
+  imageStack.setColor(0, qRgb(0, 0, 0));
+  sme::common::indexedColors indexedColors;
+  const auto nRegions = sme::simulate::getNumRegions(feature.roi);
+  for (std::size_t region = 1; region <= nRegions; ++region) {
+    imageStack.setColor(static_cast<int>(region),
+                        indexedColors[region - 1].rgb());
+  }
+
+  // Map each compartment-local region assignment back onto its geometry voxel.
+  const auto &voxels = comp->getVoxels();
+  for (std::size_t i = 0; i < voxels.size() && i < regions.size(); ++i) {
+    const auto &voxel = voxels[i];
+    if (static_cast<std::size_t>(voxel.z) < vol.depth()) {
+      imageStack[static_cast<std::size_t>(voxel.z)].setPixel(
+          voxel.p.x(), voxel.p.y(), static_cast<uint>(regions[i]));
+    }
+  }
+  ui->lblImageFeature->setImage(imageStack);
 }
