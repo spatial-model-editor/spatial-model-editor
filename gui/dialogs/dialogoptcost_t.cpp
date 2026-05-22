@@ -1,8 +1,8 @@
 #include "catch_wrapper.hpp"
 #include "dialogoptcost.hpp"
 #include "model_test_utils.hpp"
-#include "qt_test_utils.hpp"
 #include "qlabelmousetracker.hpp"
+#include "qt_test_utils.hpp"
 #include "sme/utils.hpp"
 #include <QComboBox>
 #include <QLabel>
@@ -344,14 +344,14 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(featureImage.colorTable()[0] == qRgb(0, 0, 0));
     REQUIRE(featureImage.colorTable()[1] ==
             sme::common::indexedColors()[0].rgb());
-    const auto *comp = model.getCompartments().getCompartment(
-        QString::fromStdString(compId));
+    const auto *comp =
+        model.getCompartments().getCompartment(QString::fromStdString(compId));
     REQUIRE(comp != nullptr);
     std::size_t nRegionPixels{0};
     for (const auto &voxel : comp->getVoxels()) {
       if (static_cast<std::size_t>(voxel.z) < featureImage.volume().depth() &&
-          featureImage[static_cast<std::size_t>(voxel.z)].pixelIndex(
-              voxel.p) == 1) {
+          featureImage[static_cast<std::size_t>(voxel.z)].pixelIndex(voxel.p) ==
+              1) {
         ++nRegionPixels;
       }
     }
