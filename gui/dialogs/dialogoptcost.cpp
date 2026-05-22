@@ -46,6 +46,7 @@ DialogOptCost::DialogOptCost(
   ui->setupUi(this);
   ui->lblFeature->setVisible(false);
   ui->lblImageFeature->setVisible(false);
+  adjustSize();
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
     // model has no species: disable everything except cancel button
@@ -236,13 +237,20 @@ void DialogOptCost::updateTargetValuesLabel() {
   const auto text{targetValuesText(m_optCost.optCostType)};
   const auto isFeatureTarget{m_optCost.optCostType ==
                              sme::simulate::OptCostType::Feature};
-  ui->lblTargetValuesLabel->setText(
-      QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
+  //   ui->lblTargetValuesLabel->setText(
+  //       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
   ui->lblTargetDisplayed->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
-  ui->lblFeature->setVisible(isFeatureTarget);
-  ui->lblImageFeature->setVisible(isFeatureTarget);
-  ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
+
+  if (not isFeatureTarget) {
+    ui->lblFeature->setVisible(false);
+    ui->lblImageFeature->setVisible(false);
+    this->adjustSize();
+  } else {
+    ui->lblFeature->setVisible(true);
+    ui->lblImageFeature->setVisible(true);
+    ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
+  }
 }
 
 void DialogOptCost::updateImage() {
