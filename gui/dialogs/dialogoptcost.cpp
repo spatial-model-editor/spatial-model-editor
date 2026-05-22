@@ -44,9 +44,7 @@ DialogOptCost::DialogOptCost(
     : QDialog(parent), m_model{model}, m_defaultOptCosts{defaultOptCosts},
       ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
-  ui->lblFeature->setVisible(false);
-  ui->lblImageFeature->setVisible(false);
-  adjustSize();
+  this->adjustFeatureDisplay(false);
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
     // model has no species: disable everything except cancel button
@@ -179,8 +177,7 @@ void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
     m_optCost.featureId = item.featureId;
 
     // show feature image
-    ui->lblFeature->setVisible(true);
-    ui->lblImageFeature->setVisible(true);
+    this->adjustFeatureDisplay(true);
     updateImageFeature();
 
   } else {
@@ -233,22 +230,20 @@ void DialogOptCost::txtEpsilon_editingFinished() {
   ui->txtEpsilon->setText(toQStr(m_optCost.epsilon));
 }
 
+void DialogOptCost::adjustFeatureDisplay(bool condition) {
+  ui->featureDisplay->setVisible(condition);
+  //   ui->featureDisplay->adjustSize();
+}
+
 void DialogOptCost::updateTargetValuesLabel() {
   const auto text{targetValuesText(m_optCost.optCostType)};
   const auto isFeatureTarget{m_optCost.optCostType ==
                              sme::simulate::OptCostType::Feature};
-  //   ui->lblTargetValuesLabel->setText(
-  //       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
   ui->lblTargetDisplayed->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
 
-  if (not isFeatureTarget) {
-    ui->lblFeature->setVisible(false);
-    ui->lblImageFeature->setVisible(false);
-    this->adjustSize();
-  } else {
-    ui->lblFeature->setVisible(true);
-    ui->lblImageFeature->setVisible(true);
+  this->adjustFeatureDisplay(isFeatureTarget);
+  if (isFeatureTarget) {
     ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
   }
 }

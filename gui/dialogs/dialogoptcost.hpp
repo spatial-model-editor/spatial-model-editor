@@ -43,4 +43,5 @@ private:
   void updateTargetValuesLabel();
   void updateImage();
   void updateImageFeature();
+  void adjustFeatureDisplay(bool condition);
 };
