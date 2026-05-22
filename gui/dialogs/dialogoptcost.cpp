@@ -230,9 +230,8 @@ void DialogOptCost::txtEpsilon_editingFinished() {
   ui->txtEpsilon->setText(toQStr(m_optCost.epsilon));
 }
 
-void DialogOptCost::adjustFeatureDisplay(bool condition) {
-  ui->featureDisplay->setVisible(condition);
-  //   ui->featureDisplay->adjustSize();
+void DialogOptCost::adjustFeatureDisplay(bool showFeature) {
+  ui->featureDisplay->setVisible(showFeature);
 }
 
 void DialogOptCost::updateTargetValuesLabel() {
