@@ -94,7 +94,7 @@ security find-identity -v -p codesigning
 
 # notarize app and binary
 # store credentials to avoid UI prompts for passwords
-xcrun notarytool store-credentials "notarytool-profile" --apple-id "$MACOS_NOTARIZATION_APPLE_ID" --team-id "$MACOS_NOTARIZATION_TEAM_ID" --password "$MACOS_NOTARIZATION_PWD"
+retry xcrun notarytool store-credentials "notarytool-profile" --apple-id "$MACOS_NOTARIZATION_APPLE_ID" --team-id "$MACOS_NOTARIZATION_TEAM_ID" --password "$MACOS_NOTARIZATION_PWD"
 
 # zip GUI app
 ditto -c -k --keepParent "app/spatial-model-editor.app" "notarization_gui.zip"
