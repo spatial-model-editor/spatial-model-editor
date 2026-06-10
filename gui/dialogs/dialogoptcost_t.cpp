@@ -1,6 +1,7 @@
 #include "catch_wrapper.hpp"
 #include "dialogoptcost.hpp"
 #include "model_test_utils.hpp"
+#include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "sme/utils.hpp"
 #include <QComboBox>
@@ -15,7 +16,9 @@ struct DialogOptCostWidgets {
   explicit DialogOptCostWidgets(const DialogOptCost *dialog) {
     GET_DIALOG_WIDGET(QComboBox, cmbSpecies);
     GET_DIALOG_WIDGET(QComboBox, cmbCostType);
-    GET_DIALOG_WIDGET(QLabel, lblTargetValuesLabel);
+    GET_DIALOG_WIDGET(QLabel, lblTargetDisplayed);
+    GET_DIALOG_WIDGET(QLabel, lblFeature);
+    GET_DIALOG_WIDGET(QLabelMouseTracker, lblImageFeature);
     GET_DIALOG_WIDGET(QLineEdit, txtSimulationTime);
     GET_DIALOG_WIDGET(QPushButton, btnEditTargetValues);
     GET_DIALOG_WIDGET(QComboBox, cmbDiffType);
@@ -24,7 +27,9 @@ struct DialogOptCostWidgets {
   }
   QComboBox *cmbSpecies;
   QComboBox *cmbCostType;
-  QLabel *lblTargetValuesLabel;
+  QLabel *lblTargetDisplayed;
+  QLabel *lblFeature;
+  QLabelMouseTracker *lblImageFeature;
   QLineEdit *txtSimulationTime;
   QPushButton *btnEditTargetValues;
   QComboBox *cmbDiffType;
@@ -97,13 +102,13 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(dia.getOptCost().compartmentIndex == 0);
     REQUIRE(dia.getOptCost().optCostType ==
             simulate::OptCostType::Concentration);
-    REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
+    REQUIRE(widgets.lblTargetDisplayed->text() == "Concentration:");
     REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
     REQUIRE(dia.getOptCost().optCostDiffType ==
             simulate::OptCostDiffType::Relative);
     REQUIRE(widgets.txtEpsilon->isEnabled());
     widgets.cmbCostType->setCurrentIndex(1);
-    REQUIRE(widgets.lblTargetValuesLabel->text() ==
+    REQUIRE(widgets.lblTargetDisplayed->text() ==
             "Rate of change\nof concentration:");
     REQUIRE(widgets.btnEditTargetValues->text() ==
             "Edit Rate of change of concentration");
@@ -317,6 +322,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     auto compId = model.getSpecies().getField("Mt")->getCompartment()->getId();
     auto featureIndex = model.getFeatures().add(
         "peripheral Mt", compId, "Mt", roi, simulate::ReductionOp::Average);
+    const auto &vol = model.getGeometry().getImages().volume();
+    defaultOptCosts[1].targetValues = std::vector<double>(vol.nVoxels(), 1.0);
     DialogOptCost dia(model, defaultOptCosts, &defaultOptCosts[1]);
     DialogOptCostWidgets widgets(&dia);
     dia.show();
@@ -325,13 +332,36 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     REQUIRE(widgets.cmbCostType->itemText(1) ==
             "Rate of change of concentration");
     REQUIRE(widgets.cmbCostType->itemText(2) == "Feature: peripheral Mt");
+    REQUIRE(widgets.lblFeature->isVisible() == false);
+    REQUIRE(widgets.lblImageFeature->isVisible() == false);
     widgets.cmbCostType->setCurrentIndex(2);
     REQUIRE(dia.getOptCost().optCostType == simulate::OptCostType::Feature);
     REQUIRE(dia.getOptCost().featureId ==
             model.getFeatures().getFeatures()[featureIndex].id);
-    REQUIRE(widgets.lblTargetValuesLabel->text() == "Concentration:");
+    REQUIRE(widgets.lblFeature->isVisible());
+    REQUIRE(widgets.lblImageFeature->isVisible());
+    const auto &featureImage = widgets.lblImageFeature->getImage();
+    REQUIRE(featureImage.empty() == false);
+    REQUIRE(featureImage.volume() == vol);
+    // Uniform target (all 1.0) + single region covering all voxels → max
+    // intensity
+    const auto *comp =
+        model.getCompartments().getCompartment(QString::fromStdString(compId));
+    REQUIRE(comp != nullptr);
+    std::size_t nMaxPixels{0};
+    for (const auto &voxel : comp->getVoxels()) {
+      if (static_cast<std::size_t>(voxel.z) < featureImage.volume().depth() &&
+          qRed(featureImage[static_cast<std::size_t>(voxel.z)].pixel(
+              voxel.p)) == 255) {
+        ++nMaxPixels;
+      }
+    }
+    REQUIRE(nMaxPixels == comp->getVoxels().size());
+    REQUIRE(widgets.lblTargetDisplayed->text() == "Concentration:");
     REQUIRE(widgets.btnEditTargetValues->text() == "Edit Concentration");
     widgets.cmbSpecies->setCurrentIndex(0);
     REQUIRE(widgets.cmbCostType->count() == 2);
+    REQUIRE(widgets.lblFeature->isVisible() == false);
+    REQUIRE(widgets.lblImageFeature->isVisible() == false);
   }
 }
