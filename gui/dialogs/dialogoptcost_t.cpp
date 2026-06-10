@@ -343,7 +343,8 @@ TEST_CASE("DialogOptCost", "[gui/dialogs/optcost][gui/"
     const auto &featureImage = widgets.lblImageFeature->getImage();
     REQUIRE(featureImage.empty() == false);
     REQUIRE(featureImage.volume() == vol);
-    // Uniform target (all 1.0) + single region covering all voxels → max intensity
+    // Uniform target (all 1.0) + single region covering all voxels → max
+    // intensity
     const auto *comp =
         model.getCompartments().getCompartment(QString::fromStdString(compId));
     REQUIRE(comp != nullptr);
