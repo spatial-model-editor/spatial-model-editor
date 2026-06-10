@@ -1,6 +1,5 @@
 #include "dialogoptcost.hpp"
 #include "dialogimagedata.hpp"
-#include "sme/utils.hpp"
 #include "ui_dialogoptcost.h"
 #include <QMessageBox>
 
@@ -210,6 +209,7 @@ void DialogOptCost::btnEditTargetValues_clicked() {
     if (dialog.exec() == QDialog::Accepted) {
       m_optCost.targetValues = dialog.getImageArray();
       updateImage();
+      updateImageFeature();
     }
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(
@@ -240,11 +240,8 @@ void DialogOptCost::updateTargetValuesLabel() {
                              sme::simulate::OptCostType::Feature};
   ui->lblTargetDisplayed->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
-
+  ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
   this->adjustFeatureDisplay(isFeatureTarget);
-  if (isFeatureTarget) {
-    ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
-  }
 }
 
 void DialogOptCost::updateImage() {
@@ -255,6 +252,11 @@ void DialogOptCost::updateImage() {
 }
 
 void DialogOptCost::updateImageFeature() {
+  if (m_optCost.targetValues.empty()) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
   const auto &features = m_model.getFeatures().getFeatures();
   const auto featureIndex =
       m_model.getFeatures().getIndexFromId(m_optCost.featureId);
@@ -265,38 +267,41 @@ void DialogOptCost::updateImageFeature() {
   }
 
   const auto &feature = features[featureIndex];
-  const auto &regions = m_model.getFeatures().getVoxelRegions(featureIndex);
+  const auto &voxelRegions =
+      m_model.getFeatures().getVoxelRegions(featureIndex);
   const auto *comp = m_model.getCompartments().getCompartment(
       QString::fromStdString(feature.compartmentId));
-  if (comp == nullptr || regions.empty()) {
+  if (comp == nullptr || voxelRegions.empty()) {
     ui->lblImageFeature->setImage({});
     return;
   }
 
-  // Feature regions are stored per compartment voxel. Build a full
-  // geometry-sized indexed image so the preview lines up with the target image.
   const auto &vol = m_model.getGeometry().getImages().volume();
-  sme::common::ImageStack imageStack(
-      vol, sme::common::ImageStack::indexedImageFormat);
-  imageStack.fill(0);
-  // Palette index 0 is the black background; regions 1..N use the same
-  // indexed colors as the feature editor.
-  imageStack.setColor(0, qRgb(0, 0, 0));
-  sme::common::indexedColors indexedColors;
-  const auto nRegions = sme::simulate::getNumRegions(feature.roi);
-  for (std::size_t region = 1; region <= nRegions; ++region) {
-    imageStack.setColor(static_cast<int>(region),
-                        indexedColors[region - 1].rgb());
-  }
-
-  // Map each compartment-local region assignment back onto its geometry voxel.
   const auto &voxels = comp->getVoxels();
-  for (std::size_t i = 0; i < voxels.size() && i < regions.size(); ++i) {
-    const auto &voxel = voxels[i];
-    if (static_cast<std::size_t>(voxel.z) < vol.depth()) {
-      imageStack[static_cast<std::size_t>(voxel.z)].setPixel(
-          voxel.p.x(), voxel.p.y(), static_cast<uint>(regions[i]));
+
+  // Extract per-voxel concentrations from the full-geometry targetValues array.
+  std::vector<double> targetConcentrations(voxels.size(), 0.0);
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
+    const auto idx = sme::common::voxelArrayIndex(vol, voxels[i], true);
+    if (idx < m_optCost.targetValues.size()) {
+      targetConcentrations[i] = m_optCost.targetValues[idx];
     }
   }
-  ui->lblImageFeature->setImage(imageStack);
+
+  // Reduce to one scalar per region.
+  const auto regionValues = sme::simulate::evaluateFeature(
+      feature, targetConcentrations, voxelRegions);
+
+  // Scatter per-region scalars back to a full-geometry array for ImageStack.
+  std::vector<double> perVoxelValues(vol.nVoxels(), 0.0);
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
+    const auto region = voxelRegions[i];
+    if (region == 0 || region > regionValues.size()) {
+      continue;
+    }
+    perVoxelValues[sme::common::voxelArrayIndex(vol, voxels[i], true)] =
+        regionValues[region - 1];
+  }
+
+  ui->lblImageFeature->setImage(sme::common::ImageStack(vol, perVoxelValues));
 }
