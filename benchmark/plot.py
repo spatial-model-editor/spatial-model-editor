@@ -1,7 +1,9 @@
-import pandas as pd
 import json
 
-benchmarks = json.load(open("bench_out.json"))["benchmarks"]
+import pandas as pd
+
+with open("bench_out.json", encoding="utf-8") as benchmark_file:
+    benchmarks = json.load(benchmark_file)["benchmarks"]
 
 classes = set()
 datasets = set()

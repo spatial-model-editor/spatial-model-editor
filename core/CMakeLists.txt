@@ -145,7 +145,20 @@ find_package(fmt REQUIRED)
 if(WIN32)
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
+# CGAL 6.0.x uses find_package(Boost) without CONFIG and limits its policy scope
+# to CMake 3.29, so opt it into the modern BoostConfig lookup.
+if(POLICY CMP0167
+   AND NOT
+       DEFINED
+       CMAKE_POLICY_DEFAULT_CMP0167)
+  set(CMAKE_POLICY_DEFAULT_CMP0167 NEW)
+  set(SME_UNSET_CMAKE_POLICY_DEFAULT_CMP0167 ON)
+endif()
 find_package(CGAL REQUIRED)
+if(SME_UNSET_CMAKE_POLICY_DEFAULT_CMP0167)
+  unset(CMAKE_POLICY_DEFAULT_CMP0167)
+  unset(SME_UNSET_CMAKE_POLICY_DEFAULT_CMP0167)
+endif()
 find_package(cereal REQUIRED)
 find_package(Pagmo REQUIRED)
 find_package(

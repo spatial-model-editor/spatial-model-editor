@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core"]
+requires = ["scikit-build-core>=0.11"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -7,12 +7,12 @@ name = "sme"
 version = "1.12.0"
 description = "Spatial Model Editor python bindings"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors=[{name="Liam Keegan", email="liam@keegan.ch"}]
 requires-python = ">=3.9"
 classifiers=[
     "Topic :: Scientific/Engineering :: Bio-Informatics",
-    "License :: OSI Approved :: MIT License",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Education",
     "Natural Language :: English",
@@ -43,7 +43,8 @@ Issues = "https://github.com/spatial-model-editor/spatial-model-editor/issues"
 test = ["pytest", "matplotlib"]
 
 [tool.scikit-build]
-cmake.verbose = true
+minimum-version = "build-system.requires"
+build.verbose = true
 logging.level = "DEBUG"
 
 [tool.scikit-build.cmake.define]

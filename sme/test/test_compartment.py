@@ -1,6 +1,7 @@
-import sme
-import pytest
 import numpy as np
+import pytest
+
+import sme
 
 
 def test_compartment_image() -> None:

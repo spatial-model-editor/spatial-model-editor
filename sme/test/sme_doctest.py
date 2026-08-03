@@ -1,6 +1,6 @@
 if __name__ == "__main__":
-    import os
     import doctest
+    import os
     import sys
 
     # Ensure doctest plotting examples use a headless backend in CI.

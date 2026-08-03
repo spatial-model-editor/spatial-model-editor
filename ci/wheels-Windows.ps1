@@ -74,7 +74,6 @@ foreach ($name in $requiredEnvVars) {
   }
 }
 
-Set-DefaultEnvironmentValue -Name "CMAKE_POLICY_VERSION_MINIMUM" -Value "3.5"
 Set-DefaultEnvironmentValue -Name "CMAKE_GENERATOR" -Value "Ninja"
 Set-DefaultEnvironmentValue -Name "CMAKE_C_COMPILER" -Value "cl"
 Set-DefaultEnvironmentValue -Name "CMAKE_CXX_COMPILER" -Value "cl"
@@ -100,7 +99,6 @@ $qtFreetypeIncludeDirCMake = "$installPrefixCMake/include/QtFreetype"
 
 Write-Host "INSTALL_PREFIX = $env:INSTALL_PREFIX"
 Write-Host "CIBUILDWHEEL_VERSION = $env:CIBUILDWHEEL_VERSION"
-Write-Host "CMAKE_POLICY_VERSION_MINIMUM = $env:CMAKE_POLICY_VERSION_MINIMUM"
 Write-Host "CMAKE_GENERATOR = $env:CMAKE_GENERATOR"
 Write-Host "CMAKE_C_COMPILER = $env:CMAKE_C_COMPILER"
 Write-Host "CMAKE_CXX_COMPILER = $env:CMAKE_CXX_COMPILER"
