@@ -479,6 +479,89 @@ TEST_CASE("setBestResults and getUpdatedBestResultImage",
   REQUIRE(optimization.getUpdatedBestResultImage(1).has_value() == false);
 }
 
+TEST_CASE("Feature target and result images show reduced feature values",
+          "[core/simulate/optimize][core/simulate][core][optimize][features]") {
+  auto model{getExampleModel(Mod::ABtoC)};
+  const auto *comp = model.getSpecies().getField("A")->getCompartment();
+  REQUIRE(comp != nullptr);
+
+  simulate::RoiSettings roi;
+  roi.roiType = simulate::RoiType::Analytic;
+  roi.expression = "1";
+  roi.numRegions = 1;
+  const auto featureIndex = model.getFeatures().add(
+      "average A", comp->getId(), "A", roi, simulate::ReductionOp::Average);
+
+  const auto volume = model.getGeometry().getImages().volume();
+  std::vector<double> targetValues(volume.nVoxels(), 0.0);
+  std::vector<double> resultValues(volume.nVoxels(), 0.0);
+  for (std::size_t i = 0; i < comp->getVoxels().size(); ++i) {
+    const auto imageIndex =
+        common::voxelArrayIndex(volume, comp->getVoxels()[i], true);
+    targetValues[imageIndex] = i % 2 == 0 ? 1.0 : 3.0;
+    resultValues[imageIndex] = 0.5 * targetValues[imageIndex];
+  }
+
+  simulate::OptimizeOptions options;
+  options.optAlgorithm.islands = 1;
+  options.optAlgorithm.population = 3;
+  options.optParams.push_back({simulate::OptParamType::ReactionParameter, "k1",
+                               "k1", "r1", 0.02, 0.88});
+  options.optCosts.push_back(
+      {simulate::OptCostType::Feature, simulate::OptCostDiffType::Absolute,
+       "average A", "A", 1.0, 1.0, 0, 0, targetValues, 1e-14,
+       model.getFeatures().getFeatures()[featureIndex].id});
+  model.getOptimizeOptions() = options;
+  simulate::Optimization optimization(model);
+
+  // The varying target concentration is reduced to a single region value.
+  // That value sets the common normalization used by both images.
+  const auto targetImage = optimization.getTargetImage(0);
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(targetImage[voxel.z].pixel(voxel.p) == qRgb(255, 255, 255));
+  }
+
+  REQUIRE(optimization.setBestResults(
+      1.0, std::vector<std::vector<double>>{resultValues}));
+  const auto resultImage = optimization.getUpdatedBestResultImage(0).value();
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(resultImage[voxel.z].pixel(voxel.p) == qRgb(127, 127, 127));
+  }
+
+  // Difference images for feature targets are also reduced in feature space.
+  const auto differenceImage = optimization.getDifferenceImage(0);
+  for (const auto &voxel : comp->getVoxels()) {
+    REQUIRE(differenceImage[voxel.z].pixel(voxel.p) == qRgb(255, 255, 255));
+  }
+}
+
+TEST_CASE("Feature optimization rejects features with no regions",
+          "[core/simulate/optimize][core/simulate][core][optimize][features]") {
+  auto model{getExampleModel(Mod::ABtoC)};
+  const auto *comp = model.getSpecies().getField("A")->getCompartment();
+  REQUIRE(comp != nullptr);
+
+  simulate::RoiSettings roi;
+  roi.roiType = simulate::RoiType::Analytic;
+  roi.expression = "1";
+  roi.numRegions = 0;
+  const auto featureIndex = model.getFeatures().add(
+      "average A", comp->getId(), "A", roi, simulate::ReductionOp::Average);
+
+  simulate::OptimizeOptions options;
+  options.optCosts.push_back(
+      {simulate::OptCostType::Feature, simulate::OptCostDiffType::Absolute,
+       "average A", "A", 1.0, 1.0, 0, 0,
+       std::vector<double>(model.getGeometry().getImages().volume().nVoxels(),
+                           1.0),
+       1e-14, model.getFeatures().getFeatures()[featureIndex].id});
+  model.getOptimizeOptions() = options;
+
+  simulate::Optimization optimization(model);
+  REQUIRE(optimization.getErrorMessage() ==
+          "Optimization: Feature 'average_A' has no regions");
+}
+
 TEST_CASE("Save and load model with optimization settings",
           "[core/simulate/optimize][core/simulate][core][optimize]") {
   auto model{getExampleModel(Mod::ABtoC)};

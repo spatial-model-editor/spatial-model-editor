@@ -70,6 +70,15 @@ private:
   std::string errorMessage{};
 
   std::size_t finalizeEvolve(const std::string &newErrorMessage = {});
+  [[nodiscard]] bool isFeatureTarget(std::size_t index) const;
+  [[nodiscard]] std::vector<double>
+  getTargetImageValues(std::size_t index) const;
+  [[nodiscard]] std::vector<double>
+  getResultImageValues(std::size_t index,
+                       const std::vector<double> &values) const;
+  [[nodiscard]] std::vector<double>
+  scatterFeatureValues(std::size_t index,
+                       const std::vector<double> &featureValues) const;
 
 public:
   /**
@@ -119,7 +128,9 @@ public:
   getBestResultValues(std::size_t index) const;
 
   /**
-   * @brief Get an image of the a target
+   * @brief Get an image of a target
+   *
+   * Feature targets are rendered as their reduced per-region values.
    */
   [[nodiscard]] common::ImageStack getTargetImage(std::size_t index) const;
 
@@ -131,6 +142,8 @@ public:
 
   /**
    * @brief Get an image of the current best result for a target
+   *
+   * Feature targets are rendered as their reduced per-region values.
    */
   [[nodiscard]] std::optional<common::ImageStack>
   getUpdatedBestResultImage(std::size_t index);

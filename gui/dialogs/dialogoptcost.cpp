@@ -43,6 +43,7 @@ DialogOptCost::DialogOptCost(
     : QDialog(parent), m_model{model}, m_defaultOptCosts{defaultOptCosts},
       ui{std::make_unique<Ui::DialogOptCost>()} {
   ui->setupUi(this);
+  this->adjustFeatureDisplay(false);
   int cmbIndex{0};
   if (defaultOptCosts.empty()) {
     // model has no species: disable everything except cancel button
@@ -161,6 +162,7 @@ void DialogOptCost::cmbSpecies_currentIndexChanged(int index) {
   }
   populateTargetTypes();
   updateImage();
+  updateImageFeature();
 }
 
 void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
@@ -172,6 +174,11 @@ void DialogOptCost::cmbCostType_currentIndexChanged(int index) {
   m_optCost.optCostType = item.optCostType;
   if (m_optCost.optCostType == sme::simulate::OptCostType::Feature) {
     m_optCost.featureId = item.featureId;
+
+    // show feature image
+    this->adjustFeatureDisplay(true);
+    updateImageFeature();
+
   } else {
     m_optCost.featureId.clear();
   }
@@ -194,6 +201,7 @@ void DialogOptCost::btnEditTargetValues_clicked() {
   if (m_optCost.optCostType == sme::simulate::OptCostType::ConcentrationDcdt) {
     dataType = DialogImageDataDataType::ConcentrationRateOfChange;
   }
+
   try {
     DialogImageData dialog(m_optCost.targetValues,
                            m_model.getSpeciesGeometry(m_optCost.id.c_str()),
@@ -201,6 +209,7 @@ void DialogOptCost::btnEditTargetValues_clicked() {
     if (dialog.exec() == QDialog::Accepted) {
       m_optCost.targetValues = dialog.getImageArray();
       updateImage();
+      updateImageFeature();
     }
   } catch (const std::invalid_argument &e) {
     QMessageBox::warning(
@@ -221,11 +230,18 @@ void DialogOptCost::txtEpsilon_editingFinished() {
   ui->txtEpsilon->setText(toQStr(m_optCost.epsilon));
 }
 
+void DialogOptCost::adjustFeatureDisplay(bool showFeature) {
+  ui->featureDisplay->setVisible(showFeature);
+}
+
 void DialogOptCost::updateTargetValuesLabel() {
   const auto text{targetValuesText(m_optCost.optCostType)};
-  ui->lblTargetValuesLabel->setText(
+  const auto isFeatureTarget{m_optCost.optCostType ==
+                             sme::simulate::OptCostType::Feature};
+  ui->lblTargetDisplayed->setText(
       QString("%1:").arg(targetValuesText(m_optCost.optCostType, true)));
   ui->btnEditTargetValues->setText(QString("Edit %1").arg(text));
+  this->adjustFeatureDisplay(isFeatureTarget);
 }
 
 void DialogOptCost::updateImage() {
@@ -233,4 +249,59 @@ void DialogOptCost::updateImage() {
       m_model.getSpeciesGeometry(m_optCost.id.c_str()).compartmentImageSize};
   ui->lblImage->setImage(
       sme::common::ImageStack(imageSize, m_optCost.targetValues));
+}
+
+void DialogOptCost::updateImageFeature() {
+  if (m_optCost.targetValues.empty()) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
+  const auto &features = m_model.getFeatures().getFeatures();
+  const auto featureIndex =
+      m_model.getFeatures().getIndexFromId(m_optCost.featureId);
+  if (featureIndex >= features.size() ||
+      !m_model.getFeatures().isValid(featureIndex)) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
+  const auto &feature = features[featureIndex];
+  const auto &voxelRegions =
+      m_model.getFeatures().getVoxelRegions(featureIndex);
+  const auto *comp = m_model.getCompartments().getCompartment(
+      QString::fromStdString(feature.compartmentId));
+  if (comp == nullptr || voxelRegions.empty()) {
+    ui->lblImageFeature->setImage({});
+    return;
+  }
+
+  const auto &vol = m_model.getGeometry().getImages().volume();
+  const auto &voxels = comp->getVoxels();
+
+  // Extract per-voxel concentrations from the full-geometry targetValues array.
+  std::vector<double> targetConcentrations(voxels.size(), 0.0);
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
+    const auto idx = sme::common::voxelArrayIndex(vol, voxels[i], true);
+    if (idx < m_optCost.targetValues.size()) {
+      targetConcentrations[i] = m_optCost.targetValues[idx];
+    }
+  }
+
+  // Reduce to one scalar per region.
+  const auto regionValues = sme::simulate::evaluateFeature(
+      feature, targetConcentrations, voxelRegions);
+
+  // Scatter per-region scalars back to a full-geometry array for ImageStack.
+  std::vector<double> perVoxelValues(vol.nVoxels(), 0.0);
+  for (std::size_t i = 0; i < voxels.size(); ++i) {
+    const auto region = voxelRegions[i];
+    if (region == 0 || region > regionValues.size()) {
+      continue;
+    }
+    perVoxelValues[sme::common::voxelArrayIndex(vol, voxels[i], true)] =
+        regionValues[region - 1];
+  }
+
+  ui->lblImageFeature->setImage(sme::common::ImageStack(vol, perVoxelValues));
 }

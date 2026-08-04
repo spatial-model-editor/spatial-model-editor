@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### Added
+- feature visualisation when they are used as optimisation targets [#1168](https://github.com/spatial-model-editor/spatial-model-editor/issues/1168)
 - species concentration at the mouseover location in the species tab [#122](https://github.com/spatial-model-editor/spatial-model-editor/issues/122)
 - tooltip in math expression editors describing the symbol or function under the cursor [#560](https://github.com/spatial-model-editor/spatial-model-editor/issues/560)
 
