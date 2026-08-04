@@ -1,6 +1,7 @@
-import pytest
-import sme
 import numpy as np
+import pytest
+
+import sme
 
 
 def test_species():

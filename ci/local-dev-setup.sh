@@ -214,7 +214,6 @@ configure_build() {
         -DEXPAT_INCLUDE_DIR="${INSTALL_PREFIX}/include"
         -DEXPAT_LIBRARY="${INSTALL_PREFIX}/lib/libexpat.a"
         -DSME_LOG_LEVEL=INFO
-        -DCMAKE_POLICY_VERSION_MINIMUM=3.5
     )
     if [ "$PLATFORM" = "macos" ]; then
         cmake_args+=(

@@ -27,7 +27,7 @@ master_doc = "index"
 # -- General configuration ---------------------------------------------------
 
 # generate doxygen xml output
-subprocess.run(["doxygen", "Doxyfile.in"])
+subprocess.run(["doxygen", "Doxyfile.in"], check=False)
 # generate rst from doxygen for each class, file, namespace
 # subprocess.run(['breathe-apidoc', 'build/xml', '-o', 'developer/_auto'])
 

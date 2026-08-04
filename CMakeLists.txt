@@ -12,14 +12,6 @@ project(
 # https://gitlab.kitware.com/cmake/cmake/-/issues/25974
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 
-# workaround for CGAL using deprecated exec_program
-if(POLICY CMP0153)
-  cmake_policy(
-    SET
-    CMP0153
-    OLD)
-endif()
-
 list(
   APPEND
   CMAKE_MODULE_PATH

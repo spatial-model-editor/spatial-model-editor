@@ -1,7 +1,9 @@
-import pytest
-import sme
 import pathlib
+
 import numpy as np
+import pytest
+
+import sme
 
 
 def get_abs_filename(filename: str):

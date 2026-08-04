@@ -4,17 +4,11 @@
 
 set -e -x
 
-# temporary workaround for cmake 4.0 complaining about symengine min cmake version being too low:
-export CMAKE_POLICY_VERSION_MINIMUM=3.5
-
 export CCACHE_BASEDIR=/private
 export CMAKE_GENERATOR="Ninja"
 export CMAKE_CXX_COMPILER_LAUNCHER="ccache"
 export CMAKE_PREFIX_PATH="/opt/smelibs;/opt/smelibs/lib/cmake"
 export CMAKE_ARGS="-DSME_LOG_LEVEL=OFF -DCMAKE_CXX_FLAGS=-fvisibility=hidden -DCMAKE_OSX_DEPLOYMENT_TARGET=$MACOSX_DEPLOYMENT_TARGET -DCMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH -DSME_BUILD_CORE=off -DCMAKE_CXX_COMPILER_LAUNCHER=$CMAKE_CXX_COMPILER_LAUNCHER"
-
-# workaround for assumption made by some older pip versions that macOS version is always 10.x
-export SYSTEM_VERSION_COMPAT=0
 
 # check versions
 cmake --version
