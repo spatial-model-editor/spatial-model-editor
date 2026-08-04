@@ -98,6 +98,11 @@ static FeatureOptCost resolveFeatureOptCost(const sme::model::Model &model,
     return featureOptCost;
   }
   featureOptCost.feature = model.getFeatures().getFeatures()[featureIndex];
+  if (featureOptCost.feature.roi.numRegions == 0) {
+    featureOptCost.errorMessage = fmt::format(
+        "Optimization: Feature '{}' has no regions", optCost.featureId);
+    return featureOptCost;
+  }
   if (featureOptCost.feature.speciesId != optCost.id) {
     featureOptCost.errorMessage =
         fmt::format("Optimization: Feature '{}' does not match species '{}'",
@@ -251,15 +256,16 @@ Optimization::Optimization(sme::model::Model &model) {
   optConstData->optTimesteps = getOptTimesteps(options);
   optConstData->featureOptCosts.resize(
       optConstData->optimizeOptions.optCosts.size());
-  for (const auto &cost : model.getOptimizeOptions().optCosts) {
-    if (cost.targetValues.empty()) {
-      // empty vector is implicitly zero everywhere,
-      // use negative value here to allow rescaling of image to whatever the
-      // result is
+  optConstData->maxTargetValues.reserve(
+      optConstData->optimizeOptions.optCosts.size());
+  for (const auto &optCost : optConstData->optimizeOptions.optCosts) {
+    if (optCost.targetValues.empty()) {
+      // An empty target is implicitly zero everywhere. Allow a non-zero result
+      // to choose the display scale so that it remains visible.
       optConstData->maxTargetValues.push_back(-1.0);
     } else {
       optConstData->maxTargetValues.push_back(
-          sme::common::max(cost.targetValues));
+          common::max(optCost.targetValues));
     }
   }
   for (std::size_t i = 0; i < optConstData->optimizeOptions.optCosts.size();
@@ -273,6 +279,10 @@ Optimization::Optimization(sme::model::Model &model) {
     if (!optConstData->featureOptCosts[i].valid) {
       errorMessage = optConstData->featureOptCosts[i].errorMessage;
       return;
+    }
+    if (!optCost.targetValues.empty()) {
+      optConstData->maxTargetValues[i] =
+          common::max(optConstData->featureOptCosts[i].targetFeatureValues);
     }
   }
   modelQueue = std::make_unique<sme::simulate::ThreadsafeModelQueue>();
@@ -399,22 +409,23 @@ common::ImageStack Optimization::getDifferenceImage(std::size_t index) {
 
   auto size = getImageSize();
 
-  std::vector<double> tgt_values = getTargetValues(index);
+  auto targetValues = getTargetImageValues(index);
 
   // separate allocation to make sure that common::max does not segfault when
   // called on an empty array.
-  auto diff_values = std::vector<double>(size.nVoxels(), 0);
+  auto differenceValues = std::vector<double>(size.nVoxels(), 0);
 
-  if (bestResults.imageIndex == std::numeric_limits<std::size_t>::max()) {
-    return sme::common::ImageStack(
-        size, diff_values, tgt_values.size() > 0 ? common::max(tgt_values) : 0);
+  auto resultValues = getBestResultValues(index);
+  if (resultValues.empty()) {
+    return common::ImageStack(size, differenceValues,
+                              targetValues.empty() ? 0.0
+                                                   : common::max(targetValues));
   }
-  auto res_values = getBestResultValues(index);
-  if (res_values.size() > 0) {
-    std::ranges::transform(tgt_values, res_values, diff_values.begin(),
-                           std::minus<double>());
-  }
-  return sme::common::ImageStack(size, diff_values, common::max(diff_values));
+  resultValues = getResultImageValues(index, resultValues);
+  std::ranges::transform(targetValues, resultValues, differenceValues.begin(),
+                         std::minus<double>());
+  return common::ImageStack(size, differenceValues,
+                            common::max(differenceValues));
 }
 
 bool Optimization::setBestResults(double fitness,
@@ -430,9 +441,9 @@ bool Optimization::setBestResults(double fitness,
 }
 
 common::ImageStack Optimization::getTargetImage(std::size_t index) const {
-  return common::ImageStack(
-      optConstData->imageSize,
-      optConstData->optimizeOptions.optCosts[index].targetValues);
+  return common::ImageStack(optConstData->imageSize,
+                            getTargetImageValues(index),
+                            optConstData->maxTargetValues[index]);
 }
 
 std::optional<common::ImageStack>
@@ -444,9 +455,10 @@ Optimization::getUpdatedBestResultImage(std::size_t index) {
   if (bestResults.imageChanged || index != bestResults.imageIndex) {
     bestResults.imageChanged = false;
     bestResults.imageIndex = index;
-    return common::ImageStack(optConstData->imageSize,
-                              bestResults.values[index],
-                              optConstData->maxTargetValues[index]);
+    return common::ImageStack(
+        optConstData->imageSize,
+        getResultImageValues(index, bestResults.values[index]),
+        optConstData->maxTargetValues[index]);
   }
   return {};
 }
@@ -461,8 +473,60 @@ common::ImageStack Optimization::getCurrentBestResultImage() const {
     return common::ImageStack();
   }
   return common::ImageStack(
-      optConstData->imageSize, bestResults.values[bestResults.imageIndex],
+      optConstData->imageSize,
+      getResultImageValues(bestResults.imageIndex,
+                           bestResults.values[bestResults.imageIndex]),
       optConstData->maxTargetValues[bestResults.imageIndex]);
+}
+
+bool Optimization::isFeatureTarget(std::size_t index) const {
+  return index < optConstData->optimizeOptions.optCosts.size() &&
+         optConstData->optimizeOptions.optCosts[index].optCostType ==
+             OptCostType::Feature;
+}
+
+std::vector<double> Optimization::scatterFeatureValues(
+    std::size_t index, const std::vector<double> &featureValues) const {
+  std::vector<double> imageValues(optConstData->imageSize.nVoxels(), 0.0);
+  const auto &featureCost = optConstData->featureOptCosts[index];
+  for (std::size_t i = 0; i < featureCost.imageIndices.size(); ++i) {
+    const auto region = featureCost.voxelRegions[i];
+    if (region == 0 || region > featureValues.size()) {
+      continue;
+    }
+    imageValues[featureCost.imageIndices[i]] = featureValues[region - 1];
+  }
+  return imageValues;
+}
+
+std::vector<double>
+Optimization::getTargetImageValues(std::size_t index) const {
+  if (isFeatureTarget(index)) {
+    return scatterFeatureValues(
+        index, optConstData->featureOptCosts[index].targetFeatureValues);
+  }
+  const auto &targetValues =
+      optConstData->optimizeOptions.optCosts[index].targetValues;
+  if (targetValues.empty()) {
+    return std::vector<double>(optConstData->imageSize.nVoxels(), 0.0);
+  }
+  return targetValues;
+}
+
+std::vector<double>
+Optimization::getResultImageValues(std::size_t index,
+                                   const std::vector<double> &values) const {
+  if (!isFeatureTarget(index)) {
+    return values;
+  }
+  const auto &featureCost = optConstData->featureOptCosts[index];
+  std::vector<double> concentrations(featureCost.imageIndices.size(), 0.0);
+  for (std::size_t i = 0; i < featureCost.imageIndices.size(); ++i) {
+    concentrations[i] = values[featureCost.imageIndices[i]];
+  }
+  return scatterFeatureValues(index, evaluateFeature(featureCost.feature,
+                                                     concentrations,
+                                                     featureCost.voxelRegions));
 }
 
 std::vector<double> Optimization::getBestResultValues(std::size_t index) const {
