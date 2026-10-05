@@ -164,7 +164,8 @@ detail::makeCudaKernelSource(const std::vector<std::string> &variables,
   src << fmt::format(R"(
 extern "C" __global__ void reaction_kernel(const {0}* conc, {0}* dcdt,
                                            unsigned int nPixels) {{
-  const unsigned int ix = blockIdx.x * blockDim.x + threadIdx.x;
+  const unsigned long long ix =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (ix >= nPixels) {{
     return;
   }}
@@ -174,23 +175,24 @@ extern "C" __global__ void reaction_kernel(const {0}* conc, {0}* dcdt,
 extern "C" __global__ void diffusion_uniform_kernel(
     const {0}* conc, {0}* dcdt, const unsigned int* nn,
     const {0}* diffusion, unsigned int nPixels) {{
-  const unsigned int ix = blockIdx.x * blockDim.x + threadIdx.x;
+  const unsigned long long ix =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (ix >= nPixels) {{
     return;
   }}
-  const unsigned int iupx = nn[6 * ix];
-  const unsigned int idnx = nn[6 * ix + 1];
-  const unsigned int iupy = nn[6 * ix + 2];
-  const unsigned int idny = nn[6 * ix + 3];
-  const unsigned int iupz = nn[6 * ix + 4];
-  const unsigned int idnz = nn[6 * ix + 5];
-  const unsigned int iCenter = ix * N_SPECIES;
-  const unsigned int iUpx = iupx * N_SPECIES;
-  const unsigned int iDnx = idnx * N_SPECIES;
-  const unsigned int iUpy = iupy * N_SPECIES;
-  const unsigned int iDny = idny * N_SPECIES;
-  const unsigned int iUpz = iupz * N_SPECIES;
-  const unsigned int iDnz = idnz * N_SPECIES;
+  const unsigned long long iupx = nn[6 * ix];
+  const unsigned long long idnx = nn[6 * ix + 1];
+  const unsigned long long iupy = nn[6 * ix + 2];
+  const unsigned long long idny = nn[6 * ix + 3];
+  const unsigned long long iupz = nn[6 * ix + 4];
+  const unsigned long long idnz = nn[6 * ix + 5];
+  const unsigned long long iCenter = ix * N_SPECIES;
+  const unsigned long long iUpx = iupx * N_SPECIES;
+  const unsigned long long iDnx = idnx * N_SPECIES;
+  const unsigned long long iUpy = iupy * N_SPECIES;
+  const unsigned long long iDny = idny * N_SPECIES;
+  const unsigned long long iUpz = iupz * N_SPECIES;
+  const unsigned long long iDnz = idnz * N_SPECIES;
   for (unsigned int is = 0; is < N_SPECIES; ++is) {{
     const {0} c0 = conc[iCenter + is];
     dcdt[iCenter + is] +=
@@ -205,8 +207,9 @@ extern "C" __global__ void diffusion_uniform_kernel(
 
 extern "C" __global__ void rk101_update_kernel({0}* conc, const {0}* dcdt,
                                                 {0} dt,
-                                                unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+                                                unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -215,8 +218,9 @@ extern "C" __global__ void rk101_update_kernel({0}* conc, const {0}* dcdt,
 
 extern "C" __global__ void rk212_substep1_kernel(
     {0}* conc, const {0}* dcdt, {0}* sme_lower_order,
-    {0}* sme_old_conc, {0} dt, unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    {0}* sme_old_conc, {0} dt, unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -227,8 +231,9 @@ extern "C" __global__ void rk212_substep1_kernel(
 
 extern "C" __global__ void rk212_substep2_kernel(
     {0}* conc, const {0}* dcdt, {0}* sme_lower_order,
-    const {0}* sme_old_conc, {0} dt, unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const {0}* sme_old_conc, {0} dt, unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -239,11 +244,12 @@ extern "C" __global__ void rk212_substep2_kernel(
 extern "C" __global__ void rk212_error_kernel(
     const {0}* conc, const {0}* sme_lower_order,
     const {0}* sme_old_conc, {0} epsilon, {0}* abs_error_blocks,
-    {0}* rel_error_blocks, unsigned int nValues) {{
+    {0}* rel_error_blocks, unsigned long long nValues) {{
   __shared__ {0} abs_error_shared[RK_ERROR_BLOCK_SIZE];
   __shared__ {0} rel_error_shared[RK_ERROR_BLOCK_SIZE];
   const unsigned int localIndex = threadIdx.x;
-  const unsigned int globalIndex = blockIdx.x * blockDim.x + localIndex;
+  const unsigned long long globalIndex =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + localIndex;
   {0} localAbsError = 0.0{1};
   {0} localRelError = 0.0{1};
   if (globalIndex < nValues) {{
@@ -301,8 +307,9 @@ extern "C" __global__ void rk212_error_reduce_kernel(
 }}
 
 extern "C" __global__ void rk_init_kernel(
-    const {0}* conc, {0}* s2, {0}* s3, unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    const {0}* conc, {0}* s2, {0}* s3, unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -313,8 +320,9 @@ extern "C" __global__ void rk_init_kernel(
 extern "C" __global__ void rk_substep_kernel(
     {0}* conc, const {0}* dcdt, {0}* s2, const {0}* s3,
     {0} dt, {0} g1, {0} g2, {0} g3, {0} beta, {0} delta,
-    unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -325,8 +333,9 @@ extern "C" __global__ void rk_substep_kernel(
 extern "C" __global__ void rk_finalise_kernel(
     const {0}* conc, {0}* s2, const {0}* s3,
     {0} cFactor, {0} s2Factor, {0} s3Factor,
-    unsigned int nValues) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+    unsigned long long nValues) {{
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nValues) {{
     return;
   }}
@@ -335,11 +344,12 @@ extern "C" __global__ void rk_finalise_kernel(
 
 extern "C" __global__ void clamp_negative_kernel({0}* conc,
                                                  unsigned int nPixels) {{
-  const unsigned int ix = blockIdx.x * blockDim.x + threadIdx.x;
+  const unsigned long long ix =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (ix >= nPixels) {{
     return;
   }}
-  const unsigned int offset = ix * N_SPECIES;
+  const unsigned long long offset = ix * N_SPECIES;
   for (unsigned int is = 0; is < N_SPECIES; ++is) {{
     if (conc[offset + is] < 0.0{1}) {{
       conc[offset + is] = 0.0{1};
@@ -403,16 +413,17 @@ extern "C" __global__ void membrane_reaction_kernel(
     const unsigned int* indexPairs, unsigned int nPairs, const {0}* concA,
     {0}* dcdtA, const {0}* concB, {0}* dcdtB,
     {0} invFluxLength) {{
-  const unsigned int i = blockIdx.x * blockDim.x + threadIdx.x;
+  const unsigned long long i =
+      static_cast<unsigned long long>(blockIdx.x) * blockDim.x + threadIdx.x;
   if (i >= nPairs) {{
     return;
   }}
-  const unsigned int ixA = indexPairs[2 * i];
-  const unsigned int ixB = indexPairs[2 * i + 1];
+  const unsigned long long ixA = indexPairs[2 * i];
+  const unsigned long long ixB = indexPairs[2 * i + 1];
   {0} sme_inputs[N_MEMBRANE_INPUTS]{{}};
   {0} sme_result[N_MEMBRANE_INPUTS]{{}};
-  const unsigned int offsetA = ixA * N_SPECIES_A;
-  const unsigned int offsetB = ixB * N_SPECIES_B;
+  const unsigned long long offsetA = ixA * N_SPECIES_A;
+  const unsigned long long offsetB = ixB * N_SPECIES_B;
   for (unsigned int is = 0; is < N_SPECIES_A; ++is) {{
     sme_inputs[is] = concA[offsetA + is];
   }}
@@ -692,6 +703,12 @@ static CudaMembraneKernelBundle compileCudaMembraneKernelBundle(
     }
     throw;
   }
+}
+
+// number of blocks needed to launch a kernel with one thread per element
+static unsigned int gridSize(std::size_t nElements) {
+  return static_cast<unsigned int>((nElements + cudaKernelBlockSize - 1) /
+                                   cudaKernelBlockSize);
 }
 
 static void launchKernel(CUfunction kernel, unsigned int gridX,
@@ -1191,8 +1208,7 @@ void CudaPixelSim::evaluateDcdt() {
   // Launch reaction and diffusion kernels on per-compartment streams
   for (auto &state : impl->compartments) {
     auto nPixels = static_cast<unsigned int>(state.nPixels);
-    const auto voxelGrid =
-        (nPixels + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    const auto voxelGrid = gridSize(nPixels);
     std::array<void *, 3> reactionArgs{&state.dConc, &state.dDcdt, &nPixels};
     launchKernel(state.kernels.reaction, voxelGrid, cudaKernelBlockSize,
                  state.stream, reactionArgs.data(), "reaction_kernel");
@@ -1236,8 +1252,7 @@ void CudaPixelSim::evaluateDcdt() {
             ? impl->compartments[membrane.compartmentIndexB].dDcdt
             : 0};
     auto nPairs = membrane.nFacePairs[launch.faceIndex];
-    const auto faceGrid =
-        (nPairs + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    const auto faceGrid = gridSize(nPairs);
     auto invFluxLength = membrane.faceInvFluxLengths[launch.faceIndex];
     auto invFluxLengthF = static_cast<float>(invFluxLength);
     std::array<void *, 7> membraneArgs{
@@ -1265,9 +1280,8 @@ void CudaPixelSim::launchRk101Update(double dt) {
   float dtF = static_cast<float>(dt);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 4> updateArgs{&state.dConc, &state.dDcdt,
                                      impl->useFloat ? static_cast<void *>(&dtF)
                                                     : static_cast<void *>(&dt),
@@ -1284,8 +1298,7 @@ void CudaPixelSim::launchClampNegative() {
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
     auto nPixels = static_cast<unsigned int>(state.nPixels);
-    const auto voxelGrid =
-        (nPixels + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    const auto voxelGrid = gridSize(nPixels);
     std::array<void *, 2> clampArgs{&state.dConc, &nPixels};
     launchKernel(state.kernels.clampNegative, voxelGrid, cudaKernelBlockSize,
                  state.stream, clampArgs.data(), "clamp_negative_kernel");
@@ -1299,9 +1312,8 @@ void CudaPixelSim::launchRk212Substep1(double dt) {
   float dtF = static_cast<float>(dt);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 6> substepArgs{&state.dConc,
                                       &state.dDcdt,
                                       &state.dLowerOrder,
@@ -1321,9 +1333,8 @@ void CudaPixelSim::launchRk212Substep2(double dt) {
   float dtF = static_cast<float>(dt);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 6> substepArgs{&state.dConc,
                                       &state.dDcdt,
                                       &state.dLowerOrder,
@@ -1342,9 +1353,8 @@ void CudaPixelSim::launchRk212Substep2(double dt) {
 void CudaPixelSim::launchRkInit() {
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 4> args{&state.dConc, &state.dLowerOrder,
                                &state.dOldConc, &nValues};
     launchKernel(state.kernels.rkInit, valueGrid, cudaKernelBlockSize,
@@ -1366,9 +1376,8 @@ void CudaPixelSim::launchRkSubstep(double dt, double g1Val, double g2Val,
   float deltaF = static_cast<float>(deltaVal);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 11> args{&state.dConc,
                                 &state.dDcdt,
                                 &state.dLowerOrder,
@@ -1401,9 +1410,8 @@ void CudaPixelSim::launchRkFinalise(double cFactor, double s2Factor,
   float s3FactorF = static_cast<float>(s3Factor);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 7> args{&state.dConc,
                                &state.dLowerOrder,
                                &state.dOldConc,
@@ -1427,9 +1435,8 @@ PixelIntegratorError CudaPixelSim::calculateRk212Error() {
   float epsilonF = static_cast<float>(epsilon);
   beginCompartmentParallelLaunches();
   for (auto &state : impl->compartments) {
-    auto nValues = static_cast<unsigned int>(state.concHost.size());
-    const auto valueGrid =
-        (nValues + cudaKernelBlockSize - 1) / cudaKernelBlockSize;
+    auto nValues = static_cast<unsigned long long>(state.concHost.size());
+    const auto valueGrid = gridSize(nValues);
     std::array<void *, 7> errorArgs{&state.dConc,
                                     &state.dLowerOrder,
                                     &state.dOldConc,

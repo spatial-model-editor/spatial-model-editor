@@ -255,7 +255,11 @@ detail::makeMetalKernelSource(const std::vector<std::string> &variables,
 kernel void reaction_kernel(const device float* conc [[buffer(0)]],
                             device float* dcdt [[buffer(1)]],
                             constant uint& nPixels [[buffer(2)]],
-                            uint gid [[thread_position_in_grid]]) {
+                            uint tid [[thread_position_in_threadgroup]],
+                            uint tg_pos [[threadgroup_position_in_grid]],
+                            uint tg_size [[threads_per_threadgroup]]) {
+  // Promote before multiplying: the global index can exceed UINT32_MAX.
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nPixels) {
     return;
   }
@@ -267,23 +271,26 @@ kernel void diffusion_uniform_kernel(const device float* conc [[buffer(0)]],
                                      const device uint* nn [[buffer(2)]],
                                      const device float* diffusion [[buffer(3)]],
                                      constant uint& nPixels [[buffer(4)]],
-                                     uint gid [[thread_position_in_grid]]) {
+                                     uint tid [[thread_position_in_threadgroup]],
+                                     uint tg_pos [[threadgroup_position_in_grid]],
+                                     uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nPixels) {
     return;
   }
-  const uint iupx = nn[6 * gid];
-  const uint idnx = nn[6 * gid + 1];
-  const uint iupy = nn[6 * gid + 2];
-  const uint idny = nn[6 * gid + 3];
-  const uint iupz = nn[6 * gid + 4];
-  const uint idnz = nn[6 * gid + 5];
-  const uint iCenter = gid * N_SPECIES;
-  const uint iUpx = iupx * N_SPECIES;
-  const uint iDnx = idnx * N_SPECIES;
-  const uint iUpy = iupy * N_SPECIES;
-  const uint iDny = idny * N_SPECIES;
-  const uint iUpz = iupz * N_SPECIES;
-  const uint iDnz = idnz * N_SPECIES;
+  const ulong iupx = nn[6 * gid];
+  const ulong idnx = nn[6 * gid + 1];
+  const ulong iupy = nn[6 * gid + 2];
+  const ulong idny = nn[6 * gid + 3];
+  const ulong iupz = nn[6 * gid + 4];
+  const ulong idnz = nn[6 * gid + 5];
+  const ulong iCenter = gid * N_SPECIES;
+  const ulong iUpx = iupx * N_SPECIES;
+  const ulong iDnx = idnx * N_SPECIES;
+  const ulong iUpy = iupy * N_SPECIES;
+  const ulong iDny = idny * N_SPECIES;
+  const ulong iUpz = iupz * N_SPECIES;
+  const ulong iDnz = idnz * N_SPECIES;
   for (uint is = 0; is < N_SPECIES; ++is) {
     const float c0 = conc[iCenter + is];
     dcdt[iCenter + is] +=
@@ -299,8 +306,11 @@ kernel void diffusion_uniform_kernel(const device float* conc [[buffer(0)]],
 kernel void rk101_update_kernel(device float* conc [[buffer(0)]],
                                 const device float* dcdt [[buffer(1)]],
                                 constant float& dt [[buffer(2)]],
-                                constant uint& nValues [[buffer(3)]],
-                                uint gid [[thread_position_in_grid]]) {
+                                constant ulong& nValues [[buffer(3)]],
+                                uint tid [[thread_position_in_threadgroup]],
+                                uint tg_pos [[threadgroup_position_in_grid]],
+                                uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -312,8 +322,11 @@ kernel void rk212_substep1_kernel(device float* conc [[buffer(0)]],
                                   device float* sme_lower_order [[buffer(2)]],
                                   device float* sme_old_conc [[buffer(3)]],
                                   constant float& dt [[buffer(4)]],
-                                  constant uint& nValues [[buffer(5)]],
-                                  uint gid [[thread_position_in_grid]]) {
+                                  constant ulong& nValues [[buffer(5)]],
+                                  uint tid [[thread_position_in_threadgroup]],
+                                  uint tg_pos [[threadgroup_position_in_grid]],
+                                  uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -327,8 +340,11 @@ kernel void rk212_substep2_kernel(device float* conc [[buffer(0)]],
                                   device float* sme_lower_order [[buffer(2)]],
                                   const device float* sme_old_conc [[buffer(3)]],
                                   constant float& dt [[buffer(4)]],
-                                  constant uint& nValues [[buffer(5)]],
-                                  uint gid [[thread_position_in_grid]]) {
+                                  constant ulong& nValues [[buffer(5)]],
+                                  uint tid [[thread_position_in_threadgroup]],
+                                  uint tg_pos [[threadgroup_position_in_grid]],
+                                  uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -342,19 +358,19 @@ kernel void rk212_error_kernel(const device float* conc [[buffer(0)]],
                                constant float& epsilon [[buffer(3)]],
                                device float* abs_error_blocks [[buffer(4)]],
                                device float* rel_error_blocks [[buffer(5)]],
-                               constant uint& nValues [[buffer(6)]],
-                               uint3 gid [[thread_position_in_grid]],
+                               constant ulong& nValues [[buffer(6)]],
                                uint3 tid [[thread_position_in_threadgroup]],
                                uint3 tg_pos [[threadgroup_position_in_grid]],
                                uint3 tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos.x) * tg_size.x + tid.x;
   threadgroup float abs_error_shared[RK_ERROR_BLOCK_SIZE];
   threadgroup float rel_error_shared[RK_ERROR_BLOCK_SIZE];
   float localAbsError = 0.0f;
   float localRelError = 0.0f;
-  if (gid.x < nValues) {
-    localAbsError = fabs(conc[gid.x] - sme_lower_order[gid.x]);
+  if (gid < nValues) {
+    localAbsError = fabs(conc[gid] - sme_lower_order[gid]);
     const float localNorm =
-        0.5f * (conc[gid.x] + sme_old_conc[gid.x] + epsilon);
+        0.5f * (conc[gid] + sme_old_conc[gid] + epsilon);
     localRelError = localAbsError / localNorm;
   }
   abs_error_shared[tid.x] = localAbsError;
@@ -378,14 +394,14 @@ kernel void rk212_error_kernel(const device float* conc [[buffer(0)]],
 kernel void rk212_error_reduce_kernel(const device float* abs_error_blocks [[buffer(0)]],
                                       const device float* rel_error_blocks [[buffer(1)]],
                                       device float* result [[buffer(2)]],
-                                      constant uint& nBlocks [[buffer(3)]],
+                                      constant ulong& nBlocks [[buffer(3)]],
                                       uint3 tid [[thread_position_in_threadgroup]],
                                       uint3 tg_size [[threads_per_threadgroup]]) {
   threadgroup float abs_shared[RK_ERROR_BLOCK_SIZE];
   threadgroup float rel_shared[RK_ERROR_BLOCK_SIZE];
   float localAbs = 0.0f;
   float localRel = 0.0f;
-  for (uint i = tid.x; i < nBlocks; i += tg_size.x) {
+  for (ulong i = tid.x; i < nBlocks; i += tg_size.x) {
     localAbs = fmax(localAbs, abs_error_blocks[i]);
     localRel = fmax(localRel, rel_error_blocks[i]);
   }
@@ -408,8 +424,11 @@ kernel void rk212_error_reduce_kernel(const device float* abs_error_blocks [[buf
 kernel void rk_init_kernel(const device float* conc [[buffer(0)]],
                            device float* s2 [[buffer(1)]],
                            device float* s3 [[buffer(2)]],
-                           constant uint& nValues [[buffer(3)]],
-                           uint gid [[thread_position_in_grid]]) {
+                           constant ulong& nValues [[buffer(3)]],
+                           uint tid [[thread_position_in_threadgroup]],
+                           uint tg_pos [[threadgroup_position_in_grid]],
+                           uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -427,8 +446,11 @@ kernel void rk_substep_kernel(device float* conc [[buffer(0)]],
                               constant float& g3 [[buffer(7)]],
                               constant float& beta [[buffer(8)]],
                               constant float& delta [[buffer(9)]],
-                              constant uint& nValues [[buffer(10)]],
-                              uint gid [[thread_position_in_grid]]) {
+                              constant ulong& nValues [[buffer(10)]],
+                              uint tid [[thread_position_in_threadgroup]],
+                              uint tg_pos [[threadgroup_position_in_grid]],
+                              uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -442,8 +464,11 @@ kernel void rk_finalise_kernel(const device float* conc [[buffer(0)]],
                                constant float& cFactor [[buffer(3)]],
                                constant float& s2Factor [[buffer(4)]],
                                constant float& s3Factor [[buffer(5)]],
-                               constant uint& nValues [[buffer(6)]],
-                               uint gid [[thread_position_in_grid]]) {
+                               constant ulong& nValues [[buffer(6)]],
+                               uint tid [[thread_position_in_threadgroup]],
+                               uint tg_pos [[threadgroup_position_in_grid]],
+                               uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nValues) {
     return;
   }
@@ -452,11 +477,14 @@ kernel void rk_finalise_kernel(const device float* conc [[buffer(0)]],
 
 kernel void clamp_negative_kernel(device float* conc [[buffer(0)]],
                                   constant uint& nPixels [[buffer(1)]],
-                                  uint gid [[thread_position_in_grid]]) {
+                                  uint tid [[thread_position_in_threadgroup]],
+                                  uint tg_pos [[threadgroup_position_in_grid]],
+                                  uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nPixels) {
     return;
   }
-  const uint offset = gid * N_SPECIES;
+  const ulong offset = gid * N_SPECIES;
   for (uint is = 0; is < N_SPECIES; ++is) {
     if (conc[offset + is] < 0.0f) {
       conc[offset + is] = 0.0f;
@@ -472,12 +500,10 @@ std::string detail::makeMetalCompileFailureMessage(std::string_view context,
   return fmt::format("{}: {}", context, error);
 }
 
-namespace {
-
-static std::string
-makeMetalMembraneKernelSource(const std::vector<std::string> &variables,
-                              const std::vector<std::string> &expressions,
-                              unsigned int nSpeciesA, unsigned int nSpeciesB) {
+std::string detail::makeMetalMembraneKernelSource(
+    const std::vector<std::string> &variables,
+    const std::vector<std::string> &expressions, unsigned int nSpeciesA,
+    unsigned int nSpeciesB) {
   const auto bundle = makeMetalGeneratedExpressionBundle(
       variables, expressions, "membrane reaction expression");
 
@@ -505,16 +531,19 @@ kernel void membrane_reaction_kernel(const device uint* indexPairs [[buffer(0)]]
                                      const device float* concB [[buffer(4)]],
                                      device atomic_float* dcdtB [[buffer(5)]],
                                      constant float& invFluxLength [[buffer(6)]],
-                                     uint gid [[thread_position_in_grid]]) {
+                                     uint tid [[thread_position_in_threadgroup]],
+                                     uint tg_pos [[threadgroup_position_in_grid]],
+                                     uint tg_size [[threads_per_threadgroup]]) {
+  const ulong gid = static_cast<ulong>(tg_pos) * tg_size + tid;
   if (gid >= nPairs) {
     return;
   }
-  const uint ixA = indexPairs[2 * gid];
-  const uint ixB = indexPairs[2 * gid + 1];
+  const ulong ixA = indexPairs[2 * gid];
+  const ulong ixB = indexPairs[2 * gid + 1];
   thread float sme_inputs[N_MEMBRANE_INPUTS] {};
   thread float sme_result[N_MEMBRANE_INPUTS] {};
-  const uint offsetA = ixA * N_SPECIES_A;
-  const uint offsetB = ixB * N_SPECIES_B;
+  const ulong offsetA = ixA * N_SPECIES_A;
+  const ulong offsetB = ixB * N_SPECIES_B;
   for (uint is = 0; is < N_SPECIES_A; ++is) {
     sme_inputs[is] = concA[offsetA + is];
   }
@@ -536,6 +565,8 @@ kernel void membrane_reaction_kernel(const device uint* indexPairs [[buffer(0)]]
 )";
   return src.str();
 }
+
+namespace {
 
 struct MetalKernelBundle {
   MTL::ComputePipelineState *reaction{};
@@ -624,7 +655,7 @@ compileMetalMembraneKernelBundle(MTL::Device *device, const ReacExpr &reacExpr,
                                  unsigned int nSpeciesA,
                                  unsigned int nSpeciesB) {
   NS::AutoreleasePool *pool = NS::AutoreleasePool::alloc()->init();
-  auto source = makeMetalMembraneKernelSource(
+  auto source = detail::makeMetalMembraneKernelSource(
       reacExpr.variables, reacExpr.expressions, nSpeciesA, nSpeciesB);
   NS::Error *error{};
   auto *library = device->newLibrary(
@@ -1243,7 +1274,7 @@ void MetalPixelSim::encodeRk101Update(MTL::ComputeCommandEncoder *encoder,
   const float dtF = static_cast<float>(dt);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rk101Update);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rk101Update);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dDcdt, 0, 1);
@@ -1273,7 +1304,7 @@ void MetalPixelSim::encodeRk212Substep1(MTL::ComputeCommandEncoder *encoder,
   const float dtF = static_cast<float>(dt);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rk212Substep1);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rk212Substep1);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dDcdt, 0, 1);
@@ -1292,7 +1323,7 @@ void MetalPixelSim::encodeRk212Substep2(MTL::ComputeCommandEncoder *encoder,
   const float dtF = static_cast<float>(dt);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rk212Substep2);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rk212Substep2);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dDcdt, 0, 1);
@@ -1309,7 +1340,7 @@ void MetalPixelSim::encodeRk212Substep2(MTL::ComputeCommandEncoder *encoder,
 void MetalPixelSim::encodeRkInit(MTL::ComputeCommandEncoder *encoder) {
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rkInit);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rkInit);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dLowerOrder, 0, 1);
@@ -1333,7 +1364,7 @@ void MetalPixelSim::encodeRkSubstep(MTL::ComputeCommandEncoder *encoder,
   const float deltaF = static_cast<float>(deltaVal);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rkSubstep);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rkSubstep);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dDcdt, 0, 1);
@@ -1360,7 +1391,7 @@ void MetalPixelSim::encodeRkFinalise(MTL::ComputeCommandEncoder *encoder,
   const float s3FactorF = static_cast<float>(s3Factor);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rkFinalise);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rkFinalise);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dLowerOrder, 0, 1);
@@ -1379,7 +1410,7 @@ void MetalPixelSim::encodeRk212Error(MTL::ComputeCommandEncoder *encoder) {
   const float epsilonF = static_cast<float>(epsilon);
   for (auto &state : impl->compartments) {
     auto groupSize = threadgroupSizeForPipeline(state.kernels.rk212Error);
-    auto nValues = static_cast<std::uint32_t>(state.concHost.size());
+    auto nValues = static_cast<std::uint64_t>(state.concHost.size());
     encoder->setComputePipelineState(state.kernels.rk212Error);
     encoder->setBuffer(state.dConc, 0, 0);
     encoder->setBuffer(state.dLowerOrder, 0, 1);
@@ -1393,7 +1424,7 @@ void MetalPixelSim::encodeRk212Error(MTL::ComputeCommandEncoder *encoder) {
         makeThreadgroupSize(groupSize));
 
     groupSize = threadgroupSizeForPipeline(state.kernels.rk212ErrorReduce);
-    auto nBlocks = static_cast<std::uint32_t>(state.nErrorBlocks);
+    auto nBlocks = static_cast<std::uint64_t>(state.nErrorBlocks);
     encoder->setComputePipelineState(state.kernels.rk212ErrorReduce);
     encoder->setBuffer(state.dErrorAbs, 0, 0);
     encoder->setBuffer(state.dErrorRel, 0, 1);
