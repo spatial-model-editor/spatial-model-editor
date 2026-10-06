@@ -116,7 +116,7 @@ public:
    * @brief Total voxel count.
    */
   [[nodiscard]] inline std::size_t nVoxels() const {
-    return static_cast<std::size_t>(xy.width() * xy.height()) * z;
+    return static_cast<std::size_t>(xy.width()) * xy.height() * z;
   }
   /**
    * @brief Equality comparison.
@@ -223,9 +223,10 @@ public:
 [[nodiscard]] inline std::size_t
 voxelArrayIndex(const Volume &volume, int x, int y, std::size_t z,
                 bool invertY = false) noexcept {
-  return static_cast<std::size_t>(x + volume.width() *
-                                          yIndex(y, volume.height(), invertY)) +
-         static_cast<std::size_t>(volume.width() * volume.height()) * z;
+  return static_cast<std::size_t>(x) +
+         static_cast<std::size_t>(volume.width()) *
+             yIndex(y, volume.height(), invertY) +
+         static_cast<std::size_t>(volume.width()) * volume.height() * z;
 }
 
 /**

@@ -1,5 +1,6 @@
 #include "geometry_impl.hpp"
 #include "sme/logger.hpp"
+#include "sme/voxel.hpp"
 #include <QImage>
 #include <QString>
 
@@ -81,8 +82,9 @@ void saveDebuggingIndicesImageXY(const std::vector<std::size_t> &arrayPoints,
     QColor c;
     for (int x = 0; x < nx; ++x) {
       for (int y = 0; y < ny; ++y) {
-        auto i = arrayPoints[static_cast<std::size_t>(x + nx * y) +
-                             static_cast<std::size_t>(nx * ny * z)];
+        auto i = arrayPoints[common::voxelArrayIndex(
+            common::Volume{nx, ny, static_cast<std::size_t>(nz)}, x, y,
+            static_cast<std::size_t>(z))];
         if (i <= maxIndex) {
           auto v{static_cast<float>(i) / norm};
           c.setHslF(1.0f - v, 1.0, 0.5f * v);

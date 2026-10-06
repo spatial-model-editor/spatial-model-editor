@@ -14,6 +14,7 @@
 #include <QRgb>
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -26,8 +27,9 @@ namespace sme::geometry {
  */
 class Compartment {
 private:
-  // indices of nearest neighbours
-  std::vector<std::size_t> nn;
+  // indices of nearest neighbours, stored as 32-bit to reduce memory
+  // bandwidth, but returned as std::size_t by the accessors below
+  std::vector<std::uint32_t> nn;
   std::string compartmentId;
   // vector of voxels that make up compartment
   std::vector<common::Voxel> ix;

@@ -104,8 +104,7 @@ bool VoxelFlattener::isValid(const common::Voxel &voxel) const {
 }
 
 std::size_t VoxelFlattener::flatten(const common::Voxel &voxel) const {
-  return static_cast<std::size_t>(voxel.p.x() + voxel.p.y() * nx) +
-         voxel.z * static_cast<std::size_t>(nx * ny);
+  return common::voxelArrayIndex(common::Volume{nx, ny, nz}, voxel);
 }
 
 VoxelIndexer::VoxelIndexer(const common::Volume &vSize,
@@ -116,10 +115,8 @@ VoxelIndexer::VoxelIndexer(const common::Volume &vSize,
 
 VoxelIndexer::VoxelIndexer(int nx, int ny, int nz,
                            const std::vector<common::Voxel> &voxels)
-    : flattener(nx, ny, static_cast<std::size_t>(nz)),
-      voxelIndex(static_cast<std::size_t>(nx * ny * nz), NULL_INDEX) {
-  addVoxels(voxels);
-}
+    : VoxelIndexer(common::Volume{nx, ny, static_cast<std::size_t>(nz)},
+                   voxels) {}
 
 void VoxelIndexer::addVoxels(const std::vector<common::Voxel> &voxels) {
   for (const auto &voxel : voxels) {

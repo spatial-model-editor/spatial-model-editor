@@ -91,6 +91,11 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
 #endif
 
   VoxelIndexer ixIndexer(nx, ny, nz, ix);
+  if (ix.size() > std::numeric_limits<std::uint32_t>::max()) {
+    SPDLOG_ERROR("  - compartment has {} voxels, maximum is {}", ix.size(),
+                 std::numeric_limits<std::uint32_t>::max());
+    throw std::invalid_argument("too many voxels in compartment");
+  }
   // find nearest neighbours of each point
   nn.clear();
   nn.reserve(6 * ix.size());
@@ -105,7 +110,8 @@ Compartment::Compartment(std::string compId, const common::ImageStack &imgs,
           Voxel{x, y - 1, z}, Voxel{x, y, z + 1}, Voxel{x, y, z - 1}}) {
       // nearest neighbour is index of voxel vn if vn is in the same compartment
       // as v, otherwise set to the index of v itself (Neumann zero flux bcs)
-      nn.push_back(ixIndexer.getIndex(vn).value_or(i));
+      nn.push_back(
+          static_cast<std::uint32_t>(ixIndexer.getIndex(vn).value_or(i)));
     }
   }
   SPDLOG_INFO("compartmentId: {}", compartmentId);
@@ -350,15 +356,12 @@ std::vector<double> Field::getImageArray(const std::vector<double> &values,
                                          bool maskAndInvertY) const {
   std::vector<double> a;
   const auto &imageSize{comp->getImageSize()};
-  int nx{imageSize.width()};
-  int ny{imageSize.height()};
   if (maskAndInvertY) {
     // y=0 at top of image & set voxels outside of compartment to zero
     a.resize(imageSize.nVoxels(), 0.0);
     for (std::size_t i = 0; i < comp->nVoxels(); ++i) {
       auto v{comp->getVoxel(i)};
-      a[static_cast<std::size_t>(v.p.x() + nx * v.p.y()) +
-        (static_cast<std::size_t>(nx * ny) * v.z)] = values[i];
+      a[common::voxelArrayIndex(imageSize, v)] = values[i];
     }
   } else {
     // y=0 at bottom, set voxels outside of compartment to nearest valid voxel

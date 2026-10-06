@@ -27,6 +27,10 @@ namespace detail {
 makeMetalKernelSource(const std::vector<std::string> &variables,
                       const std::vector<std::string> &expressions);
 [[nodiscard]] std::string
+makeMetalMembraneKernelSource(const std::vector<std::string> &variables,
+                              const std::vector<std::string> &expressions,
+                              unsigned int nSpeciesA, unsigned int nSpeciesB);
+[[nodiscard]] std::string
 makeMetalCompileFailureMessage(std::string_view context,
                                std::string_view error);
 } // namespace detail

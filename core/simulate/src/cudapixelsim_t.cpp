@@ -375,6 +375,72 @@ TEST_CASE("MetalPixelSim compile failures include compile log details",
           std::string::npos);
   REQUIRE(message.find("undeclared identifier 'foo'") != std::string::npos);
 }
+
+TEST_CASE(
+    "MetalPixelSim kernels address large arrays with 32-bit voxel storage",
+    "[core/simulate/metalpixelsim][core/simulate][core][simulate]") {
+  const auto source =
+      simulate::detail::makeMetalKernelSource({"A", "B"}, {"A", "B"});
+  // Stored voxel indices remain 32-bit and concentrations remain float.
+  REQUIRE(source.find("const device uint* nn") != std::string::npos);
+  REQUIRE(source.find("constant uint& nPixels") != std::string::npos);
+  REQUIRE(source.find("const device float* conc") != std::string::npos);
+  REQUIRE(source.find("double") == std::string::npos);
+
+  // All kernels derive the global index from threadgroups: Metal's built-in
+  // thread_position_in_grid is 32-bit and would truncate large RK arrays.
+  REQUIRE(source.find("thread_position_in_grid") == std::string::npos);
+  constexpr std::array voxelKernels{
+      "reaction_kernel", "diffusion_uniform_kernel", "clamp_negative_kernel"};
+  constexpr std::array valueKernels{
+      "rk101_update_kernel", "rk212_substep1_kernel", "rk212_substep2_kernel",
+      "rk212_error_kernel",  "rk_init_kernel",        "rk_substep_kernel",
+      "rk_finalise_kernel"};
+  const auto kernelSource = [&source](const char *name) {
+    const auto begin = source.find(std::string("kernel void ") + name + "(");
+    REQUIRE(begin != std::string::npos);
+    const auto end = source.find("\n}", begin);
+    REQUIRE(end != std::string::npos);
+    return source.substr(begin, end - begin);
+  };
+  for (const auto *name : voxelKernels) {
+    CAPTURE(name);
+    const auto kernel = kernelSource(name);
+    REQUIRE(kernel.find("const ulong gid = static_cast<ulong>(tg_pos)") !=
+            std::string::npos);
+  }
+  for (const auto *name : valueKernels) {
+    CAPTURE(name);
+    const auto kernel = kernelSource(name);
+    REQUIRE(kernel.find("constant ulong& nValues") != std::string::npos);
+    REQUIRE(kernel.find("const ulong gid = static_cast<ulong>(tg_pos") !=
+            std::string::npos);
+  }
+  REQUIRE(source.find("const ulong iupx = nn[6 * gid];") != std::string::npos);
+  REQUIRE(source.find("const ulong iUpx = iupx * N_SPECIES;") !=
+          std::string::npos);
+  REQUIRE(source.find("constant ulong& nBlocks") != std::string::npos);
+  REQUIRE(source.find("for (ulong i = tid.x; i < nBlocks;") !=
+          std::string::npos);
+}
+
+TEST_CASE("MetalPixelSim membrane offsets use 64-bit arithmetic",
+          "[core/simulate/metalpixelsim][core/simulate][core][simulate]") {
+  const auto source = simulate::detail::makeMetalMembraneKernelSource(
+      {"A", "B", "C", "D"}, {"A", "B", "C", "D"}, 2, 2);
+  REQUIRE(source.find("const device uint* indexPairs") != std::string::npos);
+  REQUIRE(source.find("constant uint& nPairs") != std::string::npos);
+  REQUIRE(source.find("const ulong gid = static_cast<ulong>(tg_pos)") !=
+          std::string::npos);
+  REQUIRE(source.find("const ulong ixA = indexPairs[2 * gid];") !=
+          std::string::npos);
+  REQUIRE(source.find("const ulong ixB = indexPairs[2 * gid + 1];") !=
+          std::string::npos);
+  REQUIRE(source.find("const ulong offsetA = ixA * N_SPECIES_A;") !=
+          std::string::npos);
+  REQUIRE(source.find("const ulong offsetB = ixB * N_SPECIES_B;") !=
+          std::string::npos);
+}
 #endif
 
 TEST_CASE("GPU PixelSim unsupported-feature gating",

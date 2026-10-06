@@ -40,4 +40,18 @@ TEST_CASE("Voxel", "[core/common/voxel][core/common][core][voxel]") {
     REQUIRE(sme::common::voxelArrayIndex(vol, 2, 1, 2, true) ==
             sme::common::voxelArrayIndex(vol, voxel, true));
   }
+  SECTION("Large voxel counts and offsets without allocating image data") {
+    const common::Volume deepVolume{1024, 1024, 2048};
+    REQUIRE(deepVolume.nVoxels() == 2147483648ULL);
+    REQUIRE(common::voxelArrayIndex(deepVolume, 1023, 1023, 2047) ==
+            2147483647ULL);
+
+    // Even a single slice can exceed the signed 32-bit range.
+    const common::Volume wideVolume{65536, 65536, 2};
+    REQUIRE(wideVolume.nVoxels() == 8589934592ULL);
+    const common::Voxel lastVoxel{65535, 65535, 1};
+    REQUIRE(common::voxelArrayIndex(wideVolume, lastVoxel) == 8589934591ULL);
+    REQUIRE(common::voxelArrayIndex(wideVolume, 65535, 0, 1, true) ==
+            8589934591ULL);
+  }
 }
