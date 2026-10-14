@@ -3,6 +3,7 @@
 #include "qlabelmousetracker.hpp"
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
+#include "sme/mesh2d.hpp"
 #include "sme/model.hpp"
 #include "tabgeometry.hpp"
 #include <QComboBox>
@@ -314,9 +315,17 @@ TEST_CASE("TabGeometry",
       REQUIRE(spinBoundaryZoom->isEnabled() == false);
     }
   }
-  SECTION("single pixel model loaded") {
+  SECTION(
+      "mesh error is displayed and cleared after restoring boundary points") {
     model = getTestModel("single-pixel-meshing");
+    QImage image(3, 1, QImage::Format_RGB32);
+    image.fill(model.getCompartments().getColor("comp"));
+    model.getGeometry().importGeometryFromImages(
+        sme::common::ImageStack{{image}}, true);
     tab.loadModelData();
+    const auto *mesh = model.getGeometry().getMesh2d();
+    REQUIRE(mesh != nullptr);
+    REQUIRE(mesh->isValid());
     // boundary tab
     tabCompartmentGeometry->setFocus();
     sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
@@ -324,13 +333,14 @@ TEST_CASE("TabGeometry",
     spinBoundaryIndex->setFocus();
     REQUIRE(spinBoundaryIndex->value() == 0);
     REQUIRE(spinMaxBoundaryPoints->value() == 4);
-    // set outer boundary to 3 points: results in invalid mesh due to interior
-    // point lying outside of boundary lines
+    // Simplifying the 3x1 strip to a triangle puts its interior point strictly
+    // outside the boundary. A single pixel puts it on the diagonal instead.
     sendKeyEvents(spinMaxBoundaryPoints, {"Down"});
     REQUIRE(spinMaxBoundaryPoints->value() == 3);
     // go to mesh tab: check invalid mesh error message is displayed
     tabCompartmentGeometry->setFocus();
     sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE_FALSE(mesh->isValid());
     REQUIRE(lblCompMesh->text().right(41) ==
             "Triangle is outside of the boundary lines");
     // go back to boundary tab, reset max number of boundary points
@@ -341,6 +351,7 @@ TEST_CASE("TabGeometry",
     // go back to mesh tab: check error message is gone
     tabCompartmentGeometry->setFocus();
     sendKeyEvents(tabCompartmentGeometry, {"Ctrl+Tab"});
+    REQUIRE(mesh->isValid());
     REQUIRE(lblCompMesh->text().isEmpty());
   }
   SECTION("fixed mesh source disables mesh edits") {

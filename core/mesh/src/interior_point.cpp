@@ -2,6 +2,7 @@
 #include "mesh_utils.hpp"
 #include "sme/logger.hpp"
 #include <algorithm>
+#include <opencv2/geometry.hpp>
 #include <opencv2/imgproc.hpp>
 #include <optional>
 #if SPDLOG_ACTIVE_LEVEL <= SPDLOG_LEVEL_TRACE

@@ -21,11 +21,12 @@ jobs:
       matrix:
         script: [codecov, asan, ubsan]
     steps:
-      - uses: spatial-model-editor/setup-ci@2026.03.30
+      - uses: spatial-model-editor/setup-ci@2026.10.02
         with:
-          sme_deps: '2026.04.30'
+          sme_deps: '2026.10.12'
           cache_id: ${{ matrix.script }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
           fetch-depth: 0
+      - run: ./ci/quality-${{ matrix.script }}.sh
