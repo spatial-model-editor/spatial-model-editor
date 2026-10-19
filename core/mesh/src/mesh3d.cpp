@@ -275,7 +275,7 @@ Mesh3d::Mesh3d(const sme::common::ImageStack &imageStack,
   auto *pointImage =
       _createImage(static_cast<std::size_t>(vol.width()),
                    static_cast<std::size_t>(vol.height()), vol.depth(), 1, 1, 1,
-                   1, 1, WORD_KIND::WK_FIXED, SIGN::SGN_UNSIGNED);
+                   1, 1, CGAL::WORD_KIND::WK_FIXED, CGAL::SIGN::SGN_UNSIGNED);
   auto *ptr = static_cast<std::uint8_t *>(pointImage->data);
   for (std::size_t z = 0; z < vol.depth(); ++z) {
     for (int y = vol.height() - 1; y >= 0; --y) {

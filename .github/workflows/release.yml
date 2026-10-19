@@ -21,13 +21,13 @@ jobs:
         platform:
           - os: "ubuntu-22.04"
           - os: "ubuntu-22.04-arm"
-          - os: "macos-14"
+          - os: "macos-26"
           - os: "windows-2022"
           - os: "windows-11-arm"
     env:
       CIBUILDWHEEL_VERSION: "4.1"
-      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.04.20"
-      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2026.04.20"
+      CIBW_MANYLINUX_X86_64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_x86_64:2026.10.13"
+      CIBW_MANYLINUX_AARCH64_IMAGE: "ghcr.io/spatial-model-editor/manylinux_aarch64:2026.10.13"
       MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
       MACOS_CERTIFICATE_PWD: ${{ secrets.MACOS_CERTIFICATE_PWD }}
       MACOS_CERTIFICATE_NAME: ${{ secrets.MACOS_CERTIFICATE_NAME }}
@@ -37,11 +37,11 @@ jobs:
       MACOS_KEYCHAIN_PWD: ${{ secrets.MACOS_KEYCHAIN_PWD }}
     name: "${{ matrix.target }} :: ${{ matrix.platform.os }}"
     steps:
-      - uses: spatial-model-editor/setup-ci@2026.03.30
+      - uses: spatial-model-editor/setup-ci@2026.10.02
         with:
-          sme_deps: '2026.04.30'
+          sme_deps: '2026.10.12'
           cache_id: ${{ matrix.target }}
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           submodules: 'recursive'
       - name: Set "latest" version number unless commit is tagged
@@ -62,7 +62,7 @@ jobs:
     name: PyPI source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - run: pipx run build --sdist --outdir ./artifacts/dist
       - uses: actions/upload-artifact@v7
         with:

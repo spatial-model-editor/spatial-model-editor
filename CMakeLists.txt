@@ -30,6 +30,7 @@ option(
 if(SME_USE_STATIC_LIBS)
   set(CGAL_Boost_USE_STATIC_LIBS ON)
   set(OpenCV_STATIC ON)
+  set(ZLIB_USE_STATIC_LIBS ON)
 endif()
 
 set(SME_WITH_CUDA OFF)
