@@ -4,32 +4,20 @@
 # list see the documentation:
 # http://www.sphinx-doc.org/en/master/config
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
 import subprocess
-
-# import sys
-# sys.path.insert(0, os.path.abspath('.'))
-
 
 # -- Project information -----------------------------------------------------
 
 project = "spatial-model-editor"
-copyright = "2019, Liam Keegan"
+copyright = "2019-2026, Liam Keegan"
 author = "Liam Keegan"
 
-master_doc = "index"
+root_doc = "index"
 
 # -- General configuration ---------------------------------------------------
 
 # generate doxygen xml output
-subprocess.run(["doxygen", "Doxyfile.in"], check=False)
-# generate rst from doxygen for each class, file, namespace
-# subprocess.run(['breathe-apidoc', 'build/xml', '-o', 'developer/_auto'])
+subprocess.run(["doxygen", "Doxyfile.in"], check=True)
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -50,11 +38,11 @@ autoclass_content = "class"
 autosummary_generate = True
 
 nbsphinx_prolog = """
-|colab-icon|_ `Interactive online version <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}>`_
+|colab-icon|_ `Interactive online version <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/main/docs/{{ env.doc2path(env.docname, base=None) }}>`_
 
 .. |colab-icon| image:: https://colab.research.google.com/assets/colab-badge.svg
 
-.. _colab-icon: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/{{ env.doc2path(env.docname, base=None) }}
+.. _colab-icon: https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/main/docs/{{ env.doc2path(env.docname, base=None) }}
 
 """
 
@@ -65,8 +53,8 @@ templates_path = ["_templates"]
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = [
-    "_build",
     "build",
+    "README.md",
     "Thumbs.db",
     ".DS_Store",
     "sme/_autosummary/sme.ConcentrationType*.rst",

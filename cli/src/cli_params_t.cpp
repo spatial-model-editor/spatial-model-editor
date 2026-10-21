@@ -2,6 +2,7 @@
 #include "cli_params.hpp"
 #include "model_test_utils.hpp"
 #include "sme/optimize_options.hpp"
+#include <fstream>
 
 using namespace sme;
 
@@ -55,4 +56,57 @@ TEST_CASE("CLI Params", "[cli][params]") {
   REQUIRE_NOTHROW(c.parse("simulate x.sme"));
   REQUIRE(simParamsNoTimes.sim.simulationTimes.empty());
   REQUIRE(simParamsNoTimes.sim.imageIntervals.empty());
+}
+
+TEST_CASE("CLI Params config file", "[cli][params]") {
+  test::createBinaryFile("smefiles/very-simple-model-v3.sme", "x.sme");
+  CLI::App a;
+  auto params = cli::setupCLI(a);
+  // dumping the config does not require a subcommand or input file
+  REQUIRE_THROWS_AS(a.parse("-d"), CLI::Success);
+  auto config = a.config_to_str(true, true);
+  // options without a value are commented out
+  REQUIRE(config.find("#simulate.simulator=\"\"") != std::string::npos);
+  REQUIRE(config.find("#fit.file=") != std::string::npos);
+  REQUIRE(config.find("#fit.n-iterations=20") != std::string::npos);
+  {
+    std::ofstream fs("config.ini");
+    fs << config;
+  }
+  // unedited config file can be read for either subcommand
+  for (const auto *subcommand : {"simulate", "fit"}) {
+    CLI::App b;
+    auto p = cli::setupCLI(b);
+    REQUIRE_NOTHROW(b.parse(fmt::format("-c config.ini {} x.sme", subcommand)));
+    REQUIRE(p.inputFile == "x.sme");
+    REQUIRE(p.simType.has_value() == false);
+    REQUIRE(p.maxThreads.has_value() == false);
+    REQUIRE(p.fit.nIterations == 20);
+  }
+  // uncommented options are read from the config file
+  for (const auto &[from, to] :
+       {std::pair{"#simulate.simulator=\"\"", "simulate.simulator=\"pixel\""},
+        std::pair{"#simulate.pixel-integrator=\"\"",
+                  "simulate.pixel-integrator=\"rk323\""},
+        std::pair{"#fit.n-iterations=20", "fit.n-iterations=5"}}) {
+    auto pos = config.find(from);
+    REQUIRE(pos != std::string::npos);
+    config.replace(pos, std::string(from).size(), to);
+  }
+  {
+    std::ofstream fs("config.ini");
+    fs << config;
+  }
+  CLI::App c;
+  auto simParams = cli::setupCLI(c);
+  REQUIRE_NOTHROW(c.parse("-c config.ini simulate x.sme"));
+  REQUIRE(simParams.simType.has_value());
+  REQUIRE(simParams.simType.value() == simulate::SimulatorType::Pixel);
+  REQUIRE(simParams.sim.pixelIntegrator.has_value());
+  REQUIRE(simParams.sim.pixelIntegrator.value() ==
+          simulate::PixelIntegratorType::RK323);
+  CLI::App d;
+  auto fitParams = cli::setupCLI(d);
+  REQUIRE_NOTHROW(d.parse("-c config.ini fit x.sme"));
+  REQUIRE(fitParams.fit.nIterations == 5);
 }

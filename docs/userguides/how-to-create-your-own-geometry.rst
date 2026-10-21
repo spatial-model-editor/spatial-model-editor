@@ -5,7 +5,7 @@ How to create your own geometry
 
 Create a 2D Geometry
 --------------------
-We first import the necessary models.
+We first import the necessary modules.
 
 .. code-block:: python
 
@@ -18,24 +18,22 @@ Next, we create a 2D numpy array that represents the geometry. We will use a sim
 
     # create a 2D numpy array
     size = 100
-    x0 = 40
-    y0 = 50
+    x0 = 20
+    y0 = 25
     r = 10
     geometry = np.zeros((size, size))
     for i in range(size):
         for j in range(size):
-            # make a circle around (40, 50) with radius 10
-            if (i - x0 // 2) ** 2 + (j - y0 // 2) ** 2 < r ** 2:
+            # make a circle around (20, 25) with radius 10
+            if (i - x0) ** 2 + (j - y0) ** 2 < r ** 2:
                 geometry[i, j] = 1
 
-Finally, we plot the geometry and save it as a png image.
+Finally, we save the geometry as a png image, with one pixel in the image for each element of the array.
 
 .. code-block:: python
 
-    # plot the geometry
-    img = plt.imshow(geometry, cmap="gray")
-    plt.axis("off")
-    img.get_figure().savefig("2d_geometry.png", bbox_inches="tight", pad_inches=0)
+    # save the geometry
+    plt.imsave("2d_geometry.png", geometry, cmap="gray")
 
 .. figure::
     img/2d_circle.png
@@ -45,7 +43,7 @@ Finally, we plot the geometry and save it as a png image.
 
 Create a 3D Geometry
 --------------------
-We follow the same steps as for the 2D geometry: We define the basic shape of the domain and then create functions that defines the various compartments in the domain. Here, we will create 2 spheres that intersect each other.
+We follow the same steps as for the 2D geometry: We define the basic shape of the domain and then create functions that define the various compartments in the domain. Here, we will create 2 spheres that intersect each other.
 This time, we use `tifffile` instead of matplotlib:
 
 .. code-block:: python
@@ -68,7 +66,7 @@ Then, we create the 3D domain and the compartments.
     for i in range(100):
         for j in range(100):
             for k in range(100):
-                arr[i,j,k] = compartment(x,y,z)
+                arr[i,j,k] = compartment(i,j,k)
 
 Finally, we save the 3D geometry as a tiff image.
 
@@ -84,7 +82,7 @@ Finally, we save the 3D geometry as a tiff image.
 
 Create an image for initial conditions
 ---------------------------------------
-You can use the same workflow to create images that can serve as initial conditions for a species in a certain compartment. To that end, we can add another function which computes the concentration field at each pixel of the image. The resulting array then can be stored as a png (2D) or tiff (3D) image and loaded into a model as described in `the section on reactions in the 'getting started' page <../quickstart/reactions.html>`_.
+You can use the same workflow to create images that can serve as initial conditions for a species in a certain compartment. To that end, we can add another function which computes the concentration field at each pixel of the image. The resulting array then can be stored as a png (2D) or tiff (3D) image and loaded into a model as described in :doc:`the section on species in the 'getting started' guide <../quickstart/species>`.
 
 .. code-block:: python
 
@@ -104,7 +102,7 @@ You can use the same workflow to create images that can serve as initial conditi
     for i in range(100):
         for j in range(100):
             for k in range(100):
-                arr_init[i,j,k] = compartment(x,y,z)*init(i,j,k)
+                arr_init[i,j,k] = compartment(i,j,k)*init(i,j,k)
 
     tiff.imwrite('3d_skewed_hourglass_init.tiff', arr_init)
 

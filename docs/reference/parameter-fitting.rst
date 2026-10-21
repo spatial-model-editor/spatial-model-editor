@@ -20,7 +20,7 @@ resulting values from the current best set of parameters.
    * The lower image shows the actual values from the simulation using the current best set of parameters
 * Fitness and parameters (right side)
    * The upper plot shows the history of fitness values during the optimization (lower is better)
-   * The lower plot shows the history of the best set of parameters for at each optimization iteration
+   * The lower plot shows the history of the best set of parameters at each optimization iteration
 * Setup
    * Click the `Setup` button to change the optimization settings
    * See the :ref:`opt-setup` section for more details

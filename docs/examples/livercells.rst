@@ -1,9 +1,9 @@
 Liver cells
 ===========
-This model uses a more complex 2D geometry than seen before that consists of a row of cells at the top and bottom of the domain with a undulating channel and small gaps between the cells. Each cell additionally has a nucleus.
+This model uses a more complex 2D geometry than seen before that consists of a row of cells at the top and bottom of the domain with an undulating channel and small gaps between the cells. Each cell additionally has a nucleus.
 
-This model can serve as a playground,e.g., for working with exchange processes complicated geometries. The mathematical model is geared towards simplicity and does not represent a real physical system. There is one species :math:`g` which exists in all three compartments `nuclear`, `sinosoid` and `hepatocyte`.
-There are no bulk reactions, only membrane fluxes and diffusion in the bulk volume, which has the same form everywhere. In the following, the abbreviations nuclear (n), sinosoid (s), hepatocyte (h) are used. :math:`c` and :math:`k` are reaction parameters.
+This model can serve as a playground, e.g., for working with exchange processes in complicated geometries. The mathematical model is geared towards simplicity and does not represent a real physical system. There is one species :math:`g` which exists in all three compartments `nucleus`, `sinusoid` and `hepatocyte`.
+There are no bulk reactions, only membrane fluxes and diffusion in the bulk volume, which has the same form everywhere. In the following, the abbreviations nucleus (n), sinusoid (s), hepatocyte (h) are used. :math:`c` and :math:`k` are reaction parameters.
 
 Formulation
 """"""""""""""

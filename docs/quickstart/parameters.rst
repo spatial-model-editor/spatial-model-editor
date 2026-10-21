@@ -1,6 +1,6 @@
 Defining parameters
 ===================
-In the last section, we saw how to define parameters for reactions that are relevant for only the term reaction term we are currently concerned with.
+In the last section, we saw how to define parameters for reactions that are only relevant for the reaction term we are currently concerned with.
 This can get cumbersome when the whole system of equations shares a number of parameters, since we have to redefine them for each reaction.
 
 To alleviate this, SME maintains a list of global parameters which you can find in the `Parameters` tab.

@@ -8,17 +8,17 @@ Formulation
 """""""""""
 
 .. math::
-        &\frac{\partial u_{i}}{\partial t} = D_{u_{i}} \nabla^2 u_{i} + u_{i} - u_{i}^3 - v_{i} + I
+        &\frac{\partial u_{i}}{\partial t} = D_{u_{i}} \nabla^2 u_{i} + u_{i} - \frac{u_{i}^3}{3} - v_{i} + I
 
-        &\frac{\partial v_{i}}{\partial t} = D_{v_{i}} \nabla^2 v_{i} + \epsilon \left( u_{i} + \beta - \gamma v_{i} \right)
+        &\frac{\partial v_{i}}{\partial t} = D_{v_{i}} \nabla^2 v_{i} + \epsilon \left( u_{i} + b - \gamma v_{i} \right)
 
-        &j_{u, 1 \rightarrow 2} = k u_{1} v_{2}
+        &j_{u, 1 \rightarrow 2} = k u_{1} u_{2}
 
         &j_{u, 2 \rightarrow 1} = k \alpha u_{2}^{2}
 
         &j_{v, 1 \rightarrow 2} = k u_{2} v_{1}
 
-        &j_{v, 2 \rightarrow 1} = \beta v_{1}^{2}
+        &j_{v, 2 \rightarrow 1} = k \beta v_{1}^{2}
 
 Example snapshot:
 ^^^^^^^^^^^^^^^^^

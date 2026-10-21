@@ -1,7 +1,7 @@
 Mesh generation
 ===============
 
-Generating a triangular mesh for the dune-copasi solver from a pixel image of the compartment geometry involves multiple steps:
+Generating a triangular mesh for the dune-copasi solver from a 2D pixel image of the compartment geometry involves multiple steps:
 
 * `Pixel contours`_
 * `Pixel-Edge contours`_
@@ -26,7 +26,7 @@ compartment, as well as the boundary between the model geometry (i.e. all the co
 The contour tracing is done using the
 `findContours <https://docs.opencv.org/4.5.1/d3/dc0/group__imgproc__shape.html#gae4156f04053c44f886e387cff0ef6e08>`_
 function from the `OpenCV <https://opencv.org/>`_ library, which implements the method described in
-`Suzuki et. al. <https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167>`_.
+`Suzuki et al. <https://www.sciencedirect.com/science/article/abs/pii/0734189X85900167>`_.
 This method returns an ordered, closed loop of 8-connected pixels for each contour.
 Each compartment has at least one contour around its outer boundary,
 and it may also contain inner contours around any holes in the compartment shape.
@@ -99,8 +99,6 @@ It is important that the interior point is as far as possible from any of the bo
 to ensure that it remains within these boundaries even when they are simplified, so that the compartment that
 corresponds to the region is correctly identified during triangulation.
 
-The connected regions are identified using the
-
 The animations below show how the algorithm works, which uses the
 `connectedComponents() <https://docs.opencv.org/4.5.1/d3/dc0/group__imgproc__shape.html#gaedef8c7340499ca391d459122e51bef5>`_
 and `erode() <https://docs.opencv.org/4.5.1/d4/d86/group__imgproc__filter.html#gaeb1e0c1033e3f6b891a25d0511362aeb>`_
@@ -138,7 +136,7 @@ Mesh refinement
 ---------------
 
 The mesh is then constructed from the triangulation using
-`Delauney refinement <https://doc.cgal.org/latest/Mesh_2/index.html#secMesh_2_criteria>`_,
+`Delaunay refinement <https://doc.cgal.org/latest/Mesh_2/index.html#secMesh_2_criteria>`_,
 which inserts points inside the compartment as far away as possible from the existing points,
 and triangulates them. It continues this until the minimum triangle angle is sufficiently large,
 and the maximum triangle area is sufficiently small.

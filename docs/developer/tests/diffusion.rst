@@ -4,7 +4,7 @@ Diffusion
 2d Model
 --------
 
-The example model `single-compartment-diffusion <https://github.com/lkeegan/spatial-model-editor/blob/master/src/core/resources/models/single-compartment-diffusion.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution
+The example model `single-compartment-diffusion <https://github.com/spatial-model-editor/spatial-model-editor/blob/main/core/resources/models/single-compartment-diffusion.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution
 
 .. math::
 
@@ -51,9 +51,9 @@ and this is also valid at late times, since our zero flux Neumann boundary condi
 3d Model
 --------
 
-The example model `single-compartment-diffusion-3d <https://github.com/lkeegan/spatial-model-editor/blob/master/src/core/resources/models/single-compartment-diffusion-3d.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution.
+The example model `single-compartment-diffusion-3d <https://github.com/spatial-model-editor/spatial-model-editor/blob/main/core/resources/models/single-compartment-diffusion-3d.xml>`_ is a single compartment that contains two species: 'fast' and 'slow', each with the same analytic initial distribution.
 
-Key differences from the 2d example above are that the origin of the geometry lies in the centre of a 100cm^3 cube, with initial species concentration given by:
+Key differences from the 2d example above are that the origin of the geometry lies in the centre of a cube with sides of length 100cm, with initial species concentration given by:
 
 .. math::
 

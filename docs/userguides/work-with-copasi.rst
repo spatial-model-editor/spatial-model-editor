@@ -1,22 +1,26 @@
 Work with SBML and COPASI models
 =================================
 
-This guide will show you how to use SME to turn non-spatial ODE models created with COPASI or SBML into spatial models. If you haven't already, start by reading through the `getting started section <../quickstart/get-started.html>`_, because many of the workflows described there are useful here, too.
+This guide will show you how to use SME to turn non-spatial ODE models created with COPASI or SBML into spatial models. If you haven't already, start by reading through the :doc:`getting started section <../quickstart/get-started>`, because many of the workflows described there are useful here, too.
 
 Importing a Model
 -----------------
 
 To import an existing SBML or COPASI model,
-go to `File->Open` or press ``Ctrl+O``, like shown below:
+go to `File->Open` or press ``Ctrl+O``, as shown below:
 
 .. figure:: img/model.apng
    :alt: screenshot showing built-in example model
 
    Open an existing model in SME
 
-Since the imported model is non-spatial, we need to define the geometry on which it should run next. To learn how to define a geometry with different compartments, see the `geometry section in the getting-started guide <../quickstart/import-geometry.html>`_ and the `respective section on assiging compartments <../quickstart/assign-compartments.html>`_.
+.. note::
+   Opening COPASI ``.cps`` files requires `COPASI <https://copasi.org/>`_ to be installed,
+   with the ``CopasiSE`` command line executable available on your ``PATH``.
 
-If you want to create your own geometry, please refer to `the respective userguide <./how-to-create-your-own-geometry.html>`_.
+Since the imported model is non-spatial, we need to define the geometry on which it should run next. To learn how to define a geometry with different compartments, see the :doc:`geometry section in the getting-started guide <../quickstart/import-geometry>` and the :doc:`respective section on assigning compartments <../quickstart/assign-compartments>`.
+
+If you want to create your own geometry, please refer to :doc:`the respective user guide <how-to-create-your-own-geometry>`.
 
 Define or change reactions
 --------------------------
@@ -33,7 +37,7 @@ In a PDE model, we have two kinds of reactions
    * take place on the membrane between two compartments
    * units: rate of species **amount crossing unit area** of the membrane
 
-For more on the the formulae involved, see the `mathematical formulation <../reference/maths.html>`_.
+For more on the formulae involved, see the :doc:`mathematical formulation <../reference/maths>`.
 
 When editing a reaction, an image of the location is displayed on the left,
 and the units are displayed below the reaction rate in the bottom right.
@@ -43,7 +47,7 @@ and the units are displayed below the reaction rate in the bottom right.
 
    Editing the reactions in a spatial model.
 
-Since the system already contains a number of reactions from the imported model, we need to assign them to the right compartment here first. When this is done, we need to add the membrane reactions on the interfaces between compartments (if there are any). See `here <../quickstart/reactions.html>`_ for more details on how to define reactions in SME.
+Since the system already contains a number of reactions from the imported model, we need to assign them to the right compartment here first. When this is done, we need to add the membrane reactions on the interfaces between compartments (if there are any). See :doc:`here <../quickstart/reactions>` for more details on how to define reactions in SME.
 
 Rescale Reactions
 -----------------

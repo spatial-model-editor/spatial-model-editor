@@ -71,8 +71,3 @@ Spatial Model Editor Documentation
    developer/core
    developer/pixel-solver
    developer/tests
-
-.. toctree::
-   :hidden:
-
-   README.md
