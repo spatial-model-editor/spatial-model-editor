@@ -54,8 +54,14 @@ void bindModule(nanobind::module_ &m) {
         * "liver-cells"
         * "single-compartment-diffusion"
         * "very-simple-model"
+        * "gray-scott-3d"
+        * "single-compartment-diffusion-3d"
+        * "very-simple-model-3d"
+        * "CalciumWavePropagation3D"
+        * "FitzhughNagumo3D"
+        * "SelKov3D"
 
-        If the name is not specified the the default
+        If the name is not specified the default
         example model is "very-simple-model".
 
         Args:

@@ -1,30 +1,36 @@
 A very simple model
 ======================
-This models a simple system in which two species :math:`A` and :math:`B` react in a compartment and are exchanged across membranes that separate a cell from and outside volume and the cell nucleus from the cytoplasm. It shows how to define membrane reactions and how to use stoichiometric coefficients to define the direction of exchange between compartments.
+This models a simple system in which two species :math:`A` and :math:`B` react in a compartment and are exchanged across membranes that separate a cell from an outside volume and the cell nucleus from the cytoplasm. It shows how to define membrane reactions and how to use stoichiometric coefficients to define the direction of exchange between compartments.
 To become familiar with this, play around with the stoichiometric coefficients in the reaction definition and observe how the reaction label below the reaction name in the GUI changes when you change their sign. Check which term in the mathematical formulation below corresponds to what part of the reaction definition in the GUI, and how the two representations differ.
 This model comes in a 2D and a 3D version.
 
-In the formulation below, the index :math:`i` refers to compartments (nucleus, cytoplasm, outside). :math:`k_{1}` and :math:`k_{2}` are reaction parameters, :math:`D_{A_{i}}` and :math:`D_{B_{i}}` are diffusion coefficients.
+In the formulation below, the index :math:`i` refers to compartments (nucleus, cell, outside). :math:`k_{1}` and :math:`k_{2}` are reaction parameters, :math:`D_{A_{i}}` and :math:`D_{B_{i}}` are diffusion coefficients. Each reaction has its own local parameters, so the value of :math:`k_{1}` differs between reactions.
 
 Formulation in the bulk volume of each compartment
 """"""""""""""""""""""""""""""""""""""""""""""""""
 
+A is converted to B only in the nucleus, in the cell and outside compartments the species only diffuse:
+
 .. math::
 
-    &\frac{\partial A_{i}}{\partial t} = D_{A_{i}} \nabla^2 A_{i} - k_{1} A_{i}
+    &\frac{\partial A_{nucleus}}{\partial t} = D_{A_{nucleus}} \nabla^2 A_{nucleus} - k_{1} A_{nucleus}
 
-    &\frac{\partial B_{i}}{\partial t} = D_{B_{i}} \nabla^2 B_{i} + k_{1} A_{i}
+    &\frac{\partial B_{nucleus}}{\partial t} = D_{B_{nucleus}} \nabla^2 B_{nucleus} + k_{1} A_{nucleus}
+
+    &\frac{\partial A_{i}}{\partial t} = D_{A_{i}} \nabla^2 A_{i}, \quad i \in \{cell, outside\}
+
+    &\frac{\partial B_{i}}{\partial t} = D_{B_{i}} \nabla^2 B_{i}, \quad i \in \{cell, outside\}
 
 Formulation for the exchange between compartments
 """""""""""""""""""""""""""""""""""""""""""""""""
 
 .. math::
 
-    &j_{A, nucleus \rightarrow cell} = - \left(k_{2} A_{nucleus} - k_{1} A_{Cell} \right)
+    &j_{A, outside \rightarrow cell} = k_{1} A_{outside}
+
+    &j_{A, cell \rightarrow nucleus} = k_{1} A_{cell} - k_{2} A_{nucleus}
 
     &j_{B, nucleus \rightarrow cell} = k_{1} B_{nucleus}
-
-    &j_{A, cell \rightarrow outside} = - k_{1} A_{out}
 
     &j_{B, cell \rightarrow outside} = k_{1} B_{cell}
 

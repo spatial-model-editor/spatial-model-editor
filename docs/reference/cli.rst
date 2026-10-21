@@ -3,22 +3,26 @@ Command Line Interface
 
 A Command Line Interface (CLI) is also provided for running long simulations or parameter fitting:
 
-*  |icon-linux|_ `linux <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli>`_
-*  |icon-osx-arm64|_ `macOS arm64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.dmg>`_
-*  |icon-osx|_ `macOS <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.dmg>`_
-*  |icon-windows|_ `windows <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe>`_
+*  |icon-linux-x64|_ `Linux x64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-X64>`_
+*  |icon-linux-arm64|_ `Linux Arm64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64>`_
+*  |icon-windows-x64|_ `Windows x64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe>`_
+*  |icon-windows-arm64|_ `Windows Arm64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.exe>`_
+*  |icon-macos-arm64|_ `macOS Arm64 <https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.dmg>`_
 
-.. |icon-linux| image:: ../img/icon-linux.png
-.. _icon-linux: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli
+.. |icon-linux-x64| image:: ../img/icon-linux.png
+.. _icon-linux-x64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-X64
 
-.. |icon-osx-arm64| image:: ../img/icon-osx.png
-.. _icon-osx-arm64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.dmg
+.. |icon-linux-arm64| image:: ../img/icon-linux.png
+.. _icon-linux-arm64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64
 
-.. |icon-osx| image:: ../img/icon-osx.png
-.. _icon-osx: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.dmg
+.. |icon-windows-x64| image:: ../img/icon-windows.png
+.. _icon-windows-x64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe
 
-.. |icon-windows| image:: ../img/icon-windows.png
-.. _icon-windows: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli.exe
+.. |icon-windows-arm64| image:: ../img/icon-windows.png
+.. _icon-windows-arm64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.exe
+
+.. |icon-macos-arm64| image:: ../img/icon-osx.png
+.. _icon-macos-arm64: https://github.com/spatial-model-editor/spatial-model-editor/releases/latest/download/spatial-cli-ARM64.dmg
 
 Simulation
 ----------
@@ -61,7 +65,7 @@ If parameter optimization has been set up in the model (this can be done in the 
 For example, to run 50 iterations of the particle swarm optimization algorithm on the model in ``filename.xml``,
 using 4 optimization threads with a population of 20 per thread,
 using the Pixel simulator with a single thread for the simulation,
-and save the model with the the optimized parameters results in ``results.sme``:
+and save the model with the optimized parameters in ``results.sme``:
 
 .. code-block:: bash
 
@@ -74,7 +78,7 @@ Command line parameters
 
 .. code-block:: bash
 
-    Spatial Model Editor CLI v1.11.0
+    Spatial Model Editor CLI v1.12.0
 
 
     ./cli/spatial-cli [OPTIONS] SUBCOMMAND
@@ -219,14 +223,16 @@ Command line parameters
 Using a config file
 -------------------
 
-To create an ini file with all options set to their default values, you can use the ``-d`` option:
+To create an ini file containing all the available options, you can use the ``-d`` option:
 
 .. code-block:: bash
 
     ./spatial-cli -d > config.ini
 
-You can then edit this file as desired, and use it with the ``-c`` option instead of specifying the options on the command line:
+Options that have not been set are commented out, and options that are not set use the values from the model.
+You can then uncomment and edit the options you want to set, and use the file with the ``-c`` option instead of specifying the options on the command line.
+Note that ``-c`` must come before the subcommand:
 
 .. code-block:: bash
 
-    ./spatial-cli fit -c config.ini
+    ./spatial-cli -c config.ini simulate filename.xml

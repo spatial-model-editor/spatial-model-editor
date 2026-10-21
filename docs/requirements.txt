@@ -1,11 +1,9 @@
 breathe
-docutils
 https://github.com/spatial-model-editor/spatial-model-editor/releases/download/latest/sme-0.0.0-cp312-cp312-manylinux_2_28_x86_64.whl
 ipykernel
 matplotlib
 myst_parser
 nbsphinx
 numpy
-pandoc
 sphinx
 sphinx_rtd_theme>=1.0.0

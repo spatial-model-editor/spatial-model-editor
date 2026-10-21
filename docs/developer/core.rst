@@ -32,7 +32,7 @@ Importing, exporting and editing spatial models.
 ``sme::mesh``
 -------------
 
-Constructing the simplified boundary lines and triangular mesh approximation to the geometry.
+Constructing the simplified boundary lines and triangular (2D) or tetrahedral (3D) mesh approximation to the geometry.
 
 .. toctree::
 

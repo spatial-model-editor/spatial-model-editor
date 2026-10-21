@@ -2,12 +2,12 @@ Steady state analysis
 =====================
 
 .. warning::
-    This is in an early stage of implementation and currently has only limited functionality. The interface may change at any time. Performance is not fully optimized yet and meaningful results will, for now, rely on significant knowledge of the system to be solved and the chosen solver parameters. No custom observables are supported at the moment, at only a single steady state in the parameter space will be found at once.
+    This is in an early stage of implementation and currently has only limited functionality. The interface may change at any time. Performance is not fully optimized yet and meaningful results will, for now, rely on significant knowledge of the system to be solved and the chosen solver parameters. No custom observables are supported at the moment, and only a single steady state in the parameter space will be found at once.
 
 .. figure:: img/steadystate.png
    :alt: Steady state analysis
 
-   The steadystate analysis window.
+   The steady state analysis window.
 
 *SME* provides a steady state analysis tool that can be used to find an attractive fixed point of the currently loaded model for the current parameters. It does this by using the existing solvers as pseudo-timestepping methods, which will run until the (possibly normalised) time derivative of the
 concentrations does not change significantly anymore.
@@ -24,7 +24,7 @@ The steady state analysis can be started from the GUI by selecting the menu item
 * **Stop Tolerance**: The tolerance for the steady state analysis. This is the maximum allowed change in the concentrations between two consecutive iterations. The default value is 1e-6.
 * **Steps to convergence**: The number of steps for which the rate of change of the concentrations has to stay below the stop tolerance before the solver is considered to have converged. The default value is 10.
 * **Convergence mode**: Can be 'relative' or 'absolute'. In relative mode, the change in the concentrations is normalised by the current concentration. In absolute mode, the change is not normalised. The default value is 'relative'.
-* **Plotting mode**: Can be '2D' or '3D'. In 2D mode, the concentrations are plotted as slices along the z-direction of a 3D image (one such slice if the the system is 2D). In 3D mode, the concentrations are plotted as a 3D image. The default value is '2D'.
+* **Plotting mode**: Can be '2D' or '3D'. In 2D mode, the concentrations are plotted as slices along the z-direction of a 3D image (one such slice if the system is 2D). In 3D mode, the concentrations are plotted as a 3D image. The default value is '2D'.
 
 Solver controls
 ---------------

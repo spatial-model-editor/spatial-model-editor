@@ -27,7 +27,7 @@ All quantities in the model have units that can be written as some combination o
     - describe the rate of change of the concentration of species
     - have units of concentration / time, i.e. ``amount`` / ``volume`` / ``time``
 - reactions *between* two compartments
-    - describe that rate at which a unit amount of species crosses a unit area of the *membrane*
+    - describe the rate at which a unit amount of species crosses a unit area of the *membrane*
     - where the membrane is the area where the two compartments touch each other
     - have units of amount / membrane-area / time, i.e. ``amount`` / ``length`` / ``length`` / ``time``
 - diffusion constants

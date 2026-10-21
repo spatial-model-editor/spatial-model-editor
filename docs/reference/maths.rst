@@ -24,12 +24,12 @@ where
 * :math:`R_s` is the reaction term for species :math:`s`
 * :math:`S_s` is the species storage coefficient (dimensionless, non-negative, default :math:`1`)
 
-If no cross-diffusion terms are defined, all :math:`D_{s,r}` with :math:`r \ne s` are zero and this reduces to the standard reaction-diffusion equation.
-
 and we assume that
 
 * each diffusion coefficient :math:`D_{s,r}` is isotropic (a scalar, not a tensor)
 * the reaction term :math:`R_s` is a function that can depend on the concentrations of other species in the model, but only locally, i.e. the concentrations at the same spatial coordinate.
+
+If no cross-diffusion terms are defined, all :math:`D_{s,r}` with :math:`r \ne s` are zero and this reduces to the standard reaction-diffusion equation.
 
 When :math:`S_s = 0`, the equation becomes an algebraic constraint rather than a time-evolution equation:
 
@@ -68,7 +68,7 @@ Compartment Reactions
 
 Compartment reaction terms correspond to the :math:`R_s` term in the reaction-diffusion equation,
 and describe the rate of change of species concentration with time.
-They are evaluated at every point inside the compartment
+They are evaluated at every point inside the compartment.
 
 Membrane reactions
 ------------------

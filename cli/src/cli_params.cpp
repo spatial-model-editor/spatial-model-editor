@@ -201,13 +201,19 @@ static void addCallbacks(CLI::App &app) {
            throw CLI::Success();
          },
          "Dump the default config ini file and exit")
-      ->configurable(false);
+      ->configurable(false)
+      // run before checking for the required subcommand and input file
+      ->callback_priority(CLI::CallbackPriority::First);
 }
 
 static void addConfig(CLI::App &app) {
   app.set_config("-c,--config", "",
                  "Read an ini file containing simulation options");
-  app.config_formatter(std::make_shared<CLI::ConfigTOML>());
+  auto configFormatter{std::make_shared<CLI::ConfigTOML>()};
+  // comment out options that have not been set, so that the dumped config
+  // file can be read back without failing validation of empty values
+  configFormatter->commentDefaults();
+  app.config_formatter(configFormatter);
 }
 
 Params setupCLI(CLI::App &app) {

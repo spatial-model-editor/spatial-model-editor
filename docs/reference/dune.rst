@@ -2,7 +2,7 @@ dune-copasi simulator
 =====================
 
 `dune-copasi <https://dune-copasi.netlify.app/>`_ is the default PDE solver,
-which solves the PDE on a tetrahedral mesh using finite element discretization methods.
+which solves the PDE on a triangular (2D) or tetrahedral (3D) mesh using finite element discretization methods.
 The mesh is automatically constructed from the geometry image, as described in :doc:`mesh`.
 
 Simulation options
@@ -13,7 +13,7 @@ The default settings should work well in most cases, but if desired they can be 
 .. figure:: img/dune_options.png
    :alt: dune-copasi simulation options
 
-   The simulation options that can be used to fine tune-the dune-copasi solver.
+   The simulation options that can be used to fine-tune the dune-copasi solver.
 
 * Discretization
    * currently only 1st order FEM is supported
@@ -21,7 +21,7 @@ The default settings should work well in most cases, but if desired they can be 
 * Integrator
    * the Runge-Kutta integration scheme used for time integration
    * a variety of implicit and explicit schemes of different orders are available
-   * the default is the 2nd order Alexander scheme, which is a `Diagonally Implicit Runge Kutta <https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods#Diagonally_Implicit_Runge_Kutta_methods>`_ method
+   * the default is the 2nd order Alexander scheme, which is a `Diagonally Implicit Runge Kutta <https://en.wikipedia.org/wiki/List_of_Runge%E2%80%93Kutta_methods#Diagonally_Implicit_Runge%E2%80%93Kutta_methods>`_ method
 * Initial timestep
    * the timestep used at the start of a simulation
 * Min timestep
@@ -51,5 +51,8 @@ The default settings should work well in most cases, but if desired they can be 
 * Linear solver
    * a variety of iterative and direct solvers are available
    * the default is RestartedGMRes
+* Max CPU threads
+   * limit the maximum number of CPU threads to be used
+   * default: unlimited
 
 For more information see the `dune-copasi documentation <https://dune-copasi.netlify.app/>`_.

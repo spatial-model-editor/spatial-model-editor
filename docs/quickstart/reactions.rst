@@ -1,6 +1,6 @@
 Defining reactions
 ==================
-Models in SME are always of the reaction diffusion type. For each chemical species in the system, there is on equation that describes how the species concentration changes over time and space. Hence, we end up with a system of coupled partial differential equations (PDEs).
+Models in SME are always of the reaction diffusion type. For each chemical species in the system, there is one equation that describes how the species concentration changes over time and space. Hence, we end up with a system of coupled partial differential equations (PDEs).
 Reactions in a compartmentalized spatial model come in two types:
 
 * Bulk volume reactions
@@ -15,17 +15,17 @@ For more on the mathematical formulation, see :doc:`here <../reference/maths>`.
 
 To define a reaction, we have to follow six steps:
 
-- click on the `Reactions` tab in the main window. You will see a rendering of the geometry of the selected compartment on the right. Scroll through the z-axis of a 3D model to see it's geometry slice by slice.
+- click on the `Reactions` tab in the main window. You will see a rendering of the geometry of the selected compartment on the left. Scroll through the z-axis of a 3D model to see its geometry slice by slice.
 
 - In the middle, a list of different compartments is displayed. Volumes are displayed first, followed by membranes that link them. Select a compartment in which to define a volume reaction. Then click the 'Add' button below, choose a name for the reaction, and click 'OK'.
 
-- On the right side, you see the model editor menu. At the top, the name you just chose is displayed. Below, you find a dropdown menu that lets you select the compartment in which the reaction is defined.
+- On the right side, you see the reaction settings. At the top, the name you just chose is displayed. Below, you find a dropdown menu that lets you select the compartment in which the reaction is defined.
 
 - Next, skip to the bottom of the window. There, you find the table of parameters for the reactions. Put in all the parameters that are relevant for this one reaction.
 
 - Then, click into the input field below that which is labeled 'Rate'. Enter the rate at which the reaction happens. The units are displayed below the input field.
 
-- Lastly, go back up to the field labeled 'Species' below the compartments dropdown list. You will find there a list of Species in the left column. The right column is labeled 'Stoichiometry'. Here you can define the stoichiometry of the reaction for the involved species. Since often the parameters of the equation take care of this, these often represent the coefficients of the reaction in the equation.
+- Lastly, go back up to the field labeled 'Species' below the compartments dropdown list. You will find there a list of Species in the left column. The right column is labeled 'Stoichiometry'. Here you can define the stoichiometry of the reaction for the involved species: a negative value for a species that is consumed by the reaction, and a positive value for a species that is produced.
 
 .. note::
     When the same reaction term appears in multiple reactions for different species, adding the respective stoichiometric coefficient in this menu takes care of adding the term to all relevant equations.
@@ -33,7 +33,7 @@ To define a reaction, we have to follow six steps:
 .. note::
    To become more acquainted with the way the stoichiometric coefficients work, have a look at :doc:`this example model <../examples/verysimple>`.
 
-Follow the same procedure to define a membrane reaction. See the figure below for how all this looks like in the GUI.
+Follow the same procedure to define a membrane reaction. See the figure below for what all this looks like in the GUI.
 
 .. note::
     Take care to get the units of your parameters and rates right. Note how they differ between bulk volume and membrane reactions.

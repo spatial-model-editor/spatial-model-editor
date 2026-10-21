@@ -11,7 +11,7 @@ To get started, take a look at the :ref:`example-notebooks`, or the :ref:`api-re
 
 .. tip ::
 
-    There is an online `colab notebook <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/master/docs/sme/notebooks/getting_started.ipynb>`_ where you can try it out in your browser without installing anything on your computer.
+    There is an online `colab notebook <https://colab.research.google.com/github/spatial-model-editor/spatial-model-editor/blob/main/docs/sme/notebooks/getting_started.ipynb>`_ where you can try it out in your browser without installing anything on your computer.
 
 sme-contrib
 -----------

@@ -14,8 +14,18 @@ but if desired they can be adjusted by going to `Advanced->Simulation options`
 .. figure:: img/pixel_options.png
    :alt: Pixel simulation options
 
-   The simulation options that can be used to fine tune-the Pixel solver.
+   The simulation options that can be used to fine-tune the Pixel solver.
 
+* Backend
+   * whether the simulation runs on the CPU or on a GPU
+   * default: CPU
+   * the GPU backend is only available on systems with a CUDA-capable NVIDIA GPU, or on Apple silicon macOS
+   * the GPU backend does not support all model features, see :doc:`../developer/pixel-solver` for details
+* GPU precision
+   * the floating-point precision used on the GPU
+   * default: Double (64-bit)
+   * Float (32-bit) uses less memory and is faster on most GPUs, but may reduce accuracy
+   * on Apple silicon macOS only Float (32-bit) is supported
 * Integrator
    * the explicit Runge-Kutta integration scheme used for time integration
    * default: 2nd order Heun scheme, with embedded 1st order error estimate
@@ -312,7 +322,7 @@ We use the embedded lower order solution to estimate the error at each timestep,
 Maximum timestep
 ----------------
 
-For the Euler method, we don't have an embedded lower order solution from which we can estimate of the error,
+For the Euler method, we don't have an embedded lower order solution from which we can estimate the error,
 so we can't automatically adjust the stepsize.
 However, if we ignore the reaction terms,
 there is an analytic upper bound on the size of timestep that can be used for Euler (see p125 of https://doi.org/10.1017/CBO9780511781438 ),

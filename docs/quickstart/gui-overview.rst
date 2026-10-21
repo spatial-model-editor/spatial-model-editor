@@ -13,15 +13,19 @@ A model in spatial-model-editor (SME) consists of five basic parts which all mus
 
 #. The chemical reactions between species typically come with a number of parameters that we need to set to defined numerical values. Often, these define the rates at which a reaction occurs.
 
-#. How the model equations defined in the last three steps should be solved numerically in space and time. This means we have to choose a time interval in which to solve the equations and algorithm to do so.
+#. How the model equations defined in the last three steps should be solved numerically in space and time. This means we have to choose a time interval in which to solve the equations and an algorithm to do so.
 
 The graphical user interface of spatial-model-editor follows this basic structure. For each of the steps, there is a tab in the main window that allows you to define the corresponding part of the model.
+There are also two optional tabs: `Events`, which lets you change the value of a parameter or species concentration at a given time during the simulation,
+and `Features`, which lets you define summary statistics of species concentrations within a region of a compartment, which can be used as targets for :doc:`parameter optimization <../reference/parameter-fitting>`.
+There are also two optional tabs: `Events`, which lets you change the value of a parameter or species concentration at a given time during the simulation,
+and `Features`, which lets you define summary statistics of species concentrations within a region of a compartment, which can be used as targets for :doc:`parameter optimization <../reference/parameter-fitting>`.
 
 Additional functions for each step are available via the menu bar at the top of the main window.
 
 - The `File` menu lets you load and save models for future use or load example models from the model library.
 
-- The `Import` menu provides dialogs to import the spatial geometry of the problem from an existing SME model or from an image.
+- The `Import` menu provides dialogs to import the spatial geometry of the problem from an existing SME model, from an image, or from a Gmsh mesh file.
 
 - The `Tools` menu lets you edit various fundamental elements of the model, like the basic units it works with, the geometry or the names of spatial coordinates. It also gives you access to parameter optimization algorithms. See :doc:`here <../reference/parameter-fitting>` for more details.
 
@@ -32,8 +36,8 @@ Additional functions for each step are available via the menu bar at the top of 
 .. figure:: img/sme-gui.png
    :alt: screenshot showing main window of spatial-model-editor
 
-   The main window of the spatial-model-editor. The five tabs at in the upper center correspond to the five parts of the model that need to be defined.
+   The main window of the spatial-model-editor. The tabs in the upper center correspond to the parts of the model that need to be defined.
 
 
 In the following, you will learn how to define your own model in spatial-model-editor by following the above scheme.
-If instead you are more interested in turning an existing non-spatial model defined in COPASI or SBML into a spatial model and run it via spatial-model-editor, you can skip ahead and go the respective :doc:`user guide <../userguides/work-with-copasi>` right away. However, we recommend to work through this guide once because parts of it are needed to make predefined ODE models work in SME.
+If instead you are more interested in turning an existing non-spatial model defined in COPASI or SBML into a spatial model and run it via spatial-model-editor, you can skip ahead and go to the respective :doc:`user guide <../userguides/work-with-copasi>` right away. However, we recommend to work through this guide once because parts of it are needed to make predefined ODE models work in SME.
