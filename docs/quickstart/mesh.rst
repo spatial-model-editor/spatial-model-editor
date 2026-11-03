@@ -9,6 +9,7 @@ The number of points used for each boundary can be altered here to refine or coa
 
 The `Mesh` tab shows the generated triangular mesh with the currently selected compartment highlighted.
 The maximum triangle area for each compartment can be altered here to refine or coarsen the mesh. More triangles will allow for a more accurate solution, but also need more computational resources. This is especially relevant for 3D systems which have vastly more cells than 2D systems.
+For 3D geometries, the mesh consists of tetrahedra. Use the clipping-plane direction and slider next to the geometry view to inspect the interior: the same plane clips both the geometry image and the mesh, including the exposed mesh faces.
 For imported 3D Gmsh geometries, you can alternatively keep the imported mesh topology fixed by setting `Mesh Source` to `Keep imported mesh fixed` in `Advanced -> Meshing options...`.
 In this mode, mesh tuning controls are disabled because the mesh is taken directly from the imported model, while the voxelized geometry is still kept for image-based and pixel-based workflows.
 When exporting SBML, the fixed mesh topology is written to ParametricGeometry and restored on import.

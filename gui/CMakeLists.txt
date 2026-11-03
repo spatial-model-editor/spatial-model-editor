@@ -22,6 +22,7 @@ find_package(
              CommonCore
              CommonDataModel
              FiltersCore
+             FiltersGeneral
              InteractionStyle
              RenderingUI
              RenderingContextOpenGL2

@@ -13,6 +13,7 @@
 #include <vtkPlane.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
+#include <vtkTableBasedClipDataSet.h>
 #include <vtkUnstructuredGrid.h>
 
 class QVoxelRenderer;
@@ -53,7 +54,7 @@ private:
   std::vector<vtkNew<vtkCellArray>> triangles{};
   std::vector<vtkNew<vtkPolyData>> membranes{};
   std::vector<vtkNew<vtkClipDataSet>> clippedMembranes{};
-  std::vector<vtkNew<vtkClipDataSet>> clippedTetrahedrons{};
+  std::vector<vtkNew<vtkTableBasedClipDataSet>> clippedTetrahedrons{};
   std::vector<vtkNew<vtkExtractEdges>> edges{};
   std::vector<vtkNew<vtkClipDataSet>> clippedEdges{};
   std::vector<vtkNew<vtkDataSetMapper>> solidMappers{};
