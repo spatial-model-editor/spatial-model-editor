@@ -8,7 +8,9 @@
 #include <vtkActorCollection.h>
 #include <vtkDataSetTriangleFilter.h>
 #include <vtkIdList.h>
+#include <vtkMapper.h>
 #include <vtkTetra.h>
+#include <vtkUnstructuredGrid.h>
 
 using namespace sme::test;
 
@@ -18,14 +20,22 @@ constexpr int delay_ms{0};
 namespace {
 
 class TestQMeshRenderer : public QMeshRenderer {
+  vtkActor *getActor(std::size_t index) {
+    return vtkActor::SafeDownCast(
+        renderer->GetActors()->GetItemAsObject(index));
+  }
+
   vtkDataSet *getActorMesh(std::size_t index) {
-    auto *actor =
-        vtkActor::SafeDownCast(renderer->GetActors()->GetItemAsObject(index));
+    auto *actor = getActor(index);
     actor->GetMapper()->Update();
     return actor->GetMapper()->GetInput();
   }
 
 public:
+  bool isSolidVisible(std::size_t part) {
+    return getActor(2 * part)->GetVisibility() != 0;
+  }
+  int getNumberOfActors() { return renderer->GetActors()->GetNumberOfItems(); }
   vtkDataSet *getSolidMesh(std::size_t part = 0) {
     return getActorMesh(2 * part);
   }
@@ -102,6 +112,7 @@ TEST_CASE("QMeshRenderer preserves compartment and membrane connectivity",
   REQUIRE(mesh.getTetrahedronIndices()[1].size() == 1);
   REQUIRE(mesh.getMembraneTriangleIndices()[0].size() == membraneCells);
   TestQMeshRenderer renderer;
+  QVoxelRenderer voxelRenderer;
   renderer.resize(200, 200);
   renderer.show();
 
@@ -123,6 +134,41 @@ TEST_CASE("QMeshRenderer preserves compartment and membrane connectivity",
     REQUIRE(renderer.getWireframeMesh(2)->GetNumberOfCells() ==
             static_cast<vtkIdType>(3 * membraneCells));
     renderer.clear();
+    REQUIRE(renderer.getNumberOfActors() == 0);
+  }
+
+  // The connected pipeline owns its data and filters after setMesh returns.
+  // Rebuild with a different compartment count, then restore both compartments
+  // and their membrane to check selection bookkeeping as well as lifetime.
+  auto singleCompartmentMesh = gmshMesh;
+  singleCompartmentMesh.tetrahedra.resize(2);
+  const sme::mesh::Mesh3d singleMesh(singleCompartmentMesh, {{red, 7}},
+                                     {6, 4, 3}, {0.5, 2.0, 3.0},
+                                     {5.0, 6.0, 7.0}, {red});
+  REQUIRE(singleMesh.isValid());
+  renderer.syncClippingPlane(&voxelRenderer);
+  for (int rebuild = 0; rebuild < 2; ++rebuild) {
+    renderer.setMesh(singleMesh, 0);
+    REQUIRE(renderer.getNumberOfActors() == 2);
+    REQUIRE(renderer.isSolidVisible(0));
+    REQUIRE(renderer.getSolidMesh()->GetNumberOfCells() == 2);
+
+    renderer.setMesh(mesh, 1);
+    REQUIRE(renderer.getNumberOfActors() == 6);
+    REQUIRE(renderer.isSolidVisible(0));
+    REQUIRE(renderer.isSolidVisible(1));
+    REQUIRE_FALSE(renderer.isSolidVisible(2));
+    renderer.setMembraneIndex(0);
+    REQUIRE_FALSE(renderer.isSolidVisible(0));
+    REQUIRE_FALSE(renderer.isSolidVisible(1));
+    REQUIRE(renderer.isSolidVisible(2));
+    REQUIRE(renderer.getSolidMesh(2)->GetNumberOfCells() ==
+            static_cast<vtkIdType>(membraneCells));
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
+    REQUIRE(renderer.getWireframeMesh(2)->GetNumberOfCells() ==
+            static_cast<vtkIdType>(3 * membraneCells));
+    renderer.clear();
+    REQUIRE(renderer.getNumberOfActors() == 0);
   }
 }
 

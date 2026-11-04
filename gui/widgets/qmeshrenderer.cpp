@@ -3,9 +3,17 @@
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include <vtkCamera.h>
+#include <vtkCellArray.h>
+#include <vtkClipDataSet.h>
+#include <vtkDataSetMapper.h>
+#include <vtkExtractEdges.h>
 #include <vtkIdTypeArray.h>
+#include <vtkPoints.h>
+#include <vtkPolyData.h>
 #include <vtkPropPicker.h>
 #include <vtkProperty.h>
+#include <vtkTableBasedClipDataSet.h>
+#include <vtkUnstructuredGrid.h>
 
 static std::array<double, 3> makeEdgeColor(const QColor &color) {
   // lighter or darker edge color depending on lightness of color
@@ -49,6 +57,8 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     compartmentIndex = 0;
   }
   clear();
+  numberOfCompartments = mesh.getNumberOfCompartments();
+  vtkNew<vtkPoints> points;
   points->SetNumberOfPoints(static_cast<vtkIdType>(mesh.getVertices().size()));
   for (vtkIdType i = 0; const auto &v : mesh.getVertices()) {
     points->SetPoint(i, static_cast<float>(v.p.x()),
@@ -58,19 +68,18 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   points->Modified();
   for (const auto &compartmentTetrahedronIndices :
        mesh.getTetrahedronIndices()) {
-    auto &grid = grids.emplace_back();
-    auto &clippedTetrahedron = clippedTetrahedrons.emplace_back();
-    auto &edge = edges.emplace_back();
-    auto &clippedEdge = clippedEdges.emplace_back();
+    vtkNew<vtkUnstructuredGrid> grid;
+    vtkNew<vtkExtractEdges> edge;
     auto &solidActor = solidActors.emplace_back();
-    auto &solidMapper = solidMappers.emplace_back();
+    vtkNew<vtkDataSetMapper> solidMapper;
     auto &wireframeActor = wireframeActors.emplace_back();
-    auto &wireframeMapper = wireframeMappers.emplace_back();
+    vtkNew<vtkDataSetMapper> wireframeMapper;
     auto tetrahedra = makeCellArray(compartmentTetrahedronIndices);
     grid->SetCells(VTK_TETRA, tetrahedra);
     grid->SetPoints(points);
     edge->SetInputData(grid);
     if (clippingPlane != nullptr) {
+      vtkNew<vtkTableBasedClipDataSet> clippedTetrahedron;
       clippedTetrahedron->SetClipFunction(clippingPlane);
       clippedTetrahedron->SetInputData(grid);
       solidMapper->SetInputConnection(clippedTetrahedron->GetOutputPort());
@@ -81,6 +90,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     solidActor->GetProperty()->EdgeVisibilityOn();
     renderer->AddActor(solidActor);
     if (clippingPlane != nullptr) {
+      vtkNew<vtkClipDataSet> clippedEdge;
       clippedEdge->SetClipFunction(clippingPlane);
       clippedEdge->SetInputConnection(edge->GetOutputPort());
       wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());
@@ -92,19 +102,17 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   }
   for (const auto &membraneTriangleIndices :
        mesh.getMembraneTriangleIndices()) {
-    auto &triangle =
-        triangles.emplace_back(makeCellArray(membraneTriangleIndices));
-    auto &membrane = membranes.emplace_back();
-    auto &clippedMembrane = clippedMembranes.emplace_back();
-    auto &edge = edges.emplace_back();
-    auto &clippedEdge = clippedEdges.emplace_back();
+    auto triangle = makeCellArray(membraneTriangleIndices);
+    vtkNew<vtkPolyData> membrane;
+    vtkNew<vtkExtractEdges> edge;
     auto &solidActor = solidActors.emplace_back();
-    auto &solidMapper = solidMappers.emplace_back();
+    vtkNew<vtkDataSetMapper> solidMapper;
     auto &wireframeActor = wireframeActors.emplace_back();
-    auto &wireframeMapper = wireframeMappers.emplace_back();
+    vtkNew<vtkDataSetMapper> wireframeMapper;
     membrane->SetPoints(points);
     membrane->SetPolys(triangle);
     if (clippingPlane != nullptr) {
+      vtkNew<vtkClipDataSet> clippedMembrane;
       clippedMembrane->SetClipFunction(clippingPlane);
       clippedMembrane->SetInputData(membrane);
       solidMapper->SetInputConnection(clippedMembrane->GetOutputPort());
@@ -116,6 +124,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     renderer->AddActor(solidActor);
     edge->SetInputData(membrane);
     if (clippingPlane != nullptr) {
+      vtkNew<vtkClipDataSet> clippedEdge;
       clippedEdge->SetClipFunction(clippingPlane);
       clippedEdge->SetInputConnection(edge->GetOutputPort());
       wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());
@@ -144,7 +153,7 @@ void QMeshRenderer::setCompartmentIndex(std::size_t compartmentIndex) {
 }
 
 void QMeshRenderer::setMembraneIndex(std::size_t membraneIndex) {
-  setCompartmentIndex(grids.size() + membraneIndex);
+  setCompartmentIndex(numberOfCompartments + membraneIndex);
 }
 
 void QMeshRenderer::setColors(std::vector<QRgb> colors) {
@@ -167,18 +176,9 @@ void QMeshRenderer::setRenderMode(RenderMode mode) {
 
 void QMeshRenderer::clear() {
   currentCompartmentIndex = 0;
+  numberOfCompartments = 0;
   renderMode = RenderMode::Solid;
   renderer->RemoveAllViewProps();
-  points->Reset();
-  grids.clear();
-  clippedTetrahedrons.clear();
-  triangles.clear();
-  membranes.clear();
-  clippedMembranes.clear();
-  edges.clear();
-  clippedEdges.clear();
-  solidMappers.clear();
-  wireframeMappers.clear();
   solidActors.clear();
   wireframeActors.clear();
 }
@@ -218,10 +218,11 @@ void QMeshRenderer::updateAndRender() {
   for (auto &wireframeActor : wireframeActors) {
     wireframeActor->SetVisibility(false);
   }
-  std::size_t iMin = currentCompartmentIndex < grids.size() ? 0 : grids.size();
-  std::size_t iMax = currentCompartmentIndex < grids.size()
-                         ? grids.size()
-                         : grids.size() + triangles.size();
+  std::size_t iMin =
+      currentCompartmentIndex < numberOfCompartments ? 0 : numberOfCompartments;
+  std::size_t iMax = currentCompartmentIndex < numberOfCompartments
+                         ? numberOfCompartments
+                         : solidActors.size();
   for (std::size_t i = iMin; i < iMax; ++i) {
     if (renderMode == RenderMode::Solid) {
       solidActors[i]->SetVisibility(true);
