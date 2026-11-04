@@ -188,7 +188,6 @@ void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
       minClippingPlaneOrigin +
       fractionalValue * (maxClippingPlaneOrigin - minClippingPlaneOrigin);
   clippingPlane->SetOrigin(origin, origin, origin);
-  clippingPlane->Modified();
   vtkRender();
   if (smeVtkWidgetToRenderOnClippingPlaneChange != nullptr) {
     smeVtkWidgetToRenderOnClippingPlaneChange->vtkRender();

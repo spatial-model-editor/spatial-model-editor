@@ -37,6 +37,26 @@ public:
 
 } // namespace
 
+TEST_CASE("QVoxelRenderer modifies the clipping plane once per slider change",
+          "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  EventCounter planeChanges;
+  QSlider slider;
+  QComboBox comboBox;
+  QVoxelRenderer voxelRenderer;
+  voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  sme::common::ImageStack image({4, 3, 2}, QImage::Format_RGB32);
+  image.fill(qRgb(50, 50, 50));
+  voxelRenderer.setImage(image);
+  voxelRenderer.resize(200, 200);
+  voxelRenderer.show();
+  wait(0);
+  voxelRenderer.getClippingPlane()->AddObserver(
+      vtkCommand::ModifiedEvent, &planeChanges, &EventCounter::increment);
+  slider.setValue(35);
+  REQUIRE(planeChanges.events == 1);
+}
+
 TEST_CASE(
     "QVoxelRenderer renders image changes without relying on clipping controls",
     "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
