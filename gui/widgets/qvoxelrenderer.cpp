@@ -112,9 +112,8 @@ void QVoxelRenderer::setImage(const sme::common::ImageStack &img,
     cmbClippingPlaneNormal_currentTextChanged(
         cmbClippingPlaneNormal->currentText());
     clippingPlaneControlsInitialized = true;
-  } else if (!geometryChanged) {
-    // Updating only the scalars no longer changes the clipping controls, whose
-    // callbacks would otherwise trigger rendering.
+  } else {
+    // Render the updated image when the clipping-control callbacks did not.
     vtkRender();
   }
 }

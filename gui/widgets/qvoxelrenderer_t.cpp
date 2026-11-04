@@ -37,6 +37,53 @@ public:
 
 } // namespace
 
+TEST_CASE(
+    "QVoxelRenderer renders image changes without relying on clipping controls",
+    "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  EventCounter renders;
+  QSlider slider;
+  QComboBox comboBox;
+  TestQVoxelRenderer voxelRenderer;
+  SECTION("no clipping controls") {}
+  SECTION("only a clipping slider") {
+    voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  }
+  SECTION("only a clipping direction combobox") {
+    voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  }
+  SECTION("both clipping controls") {
+    voxelRenderer.setClippingPlaneOriginSlider(&slider);
+    voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  }
+  voxelRenderer.resize(200, 200);
+  voxelRenderer.show();
+  wait(delay_ms);
+  voxelRenderer.getRenderer()->GetRenderWindow()->AddObserver(
+      vtkCommand::EndEvent, &renders, &EventCounter::increment);
+  sme::common::ImageStack image({4, 3, 2}, QImage::Format_RGB32);
+  image.fill(qRgb(50, 50, 50));
+  sme::common::VoxelF origin{1.0, 2.0, 3.0};
+  const auto checkRendered = [&]() {
+    renders.events = 0;
+    voxelRenderer.setImage(image, origin);
+    // Check immediately: receiving a Qt paint event or interacting with the
+    // widget must not be necessary to refresh its VTK rendering.
+    REQUIRE(renders.events > 0);
+  };
+  checkRendered();
+  image.fill(qRgb(120, 60, 30));
+  checkRendered();
+  image.rescaleXY({6, 4});
+  checkRendered();
+  image.setVoxelSize({0.5, 2.0, 3.0});
+  checkRendered();
+  origin = {5.0, 6.0, 7.0};
+  checkRendered();
+  image.clear();
+  checkRendered();
+  REQUIRE(voxelRenderer.getImageData()->GetNumberOfPoints() == 0);
+}
+
 TEST_CASE("QVoxelRenderer updates values without resetting the view",
           "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
   EventCounter cameraResets;
