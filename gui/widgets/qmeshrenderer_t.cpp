@@ -7,6 +7,7 @@
 #include <cmath>
 #include <vtkActorCollection.h>
 #include <vtkDataSetTriangleFilter.h>
+#include <vtkIdList.h>
 #include <vtkTetra.h>
 
 using namespace sme::test;
@@ -17,14 +18,38 @@ constexpr int delay_ms{0};
 namespace {
 
 class TestQMeshRenderer : public QMeshRenderer {
-public:
-  vtkDataSet *getSolidMesh() {
+  vtkDataSet *getActorMesh(std::size_t index) {
     auto *actor =
-        vtkActor::SafeDownCast(renderer->GetActors()->GetItemAsObject(0));
+        vtkActor::SafeDownCast(renderer->GetActors()->GetItemAsObject(index));
     actor->GetMapper()->Update();
     return actor->GetMapper()->GetInput();
   }
+
+public:
+  vtkDataSet *getSolidMesh(std::size_t part = 0) {
+    return getActorMesh(2 * part);
+  }
+  vtkDataSet *getWireframeMesh(std::size_t part) {
+    return getActorMesh(2 * part + 1);
+  }
 };
+
+template <std::size_t CellSize>
+void checkCells(vtkDataSet *data,
+                const std::vector<std::array<std::size_t, CellSize>> &expected,
+                int cellType) {
+  REQUIRE(data->GetNumberOfCells() == static_cast<vtkIdType>(expected.size()));
+  vtkNew<vtkIdList> ids;
+  for (vtkIdType i = 0; i < data->GetNumberOfCells(); ++i) {
+    CAPTURE(i);
+    REQUIRE(data->GetCellType(i) == cellType);
+    data->GetCellPoints(i, ids);
+    REQUIRE(ids->GetNumberOfIds() == CellSize);
+    for (vtkIdType j = 0; j < static_cast<vtkIdType>(CellSize); ++j) {
+      REQUIRE(ids->GetId(j) == static_cast<vtkIdType>(expected[i][j]));
+    }
+  }
+}
 
 double meshVolume(vtkDataSet *mesh) {
   vtkNew<vtkDataSetTriangleFilter> tetrahedra;
@@ -46,6 +71,60 @@ double meshVolume(vtkDataSet *mesh) {
 }
 
 } // namespace
+
+TEST_CASE("QMeshRenderer preserves compartment and membrane connectivity",
+          "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {
+  sme::mesh::GMSHMesh gmshMesh{
+      {{0.0, 0.0, 0.0},
+       {1.0, 0.0, 0.0},
+       {0.0, 1.0, 0.0},
+       {0.0, 0.0, 1.0},
+       {1.0, 1.0, 1.0},
+       {2.0, 0.0, 0.0}},
+      {{{2, 0, 1, 3}, 7}, {{3, 1, 2, 4}, 7}, {{2, 4, 1, 5}, 11}},
+      {}};
+  std::size_t membraneCells{1};
+  SECTION("compartments share a membrane") {}
+  SECTION("disconnected compartments have an empty membrane") {
+    gmshMesh.vertices.insert(
+        gmshMesh.vertices.end(),
+        {{3.0, 0.0, 0.0}, {4.0, 0.0, 0.0}, {3.0, 1.0, 0.0}, {3.0, 0.0, 1.0}});
+    gmshMesh.tetrahedra.back().vertexIndices = {6, 7, 8, 9};
+    membraneCells = 0;
+  }
+  const auto red = qRgb(255, 0, 0);
+  const auto green = qRgb(0, 255, 0);
+  const sme::mesh::Mesh3d mesh(gmshMesh, {{red, 7}, {green, 11}}, {6, 4, 3},
+                               {0.5, 2.0, 3.0}, {5.0, 6.0, 7.0}, {red, green},
+                               {{"membrane", {red, green}}});
+  REQUIRE(mesh.isValid());
+  REQUIRE(mesh.getTetrahedronIndices()[0].size() == 2);
+  REQUIRE(mesh.getTetrahedronIndices()[1].size() == 1);
+  REQUIRE(mesh.getMembraneTriangleIndices()[0].size() == membraneCells);
+  TestQMeshRenderer renderer;
+  renderer.resize(200, 200);
+  renderer.show();
+
+  // Rebuilding and clearing must not leave dangling references to the arrays
+  // created locally while assembling each compartment and membrane.
+  for (int rebuild = 0; rebuild < 2; ++rebuild) {
+    CAPTURE(rebuild);
+    renderer.setMesh(mesh, 0);
+    for (std::size_t i = 0; i < mesh.getNumberOfCompartments(); ++i) {
+      checkCells(renderer.getSolidMesh(i), mesh.getTetrahedronIndices()[i],
+                 VTK_TETRA);
+    }
+    renderer.setMembraneIndex(0);
+    checkCells(renderer.getSolidMesh(mesh.getNumberOfCompartments()),
+               mesh.getMembraneTriangleIndices()[0], VTK_TRIANGLE);
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
+    REQUIRE(renderer.getWireframeMesh(0)->GetNumberOfCells() == 9);
+    REQUIRE(renderer.getWireframeMesh(1)->GetNumberOfCells() == 6);
+    REQUIRE(renderer.getWireframeMesh(2)->GetNumberOfCells() ==
+            static_cast<vtkIdType>(3 * membraneCells));
+    renderer.clear();
+  }
+}
 
 TEST_CASE("QMeshRenderer clips tetrahedra with a shared plane",
           "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {

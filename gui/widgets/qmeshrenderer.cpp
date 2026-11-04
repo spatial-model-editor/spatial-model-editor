@@ -3,6 +3,7 @@
 #include "sme/logger.hpp"
 #include "sme/utils.hpp"
 #include <vtkCamera.h>
+#include <vtkIdTypeArray.h>
 #include <vtkPropPicker.h>
 #include <vtkProperty.h>
 
@@ -14,6 +15,26 @@ static std::array<double, 3> makeEdgeColor(const QColor &color) {
     edge = QColor(edge.red() + 50, edge.green() + 50, edge.blue() + 50);
   }
   return {edge.redF(), edge.greenF(), edge.blueF()};
+}
+
+template <std::size_t CellSize>
+static vtkNew<vtkCellArray>
+makeCellArray(const std::vector<std::array<std::size_t, CellSize>> &indices) {
+  vtkNew<vtkIdTypeArray> connectivity;
+  connectivity->SetNumberOfValues(static_cast<vtkIdType>(indices.size()) *
+                                  static_cast<vtkIdType>(CellSize));
+  auto *output = connectivity->GetPointer(0);
+  for (const auto &cell : indices) {
+    for (auto id : cell) {
+      *output++ = static_cast<vtkIdType>(id);
+    }
+  }
+  connectivity->Modified();
+  vtkNew<vtkCellArray> cells;
+  // Fixed-size cells use implicit offsets. SetData retains the connectivity
+  // array, so the pipeline owns the storage after this helper returns.
+  cells->SetData(static_cast<vtkIdType>(CellSize), connectivity);
+  return cells;
 }
 
 QMeshRenderer::QMeshRenderer(QWidget *parent) : SmeVtkWidget(parent) {}
@@ -45,12 +66,8 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
     auto &wireframeMapper = wireframeMappers.emplace_back();
-    grid->AllocateEstimate(
-        static_cast<vtkIdType>(compartmentTetrahedronIndices.size()), 4);
-    for (const auto &t : compartmentTetrahedronIndices) {
-      grid->InsertNextCell(VTK_TETRA, 4,
-                           reinterpret_cast<const vtkIdType *>(t.data()));
-    }
+    auto tetrahedra = makeCellArray(compartmentTetrahedronIndices);
+    grid->SetCells(VTK_TETRA, tetrahedra);
     grid->SetPoints(points);
     edge->SetInputData(grid);
     if (clippingPlane != nullptr) {
@@ -75,7 +92,8 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
   }
   for (const auto &membraneTriangleIndices :
        mesh.getMembraneTriangleIndices()) {
-    auto &triangle = triangles.emplace_back();
+    auto &triangle =
+        triangles.emplace_back(makeCellArray(membraneTriangleIndices));
     auto &membrane = membranes.emplace_back();
     auto &clippedMembrane = clippedMembranes.emplace_back();
     auto &edge = edges.emplace_back();
@@ -84,12 +102,6 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
     auto &wireframeMapper = wireframeMappers.emplace_back();
-    triangle->AllocateEstimate(
-        static_cast<vtkIdType>(membraneTriangleIndices.size()), 3);
-    for (const auto &triangleIndex : membraneTriangleIndices) {
-      triangle->InsertNextCell(
-          3, reinterpret_cast<const vtkIdType *>(triangleIndex.data()));
-    }
     membrane->SetPoints(points);
     membrane->SetPolys(triangle);
     if (clippingPlane != nullptr) {
