@@ -5,6 +5,7 @@
 #include "qvoxelrenderer.hpp"
 #include <array>
 #include <cmath>
+#include <memory>
 #include <vtkActorCollection.h>
 #include <vtkDataSetTriangleFilter.h>
 #include <vtkIdList.h>
@@ -13,6 +14,7 @@
 #include <vtkTetra.h>
 #include <vtkTriangle.h>
 #include <vtkUnstructuredGrid.h>
+#include <vtkWeakPointer.h>
 
 using namespace sme::test;
 
@@ -295,6 +297,46 @@ TEST_CASE("QMeshRenderer clips membrane areas and wireframe lengths",
       REQUIRE(renderer.getWireframeMesh(part)->GetNumberOfCells() == 0);
     }
   }
+}
+
+TEST_CASE(
+    "QMeshRenderer retains the clipping plane after its source is destroyed",
+    "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {
+  const sme::mesh::GMSHMesh gmshMesh{
+      {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}},
+      {{{0, 1, 2, 3}, 1}},
+      {}};
+  const auto color = qRgb(255, 0, 0);
+  const sme::mesh::Mesh3d mesh(gmshMesh, {{color, 1}}, {8, 12, 16},
+                               {1.0, 1.0, 1.0}, {5.0, 6.0, 7.0}, {color});
+  REQUIRE(mesh.isValid());
+  constexpr double fullVolume = 8.0 * 12.0 * 16.0 / 6.0;
+  auto voxelRenderer = std::make_unique<QVoxelRenderer>();
+  auto meshRenderer = std::make_unique<TestQMeshRenderer>();
+  meshRenderer->resize(200, 200);
+  meshRenderer->show();
+  meshRenderer->syncClippingPlane(voxelRenderer.get());
+  // Observe the plane without keeping it alive on behalf of the renderer.
+  vtkWeakPointer<vtkPlane> plane = voxelRenderer->getClippingPlane();
+  plane->SetNormal(1.0, 0.0, 0.0);
+  plane->SetOrigin(9.0, 6.0, 7.0);
+  SECTION("source is destroyed before the first mesh is built") {}
+  SECTION("source is destroyed after a clipped mesh is built") {
+    meshRenderer->setMesh(mesh, 0);
+    REQUIRE(meshVolume(meshRenderer->getSolidMesh()) ==
+            dbl_approx(fullVolume / 8.0));
+  }
+  voxelRenderer.reset();
+  meshRenderer->clear();
+  REQUIRE(plane != nullptr);
+  meshRenderer->setMesh(mesh, 0);
+  REQUIRE(meshVolume(meshRenderer->getSolidMesh()) ==
+          dbl_approx(fullVolume / 8.0));
+  plane->SetOrigin(4.0, 6.0, 7.0);
+  meshRenderer->vtkRender();
+  REQUIRE(meshVolume(meshRenderer->getSolidMesh()) == dbl_approx(fullVolume));
+  meshRenderer.reset();
+  REQUIRE(plane == nullptr);
 }
 
 TEST_CASE("QMeshRenderer clips tetrahedra with a shared plane",

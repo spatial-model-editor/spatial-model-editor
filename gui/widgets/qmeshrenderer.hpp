@@ -7,6 +7,7 @@
 #include <vtkActor.h>
 #include <vtkNew.h>
 #include <vtkPlane.h>
+#include <vtkSmartPointer.h>
 
 class QVoxelRenderer;
 
@@ -37,7 +38,7 @@ protected:
 
 private:
   void updateAndRender();
-  vtkPlane *clippingPlane = nullptr;
+  vtkSmartPointer<vtkPlane> clippingPlane;
   QPoint lastMouseClickPos{};
   std::size_t currentCompartmentIndex{0};
   std::size_t numberOfCompartments{0};

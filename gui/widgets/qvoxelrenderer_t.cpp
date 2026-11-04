@@ -1,11 +1,13 @@
 #include "catch_wrapper.hpp"
 #include "model_test_utils.hpp"
+#include "qmeshrenderer.hpp"
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
 #include "sme/image_stack.hpp"
 #include <QComboBox>
 #include <QSlider>
 #include <array>
+#include <memory>
 #include <vtkCamera.h>
 #include <vtkCommand.h>
 #include <vtkDataArray.h>
@@ -182,6 +184,37 @@ TEST_CASE(
     REQUIRE(clicks.back().first == image[0].pixel(2, 1));
     REQUIRE(clicks.back().second == sme::common::Voxel{2, 1, 0});
   }
+}
+
+TEST_CASE(
+    "QVoxelRenderer can update clipping after the linked mesh is destroyed",
+    "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  EventCounter renders;
+  QSlider slider;
+  QComboBox comboBox;
+  TestQVoxelRenderer voxelRenderer;
+  voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  sme::common::ImageStack image({4, 3, 2}, QImage::Format_RGB32);
+  image.fill(qRgb(50, 50, 50));
+  voxelRenderer.resize(200, 200);
+  voxelRenderer.show();
+  voxelRenderer.setImage(image);
+  auto meshRenderer = std::make_unique<QMeshRenderer>();
+  meshRenderer->resize(200, 200);
+  meshRenderer->show();
+  meshRenderer->syncClippingPlane(&voxelRenderer);
+  wait(0);
+  voxelRenderer.getRenderer()->GetRenderWindow()->AddObserver(
+      vtkCommand::EndEvent, &renders, &EventCounter::increment);
+  slider.setValue(35);
+  REQUIRE(renders.events == 1);
+  const auto previousOrigin = voxelRenderer.getClippingPlane()->GetOrigin()[2];
+  meshRenderer.reset();
+  renders.events = 0;
+  slider.setValue(60);
+  REQUIRE(renders.events == 1);
+  REQUIRE(voxelRenderer.getClippingPlane()->GetOrigin()[2] > previousOrigin);
 }
 
 TEST_CASE("QVoxelRenderer modifies the clipping plane once per slider change",

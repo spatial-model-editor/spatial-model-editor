@@ -3,6 +3,7 @@
 #include "sme/image_stack.hpp"
 #include "smevtkwidget.hpp"
 #include <QComboBox>
+#include <QPointer>
 #include <QSlider>
 #include <vtkGPUVolumeRayCastMapper.h>
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -42,7 +43,7 @@ private:
   sme::common::Volume imageVolume{};
   vtkNew<vtkPlane> clippingPlane;
   QString lengthUnits{};
-  SmeVtkWidget *smeVtkWidgetToRenderOnClippingPlaneChange{nullptr};
+  QPointer<SmeVtkWidget> smeVtkWidgetToRenderOnClippingPlaneChange;
   double minClippingPlaneOrigin{0.0};
   double maxClippingPlaneOrigin{0.0};
   QSlider *slideClippingPlaneOrigin{nullptr};
