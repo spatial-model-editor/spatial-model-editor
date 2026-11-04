@@ -37,6 +37,7 @@ private:
   vtkNew<vtkPiecewiseFunction> opacityTransferFunction;
   vtkNew<vtkImageData> imageData;
   vtkNew<vtkUnsignedCharArray> imageDataArray;
+  sme::common::Volume imageVolume{};
   vtkNew<vtkPlane> clippingPlane;
   QString lengthUnits{};
   SmeVtkWidget *smeVtkWidgetToRenderOnClippingPlaneChange{nullptr};
@@ -44,6 +45,7 @@ private:
   double maxClippingPlaneOrigin{0.0};
   QSlider *slideClippingPlaneOrigin{nullptr};
   QComboBox *cmbClippingPlaneNormal{nullptr};
+  bool clippingPlaneControlsInitialized{false};
   void slideClippingPlaneOrigin_valueChanged(int value);
   void cmbClippingPlaneNormal_currentTextChanged(const QString &text);
 };

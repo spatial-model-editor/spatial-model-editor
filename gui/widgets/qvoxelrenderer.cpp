@@ -3,6 +3,8 @@
 #include <QComboBox>
 #include <QMouseEvent>
 #include <QSlider>
+#include <algorithm>
+#include <array>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
 #include <vtkWorldPointPicker.h>
@@ -26,10 +28,9 @@ QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   renderer->AddVolume(volume);
 }
 
-static vtkNew<vtkUnsignedCharArray>
-imageStackToVtkArray(const sme::common::ImageStack &img,
-                     std::array<int, 3> &dims) {
-  vtkNew<vtkUnsignedCharArray> array;
+static void imageStackToVtkArray(const sme::common::ImageStack &img,
+                                 vtkUnsignedCharArray *array,
+                                 std::array<int, 3> &dims) {
   array->SetNumberOfComponents(4);
   dims[0] = img.volume().width();
   dims[1] = img.volume().height();
@@ -46,7 +47,7 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
   }
   SPDLOG_TRACE("  - constructing array with {} tuples of 4 x uchar", nVoxels);
   array->SetNumberOfTuples(nVoxels);
-  int i = 0;
+  vtkIdType i = 0;
   for (std::size_t z = 0; z < static_cast<std::size_t>(dims[2]); ++z) {
     auto z_index = std::min(z, img.volume().depth() - 1);
     // iterate over y-pixels in reverse order to match VTK's coordinate system
@@ -70,35 +71,57 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
     }
   }
   SPDLOG_TRACE("  - assigned {} of {} values", i, array->GetNumberOfValues());
-  return array;
+  // SetValue does not update the array's modification time. Invalidate cached
+  // scalar ranges and the GPU texture after filling the reused allocation.
+  array->Modified();
 }
 
 void QVoxelRenderer::setImage(const sme::common::ImageStack &img,
                               const sme::common::VoxelF &origin) {
+  const std::array<double, 3> spacing{img.voxelSize().width(),
+                                      img.voxelSize().height(),
+                                      img.voxelSize().depth()};
+  const std::array<double, 3> physicalOrigin{origin.p.x(), origin.p.y(),
+                                             origin.z};
+  const bool geometryChanged =
+      imageData->GetPointData()->GetScalars() == nullptr ||
+      imageVolume != img.volume() ||
+      !std::equal(spacing.begin(), spacing.end(), imageData->GetSpacing()) ||
+      !std::equal(physicalOrigin.begin(), physicalOrigin.end(),
+                  imageData->GetOrigin());
   std::array<int, 3> dims{};
-  imageDataArray = imageStackToVtkArray(img, dims);
-  imageData->SetDimensions(dims.data());
-  double avgVoxelLength = pow(img.voxelSize().volume(), 1.0 / 3.0);
-  SPDLOG_TRACE("Setting opacity unit distance to {} ({})", avgVoxelLength,
-               img.voxelSize().width());
-  volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
-  imageData->SetSpacing(img.voxelSize().width(), img.voxelSize().height(),
-                        img.voxelSize().depth());
-  imageData->SetOrigin(origin.p.x(), origin.p.y(), origin.z);
+  imageStackToVtkArray(img, imageDataArray, dims);
   imageData->GetPointData()->SetScalars(imageDataArray);
-  renderer->ResetCameraClippingRange();
-  renderer->ResetCamera();
+  imageVolume = img.volume();
+  if (geometryChanged) {
+    imageData->SetDimensions(dims.data());
+    double avgVoxelLength = pow(img.voxelSize().volume(), 1.0 / 3.0);
+    SPDLOG_TRACE("Setting opacity unit distance to {} ({})", avgVoxelLength,
+                 img.voxelSize().width());
+    volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
+    imageData->SetSpacing(spacing.data());
+    imageData->SetOrigin(physicalOrigin.data());
+    renderer->ResetCameraClippingRange();
+    renderer->ResetCamera();
+  }
   if (cmbClippingPlaneNormal != nullptr &&
-      slideClippingPlaneOrigin != nullptr) {
+      slideClippingPlaneOrigin != nullptr &&
+      (geometryChanged || !clippingPlaneControlsInitialized)) {
     cmbClippingPlaneNormal->setCurrentIndex(2);
     slideClippingPlaneOrigin->setValue(0);
     cmbClippingPlaneNormal_currentTextChanged(
         cmbClippingPlaneNormal->currentText());
+    clippingPlaneControlsInitialized = true;
+  } else if (!geometryChanged) {
+    // Updating only the scalars no longer changes the clipping controls, whose
+    // callbacks would otherwise trigger rendering.
+    vtkRender();
   }
 }
 
 void QVoxelRenderer::setClippingPlaneOriginSlider(QSlider *slider) {
   slideClippingPlaneOrigin = slider;
+  clippingPlaneControlsInitialized = false;
   if (slideClippingPlaneOrigin == nullptr) {
     return;
   }
@@ -111,6 +134,7 @@ void QVoxelRenderer::setClippingPlaneOriginSlider(QSlider *slider) {
 
 void QVoxelRenderer::setClippingPlaneNormalCombobox(QComboBox *combobox) {
   cmbClippingPlaneNormal = combobox;
+  clippingPlaneControlsInitialized = false;
   if (cmbClippingPlaneNormal == nullptr) {
     return;
   }
