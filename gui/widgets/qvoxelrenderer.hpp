@@ -12,6 +12,7 @@
 #include <vtkPlane.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkVolume.h>
+#include <vtkVolumePicker.h>
 #include <vtkVolumeProperty.h>
 
 class QVoxelRenderer : public SmeVtkWidget {
@@ -34,6 +35,7 @@ protected:
 private:
   vtkNew<vtkVolume> volume;
   vtkNew<vtkGPUVolumeRayCastMapper> volumeMapper;
+  vtkNew<vtkVolumePicker> volumePicker;
   vtkNew<vtkPiecewiseFunction> opacityTransferFunction;
   vtkNew<vtkImageData> imageData;
   vtkNew<vtkUnsignedCharArray> imageDataArray;

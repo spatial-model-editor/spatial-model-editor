@@ -35,7 +35,154 @@ public:
   }
 };
 
+QPoint screenPosition(TestQVoxelRenderer &widget,
+                      const std::array<double, 3> &world) {
+  auto *renderer = widget.getRenderer();
+  renderer->SetWorldPoint(world[0], world[1], world[2], 1.0);
+  renderer->WorldToDisplay();
+  const auto *display = renderer->GetDisplayPoint();
+  const auto scale = widget.effectiveDevicePixelRatio();
+  const auto height = renderer->GetRenderWindow()->GetSize()[1];
+  return {qRound(display[0] / scale),
+          qRound((height - 1 - display[1]) / scale)};
+}
+
+void lookAlongZ(TestQVoxelRenderer &widget, bool fromAbove = false) {
+  std::array<double, 3> center{};
+  widget.getImageData()->GetCenter(center.data());
+  auto *camera = widget.getRenderer()->GetActiveCamera();
+  camera->ParallelProjectionOn();
+  camera->SetFocalPoint(center.data());
+  camera->SetPosition(center[0], center[1],
+                      center[2] + (fromAbove ? 1.0 : -1.0));
+  camera->SetViewUp(0.0, 1.0, 0.0);
+  widget.getRenderer()->ResetCamera();
+  widget.vtkRender();
+  wait(0);
+}
+
+sme::common::ImageStack makePickingImage(std::size_t depth) {
+  sme::common::ImageStack image({9, 7, depth}, QImage::Format_RGB32);
+  for (std::size_t z = 0; z < depth; ++z) {
+    for (int y = 0; y < image.volume().height(); ++y) {
+      for (int x = 0; x < image.volume().width(); ++x) {
+        image[z].setPixel(x, y, qRgb(10 + 20 * x, 15 + 25 * y, 20 + 30 * z));
+      }
+    }
+  }
+  return image;
+}
+
 } // namespace
+
+TEST_CASE("QVoxelRenderer picks source voxels in physical coordinates",
+          "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  std::vector<std::pair<QRgb, sme::common::Voxel>> clicks;
+  QSlider slider;
+  QComboBox comboBox;
+  TestQVoxelRenderer voxelRenderer;
+  voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  auto image = makePickingImage(5);
+  sme::common::VoxelF origin{};
+  SECTION("unit spacing and zero origin") {}
+  SECTION("anisotropic spacing") { image.setVoxelSize({0.5, 2.0, 3.0}); }
+  SECTION("positive physical origin") { origin = {100.0, 200.0, 300.0}; }
+  SECTION("negative physical origin and anisotropic spacing") {
+    image.setVoxelSize({0.5, 2.0, 3.0});
+    origin = {-20.0, -30.0, -40.0};
+  }
+  SECTION("device pixels differ from widget coordinates") {
+    voxelRenderer.setCustomDevicePixelRatio(2.0);
+    image.setVoxelSize({0.5, 2.0, 3.0});
+    origin = {-20.0, -30.0, -40.0};
+  }
+  voxelRenderer.resize(400, 300);
+  voxelRenderer.show();
+  voxelRenderer.setImage(image, origin);
+  wait(0);
+  lookAlongZ(voxelRenderer);
+  QObject::connect(&voxelRenderer, &QVoxelRenderer::mouseClicked,
+                   [&clicks](QRgb color, sme::common::Voxel voxel) {
+                     clicks.emplace_back(color, voxel);
+                   });
+  const auto clickVoxel = [&](const sme::common::Voxel &voxel) {
+    const auto &spacing = image.voxelSize();
+    const std::array<double, 3> world{
+        origin.p.x() + spacing.width() * voxel.p.x(),
+        origin.p.y() +
+            spacing.height() * (image.volume().height() - 1 - voxel.p.y()),
+        origin.z + spacing.depth() * static_cast<double>(voxel.z)};
+    const auto pos = screenPosition(voxelRenderer, world);
+    const auto previousClicks = clicks.size();
+    sendMouseMove(&voxelRenderer, pos);
+    sendMouseClick(&voxelRenderer, pos);
+    REQUIRE(clicks.size() == previousClicks + 1);
+    REQUIRE(clicks.back().first == image[voxel.z].pixel(voxel.p));
+    REQUIRE(clicks.back().second == voxel);
+  };
+  clickVoxel({2, 1, 0});
+  clickVoxel({5, 4, 0});
+  // Reusing the scalar buffer must not leave picking with an earlier color.
+  image[0].setPixel(2, 1, qRgb(220, 40, 80));
+  voxelRenderer.setImage(image, origin);
+  clickVoxel({2, 1, 0});
+  const auto previousClicks = clicks.size();
+  sendMouseMove(&voxelRenderer, {1, 1});
+  sendMouseClick(&voxelRenderer, {1, 1});
+  REQUIRE(clicks.size() == previousClicks);
+
+  // Looking along +z now exposes slice 2 at the clipping plane.
+  auto *plane = voxelRenderer.getClippingPlane();
+  plane->SetOrigin(origin.p.x(), origin.p.y(),
+                   origin.z + 2.0 * image.voxelSize().depth());
+  voxelRenderer.vtkRender();
+  clickVoxel({2, 1, 2});
+  plane->SetOrigin(origin.p.x(), origin.p.y(),
+                   origin.z + 5.0 * image.voxelSize().depth());
+  voxelRenderer.vtkRender();
+  const auto clippedClicks = clicks.size();
+  sendMouseClick(&voxelRenderer, {200, 150});
+  REQUIRE(clicks.size() == clippedClicks);
+  voxelRenderer.setImage({});
+  sendMouseClick(&voxelRenderer, {200, 150});
+  REQUIRE(clicks.size() == clippedClicks);
+}
+
+TEST_CASE(
+    "QVoxelRenderer maps the duplicated display slice to the source slice",
+    "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  std::vector<std::pair<QRgb, sme::common::Voxel>> clicks;
+  QSlider slider;
+  QComboBox comboBox;
+  TestQVoxelRenderer voxelRenderer;
+  voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  auto image = makePickingImage(1);
+  image.setVoxelSize({0.5, 2.0, 3.0});
+  const sme::common::VoxelF origin{-20.0, -30.0, -40.0};
+  voxelRenderer.resize(400, 300);
+  voxelRenderer.show();
+  voxelRenderer.setImage(image, origin);
+  wait(0);
+  QObject::connect(&voxelRenderer, &QVoxelRenderer::mouseClicked,
+                   [&clicks](QRgb color, sme::common::Voxel voxel) {
+                     clicks.emplace_back(color, voxel);
+                   });
+  for (bool fromAbove : {false, true}) {
+    CAPTURE(fromAbove);
+    lookAlongZ(voxelRenderer, fromAbove);
+    const std::array<double, 3> world{
+        origin.p.x() + 2.0 * image.voxelSize().width(),
+        origin.p.y() + 5.0 * image.voxelSize().height(), origin.z};
+    const auto pos = screenPosition(voxelRenderer, world);
+    sendMouseMove(&voxelRenderer, pos);
+    sendMouseClick(&voxelRenderer, pos);
+    REQUIRE(clicks.size() == (fromAbove ? 2 : 1));
+    REQUIRE(clicks.back().first == image[0].pixel(2, 1));
+    REQUIRE(clicks.back().second == sme::common::Voxel{2, 1, 0});
+  }
+}
 
 TEST_CASE("QVoxelRenderer modifies the clipping plane once per slider change",
           "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {

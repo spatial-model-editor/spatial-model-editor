@@ -7,7 +7,6 @@
 #include <array>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
-#include <vtkWorldPointPicker.h>
 
 QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   // piecewise opacity function, converts 0-255 input value to 0-1 opacity float
@@ -26,6 +25,8 @@ QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   clippingPlane->SetNormal(0.0, 0.0, 1.0);
   clippingPlane->SetOrigin(0.0, 0.0, 0.0);
   renderer->AddVolume(volume);
+  volumePicker->PickFromListOn();
+  volumePicker->AddPickList(volume);
 }
 
 static void imageStackToVtkArray(const sme::common::ImageStack &img,
@@ -149,36 +150,38 @@ void QVoxelRenderer::renderOnClippingPaneChange(SmeVtkWidget *smeVtkWidget) {
 }
 
 void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
-  if (ev->buttons() == Qt::NoButton) {
+  if (ev->buttons() == Qt::NoButton || imageVolume.nVoxels() == 0) {
     return;
   }
   auto *interactor = renderWindow->GetInteractor();
-  auto *picker = interactor != nullptr ? interactor->GetPicker() : nullptr;
-  if (picker == nullptr) {
+  if (interactor == nullptr) {
     return;
   }
   const auto *pos = interactor->GetEventPosition();
-  if (picker->Pick(pos[0], pos[1], 0, renderer)) {
-    std::array<double, 3> picked{};
-    picker->GetPickPosition(picked.data());
-    std::array<int, 3> dim{};
-    imageData->GetDimensions(dim.data());
-    auto x = static_cast<int>(picked[0]);
-    auto y = static_cast<int>(picked[1]);
-    auto z = static_cast<std::size_t>(picked[2]);
-    if (static_cast<int>(z) < dim[2] && y >= 0 && y < dim[1] && x >= 0 &&
-        x < dim[0]) {
-      static constexpr vtkIdType stride = 4;
-      auto idx =
-          stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[0] + x);
-      SPDLOG_DEBUG("Index in imageDataArray: {}", idx);
-      auto col =
-          qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
-               imageDataArray->GetValue(idx + 2));
-      SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", x, y, z, col);
-      Q_EMIT mouseClicked(col, sme::common::Voxel{x, y, z});
+  if (volumePicker->Pick(pos[0], pos[1], 0, renderer) == 0 ||
+      volumePicker->GetVolume() != volume) {
+    return;
+  }
+  std::array<int, 3> ijk{};
+  volumePicker->GetPointIJK(ijk.data());
+  const auto *dims = imageData->GetDimensions();
+  for (int axis = 0; axis < 3; ++axis) {
+    if (ijk[axis] < 0 || ijk[axis] >= dims[axis]) {
+      return;
     }
   }
+  const auto idx = 4 * imageData->ComputePointId(ijk.data());
+  const auto col =
+      qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
+           imageDataArray->GetValue(idx + 2));
+  // Undo the display's y reversal and map the duplicated slice of a 2D image
+  // back to its only source slice. Validate signed indices before converting z.
+  const sme::common::Voxel voxel{
+      ijk[0], imageVolume.height() - 1 - ijk[1],
+      std::min(static_cast<std::size_t>(ijk[2]), imageVolume.depth() - 1)};
+  SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", voxel.p.x(), voxel.p.y(),
+               voxel.z, col);
+  Q_EMIT mouseClicked(col, voxel);
 }
 
 void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
