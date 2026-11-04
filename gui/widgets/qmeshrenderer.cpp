@@ -45,7 +45,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
     auto &wireframeMapper = wireframeMappers.emplace_back();
-    grid->AllocateExact(
+    grid->AllocateEstimate(
         static_cast<vtkIdType>(compartmentTetrahedronIndices.size()), 4);
     for (const auto &t : compartmentTetrahedronIndices) {
       grid->InsertNextCell(VTK_TETRA, 4,
@@ -84,7 +84,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     auto &solidMapper = solidMappers.emplace_back();
     auto &wireframeActor = wireframeActors.emplace_back();
     auto &wireframeMapper = wireframeMappers.emplace_back();
-    triangle->AllocateExact(
+    triangle->AllocateEstimate(
         static_cast<vtkIdType>(membraneTriangleIndices.size()), 3);
     for (const auto &triangleIndex : membraneTriangleIndices) {
       triangle->InsertNextCell(
