@@ -4,12 +4,13 @@
 #include "sme/utils.hpp"
 #include <vtkCamera.h>
 #include <vtkCellArray.h>
-#include <vtkClipDataSet.h>
+#include <vtkClipPolyData.h>
 #include <vtkDataSetMapper.h>
 #include <vtkExtractEdges.h>
 #include <vtkIdTypeArray.h>
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
 #include <vtkPropPicker.h>
 #include <vtkProperty.h>
 #include <vtkTableBasedClipDataSet.h>
@@ -73,7 +74,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     auto &solidActor = solidActors.emplace_back();
     vtkNew<vtkDataSetMapper> solidMapper;
     auto &wireframeActor = wireframeActors.emplace_back();
-    vtkNew<vtkDataSetMapper> wireframeMapper;
+    vtkNew<vtkPolyDataMapper> wireframeMapper;
     auto tetrahedra = makeCellArray(compartmentTetrahedronIndices);
     grid->SetCells(VTK_TETRA, tetrahedra);
     grid->SetPoints(points);
@@ -90,7 +91,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     solidActor->GetProperty()->EdgeVisibilityOn();
     renderer->AddActor(solidActor);
     if (clippingPlane != nullptr) {
-      vtkNew<vtkClipDataSet> clippedEdge;
+      vtkNew<vtkClipPolyData> clippedEdge;
       clippedEdge->SetClipFunction(clippingPlane);
       clippedEdge->SetInputConnection(edge->GetOutputPort());
       wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());
@@ -106,13 +107,13 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     vtkNew<vtkPolyData> membrane;
     vtkNew<vtkExtractEdges> edge;
     auto &solidActor = solidActors.emplace_back();
-    vtkNew<vtkDataSetMapper> solidMapper;
+    vtkNew<vtkPolyDataMapper> solidMapper;
     auto &wireframeActor = wireframeActors.emplace_back();
-    vtkNew<vtkDataSetMapper> wireframeMapper;
+    vtkNew<vtkPolyDataMapper> wireframeMapper;
     membrane->SetPoints(points);
     membrane->SetPolys(triangle);
     if (clippingPlane != nullptr) {
-      vtkNew<vtkClipDataSet> clippedMembrane;
+      vtkNew<vtkClipPolyData> clippedMembrane;
       clippedMembrane->SetClipFunction(clippingPlane);
       clippedMembrane->SetInputData(membrane);
       solidMapper->SetInputConnection(clippedMembrane->GetOutputPort());
@@ -124,7 +125,7 @@ void QMeshRenderer::setMesh(const sme::mesh::Mesh3d &mesh,
     renderer->AddActor(solidActor);
     edge->SetInputData(membrane);
     if (clippingPlane != nullptr) {
-      vtkNew<vtkClipDataSet> clippedEdge;
+      vtkNew<vtkClipPolyData> clippedEdge;
       clippedEdge->SetClipFunction(clippingPlane);
       clippedEdge->SetInputConnection(edge->GetOutputPort());
       wireframeMapper->SetInputConnection(clippedEdge->GetOutputPort());

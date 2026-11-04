@@ -9,7 +9,9 @@
 #include <vtkDataSetTriangleFilter.h>
 #include <vtkIdList.h>
 #include <vtkMapper.h>
+#include <vtkMath.h>
 #include <vtkTetra.h>
+#include <vtkTriangle.h>
 #include <vtkUnstructuredGrid.h>
 
 using namespace sme::test;
@@ -78,6 +80,43 @@ double meshVolume(vtkDataSet *mesh) {
                                 vertices[2].data(), vertices[3].data()));
   }
   return volume;
+}
+
+double membraneArea(vtkDataSet *mesh) {
+  double area{0.0};
+  for (vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i) {
+    auto *cell = mesh->GetCell(i);
+    REQUIRE(cell->GetCellDimension() == 2);
+    auto *points = cell->GetPoints();
+    std::array<std::array<double, 3>, 3> vertices{};
+    points->GetPoint(0, vertices[0].data());
+    // Clipping a triangle can leave a convex quadrilateral.
+    for (vtkIdType j = 1; j + 1 < points->GetNumberOfPoints(); ++j) {
+      points->GetPoint(j, vertices[1].data());
+      points->GetPoint(j + 1, vertices[2].data());
+      area += vtkTriangle::TriangleArea(vertices[0].data(), vertices[1].data(),
+                                        vertices[2].data());
+    }
+  }
+  return area;
+}
+
+double wireframeLength(vtkDataSet *mesh, vtkPlane *plane) {
+  double length{0.0};
+  for (vtkIdType i = 0; i < mesh->GetNumberOfCells(); ++i) {
+    auto *cell = mesh->GetCell(i);
+    REQUIRE(cell->GetCellType() == VTK_LINE);
+    auto *points = cell->GetPoints();
+    std::array<double, 3> start{};
+    std::array<double, 3> end{};
+    points->GetPoint(0, start.data());
+    points->GetPoint(1, end.data());
+    REQUIRE(plane->EvaluateFunction(start.data()) >= -1e-6);
+    REQUIRE(plane->EvaluateFunction(end.data()) >= -1e-6);
+    length +=
+        std::sqrt(vtkMath::Distance2BetweenPoints(start.data(), end.data()));
+  }
+  return length;
 }
 
 } // namespace
@@ -169,6 +208,92 @@ TEST_CASE("QMeshRenderer preserves compartment and membrane connectivity",
             static_cast<vtkIdType>(3 * membraneCells));
     renderer.clear();
     REQUIRE(renderer.getNumberOfActors() == 0);
+  }
+}
+
+TEST_CASE("QMeshRenderer clips membrane areas and wireframe lengths",
+          "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {
+  // Two tetrahedra share a right-triangle membrane in the xy plane. Splitting
+  // halfway along either leg leaves one quarter of the membrane's area.
+  const sme::mesh::GMSHMesh gmshMesh{{{0.0, 0.0, 0.0},
+                                      {1.0, 0.0, 0.0},
+                                      {0.0, 1.0, 0.0},
+                                      {0.0, 0.0, 1.0},
+                                      {0.0, 0.0, -1.0}},
+                                     {{{0, 1, 2, 3}, 1}, {{0, 2, 1, 4}, 2}},
+                                     {}};
+  const auto red = qRgb(255, 0, 0);
+  const auto green = qRgb(0, 255, 0);
+  const sme::mesh::Mesh3d mesh(gmshMesh, {{red, 1}, {green, 2}}, {8, 12, 16},
+                               {1.0, 1.0, 1.0}, {5.0, 6.0, 7.0}, {red, green},
+                               {{"membrane", {red, green}}});
+  REQUIRE(mesh.isValid());
+  REQUIRE(mesh.getMembraneTriangleIndices()[0].size() == 1);
+  QVoxelRenderer voxelRenderer;
+  TestQMeshRenderer renderer;
+  renderer.resize(200, 200);
+  renderer.show();
+  renderer.syncClippingPlane(&voxelRenderer);
+  auto *plane = voxelRenderer.getClippingPlane();
+  const std::array<double, 3> origin{5.0, 6.0, 7.0};
+  const std::array<double, 3> lengths{8.0, 12.0, 8.0};
+  const double fullArea = lengths[0] * lengths[1] / 2.0;
+  const double diagonal = std::hypot(lengths[0], lengths[1]);
+
+  for (int axis = 0; axis < 2; ++axis) {
+    CAPTURE(axis);
+    std::array<double, 3> normal{};
+    normal[axis] = 1.0;
+    plane->SetNormal(normal.data());
+    plane->SetOrigin(origin.data());
+    renderer.setMesh(mesh, 2);
+    REQUIRE(membraneArea(renderer.getSolidMesh(2)) == dbl_approx(fullArea));
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
+    REQUIRE(wireframeLength(renderer.getWireframeMesh(2), plane) ==
+            dbl_approx(lengths[0] + lengths[1] + diagonal));
+
+    auto cut = origin;
+    cut[axis] += lengths[axis] / 2.0;
+    plane->SetOrigin(cut.data());
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Solid);
+    REQUIRE(membraneArea(renderer.getSolidMesh(2)) ==
+            dbl_approx(fullArea / 4.0));
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
+    const double membraneCutLength = (lengths[axis] + diagonal) / 2.0;
+    REQUIRE(wireframeLength(renderer.getWireframeMesh(2), plane) ==
+            dbl_approx(membraneCutLength));
+    const double tetrahedronCutLength =
+        membraneCutLength + std::hypot(lengths[axis], lengths[2]) / 2.0;
+    for (std::size_t part = 0; part < 2; ++part) {
+      REQUIRE(wireframeLength(renderer.getWireframeMesh(part), plane) ==
+              dbl_approx(tetrahedronCutLength));
+    }
+
+    // Reverse the shared plane without rebuilding the pipelines. Wireframes
+    // retain only original mesh edges, without introducing a new cut edge.
+    normal[axis] = -1.0;
+    plane->SetNormal(normal.data());
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Solid);
+    REQUIRE(membraneArea(renderer.getSolidMesh(2)) ==
+            dbl_approx(3.0 * fullArea / 4.0));
+    renderer.setRenderMode(QMeshRenderer::RenderMode::Wireframe);
+    REQUIRE(wireframeLength(renderer.getWireframeMesh(2), plane) ==
+            dbl_approx(membraneCutLength + lengths[1 - axis]));
+    for (std::size_t part = 0; part < 2; ++part) {
+      REQUIRE(wireframeLength(renderer.getWireframeMesh(part), plane) ==
+              dbl_approx(tetrahedronCutLength + lengths[1 - axis] + lengths[2] +
+                         std::hypot(lengths[1 - axis], lengths[2])));
+    }
+
+    normal[axis] = 1.0;
+    plane->SetNormal(normal.data());
+    cut[axis] = origin[axis] + lengths[axis] + 1.0;
+    plane->SetOrigin(cut.data());
+    renderer.vtkRender();
+    REQUIRE(renderer.getSolidMesh(2)->GetNumberOfCells() == 0);
+    for (std::size_t part = 0; part < 3; ++part) {
+      REQUIRE(renderer.getWireframeMesh(part)->GetNumberOfCells() == 0);
+    }
   }
 }
 
