@@ -77,6 +77,80 @@ sme::common::ImageStack makePickingImage(std::size_t depth) {
 
 } // namespace
 
+TEST_CASE("QVoxelRenderer preserves pixel values across image formats",
+          "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
+  std::vector<QImage::Format> formats{QImage::Format_RGB32};
+  SECTION("RGB32") {}
+  SECTION("ARGB32") { formats = {QImage::Format_ARGB32}; }
+  SECTION("indexed images with different palettes per slice") {
+    formats = {QImage::Format_Indexed8};
+  }
+  SECTION("RGB888 with padded rows") { formats = {QImage::Format_RGB888}; }
+  SECTION("grayscale") { formats = {QImage::Format_Grayscale8}; }
+  SECTION("premultiplied alpha") {
+    formats = {QImage::Format_ARGB32_Premultiplied};
+  }
+  SECTION("RGBA byte order") { formats = {QImage::Format_RGBA8888}; }
+  SECTION("mixed formats in one stack") {
+    formats = {QImage::Format_RGB32, QImage::Format_Indexed8,
+               QImage::Format_RGB888};
+  }
+  TestQVoxelRenderer renderer;
+  renderer.resize(200, 200);
+  renderer.show();
+  constexpr int width = 5;
+  constexpr int height = 3;
+  for (std::size_t depth : {1, 3}) {
+    CAPTURE(depth);
+    std::vector<QImage> slices;
+    for (std::size_t z = 0; z < depth; ++z) {
+      QImage slice(width, height, formats[z % formats.size()]);
+      if (slice.format() == QImage::Format_Indexed8) {
+        QList<QRgb> palette;
+        for (int i = 0; i < 256; ++i) {
+          palette.push_back(
+              qRgba((i + 19 * z) % 256, (37 * i) % 256, (71 * i) % 256, 150));
+        }
+        slice.setColorTable(palette);
+      }
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          if (slice.format() == QImage::Format_Indexed8) {
+            slice.setPixel(x, y, (37 * x + 71 * y + 19 * z) % 256);
+          } else {
+            slice.setPixelColor(
+                x, y, QColor(1 + 17 * x, 2 + 41 * y, 3 + 53 * z, 150));
+          }
+        }
+      }
+      slices.push_back(std::move(slice));
+    }
+    const sme::common::ImageStack image(std::move(slices));
+    renderer.setImage(image);
+    auto *scalars = renderer.getImageData()->GetPointData()->GetScalars();
+    const auto displayDepth = std::max(depth, std::size_t{2});
+    REQUIRE(scalars->GetNumberOfComponents() == 4);
+    REQUIRE(scalars->GetNumberOfTuples() == width * height * displayDepth);
+    for (std::size_t z = 0; z < displayDepth; ++z) {
+      for (int y = 0; y < height; ++y) {
+        for (int x = 0; x < width; ++x) {
+          const auto rgb =
+              image[std::min(z, depth - 1)].pixel(x, height - 1 - y);
+          const std::array<int, 4> expected{qRed(rgb), qGreen(rgb), qBlue(rgb),
+                                            qRed(rgb) / 3 + qGreen(rgb) / 3 +
+                                                qBlue(rgb) / 3};
+          const auto index =
+              static_cast<vtkIdType>(x + width * (y + height * z));
+          for (int component = 0; component < 4; ++component) {
+            REQUIRE(scalars->GetComponent(index, component) ==
+                    expected[component]);
+          }
+        }
+      }
+    }
+  }
+}
+
 TEST_CASE("QVoxelRenderer picks source voxels in physical coordinates",
           "[qvoxelrenderer][gui/widgets/qvoxelrenderer][gui/widgets][gui]") {
   std::vector<std::pair<QRgb, sme::common::Voxel>> clicks;

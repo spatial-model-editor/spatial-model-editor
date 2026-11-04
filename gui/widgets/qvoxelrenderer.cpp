@@ -48,32 +48,51 @@ static void imageStackToVtkArray(const sme::common::ImageStack &img,
   }
   SPDLOG_TRACE("  - constructing array with {} tuples of 4 x uchar", nVoxels);
   array->SetNumberOfTuples(nVoxels);
+  auto *values = array->GetPointer(0);
   vtkIdType i = 0;
+  const auto appendPixel = [&](QRgb rgb) {
+    values[i++] = static_cast<unsigned char>(qRed(rgb));
+    values[i++] = static_cast<unsigned char>(qGreen(rgb));
+    values[i++] = static_cast<unsigned char>(qBlue(rgb));
+    // Preserve the existing component-wise rounding of the opacity input.
+    values[i++] = static_cast<unsigned char>(qRed(rgb) / 3 + qGreen(rgb) / 3 +
+                                             qBlue(rgb) / 3);
+  };
   for (std::size_t z = 0; z < static_cast<std::size_t>(dims[2]); ++z) {
     auto z_index = std::min(z, img.volume().depth() - 1);
+    const auto &slice = img[z_index];
+    const auto palette = slice.colorTable();
     // iterate over y-pixels in reverse order to match VTK's coordinate system
     for (int y = dims[1] - 1; y >= 0; --y) {
-      for (int x = 0; x < dims[0]; ++x) {
-        auto rgb = img[z_index].pixel(x, y);
-        // red 0-255
-        array->SetValue(i, static_cast<unsigned char>(qRed(rgb)));
-        ++i;
-        // green 0-255
-        array->SetValue(i, static_cast<unsigned char>(qGreen(rgb)));
-        ++i;
-        // blue 0-255
-        array->SetValue(i, static_cast<unsigned char>(qBlue(rgb)));
-        // use average of rgb values for input to opacity function
-        ++i;
-        int rgb_av = qRed(rgb) / 3 + qGreen(rgb) / 3 + qBlue(rgb) / 3;
-        array->SetValue(i, static_cast<unsigned char>(rgb_av));
-        ++i;
+      switch (slice.format()) {
+      case QImage::Format_RGB32:
+      case QImage::Format_ARGB32: {
+        const auto *pixels =
+            reinterpret_cast<const QRgb *>(slice.constScanLine(y));
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(pixels[x]);
+        }
+        break;
+      }
+      case QImage::Format_Indexed8: {
+        const auto *pixels = slice.constScanLine(y);
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(palette.value(pixels[x]));
+        }
+        break;
+      }
+      default:
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(slice.pixel(x, y));
+        }
+        break;
       }
     }
   }
   SPDLOG_TRACE("  - assigned {} of {} values", i, array->GetNumberOfValues());
-  // SetValue does not update the array's modification time. Invalidate cached
-  // scalar ranges and the GPU texture after filling the reused allocation.
+  // Direct writes do not update the array's modification time. Invalidate
+  // cached scalar ranges and the GPU texture after filling the reused
+  // allocation.
   array->Modified();
 }
 
