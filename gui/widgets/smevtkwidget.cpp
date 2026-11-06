@@ -1,5 +1,6 @@
 #include "smevtkwidget.hpp"
 #include "sme/logger.hpp"
+#include <QShowEvent>
 #include <vtkCamera.h>
 
 SmeVtkWidget::SmeVtkWidget(QWidget *parent) : QVTKOpenGLNativeWidget(parent) {
@@ -21,6 +22,22 @@ SmeVtkWidget::SmeVtkWidget(QWidget *parent) : QVTKOpenGLNativeWidget(parent) {
   }();
   renderer->GetActiveCamera()->Azimuth(45);
   renderer->GetActiveCamera()->Elevation(30);
+  cameraRenderTimer.setSingleShot(true);
+  connect(&cameraRenderTimer, &QTimer::timeout, this, [this]() {
+    if (cameraRenderPending && isVisible()) {
+      vtkRender();
+    }
+  });
+  renderObserverTag = renderWindow->AddObserver(vtkCommand::EndEvent, this,
+                                                &SmeVtkWidget::cameraRendered);
+}
+
+SmeVtkWidget::~SmeVtkWidget() {
+  cameraRenderTimer.stop();
+  if (observedCamera != nullptr) {
+    observedCamera->RemoveObserver(cameraObserverTag);
+  }
+  renderWindow->RemoveObserver(renderObserverTag);
 }
 
 void SmeVtkWidget::syncCamera(SmeVtkWidget *smeVtkWidget) {
@@ -31,14 +48,45 @@ void SmeVtkWidget::syncCamera(SmeVtkWidget *smeVtkWidget) {
   }
   SPDLOG_TRACE("Syncing camera with supplied SmeVtkWidget");
   renderer->SetActiveCamera(smeVtkWidget->renderer->GetActiveCamera());
-  renderOnInteractorModified(smeVtkWidget->renderWindow.Get()->GetInteractor());
-  smeVtkWidget->renderOnInteractorModified(renderWindow->GetInteractor());
+  observeCamera();
+  smeVtkWidget->observeCamera();
+  scheduleCameraRender();
 }
 
 void SmeVtkWidget::vtkRender() { renderWindow->Render(); }
 
-void SmeVtkWidget::renderOnInteractorModified(
-    vtkRenderWindowInteractor *interactor) {
-  interactor->AddObserver(vtkCommand::ModifiedEvent, renderWindow.Get(),
-                          &vtkGenericOpenGLRenderWindow::Render);
+void SmeVtkWidget::showEvent(QShowEvent *event) {
+  QVTKOpenGLNativeWidget::showEvent(event);
+  if (cameraRenderPending) {
+    scheduleCameraRender();
+  }
+}
+
+void SmeVtkWidget::observeCamera() {
+  auto *camera = renderer->GetActiveCamera();
+  if (observedCamera == camera) {
+    return;
+  }
+  if (observedCamera != nullptr) {
+    observedCamera->RemoveObserver(cameraObserverTag);
+  }
+  observedCamera = camera;
+  cameraObserverTag = camera->AddObserver(vtkCommand::ModifiedEvent, this,
+                                          &SmeVtkWidget::scheduleCameraRender);
+}
+
+void SmeVtkWidget::scheduleCameraRender() {
+  cameraRenderPending = true;
+  if (isVisible() && !cameraRenderTimer.isActive()) {
+    // Several camera setters can run during one interaction. Render their
+    // final result once Qt processes the queued timer event.
+    cameraRenderTimer.start(0);
+  }
+}
+
+void SmeVtkWidget::cameraRendered() {
+  // The active view's interactor, or an explicit data update, may already have
+  // rendered the camera before the queued callback runs.
+  cameraRenderTimer.stop();
+  cameraRenderPending = false;
 }

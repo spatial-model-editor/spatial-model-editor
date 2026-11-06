@@ -3,6 +3,7 @@
 #include "sme/image_stack.hpp"
 #include "smevtkwidget.hpp"
 #include <QComboBox>
+#include <QPointer>
 #include <QSlider>
 #include <vtkGPUVolumeRayCastMapper.h>
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -12,6 +13,7 @@
 #include <vtkPlane.h>
 #include <vtkUnsignedCharArray.h>
 #include <vtkVolume.h>
+#include <vtkVolumePicker.h>
 #include <vtkVolumeProperty.h>
 
 class QVoxelRenderer : public SmeVtkWidget {
@@ -34,16 +36,19 @@ protected:
 private:
   vtkNew<vtkVolume> volume;
   vtkNew<vtkGPUVolumeRayCastMapper> volumeMapper;
+  vtkNew<vtkVolumePicker> volumePicker;
   vtkNew<vtkPiecewiseFunction> opacityTransferFunction;
   vtkNew<vtkImageData> imageData;
   vtkNew<vtkUnsignedCharArray> imageDataArray;
+  sme::common::Volume imageVolume{};
   vtkNew<vtkPlane> clippingPlane;
   QString lengthUnits{};
-  SmeVtkWidget *smeVtkWidgetToRenderOnClippingPlaneChange{nullptr};
+  QPointer<SmeVtkWidget> smeVtkWidgetToRenderOnClippingPlaneChange;
   double minClippingPlaneOrigin{0.0};
   double maxClippingPlaneOrigin{0.0};
   QSlider *slideClippingPlaneOrigin{nullptr};
   QComboBox *cmbClippingPlaneNormal{nullptr};
+  bool clippingPlaneControlsInitialized{false};
   void slideClippingPlaneOrigin_valueChanged(int value);
   void cmbClippingPlaneNormal_currentTextChanged(const QString &text);
 };

@@ -3,9 +3,10 @@
 #include <QComboBox>
 #include <QMouseEvent>
 #include <QSlider>
+#include <algorithm>
+#include <array>
 #include <vtkCamera.h>
 #include <vtkPointData.h>
-#include <vtkWorldPointPicker.h>
 
 QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   // piecewise opacity function, converts 0-255 input value to 0-1 opacity float
@@ -24,12 +25,13 @@ QVoxelRenderer::QVoxelRenderer(QWidget *parent) : SmeVtkWidget(parent) {
   clippingPlane->SetNormal(0.0, 0.0, 1.0);
   clippingPlane->SetOrigin(0.0, 0.0, 0.0);
   renderer->AddVolume(volume);
+  volumePicker->PickFromListOn();
+  volumePicker->AddPickList(volume);
 }
 
-static vtkNew<vtkUnsignedCharArray>
-imageStackToVtkArray(const sme::common::ImageStack &img,
-                     std::array<int, 3> &dims) {
-  vtkNew<vtkUnsignedCharArray> array;
+static void imageStackToVtkArray(const sme::common::ImageStack &img,
+                                 vtkUnsignedCharArray *array,
+                                 std::array<int, 3> &dims) {
   array->SetNumberOfComponents(4);
   dims[0] = img.volume().width();
   dims[1] = img.volume().height();
@@ -46,59 +48,99 @@ imageStackToVtkArray(const sme::common::ImageStack &img,
   }
   SPDLOG_TRACE("  - constructing array with {} tuples of 4 x uchar", nVoxels);
   array->SetNumberOfTuples(nVoxels);
-  int i = 0;
+  auto *values = array->GetPointer(0);
+  vtkIdType i = 0;
+  const auto appendPixel = [&](QRgb rgb) {
+    values[i++] = static_cast<unsigned char>(qRed(rgb));
+    values[i++] = static_cast<unsigned char>(qGreen(rgb));
+    values[i++] = static_cast<unsigned char>(qBlue(rgb));
+    // Preserve the existing component-wise rounding of the opacity input.
+    values[i++] = static_cast<unsigned char>(qRed(rgb) / 3 + qGreen(rgb) / 3 +
+                                             qBlue(rgb) / 3);
+  };
   for (std::size_t z = 0; z < static_cast<std::size_t>(dims[2]); ++z) {
     auto z_index = std::min(z, img.volume().depth() - 1);
+    const auto &slice = img[z_index];
+    const auto palette = slice.colorTable();
     // iterate over y-pixels in reverse order to match VTK's coordinate system
     for (int y = dims[1] - 1; y >= 0; --y) {
-      for (int x = 0; x < dims[0]; ++x) {
-        auto rgb = img[z_index].pixel(x, y);
-        // red 0-255
-        array->SetValue(i, static_cast<unsigned char>(qRed(rgb)));
-        ++i;
-        // green 0-255
-        array->SetValue(i, static_cast<unsigned char>(qGreen(rgb)));
-        ++i;
-        // blue 0-255
-        array->SetValue(i, static_cast<unsigned char>(qBlue(rgb)));
-        // use average of rgb values for input to opacity function
-        ++i;
-        int rgb_av = qRed(rgb) / 3 + qGreen(rgb) / 3 + qBlue(rgb) / 3;
-        array->SetValue(i, static_cast<unsigned char>(rgb_av));
-        ++i;
+      switch (slice.format()) {
+      case QImage::Format_RGB32:
+      case QImage::Format_ARGB32: {
+        const auto *pixels =
+            reinterpret_cast<const QRgb *>(slice.constScanLine(y));
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(pixels[x]);
+        }
+        break;
+      }
+      case QImage::Format_Indexed8: {
+        const auto *pixels = slice.constScanLine(y);
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(palette.value(pixels[x]));
+        }
+        break;
+      }
+      default:
+        for (int x = 0; x < dims[0]; ++x) {
+          appendPixel(slice.pixel(x, y));
+        }
+        break;
       }
     }
   }
   SPDLOG_TRACE("  - assigned {} of {} values", i, array->GetNumberOfValues());
-  return array;
+  // Direct writes do not update the array's modification time. Invalidate
+  // cached scalar ranges and the GPU texture after filling the reused
+  // allocation.
+  array->Modified();
 }
 
 void QVoxelRenderer::setImage(const sme::common::ImageStack &img,
                               const sme::common::VoxelF &origin) {
+  const std::array<double, 3> spacing{img.voxelSize().width(),
+                                      img.voxelSize().height(),
+                                      img.voxelSize().depth()};
+  const std::array<double, 3> physicalOrigin{origin.p.x(), origin.p.y(),
+                                             origin.z};
+  const bool geometryChanged =
+      imageData->GetPointData()->GetScalars() == nullptr ||
+      imageVolume != img.volume() ||
+      !std::equal(spacing.begin(), spacing.end(), imageData->GetSpacing()) ||
+      !std::equal(physicalOrigin.begin(), physicalOrigin.end(),
+                  imageData->GetOrigin());
   std::array<int, 3> dims{};
-  imageDataArray = imageStackToVtkArray(img, dims);
-  imageData->SetDimensions(dims.data());
-  double avgVoxelLength = pow(img.voxelSize().volume(), 1.0 / 3.0);
-  SPDLOG_TRACE("Setting opacity unit distance to {} ({})", avgVoxelLength,
-               img.voxelSize().width());
-  volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
-  imageData->SetSpacing(img.voxelSize().width(), img.voxelSize().height(),
-                        img.voxelSize().depth());
-  imageData->SetOrigin(origin.p.x(), origin.p.y(), origin.z);
+  imageStackToVtkArray(img, imageDataArray, dims);
   imageData->GetPointData()->SetScalars(imageDataArray);
-  renderer->ResetCameraClippingRange();
-  renderer->ResetCamera();
+  imageVolume = img.volume();
+  if (geometryChanged) {
+    imageData->SetDimensions(dims.data());
+    double avgVoxelLength = pow(img.voxelSize().volume(), 1.0 / 3.0);
+    SPDLOG_TRACE("Setting opacity unit distance to {} ({})", avgVoxelLength,
+                 img.voxelSize().width());
+    volume->GetProperty()->SetScalarOpacityUnitDistance(3, avgVoxelLength);
+    imageData->SetSpacing(spacing.data());
+    imageData->SetOrigin(physicalOrigin.data());
+    renderer->ResetCameraClippingRange();
+    renderer->ResetCamera();
+  }
   if (cmbClippingPlaneNormal != nullptr &&
-      slideClippingPlaneOrigin != nullptr) {
+      slideClippingPlaneOrigin != nullptr &&
+      (geometryChanged || !clippingPlaneControlsInitialized)) {
     cmbClippingPlaneNormal->setCurrentIndex(2);
     slideClippingPlaneOrigin->setValue(0);
     cmbClippingPlaneNormal_currentTextChanged(
         cmbClippingPlaneNormal->currentText());
+    clippingPlaneControlsInitialized = true;
+  } else {
+    // Render the updated image when the clipping-control callbacks did not.
+    vtkRender();
   }
 }
 
 void QVoxelRenderer::setClippingPlaneOriginSlider(QSlider *slider) {
   slideClippingPlaneOrigin = slider;
+  clippingPlaneControlsInitialized = false;
   if (slideClippingPlaneOrigin == nullptr) {
     return;
   }
@@ -111,6 +153,7 @@ void QVoxelRenderer::setClippingPlaneOriginSlider(QSlider *slider) {
 
 void QVoxelRenderer::setClippingPlaneNormalCombobox(QComboBox *combobox) {
   cmbClippingPlaneNormal = combobox;
+  clippingPlaneControlsInitialized = false;
   if (cmbClippingPlaneNormal == nullptr) {
     return;
   }
@@ -126,36 +169,38 @@ void QVoxelRenderer::renderOnClippingPaneChange(SmeVtkWidget *smeVtkWidget) {
 }
 
 void QVoxelRenderer::mousePressEvent(QMouseEvent *ev) {
-  if (ev->buttons() == Qt::NoButton) {
+  if (ev->buttons() == Qt::NoButton || imageVolume.nVoxels() == 0) {
     return;
   }
   auto *interactor = renderWindow->GetInteractor();
-  auto *picker = interactor != nullptr ? interactor->GetPicker() : nullptr;
-  if (picker == nullptr) {
+  if (interactor == nullptr) {
     return;
   }
   const auto *pos = interactor->GetEventPosition();
-  if (picker->Pick(pos[0], pos[1], 0, renderer)) {
-    std::array<double, 3> picked{};
-    picker->GetPickPosition(picked.data());
-    std::array<int, 3> dim{};
-    imageData->GetDimensions(dim.data());
-    auto x = static_cast<int>(picked[0]);
-    auto y = static_cast<int>(picked[1]);
-    auto z = static_cast<std::size_t>(picked[2]);
-    if (static_cast<int>(z) < dim[2] && y >= 0 && y < dim[1] && x >= 0 &&
-        x < dim[0]) {
-      static constexpr vtkIdType stride = 4;
-      auto idx =
-          stride * static_cast<vtkIdType>(z * dim[1] * dim[0] + y * dim[0] + x);
-      SPDLOG_DEBUG("Index in imageDataArray: {}", idx);
-      auto col =
-          qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
-               imageDataArray->GetValue(idx + 2));
-      SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", x, y, z, col);
-      Q_EMIT mouseClicked(col, sme::common::Voxel{x, y, z});
+  if (volumePicker->Pick(pos[0], pos[1], 0, renderer) == 0 ||
+      volumePicker->GetVolume() != volume) {
+    return;
+  }
+  std::array<int, 3> ijk{};
+  volumePicker->GetPointIJK(ijk.data());
+  const auto *dims = imageData->GetDimensions();
+  for (int axis = 0; axis < 3; ++axis) {
+    if (ijk[axis] < 0 || ijk[axis] >= dims[axis]) {
+      return;
     }
   }
+  const auto idx = 4 * imageData->ComputePointId(ijk.data());
+  const auto col =
+      qRgb(imageDataArray->GetValue(idx), imageDataArray->GetValue(idx + 1),
+           imageDataArray->GetValue(idx + 2));
+  // Undo the display's y reversal and map the duplicated slice of a 2D image
+  // back to its only source slice. Validate signed indices before converting z.
+  const sme::common::Voxel voxel{
+      ijk[0], imageVolume.height() - 1 - ijk[1],
+      std::min(static_cast<std::size_t>(ijk[2]), imageVolume.depth() - 1)};
+  SPDLOG_DEBUG("voxel ({},{},{}) -> color {:x}", voxel.p.x(), voxel.p.y(),
+               voxel.z, col);
+  Q_EMIT mouseClicked(col, voxel);
 }
 
 void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
@@ -165,7 +210,6 @@ void QVoxelRenderer::slideClippingPlaneOrigin_valueChanged(int value) {
       minClippingPlaneOrigin +
       fractionalValue * (maxClippingPlaneOrigin - minClippingPlaneOrigin);
   clippingPlane->SetOrigin(origin, origin, origin);
-  clippingPlane->Modified();
   vtkRender();
   if (smeVtkWidgetToRenderOnClippingPlaneChange != nullptr) {
     smeVtkWidgetToRenderOnClippingPlaneChange->vtkRender();

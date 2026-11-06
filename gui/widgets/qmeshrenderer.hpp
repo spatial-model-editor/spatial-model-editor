@@ -5,16 +5,9 @@
 #include "smevtkwidget.hpp"
 #include <QMouseEvent>
 #include <vtkActor.h>
-#include <vtkCellArray.h>
-#include <vtkClipDataSet.h>
-#include <vtkDataSetMapper.h>
-#include <vtkExtractEdges.h>
 #include <vtkNew.h>
 #include <vtkPlane.h>
-#include <vtkPoints.h>
-#include <vtkPolyData.h>
-#include <vtkTableBasedClipDataSet.h>
-#include <vtkUnstructuredGrid.h>
+#include <vtkSmartPointer.h>
 
 class QVoxelRenderer;
 
@@ -45,20 +38,11 @@ protected:
 
 private:
   void updateAndRender();
-  vtkPlane *clippingPlane = nullptr;
+  vtkSmartPointer<vtkPlane> clippingPlane;
   QPoint lastMouseClickPos{};
   std::size_t currentCompartmentIndex{0};
+  std::size_t numberOfCompartments{0};
   RenderMode renderMode{RenderMode::Solid};
-  vtkNew<vtkPoints> points{};
-  std::vector<vtkNew<vtkUnstructuredGrid>> grids{};
-  std::vector<vtkNew<vtkCellArray>> triangles{};
-  std::vector<vtkNew<vtkPolyData>> membranes{};
-  std::vector<vtkNew<vtkClipDataSet>> clippedMembranes{};
-  std::vector<vtkNew<vtkTableBasedClipDataSet>> clippedTetrahedrons{};
-  std::vector<vtkNew<vtkExtractEdges>> edges{};
-  std::vector<vtkNew<vtkClipDataSet>> clippedEdges{};
-  std::vector<vtkNew<vtkDataSetMapper>> solidMappers{};
-  std::vector<vtkNew<vtkDataSetMapper>> wireframeMappers{};
   std::vector<vtkNew<vtkActor>> solidActors{};
   std::vector<vtkNew<vtkActor>> wireframeActors{};
 };
