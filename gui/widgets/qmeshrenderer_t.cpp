@@ -3,10 +3,14 @@
 #include "qmeshrenderer.hpp"
 #include "qt_test_utils.hpp"
 #include "qvoxelrenderer.hpp"
+#include <QComboBox>
+#include <QSlider>
 #include <array>
 #include <cmath>
 #include <memory>
 #include <vtkActorCollection.h>
+#include <vtkAlgorithm.h>
+#include <vtkCommand.h>
 #include <vtkDataSetTriangleFilter.h>
 #include <vtkIdList.h>
 #include <vtkMapper.h>
@@ -23,6 +27,11 @@ constexpr int delay_ms{0};
 
 namespace {
 
+struct UpdateCounter {
+  int events{0};
+  void increment() { ++events; }
+};
+
 class TestQMeshRenderer : public QMeshRenderer {
   vtkActor *getActor(std::size_t index) {
     return vtkActor::SafeDownCast(
@@ -36,6 +45,10 @@ class TestQMeshRenderer : public QMeshRenderer {
   }
 
 public:
+  vtkRenderWindow *getRenderWindow() { return renderWindow; }
+  vtkAlgorithm *getSolidFilter() {
+    return getActor(0)->GetMapper()->GetInputAlgorithm();
+  }
   bool isSolidVisible(std::size_t part) {
     return getActor(2 * part)->GetVisibility() != 0;
   }
@@ -337,6 +350,65 @@ TEST_CASE(
   REQUIRE(meshVolume(meshRenderer->getSolidMesh()) == dbl_approx(fullVolume));
   meshRenderer.reset();
   REQUIRE(plane == nullptr);
+}
+
+TEST_CASE("QMeshRenderer defers hidden clipping until shown",
+          "[qmeshrenderer][gui/widgets/qmeshrenderer][gui/widgets][gui]") {
+  const sme::mesh::GMSHMesh gmshMesh{
+      {{0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}},
+      {{{0, 1, 2, 3}, 1}},
+      {}};
+  const auto color = qRgb(255, 0, 0);
+  const sme::mesh::Mesh3d mesh(gmshMesh, {{color, 1}}, {8, 12, 16},
+                               {1.0, 1.0, 1.0}, {5.0, 6.0, 7.0}, {color});
+  REQUIRE(mesh.isValid());
+  constexpr double fullVolume = 8.0 * 12.0 * 16.0 / 6.0;
+  UpdateCounter renders;
+  UpdateCounter clipping;
+  QSlider slider;
+  QComboBox comboBox;
+  QVoxelRenderer voxelRenderer;
+  TestQMeshRenderer meshRenderer;
+  voxelRenderer.setClippingPlaneOriginSlider(&slider);
+  voxelRenderer.setClippingPlaneNormalCombobox(&comboBox);
+  voxelRenderer.resize(200, 200);
+  voxelRenderer.show();
+  sme::common::ImageStack image({8, 12, 16}, QImage::Format_RGB32);
+  image.fill(color);
+  voxelRenderer.setImage(image, {5.0, 6.0, 7.0});
+  comboBox.setCurrentText("x");
+  meshRenderer.resize(200, 200);
+  meshRenderer.show();
+  meshRenderer.syncClippingPlane(&voxelRenderer);
+  meshRenderer.setMesh(mesh, 0);
+  wait(0);
+  REQUIRE(meshVolume(meshRenderer.getSolidMesh()) == dbl_approx(fullVolume));
+  meshRenderer.getRenderWindow()->AddObserver(vtkCommand::EndEvent, &renders,
+                                              &UpdateCounter::increment);
+  meshRenderer.getSolidFilter()->AddObserver(vtkCommand::StartEvent, &clipping,
+                                             &UpdateCounter::increment);
+  for (int finalValue : {50, 0}) {
+    meshRenderer.hide();
+    wait(0);
+    renders.events = 0;
+    clipping.events = 0;
+    // Intermediate slider positions must not run the hidden mesh pipeline.
+    for (int value : {20, 40, finalValue}) {
+      slider.setValue(value);
+      wait(0);
+      REQUIRE(renders.events == 0);
+      REQUIRE(clipping.events == 0);
+    }
+    meshRenderer.show();
+    wait(0);
+    REQUIRE(renders.events == 1);
+    REQUIRE(clipping.events == 1);
+    REQUIRE(meshVolume(meshRenderer.getSolidMesh()) ==
+            dbl_approx(finalValue == 50 ? fullVolume / 8.0 : fullVolume));
+    wait(0);
+    REQUIRE(renders.events == 1);
+    REQUIRE(clipping.events == 1);
+  }
 }
 
 TEST_CASE("QMeshRenderer clips tetrahedra with a shared plane",
