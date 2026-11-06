@@ -17,6 +17,7 @@ public:
   explicit SmeVtkWidget(QWidget *parent = nullptr);
   ~SmeVtkWidget() override;
   void syncCamera(SmeVtkWidget *smeVtkWidget);
+  // Refresh hidden views when shown instead of rendering unseen frames.
   void vtkRender();
 
 protected:
@@ -28,12 +29,12 @@ protected:
   vtkNew<vtkOrientationMarkerWidget> axesWidget;
 
 private:
-  QTimer cameraRenderTimer;
+  QTimer renderTimer;
   vtkSmartPointer<vtkCamera> observedCamera;
   unsigned long cameraObserverTag{0};
   unsigned long renderObserverTag{0};
-  bool cameraRenderPending{false};
+  bool renderPending{false};
   void observeCamera();
-  void scheduleCameraRender();
-  void cameraRendered();
+  void scheduleRender();
+  void rendered();
 };

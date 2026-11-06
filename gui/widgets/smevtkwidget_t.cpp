@@ -139,6 +139,43 @@ TEST_CASE("SmeVtkWidget linked views render camera changes once",
   }
 }
 
+TEST_CASE("SmeVtkWidget defers explicit renders until shown",
+          "[smevtkwidget][gui/widgets/smevtkwidget][gui/widgets][gui]") {
+  RenderCounter renders;
+  QWidget parent;
+  TestSmeVtkWidget widget;
+  widget.resize(200, 200);
+  SECTION("before the widget has first been shown") {}
+  SECTION("after the widget has been hidden") {
+    showWidget(widget, 0);
+    widget.hide();
+    wait(0);
+  }
+  SECTION("when an ancestor is hidden") {
+    widget.setParent(&parent);
+    widget.show();
+  }
+  widget.countRenders(renders);
+  for (int i = 0; i < 3; ++i) {
+    widget.getCamera()->Azimuth(5);
+    widget.vtkRender();
+    wait(0);
+    REQUIRE(renders.renders == 0);
+  }
+  std::array<double, 3> position{};
+  widget.getCamera()->GetPosition(position.data());
+  if (widget.parentWidget() != nullptr) {
+    parent.show();
+  } else {
+    widget.show();
+  }
+  wait(0);
+  REQUIRE(renders.renders == 1);
+  REQUIRE(renders.cameraPosition == position);
+  wait(0);
+  REQUIRE(renders.renders == 1);
+}
+
 TEST_CASE("SmeVtkWidget camera observers follow resynchronization",
           "[smevtkwidget][gui/widgets/smevtkwidget][gui/widgets][gui]") {
   RenderCounter firstRenders;
