@@ -4,6 +4,9 @@
 #include <vtkCamera.h>
 
 SmeVtkWidget::SmeVtkWidget(QWidget *parent) : QVTKOpenGLNativeWidget(parent) {
+  // Mouse tracking already delivers moves without pressed buttons. HoverMove
+  // would forward the same movement to VTK again, rendering twice during drags.
+  setAttribute(Qt::WA_Hover, false);
   setRenderWindow(renderWindow);
   renderWindow->AddRenderer(renderer);
   axesWidget->SetOrientationMarker(axesActor);
