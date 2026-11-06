@@ -6,6 +6,7 @@
 #include "smevtkwidget.hpp"
 #include <array>
 #include <memory>
+#include <vtkCallbackCommand.h>
 #include <vtkCamera.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkRendererCollection.h>
@@ -37,6 +38,11 @@ public:
   void countRenders(RenderCounter &counter) {
     renderWindow->AddObserver(vtkCommand::EndEvent, &counter,
                               &RenderCounter::record);
+  }
+  std::array<double, 4> getMarkerViewport() {
+    std::array<double, 4> viewport{};
+    axesWidget->GetViewport(viewport.data());
+    return viewport;
   }
 };
 
@@ -137,6 +143,75 @@ TEST_CASE("SmeVtkWidget linked views render camera changes once",
     second.getCamera()->GetPosition(finalPosition.data());
     REQUIRE(firstRenders.cameraPosition == finalPosition);
   }
+}
+
+TEST_CASE("SmeVtkWidget renders each camera drag movement once",
+          "[smevtkwidget][gui/widgets/smevtkwidget][gui/widgets][gui]") {
+  auto button = Qt::LeftButton;
+  SECTION("rotate") {}
+  SECTION("pan") { button = Qt::MiddleButton; }
+  SECTION("zoom") { button = Qt::RightButton; }
+  RenderCounter renders;
+  RenderCounter peerRenders;
+  TestSmeVtkWidget widget;
+  TestSmeVtkWidget peer;
+  showWidget(widget, 0);
+  showWidget(peer, 250);
+  widget.syncCamera(&peer);
+  wait(0);
+  widget.countRenders(renders);
+  peer.countRenders(peerRenders);
+  std::array<double, 3> originalPosition{};
+  widget.getCamera()->GetPosition(originalPosition.data());
+  sendMousePress(&widget, {100, 100}, button);
+  wait(0);
+  renders.renders = 0;
+  peerRenders.renders = 0;
+  std::array<int, 3> counts{};
+  std::array<int, 3> peerCounts{};
+  for (int i = 0; i < 3; ++i) {
+    sendMouseMove(&widget, {105 + 5 * i, 105 + 5 * i}, button);
+    wait(0);
+    counts[i] = renders.renders;
+    peerCounts[i] = peerRenders.renders;
+  }
+  sendMouseRelease(&widget, {115, 115}, button);
+  wait(0);
+  REQUIRE(counts == std::array<int, 3>{1, 2, 3});
+  REQUIRE(peerCounts == counts);
+  REQUIRE(renders.cameraPosition == peerRenders.cameraPosition);
+  REQUIRE(renders.cameraPosition != originalPosition);
+}
+
+TEST_CASE("SmeVtkWidget tracks passive pointer movement and marker interaction",
+          "[smevtkwidget][gui/widgets/smevtkwidget][gui/widgets][gui]") {
+  int moves{0};
+  TestSmeVtkWidget widget;
+  showWidget(widget, 0);
+  // A passive observer can see motion even when an interactive widget grabs
+  // focus and consumes the event before ordinary interactor observers run.
+  vtkNew<vtkCallbackCommand> observer;
+  observer->PassiveObserverOn();
+  observer->SetClientData(&moves);
+  observer->SetCallback([](vtkObject *, unsigned long, void *data, void *) {
+    ++*static_cast<int *>(data);
+  });
+  widget.getInteractor()->AddObserver(vtkCommand::MouseMoveEvent, observer);
+  std::array<double, 3> originalPosition{};
+  widget.getCamera()->GetPosition(originalPosition.data());
+  for (int i = 0; i < 3; ++i) {
+    sendMouseMove(&widget, {100 + 5 * i, 100});
+    REQUIRE(moves == i + 1);
+  }
+  std::array<double, 3> position{};
+  widget.getCamera()->GetPosition(position.data());
+  REQUIRE(position == originalPosition);
+  const auto originalViewport = widget.getMarkerViewport();
+  sendMouseMove(&widget, {30, 170});
+  sendMouseDrag(&widget, {30, 170}, {40, 160});
+  REQUIRE(widget.getMarkerViewport() != originalViewport);
+  widget.getCamera()->GetPosition(position.data());
+  REQUIRE(position == originalPosition);
 }
 
 TEST_CASE("SmeVtkWidget defers explicit renders until shown",
